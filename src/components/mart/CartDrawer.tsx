@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Minus, Check, ChevronUp, Trash2 } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Check, ChevronUp, Trash2, AlertOctagon } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { getCategoryStyle, formatCurrency } from '../../utils/categoryStyles';
 
@@ -8,6 +8,7 @@ export function CartDrawer() {
   const updateQuantity = useAppStore((s) => s.updateQuantity);
   const checkoutCart = useAppStore((s) => s.checkoutCart);
   const clearCart = useAppStore((s) => s.clearCart);
+  const sessionBudget = useAppStore((s) => s.sessionBudget);
 
   const [expanded, setExpanded] = useState(false);
   const [checkoutFlash, setCheckoutFlash] = useState(false);
@@ -15,6 +16,9 @@ export function CartDrawer() {
   const cartItems = items.filter((i) => i.quantity > 0);
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+
+  const isOverSession = sessionBudget !== null && totalPrice > sessionBudget;
+  const isWarningSession = sessionBudget !== null && totalPrice > sessionBudget * 0.8 && totalPrice <= sessionBudget;
 
   // Auto-collapse when cart becomes empty
   useEffect(() => {
@@ -46,9 +50,15 @@ export function CartDrawer() {
       {/* Checkout Bar */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50">
         <div
-          className={`glass-strong border-t border-white/[0.08] shadow-2xl transition-all duration-300 ${
+          className={`glass-strong border-t shadow-2xl transition-all duration-300 ${
             expanded ? 'rounded-t-3xl' : ''
-          } ${hasItems ? 'glow-brand' : ''}`}
+          } ${
+            isOverSession
+              ? 'border-red-500/30 glow-red'
+              : isWarningSession
+              ? 'border-orange-500/20'
+              : 'border-white/[0.08]'
+          } ${hasItems && !isOverSession ? 'glow-brand' : ''}`}
         >
           {/* Collapsed Bar */}
           <div className="px-4 pt-3.5 pb-3.5">
@@ -204,6 +214,32 @@ export function CartDrawer() {
                   );
                 })}
               </div>
+
+              {/* Session Budget Warning */}
+              {sessionBudget !== null && hasItems && (
+                <div className={`mt-3 rounded-xl p-2.5 flex items-center gap-2 animate-fade-in-up ${
+                  isOverSession
+                    ? 'bg-red-500/10 border border-red-500/20'
+                    : isWarningSession
+                    ? 'bg-orange-500/10 border border-orange-500/20'
+                    : 'bg-brand-500/10 border border-brand-500/20'
+                }`}>
+                  {isOverSession ? (
+                    <AlertOctagon className="w-4 h-4 text-red-400 flex-shrink-0" strokeWidth={2.5} />
+                  ) : (
+                    <Check className="w-4 h-4 text-brand-400 flex-shrink-0" strokeWidth={2.5} />
+                  )}
+                  <p className={`text-[11px] font-bold ${
+                    isOverSession ? 'text-red-400' : isWarningSession ? 'text-orange-400' : 'text-brand-400'
+                  }`}>
+                    {isOverSession
+                      ? `Over session limit by ₹${formatCurrency(totalPrice - sessionBudget)}`
+                      : isWarningSession
+                      ? `₹${formatCurrency(sessionBudget - totalPrice)} left in session budget — caution`
+                      : `Within session budget (₹${formatCurrency(sessionBudget - totalPrice)} left)`}
+                  </p>
+                </div>
+              )}
 
               {/* Cart Summary */}
               <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">

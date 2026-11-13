@@ -18,12 +18,52 @@ export interface Transaction {
   splitWith?: string | null;
 }
 
+export interface PricePoint {
+  date: string;
+  price: number;
+}
+
+export interface PriceHistory {
+  [itemId: string]: PricePoint[];
+}
+
+export interface FeeFlag {
+  id: string;
+  itemId: string;
+  itemName: string;
+  type: 'hidden_charge' | 'subscription_trap' | 'deceptive_pricing' | 'handling_fee' | 'inflated_tax';
+  severity: 'warning' | 'critical';
+  message: string;
+  estimatedCost: number;
+}
+
+export interface ParsedReceiptItem {
+  name: string;
+  price: number;
+  tax?: number;
+  deliveryFee?: number;
+}
+
+export interface ParsedReceipt {
+  merchant: string;
+  date: string;
+  items: ParsedReceiptItem[];
+  subtotal: number;
+  taxTotal: number;
+  deliveryFee: number;
+  total: number;
+}
+
 export interface AppState {
   items: CartItem[];
   transactions: Transaction[];
   totalBudget: number;
+  sessionBudget: number | null;
   isBrokeMode: boolean;
   categories: string[];
+  priceHistory: PriceHistory;
+  feeFlags: FeeFlag[];
+  parsedReceipts: ParsedReceipt[];
 
   addCategory: (categoryName: string) => void;
   addCustomItem: (item: Omit<CartItem, 'quantity'>) => void;
@@ -39,6 +79,28 @@ export interface AppState {
   toggleBrokeMode: () => void;
   setTransactions: (txs: Transaction[]) => void;
   setItems: (items: CartItem[]) => void;
+
+  setSessionBudget: (amount: number | null) => void;
+  setTotalBudget: (amount: number) => void;
+  setFeeFlags: (flags: FeeFlag[]) => void;
+  addParsedReceipt: (receipt: ParsedReceipt) => void;
+  clearParsedReceipts: () => void;
+}
+
+function generatePriceHistory(basePrice: number): { date: string; price: number }[] {
+  const now = new Date();
+  const points: { date: string; price: number }[] = [];
+  let currentPrice = basePrice * 0.82;
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 15);
+    const variance = (Math.sin(i * 1.7) + Math.cos(i * 0.9)) * 0.08;
+    const trend = (5 - i) * 0.02;
+    const price = Math.round(basePrice * (0.82 + trend + variance) * 100) / 100;
+    points.push({ date: d.toISOString(), price });
+    currentPrice = price;
+  }
+  points.push({ date: now.toISOString(), price: basePrice });
+  return points;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -54,8 +116,12 @@ export const useAppStore = create<AppState>((set) => ({
   ],
   transactions: [],
   totalBudget: 5000,
+  sessionBudget: null,
   isBrokeMode: false,
   categories: ['Groceries', 'Junk', 'Fuel', 'Bills'],
+  priceHistory: {},
+  feeFlags: [],
+  parsedReceipts: [],
 
   addCategory: (categoryName) =>
     set((state) =>
@@ -65,13 +131,21 @@ export const useAppStore = create<AppState>((set) => ({
     ),
 
   addCustomItem: (item) =>
-    set((state) => ({ items: [...state.items, { ...item, quantity: 0 }] })),
+    set((state) => ({
+      items: [...state.items, { ...item, quantity: 0 }],
+      priceHistory: {
+        ...state.priceHistory,
+        [item.id]: generatePriceHistory(item.price),
+      },
+    })),
 
   updateItemPrice: (id, newPrice) =>
     set((state) => ({
-      items: state.items.map((i) =>
-        i.id === id ? { ...i, price: newPrice } : i
-      ),
+      items: state.items.map((i) => (i.id === id ? { ...i, price: newPrice } : i)),
+      priceHistory: {
+        ...state.priceHistory,
+        [id]: [...(state.priceHistory[id] ?? []), { date: new Date().toISOString(), price: newPrice }],
+      },
     })),
 
   addToCart: (item) =>
@@ -100,10 +174,8 @@ export const useAppStore = create<AppState>((set) => ({
   updateQuantity: (id, delta) =>
     set((state) => ({
       items: state.items
-        .map((i) =>
-          i.id === id ? { ...i, quantity: i.quantity + delta } : i
-        )
-        .filter((i) => i.quantity > 0),
+        .map((i) => (i.id === id ? { ...i, quantity: i.quantity + delta } : i))
+        .filter((i) => i.quantity > 0 || state.items.find((x) => x.id === id)),
     })),
 
   checkoutCart: () => {
@@ -134,9 +206,25 @@ export const useAppStore = create<AppState>((set) => ({
       ],
     })),
 
-  toggleBrokeMode: () =>
-    set((state) => ({ isBrokeMode: !state.isBrokeMode })),
-
+  toggleBrokeMode: () => set((state) => ({ isBrokeMode: !state.isBrokeMode })),
   setTransactions: (txs) => set({ transactions: txs }),
   setItems: (items) => set({ items }),
+  setSessionBudget: (amount) => set({ sessionBudget: amount }),
+  setTotalBudget: (amount) => set({ totalBudget: amount }),
+  setFeeFlags: (flags) => set({ feeFlags: flags }),
+  addParsedReceipt: (receipt) =>
+    set((state) => ({ parsedReceipts: [receipt, ...state.parsedReceipts].slice(0, 10) })),
+  clearParsedReceipts: () => set({ parsedReceipts: [] }),
 }));
+
+const defaultItemIds = [
+  'item-milk', 'item-eggs', 'item-rice', 'item-chips',
+  'item-soda', 'item-chocolate', 'item-petrol', 'item-wifi',
+];
+const defaultPrices = [60, 70, 90, 30, 40, 50, 105, 500];
+
+const initialHistory: PriceHistory = {};
+defaultItemIds.forEach((id, i) => {
+  initialHistory[id] = generatePriceHistory(defaultPrices[i]);
+});
+useAppStore.setState({ priceHistory: initialHistory });

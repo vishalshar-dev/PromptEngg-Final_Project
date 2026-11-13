@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Radar, Shield, Wallet } from 'lucide-react';
+import { ShoppingBag, Radar, Shield, Wallet, ScanSearch } from 'lucide-react';
 import { QuickMartGrid } from './components/mart/QuickMartGrid';
 import { CartDrawer } from './components/mart/CartDrawer';
 import { Ledger } from './components/ledgers/Ledger';
 import { RadarDashboard } from './components/analytics/RadarDashboard';
 import { SurvivalSandbox } from './components/analytics/SurvivalSandbox';
+import { AuditPanel } from './components/audit/AuditPanel';
 import { useAppStore } from './store/useStore';
 import { formatCurrency } from './utils/categoryStyles';
 
-type Tab = 'mart' | 'radar' | 'warroom';
+type Tab = 'mart' | 'audit' | 'radar' | 'warroom';
 
 const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
   { id: 'mart', label: 'Mart', icon: ShoppingBag },
+  { id: 'audit', label: 'Audit', icon: ScanSearch },
   { id: 'radar', label: 'Radar', icon: Radar },
   { id: 'warroom', label: 'War Room', icon: Shield },
 ];
@@ -106,6 +108,7 @@ export default function App() {
               <Ledger />
             </div>
           )}
+          {activeTab === 'audit' && <AuditPanel />}
           {activeTab === 'radar' && <RadarDashboard />}
           {activeTab === 'warroom' && <SurvivalSandbox />}
         </div>
