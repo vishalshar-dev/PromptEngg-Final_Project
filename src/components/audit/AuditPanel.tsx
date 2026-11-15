@@ -6,6 +6,7 @@ import { ExportReport } from './ExportReport';
 import { BudgetGuardrail } from './BudgetGuardrail';
 import { AuditHistory } from './AuditHistory';
 import { DataBackup } from './DataBackup';
+import { CartComparator } from './CartComparator';
 
 export function AuditPanel() {
   return (
@@ -18,6 +19,11 @@ export function AuditPanel() {
 
       {/* Session Budget Guardrail */}
       <BudgetGuardrail />
+
+      {/* Multi-App Cart Comparator */}
+      <div className="glass rounded-2xl p-4">
+        <CartComparator />
+      </div>
 
       {/* Receipt OCR Scanner */}
       <div className="glass rounded-2xl p-4">
