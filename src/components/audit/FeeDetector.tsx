@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { AlertTriangle, ShieldAlert, Check, ScanSearch } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, ShieldAlert, Check, ScanSearch, Save } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { detectFees, FEE_TYPE_LABELS, FEE_SEVERITY_STYLES } from '../../utils/auditEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
@@ -8,6 +8,8 @@ export function FeeDetector() {
   const items = useAppStore((s) => s.items);
   const feeFlags = useAppStore((s) => s.feeFlags);
   const setFeeFlags = useAppStore((s) => s.setFeeFlags);
+  const addSavedAudit = useAppStore((s) => s.addSavedAudit);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   const cartItems = items.filter((i) => i.quantity > 0);
 
@@ -20,6 +22,24 @@ export function FeeDetector() {
 
   const runScan = () => {
     setFeeFlags(detectedFlags);
+  };
+
+  const handleSaveAudit = () => {
+    const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    addSavedAudit({
+      source: 'Cart Audit',
+      subtotal: cartTotal - totalEstimatedCost,
+      extraFees: totalEstimatedCost,
+      total: cartTotal,
+      flags: detectedFlags.map((f) => ({
+        type: FEE_TYPE_LABELS[f.type],
+        severity: f.severity,
+        message: f.message,
+        estimatedCost: f.estimatedCost,
+      })),
+    });
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 2000);
   };
 
   return (
@@ -118,6 +138,24 @@ export function FeeDetector() {
           <p className="text-[11px] text-zinc-500 mt-1">No hidden fees or dark patterns detected</p>
         </div>
       ) : null}
+
+      {/* Save Audit Button */}
+      {detectedFlags.length > 0 && (
+        <button
+          onClick={handleSaveAudit}
+          className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+            savedFlash
+              ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
+              : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
+          }`}
+        >
+          {savedFlash ? (
+            <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved to History</>
+          ) : (
+            <><Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Save Audit to History</>
+          )}
+        </button>
+      )}
     </div>
   );
 }

@@ -57,6 +57,34 @@ export interface ParsedReceipt {
 
 export type CategoryCaps = Record<string, number | null>;
 
+export interface SavedAuditFlag {
+  type: string;
+  severity: 'warning' | 'critical';
+  message: string;
+  estimatedCost: number;
+}
+
+export interface SavedAudit {
+  id: string;
+  timestamp: string;
+  source: string;
+  subtotal: number;
+  extraFees: number;
+  total: number;
+  flags: SavedAuditFlag[];
+}
+
+export interface BackupData {
+  version: 1;
+  exportedAt: string;
+  transactions: Transaction[];
+  customItems: CartItem[];
+  totalBudget: number;
+  sessionBudget: number | null;
+  categoryCaps: CategoryCaps;
+  savedAudits: SavedAudit[];
+}
+
 export interface AppState {
   items: CartItem[];
   transactions: Transaction[];
@@ -68,6 +96,7 @@ export interface AppState {
   priceHistory: PriceHistory;
   feeFlags: FeeFlag[];
   parsedReceipts: ParsedReceipt[];
+  savedAudits: SavedAudit[];
 
   addCategory: (categoryName: string) => void;
   addCustomItem: (item: Omit<CartItem, 'quantity'>) => void;
@@ -90,6 +119,11 @@ export interface AppState {
   setFeeFlags: (flags: FeeFlag[]) => void;
   addParsedReceipt: (receipt: ParsedReceipt) => void;
   clearParsedReceipts: () => void;
+
+  addSavedAudit: (audit: Omit<SavedAudit, 'id' | 'timestamp'>) => void;
+  removeSavedAudit: (id: string) => void;
+  clearSavedAudits: () => void;
+  importBackupData: (data: BackupData) => void;
 }
 
 function generatePriceHistory(basePrice: number): { date: string; price: number }[] {
@@ -130,6 +164,7 @@ export const useAppStore = create<AppState>()(
   priceHistory: {},
   feeFlags: [],
   parsedReceipts: [],
+  savedAudits: [],
 
   addCategory: (categoryName) =>
     set((state) =>
@@ -227,6 +262,29 @@ export const useAppStore = create<AppState>()(
   addParsedReceipt: (receipt) =>
     set((state) => ({ parsedReceipts: [receipt, ...state.parsedReceipts].slice(0, 10) })),
   clearParsedReceipts: () => set({ parsedReceipts: [] }),
+
+  addSavedAudit: (audit) =>
+    set((state) => ({
+      savedAudits: [
+        { ...audit, id: crypto.randomUUID(), timestamp: new Date().toISOString() },
+        ...state.savedAudits,
+      ].slice(0, 50),
+    })),
+  removeSavedAudit: (id) =>
+    set((state) => ({
+      savedAudits: state.savedAudits.filter((a) => a.id !== id),
+    })),
+  clearSavedAudits: () => set({ savedAudits: [] }),
+
+  importBackupData: (data) =>
+    set({
+      transactions: data.transactions,
+      items: data.customItems,
+      totalBudget: data.totalBudget,
+      sessionBudget: data.sessionBudget,
+      categoryCaps: data.categoryCaps,
+      savedAudits: data.savedAudits,
+    }),
     }),
     {
       name: 'cartaudit-store',
@@ -234,6 +292,8 @@ export const useAppStore = create<AppState>()(
         totalBudget: state.totalBudget,
         categoryCaps: state.categoryCaps,
         transactions: state.transactions,
+        savedAudits: state.savedAudits,
+        items: state.items,
       }),
     }
   )

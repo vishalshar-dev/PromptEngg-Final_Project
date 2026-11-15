@@ -4,6 +4,8 @@ import { FeeDetector } from './FeeDetector';
 import { PriceTrendTracker } from './PriceTrendTracker';
 import { ExportReport } from './ExportReport';
 import { BudgetGuardrail } from './BudgetGuardrail';
+import { AuditHistory } from './AuditHistory';
+import { DataBackup } from './DataBackup';
 
 export function AuditPanel() {
   return (
@@ -27,6 +29,11 @@ export function AuditPanel() {
         <FeeDetector />
       </div>
 
+      {/* Saved Audit History */}
+      <div className="glass rounded-2xl p-4">
+        <AuditHistory />
+      </div>
+
       {/* Price Trends */}
       <div className="glass rounded-2xl p-4">
         <PriceTrendTracker />
@@ -35,6 +42,11 @@ export function AuditPanel() {
       {/* Export Report */}
       <div className="glass rounded-2xl p-4">
         <ExportReport />
+      </div>
+
+      {/* Data Backup & Restore */}
+      <div className="glass rounded-2xl p-4">
+        <DataBackup />
       </div>
     </div>
   );

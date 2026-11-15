@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, ScanLine, FileImage, Loader2, Check, Trash2, ShoppingBag, Receipt } from 'lucide-react';
+import { Upload, ScanLine, FileImage, Loader2, Check, Trash2, ShoppingBag, Receipt, Save } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { mockParseReceipt } from '../../utils/auditEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
@@ -10,6 +10,8 @@ export function ReceiptUploader() {
   const clearParsedReceipts = useAppStore((s) => s.clearParsedReceipts);
   const addToCart = useAppStore((s) => s.addToCart);
   const items = useAppStore((s) => s.items);
+  const addSavedAudit = useAppStore((s) => s.addSavedAudit);
+  const [savedIdx, setSavedIdx] = useState<number | null>(null);
 
   const [isScanning, setIsScanning] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -35,6 +37,24 @@ export function ReceiptUploader() {
     const file = e.target.files?.[0];
     if (file) handleFile(file);
     e.target.value = '';
+  };
+
+  const handleSaveAudit = (receiptIndex: number) => {
+    const receipt = parsedReceipts[receiptIndex];
+    const extraFees = receipt.taxTotal + receipt.deliveryFee;
+    const flags = [
+      ...receipt.taxTotal > 0 ? [{ type: 'Tax', severity: 'warning' as const, message: `Tax charges of ₹${formatCurrency(receipt.taxTotal)} detected`, estimatedCost: receipt.taxTotal }] : [],
+      ...receipt.deliveryFee > 0 ? [{ type: 'Delivery Fee', severity: 'warning' as const, message: `Delivery fee of ₹${formatCurrency(receipt.deliveryFee)} detected`, estimatedCost: receipt.deliveryFee }] : [],
+    ];
+    addSavedAudit({
+      source: receipt.merchant,
+      subtotal: receipt.subtotal,
+      extraFees,
+      total: receipt.total,
+      flags,
+    });
+    setSavedIdx(receiptIndex);
+    setTimeout(() => setSavedIdx(null), 2000);
   };
 
   const handleImportItem = (name: string, price: number) => {
@@ -177,14 +197,31 @@ export function ReceiptUploader() {
                 </div>
               </div>
 
-              {/* Import Button */}
-              <button
-                onClick={() => receipt.items.forEach((item) => handleImportItem(item.name, item.price))}
-                className="w-full bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-white/[0.06] hover:border-brand-500/30"
-              >
-                <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} />
-                Import items to cart
-              </button>
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => receipt.items.forEach((item) => handleImportItem(item.name, item.price))}
+                  className="flex-1 bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-white/[0.06] hover:border-brand-500/30"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  Import to cart
+                </button>
+                <button
+                  onClick={() => handleSaveAudit(idx)}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+                    savedIdx === idx
+                      ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
+                      : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
+                  }`
+                  }
+                >
+                  {savedIdx === idx ? (
+                    <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved</>
+                  ) : (
+                    <><Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Save</>
+                  )}
+                </button>
+              </div>
             </div>
           ))}
         </div>
