@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface CartItem {
   id: string;
@@ -54,6 +55,8 @@ export interface ParsedReceipt {
   total: number;
 }
 
+export type CategoryCaps = Record<string, number | null>;
+
 export interface AppState {
   items: CartItem[];
   transactions: Transaction[];
@@ -61,6 +64,7 @@ export interface AppState {
   sessionBudget: number | null;
   isBrokeMode: boolean;
   categories: string[];
+  categoryCaps: CategoryCaps;
   priceHistory: PriceHistory;
   feeFlags: FeeFlag[];
   parsedReceipts: ParsedReceipt[];
@@ -82,6 +86,7 @@ export interface AppState {
 
   setSessionBudget: (amount: number | null) => void;
   setTotalBudget: (amount: number) => void;
+  setCategoryCap: (category: string, amount: number | null) => void;
   setFeeFlags: (flags: FeeFlag[]) => void;
   addParsedReceipt: (receipt: ParsedReceipt) => void;
   clearParsedReceipts: () => void;
@@ -103,7 +108,9 @@ function generatePriceHistory(basePrice: number): { date: string; price: number 
   return points;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
   items: [
     { id: 'item-milk', name: 'Milk', price: 60, category: 'Groceries', icon: '🥛', quantity: 0 },
     { id: 'item-eggs', name: 'Eggs (6pc)', price: 70, category: 'Groceries', icon: '🥚', quantity: 0 },
@@ -119,6 +126,7 @@ export const useAppStore = create<AppState>((set) => ({
   sessionBudget: null,
   isBrokeMode: false,
   categories: ['Groceries', 'Junk', 'Fuel', 'Bills'],
+  categoryCaps: { Groceries: null, Junk: null, Fuel: null, Bills: null },
   priceHistory: {},
   feeFlags: [],
   parsedReceipts: [],
@@ -211,11 +219,25 @@ export const useAppStore = create<AppState>((set) => ({
   setItems: (items) => set({ items }),
   setSessionBudget: (amount) => set({ sessionBudget: amount }),
   setTotalBudget: (amount) => set({ totalBudget: amount }),
+  setCategoryCap: (category, amount) =>
+    set((state) => ({
+      categoryCaps: { ...state.categoryCaps, [category]: amount },
+    })),
   setFeeFlags: (flags) => set({ feeFlags: flags }),
   addParsedReceipt: (receipt) =>
     set((state) => ({ parsedReceipts: [receipt, ...state.parsedReceipts].slice(0, 10) })),
   clearParsedReceipts: () => set({ parsedReceipts: [] }),
-}));
+    }),
+    {
+      name: 'cartaudit-store',
+      partialize: (state) => ({
+        totalBudget: state.totalBudget,
+        categoryCaps: state.categoryCaps,
+        transactions: state.transactions,
+      }),
+    }
+  )
+);
 
 const defaultItemIds = [
   'item-milk', 'item-eggs', 'item-rice', 'item-chips',
