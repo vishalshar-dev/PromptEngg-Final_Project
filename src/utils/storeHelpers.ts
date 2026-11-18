@@ -119,5 +119,18 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
     settlements: Array.isArray(data.settlements) ? data.settlements : [],
     priceObservations: Array.isArray(data.priceObservations) ? data.priceObservations : undefined,
     priceAlerts: Array.isArray(data.priceAlerts) ? data.priceAlerts : undefined,
+    isBrokeMode: typeof data.isBrokeMode === 'boolean' ? data.isBrokeMode : undefined,
+    brokeModeConfig:
+      data.brokeModeConfig && typeof data.brokeModeConfig === 'object'
+        ? data.brokeModeConfig
+        : undefined,
+    categoryLimits: Array.isArray(data.categoryLimits) ? data.categoryLimits : undefined,
+    warRoomChallenges: Array.isArray(data.warRoomChallenges) ? data.warRoomChallenges : undefined,
+    warRoomTargets: Array.isArray(data.warRoomTargets) ? data.warRoomTargets : undefined,
+    dismissedWarRoomAlerts: Array.isArray(data.dismissedWarRoomAlerts)
+      ? data.dismissedWarRoomAlerts
+      : undefined,
+    disciplineCheckIns: Array.isArray(data.disciplineCheckIns) ? data.disciplineCheckIns : undefined,
   };
 }
+

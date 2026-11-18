@@ -10,6 +10,7 @@ import {
   Package,
   Store,
   Check,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAppStore, type CartItem } from '../../store/useStore';
 import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
@@ -19,6 +20,7 @@ import {
   getDueRecurringItems,
   type ProductFilterOptions,
 } from '../../utils/martEngine';
+import { computeBrokeModeStatus } from '../../utils/warRoomEngine';
 import { CategoryCard } from './CategoryCard';
 import { CategoryManagerModal } from './CategoryManagerModal';
 import { ProductSearch } from './ProductSearch';
@@ -50,6 +52,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const totalBudget = useAppStore((s) => s.totalBudget);
   const purchaseHistory = useAppStore((s) => s.purchaseHistory);
   const isBrokeMode = useAppStore((s) => s.isBrokeMode);
+  const brokeModeConfig = useAppStore((s) => s.brokeModeConfig);
 
   const addToCart = useAppStore((s) => s.addToCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
@@ -83,6 +86,10 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   );
   const remainingMonthlyBudget = totalBudget - monthlySpend;
   const dueRecurring = useMemo(() => getDueRecurringItems(items), [items]);
+  const brokeStatus = useMemo(
+    () => computeBrokeModeStatus(transactions, brokeModeConfig),
+    [transactions, brokeModeConfig]
+  );
 
   const effectiveFilters: ProductFilterOptions = useMemo(
     () => ({
@@ -253,6 +260,26 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
           </div>
         </div>
 
+        {/* Active Broke Mode Accountability Watch */}
+        {isBrokeMode && (
+          <div className="rounded-xl px-3.5 py-2.5 bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <p className="text-xs font-bold text-amber-200">
+                Broke Mode Active ({brokeStatus.periodLabel}) · Essential items stay unrestricted; watched categories are highlighted.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] font-mono font-bold tabular-nums">
+              <span className="text-amber-300">
+                Allowance Left: ₹{formatCurrencyExact(brokeStatus.remaining)}
+              </span>
+              <span className="text-zinc-300">
+                Non-Essential Left: ₹{formatCurrencyExact(brokeStatus.nonEssentialRemaining)}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Section Navigation */}
         <div className="grid grid-cols-4 gap-1.5 bg-ink-900/70 p-1 rounded-xl border border-white/[0.05]">
           <button
@@ -401,6 +428,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             items={filteredItems}
             categoryConfigs={categoryConfigs}
             isBrokeMode={isBrokeMode}
+            restrictedCategories={brokeModeConfig.restrictedCategories}
             onAddToCart={(item) => addToCart(item)}
             onUpdateQuantity={updateQuantity}
             onToggleFavourite={toggleFavourite}
@@ -473,6 +501,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 items={filteredItems}
                 categoryConfigs={categoryConfigs}
                 isBrokeMode={isBrokeMode}
+                restrictedCategories={brokeModeConfig.restrictedCategories}
                 onAddToCart={(item) => addToCart(item)}
                 onUpdateQuantity={updateQuantity}
                 onToggleFavourite={toggleFavourite}
@@ -536,6 +565,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             items={filteredItems}
             categoryConfigs={categoryConfigs}
             isBrokeMode={isBrokeMode}
+            restrictedCategories={brokeModeConfig.restrictedCategories}
             onAddToCart={(item) => addToCart(item)}
             onUpdateQuantity={updateQuantity}
             onToggleFavourite={toggleFavourite}

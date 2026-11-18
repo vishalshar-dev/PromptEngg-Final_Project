@@ -39,6 +39,8 @@ export interface CategoryConfig {
 
 export type TransactionStatus = 'active' | 'cancelled' | 'refunded';
 export type TransactionSource = 'mart' | 'audit' | 'manual' | 'ledger';
+export type SpendingClassification = 'essential' | 'non_essential' | 'impulsive';
+export type ClassificationSource = 'predicted' | 'user';
 
 export interface Transaction {
   id: string;
@@ -52,6 +54,8 @@ export interface Transaction {
   refundAmount?: number;
   source?: TransactionSource;
   receiptFingerprint?: string;
+  classification?: SpendingClassification;
+  classificationSource?: ClassificationSource;
 }
 
 export type SplitMethod = 'equal' | 'custom' | 'percentage';
@@ -235,6 +239,73 @@ export interface TriggeredPriceAlert {
   dismissed?: boolean;
 }
 
+export type WarRoomPeriod = 'daily' | 'weekly' | 'monthly';
+
+export interface BrokeModeConfig {
+  enabled: boolean;
+  period: WarRoomPeriod;
+  dailyAllowance: number;
+  weeklyAllowance: number;
+  monthlyAllowance: number;
+  maxNonEssentialSpend: number;
+  warningThresholdPct: number; // e.g., 75
+  durationDays: number;
+  restrictedCategories: string[];
+  activatedAt?: string | null;
+}
+
+export type LimitStatus = 'normal' | 'approaching' | 'reached' | 'exceeded';
+
+export interface CategorySpendingLimit {
+  id: string;
+  category: string;
+  period: WarRoomPeriod;
+  limitAmount: number;
+  warningThresholdPct: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type FinancialChallengeTemplateId =
+  | 'no_junk_3d'
+  | 'weekly_budget_guard'
+  | 'cut_impulsive_7d'
+  | 'category_control_7d'
+  | 'non_essential_cap_14d'
+  | 'custom';
+
+export interface FinancialChallenge {
+  id: string;
+  templateId: FinancialChallengeTemplateId;
+  title: string;
+  description: string;
+  targetDays: number;
+  targetCategory?: string | null;
+  maxAllowedSpend?: number | null;
+  startedAt: string; // ISO timestamp
+  status: 'active' | 'completed' | 'failed';
+  completedAt?: string | null;
+  isCustom?: boolean;
+}
+
+export type FinancialTargetType =
+  | 'reduce_junk_by_amount'
+  | 'reduce_impulsive_pct'
+  | 'cap_non_essential_amount';
+
+export interface FinancialTarget {
+  id: string;
+  title: string;
+  type: FinancialTargetType;
+  period: 'weekly' | 'monthly';
+  targetValue: number; // ₹ amount or % depending on type
+  baselineValue?: number | null;
+  transferredSavings: number; // Explicit real savings transferred by user (never confused with estimate)
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface BackupData {
   version: 1;
   exportedAt: string;
@@ -253,4 +324,12 @@ export interface BackupData {
   settlements?: Settlement[];
   priceObservations?: PriceObservation[];
   priceAlerts?: PriceAlert[];
+  isBrokeMode?: boolean;
+  brokeModeConfig?: BrokeModeConfig;
+  categoryLimits?: CategorySpendingLimit[];
+  warRoomChallenges?: FinancialChallenge[];
+  warRoomTargets?: FinancialTarget[];
+  dismissedWarRoomAlerts?: string[];
+  disciplineCheckIns?: string[];
 }
+

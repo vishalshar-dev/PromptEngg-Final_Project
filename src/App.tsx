@@ -129,7 +129,9 @@ export default function App() {
           {activeTab === 'audit' && (
             <AuditPanel onOpenPriceTracker={() => setActiveTab('prices')} />
           )}
-          {activeTab === 'radar' && <RadarDashboard />}
+          {activeTab === 'radar' && (
+            <RadarDashboard onOpenLedger={() => setActiveTab('ledger')} />
+          )}
           {activeTab === 'warroom' && <SurvivalSandbox />}
         </div>
       </main>

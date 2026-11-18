@@ -6,6 +6,7 @@ export interface ProductGridProps {
   items: CartItem[];
   categoryConfigs: CategoryConfig[];
   isBrokeMode?: boolean;
+  restrictedCategories?: string[];
   onAddToCart: (item: CartItem) => void;
   onUpdateQuantity: (id: string, delta: number) => void;
   onToggleFavourite: (id: string) => void;
@@ -19,6 +20,7 @@ export function ProductGrid({
   items,
   categoryConfigs,
   isBrokeMode = false,
+  restrictedCategories = ['Junk', 'Snacks & Beverages'],
   onAddToCart,
   onUpdateQuantity,
   onToggleFavourite,
@@ -28,6 +30,7 @@ export function ProductGrid({
   onResetFilters,
 }: ProductGridProps) {
   const catMap = new Map(categoryConfigs.map((c) => [c.name, c]));
+  const watchedSet = new Set(restrictedCategories.map((c) => c.trim().toLowerCase()));
 
   if (items.length === 0) {
     return (
@@ -70,16 +73,15 @@ export function ProductGrid({
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {items.map((item) => {
         const cfg = catMap.get(item.category);
-        const isDisabled =
-          isBrokeMode &&
-          (item.category === 'Junk' || item.category === 'Snacks & Beverages');
+        const isWatched =
+          isBrokeMode && watchedSet.has((item.category ?? '').trim().toLowerCase());
         return (
           <ProductCard
             key={item.id}
             item={item}
             categoryAccent={cfg?.accent}
             categoryIconKey={cfg?.iconKey}
-            isDisabled={isDisabled}
+            isBrokeWatched={isWatched}
             onAddToCart={onAddToCart}
             onUpdateQuantity={onUpdateQuantity}
             onToggleFavourite={onToggleFavourite}
@@ -91,3 +93,4 @@ export function ProductGrid({
     </div>
   );
 }
+

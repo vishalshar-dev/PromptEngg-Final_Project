@@ -16,6 +16,7 @@ import {
 import { SELF_PERSON_ID } from '../../types/models';
 import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
 import { buildCheckoutBreakdown } from '../../utils/martEngine';
+import { computeBrokeModeStatus } from '../../utils/warRoomEngine';
 import {
   calculateEqualShares,
   validateAndBuildShares,
@@ -44,12 +45,27 @@ export function CheckoutSummary({
 }: CheckoutSummaryProps) {
   const items = useAppStore((s) => s.items);
   const people = useAppStore((s) => s.people);
+  const transactions = useAppStore((s) => s.transactions);
+  const isBrokeMode = useAppStore((s) => s.isBrokeMode);
+  const brokeModeConfig = useAppStore((s) => s.brokeModeConfig);
   const addPerson = useAppStore((s) => s.addPerson);
   const checkoutCart = useAppStore((s) => s.checkoutCart);
 
   const submittingRef = useRef(false);
 
   const breakdown = useMemo(() => buildCheckoutBreakdown(items), [items]);
+  const brokeStatus = useMemo(
+    () => computeBrokeModeStatus(transactions, brokeModeConfig),
+    [transactions, brokeModeConfig]
+  );
+  const watchedBasketSpend = useMemo(() => {
+    const watched = new Set(
+      brokeModeConfig.restrictedCategories.map((c) => c.trim().toLowerCase())
+    );
+    return breakdown.items
+      .filter((i) => watched.has(i.category.trim().toLowerCase()))
+      .reduce((sum, i) => sum + i.price * i.quantity, 0);
+  }, [breakdown.items, brokeModeConfig.restrictedCategories]);
 
   const [splitEnabled, setSplitEnabled] = useState(defaultSplitEnabled);
   const [expenseName, setExpenseName] = useState('');
@@ -517,6 +533,29 @@ export function CheckoutSummary({
               )}
             </span>
           </div>
+
+          {isBrokeMode &&
+            (watchedBasketSpend > 0 ||
+              brokeStatus.spent + (splitEnabled ? splitValidation.userShare : breakdown.totalAmount) >
+                brokeStatus.limit) && (
+              <div className="rounded-xl p-3 bg-amber-500/10 border border-amber-500/30 space-y-1">
+                <p className="text-xs font-extrabold text-amber-300 flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  Broke Mode Accountability Notice
+                </p>
+                <p className="text-[11px] text-amber-200/85 leading-relaxed">
+                  {watchedBasketSpend > 0
+                    ? `Cart includes ₹${formatCurrencyExact(watchedBasketSpend)} in watched discretionary categories. Remaining non-essential allowance: ₹${formatCurrencyExact(brokeStatus.nonEssentialRemaining)}. `
+                    : ''}
+                  {brokeStatus.limit > 0 &&
+                  brokeStatus.spent +
+                    (splitEnabled ? splitValidation.userShare : breakdown.totalAmount) >
+                    brokeStatus.limit
+                    ? `This purchase exceeds your ${brokeStatus.period} allowance (₹${formatCurrencyExact(brokeStatus.remaining)} left).`
+                    : ''}
+                </p>
+              </div>
+            )}
 
           {submitError && (
             <p className="text-xs text-red-400 flex items-center gap-1.5">

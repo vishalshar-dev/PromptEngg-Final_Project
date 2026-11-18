@@ -12,9 +12,11 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useAppStore, type Transaction } from '../../store/useStore';
+import type { SpendingClassification } from '../../types/models';
 import { getCategoryStyle, formatCurrencyExact } from '../../utils/categoryStyles';
 import { getEffectiveTransactionAmount } from '../../utils/martEngine';
 import { computeLedgerState } from '../../utils/splitLedgerEngine';
+import { classifyTransaction } from '../../utils/warRoomEngine';
 import { SplitExpenseModal } from '../splits/SplitExpenseModal';
 
 export function Ledger({
@@ -23,9 +25,11 @@ export function Ledger({
   onOpenSplitLedger?: () => void;
 }) {
   const transactions = useAppStore((s) => s.transactions);
+  const isBrokeMode = useAppStore((s) => s.isBrokeMode);
   const removeTransaction = useAppStore((s) => s.removeTransaction);
   const cancelTransaction = useAppStore((s) => s.cancelTransaction);
   const refundTransaction = useAppStore((s) => s.refundTransaction);
+  const updateTransactionClassification = useAppStore((s) => s.updateTransactionClassification);
   const people = useAppStore((s) => s.people);
   const sharedExpenses = useAppStore((s) => s.sharedExpenses);
   const settlements = useAppStore((s) => s.settlements);
@@ -132,6 +136,9 @@ export function Ledger({
                 : undefined;
               const effectiveAmt = getEffectiveTransactionAmount(tx);
               const isInactive = tx.status === 'cancelled' || tx.status === 'refunded';
+              const classifiedInfo = classifyTransaction(tx, transactions);
+              const isNonEssential = classifiedInfo.classification !== 'essential';
+              const brokeHighlighted = isBrokeMode && !isInactive && isNonEssential;
 
               return (
                 <div
@@ -140,6 +147,8 @@ export function Ledger({
                   className={`rounded-xl p-3 border transition-all animate-fade-in-up ${
                     isInactive
                       ? 'bg-white/[0.015] border-white/[0.03] opacity-75'
+                      : brokeHighlighted
+                      ? 'bg-amber-500/[0.05] border-amber-500/25 hover:border-amber-400/40'
                       : 'bg-white/[0.03] border-white/[0.04] hover:border-white/[0.08]'
                   }`}
                 >
@@ -165,6 +174,11 @@ export function Ledger({
                           {tx.status === 'refunded' && (
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
                               Refunded
+                            </span>
+                          )}
+                          {brokeHighlighted && (
+                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/35">
+                              Watched
                             </span>
                           )}
                         </div>
@@ -221,16 +235,51 @@ export function Ledger({
                     </div>
                   </div>
 
-                  {/* Bottom Row: Category + Split */}
-                  <div className="flex justify-between items-center gap-2 mt-2 pt-2.5 border-t border-white/[0.04]">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border} flex items-center gap-1.5`}
-                    >
+                  {/* Bottom Row: Category, Classification & Split */}
+                  <div className="flex flex-wrap justify-between items-center gap-2 mt-2 pt-2.5 border-t border-white/[0.04]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${catStyle.dot}`}
-                      />
-                      {tx.category}
-                    </span>
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border} flex items-center gap-1.5`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${catStyle.dot}`}
+                        />
+                        {tx.category}
+                      </span>
+
+                      {!isInactive && (
+                        <select
+                          aria-label={`Classification for ${tx.name}`}
+                          value={classifiedInfo.classification}
+                          onChange={(e) =>
+                            updateTransactionClassification(
+                              tx.id,
+                              e.target.value as SpendingClassification
+                            )
+                          }
+                          title={`${classifiedInfo.reason} (${
+                            classifiedInfo.classificationSource === 'user' ? 'User confirmed' : 'Auto-predicted'
+                          })`}
+                          className={`text-[10px] font-bold px-2 py-1 rounded-md border bg-ink-950/90 outline-none cursor-pointer ${
+                            classifiedInfo.classification === 'essential'
+                              ? 'text-brand-300 border-brand-500/30'
+                              : classifiedInfo.classification === 'impulsive'
+                              ? 'text-rose-300 border-rose-500/35'
+                              : 'text-amber-300 border-amber-500/30'
+                          }`}
+                        >
+                          <option value="essential">
+                            Essential ({classifiedInfo.classificationSource === 'user' ? 'Confirmed' : 'Auto'})
+                          </option>
+                          <option value="non_essential">
+                            Non-Essential ({classifiedInfo.classificationSource === 'user' ? 'Confirmed' : 'Auto'})
+                          </option>
+                          <option value="impulsive">
+                            Impulsive ({classifiedInfo.classificationSource === 'user' ? 'Confirmed' : 'Auto'})
+                          </option>
+                        </select>
+                      )}
+                    </div>
 
                     {linkedShared ? (
                       <button

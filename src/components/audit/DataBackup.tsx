@@ -22,6 +22,13 @@ export function DataBackup() {
   const settlements = useAppStore((s) => s.settlements);
   const priceObservations = useAppStore((s) => s.priceObservations);
   const priceAlerts = useAppStore((s) => s.priceAlerts);
+  const isBrokeMode = useAppStore((s) => s.isBrokeMode);
+  const brokeModeConfig = useAppStore((s) => s.brokeModeConfig);
+  const categoryLimits = useAppStore((s) => s.categoryLimits);
+  const warRoomChallenges = useAppStore((s) => s.warRoomChallenges);
+  const warRoomTargets = useAppStore((s) => s.warRoomTargets);
+  const dismissedWarRoomAlerts = useAppStore((s) => s.dismissedWarRoomAlerts);
+  const disciplineCheckIns = useAppStore((s) => s.disciplineCheckIns);
   const importBackupData = useAppStore((s) => s.importBackupData);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -52,6 +59,13 @@ export function DataBackup() {
       people,
       sharedExpenses,
       settlements,
+      isBrokeMode,
+      brokeModeConfig,
+      categoryLimits,
+      warRoomChallenges,
+      warRoomTargets,
+      dismissedWarRoomAlerts,
+      disciplineCheckIns,
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);

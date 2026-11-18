@@ -7,6 +7,7 @@ import {
   Check,
   X,
   Repeat,
+  AlertTriangle,
 } from 'lucide-react';
 import type { CartItem } from '../../store/useStore';
 import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
@@ -16,7 +17,7 @@ export interface ProductCardProps {
   item: CartItem;
   categoryAccent?: string;
   categoryIconKey?: string;
-  isDisabled?: boolean;
+  isBrokeWatched?: boolean;
   onAddToCart: (item: CartItem) => void;
   onUpdateQuantity: (id: string, delta: number) => void;
   onToggleFavourite: (id: string) => void;
@@ -28,7 +29,7 @@ export function ProductCard({
   item,
   categoryAccent,
   categoryIconKey,
-  isDisabled = false,
+  isBrokeWatched = false,
   onAddToCart,
   onUpdateQuantity,
   onToggleFavourite,
@@ -43,7 +44,6 @@ export function ProductCard({
   const inCart = item.quantity > 0;
 
   const handleQuickAdd = () => {
-    if (isDisabled) return;
     onAddToCart(item);
     setPopped(true);
     setTimeout(() => setPopped(false), 320);
@@ -61,8 +61,8 @@ export function ProductCard({
   return (
     <div
       className={`group relative rounded-2xl border p-3 flex flex-col transition-all duration-200 ${
-        isDisabled
-          ? 'bg-ink-900/50 border-white/[0.04] opacity-45'
+        isBrokeWatched
+          ? 'bg-amber-500/[0.04] border-amber-500/30 hover:border-amber-400/50'
           : 'glass hover:border-white/15 hover:bg-white/[0.05]'
       } ${popped ? 'animate-pop' : ''}`}
     >
@@ -114,6 +114,17 @@ export function ProductCard({
           >
             <Repeat className="w-2.5 h-2.5" strokeWidth={2.5} />
             <span className="capitalize">{item.recurrence.frequency}</span>
+          </span>
+        )}
+
+        {/* Broke Mode Watch Badge */}
+        {isBrokeWatched && (
+          <span
+            title="Monitored in Broke Mode"
+            className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-md bg-ink-950/85 backdrop-blur-md border border-amber-400/40 text-amber-300 text-[9px] font-extrabold flex items-center gap-1"
+          >
+            <AlertTriangle className="w-2.5 h-2.5" strokeWidth={2.5} />
+            Broke Watch
           </span>
         )}
       </div>
@@ -207,15 +218,7 @@ export function ProductCard({
       )}
 
       {/* CTA / Quantity Controls */}
-      {isDisabled ? (
-        <button
-          type="button"
-          disabled
-          className="w-full py-2 rounded-xl text-xs font-bold bg-white/[0.03] text-zinc-600 cursor-not-allowed"
-        >
-          Broke Mode Locked
-        </button>
-      ) : inCart ? (
+      {inCart ? (
         <div className="flex items-center justify-between gap-1 bg-brand-500/15 border border-brand-500/35 rounded-xl p-1">
           <button
             type="button"
@@ -242,12 +245,17 @@ export function ProductCard({
           type="button"
           onClick={handleQuickAdd}
           aria-label={`Add ${item.name} to cart`}
-          className="w-full py-2.5 rounded-xl text-xs font-extrabold bg-white/[0.07] hover:bg-brand-500 text-zinc-100 hover:text-ink-950 border border-white/[0.08] hover:border-brand-500 transition-all duration-200 flex items-center justify-center gap-1.5"
+          className={`w-full py-2.5 rounded-xl text-xs font-extrabold border transition-all duration-200 flex items-center justify-center gap-1.5 ${
+            isBrokeWatched
+              ? 'bg-amber-500/15 hover:bg-amber-500 text-amber-200 hover:text-ink-950 border-amber-500/30 hover:border-amber-500'
+              : 'bg-white/[0.07] hover:bg-brand-500 text-zinc-100 hover:text-ink-950 border-white/[0.08] hover:border-brand-500'
+          }`}
         >
           <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-          Add to Cart
+          {isBrokeWatched ? 'Add (Watched)' : 'Add to Cart'}
         </button>
       )}
     </div>
   );
 }
+

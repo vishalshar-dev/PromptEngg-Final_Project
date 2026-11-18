@@ -360,6 +360,7 @@ export function MonthlyTrendsChart() {
                     stroke="#10b981"
                     strokeWidth={2.5}
                     fill="url(#monthlySpendGrad)"
+                    isAnimationActive={false}
                     dot={{
                       r: 3.5,
                       fill: '#09090b',
@@ -428,7 +429,7 @@ export function MonthlyTrendsChart() {
                       }}
                     />
                   )}
-                  <Bar dataKey="spent" radius={[6, 6, 0, 0]} maxBarSize={36}>
+                  <Bar dataKey="spent" radius={[6, 6, 0, 0]} maxBarSize={36} isAnimationActive={false}>
                     {summary.points.map((entry) => (
                       <Cell
                         key={entry.monthKey}

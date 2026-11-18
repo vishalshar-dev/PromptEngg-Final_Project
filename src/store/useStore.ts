@@ -3,11 +3,17 @@ import { persist } from 'zustand/middleware';
 import {
   SELF_PERSON_ID,
   type BackupData,
+  type BrokeModeConfig,
   type CartItem,
   type CategoryCaps,
   type CategoryConfig,
+  type CategorySpendingLimit,
   type ExpenseParticipantShare,
   type FeeFlag,
+  type FinancialChallenge,
+  type FinancialChallengeTemplateId,
+  type FinancialTarget,
+  type FinancialTargetType,
   type ParsedReceipt,
   type Person,
   type PriceAlert,
@@ -21,10 +27,12 @@ import {
   type SavedAudit,
   type Settlement,
   type SharedExpense,
+  type SpendingClassification,
   type SplitMethod,
   type Transaction,
   type TransactionStatus,
   type TriggeredPriceAlert,
+  type WarRoomPeriod,
 } from '../types/models';
 import {
   clampQuantity,
@@ -47,8 +55,10 @@ import {
   getNextDueDateString,
   isDuplicateCheckoutAttempt,
   reorderCategoryList,
+  toLocalDateKey,
 } from '../utils/martEngine';
 import { isDuplicateSettlement, roundCurrency } from '../utils/splitLedgerEngine';
+import { DEFAULT_BROKE_MODE_CONFIG } from '../utils/warRoomEngine';
 
 import {
   buildPriceObservation,
@@ -144,6 +154,12 @@ export interface AppState {
   totalBudget: number;
   sessionBudget: number | null;
   isBrokeMode: boolean;
+  brokeModeConfig: BrokeModeConfig;
+  categoryLimits: CategorySpendingLimit[];
+  warRoomChallenges: FinancialChallenge[];
+  warRoomTargets: FinancialTarget[];
+  dismissedWarRoomAlerts: string[];
+  disciplineCheckIns: string[];
   categories: string[];
   categoryConfigs: CategoryConfig[];
   categoryCaps: CategoryCaps;
@@ -189,10 +205,48 @@ export interface AppState {
   repeatPurchaseSession: (sessionId: string) => number;
 
   addTransaction: (tx: Omit<Transaction, 'id' | 'timestamp'> & { timestamp?: string }) => void;
+  updateTransaction: (
+    id: string,
+    patch: Partial<Pick<Transaction, 'name' | 'amount' | 'category' | 'timestamp'>>
+  ) => void;
   removeTransaction: (id: string) => void;
   cancelTransaction: (id: string) => void;
   refundTransaction: (id: string, refundAmount?: number) => void;
+  updateTransactionClassification: (id: string, classification: SpendingClassification) => void;
   toggleBrokeMode: () => void;
+  updateBrokeModeConfig: (patch: Partial<BrokeModeConfig>) => void;
+  upsertCategoryLimit: (input: {
+    id?: string;
+    category: string;
+    period: WarRoomPeriod;
+    limitAmount: number;
+    warningThresholdPct?: number;
+    enabled?: boolean;
+  }) => CategorySpendingLimit;
+  deleteCategoryLimit: (id: string) => void;
+  dismissWarRoomAlert: (signature: string) => void;
+  restoreDismissedWarRoomAlerts: () => void;
+  startWarRoomChallenge: (input: {
+    templateId: FinancialChallengeTemplateId;
+    title: string;
+    description: string;
+    targetDays: number;
+    targetCategory?: string | null;
+    maxAllowedSpend?: number | null;
+    isCustom?: boolean;
+  }) => FinancialChallenge;
+  completeWarRoomChallenge: (id: string) => void;
+  deleteWarRoomChallenge: (id: string) => void;
+  recordDisciplineCheckIn: (dateKey?: string) => void;
+  addFinancialTarget: (input: {
+    title: string;
+    type: FinancialTargetType;
+    period: 'weekly' | 'monthly';
+    targetValue: number;
+    baselineValue?: number | null;
+  }) => FinancialTarget;
+  logTargetSavingsTransfer: (id: string, amount: number) => void;
+  deleteFinancialTarget: (id: string) => void;
   setTransactions: (txs: Transaction[]) => void;
   setItems: (items: CartItem[]) => void;
 
@@ -334,6 +388,12 @@ export const useAppStore = create<AppState>()(
       totalBudget: 5000,
       sessionBudget: null,
       isBrokeMode: false,
+      brokeModeConfig: { ...DEFAULT_BROKE_MODE_CONFIG },
+      categoryLimits: [],
+      warRoomChallenges: [],
+      warRoomTargets: [],
+      dismissedWarRoomAlerts: [],
+      disciplineCheckIns: [],
       categories: INITIAL_MART_CATEGORIES,
       categoryConfigs: INITIAL_CATEGORY_CONFIGS,
       categoryCaps: INITIAL_MART_CATEGORY_CAPS,
@@ -956,6 +1016,36 @@ export const useAppStore = create<AppState>()(
           ],
         })),
 
+      updateTransaction: (id, patch) =>
+        set((state) => ({
+          transactions: state.transactions.map((tx) => {
+            if (tx.id !== id) return tx;
+            const nextAmount =
+              typeof patch.amount === 'number' && Number.isFinite(patch.amount) && patch.amount > 0
+                ? roundCurrency(patch.amount)
+                : tx.amount;
+            const nextName =
+              typeof patch.name === 'string' && patch.name.trim()
+                ? patch.name.trim()
+                : tx.name;
+            const nextCategory =
+              typeof patch.category === 'string' && patch.category.trim()
+                ? patch.category.trim()
+                : tx.category;
+            const nextTimestamp =
+              typeof patch.timestamp === 'string' && !Number.isNaN(new Date(patch.timestamp).getTime())
+                ? patch.timestamp
+                : tx.timestamp;
+            return {
+              ...tx,
+              name: nextName,
+              amount: nextAmount,
+              category: nextCategory,
+              timestamp: nextTimestamp,
+            };
+          }),
+        })),
+
       removeTransaction: (id) =>
         set((state) => {
           const target = state.transactions.find((t) => t.id === id);
@@ -1002,7 +1092,216 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      toggleBrokeMode: () => set((state) => ({ isBrokeMode: !state.isBrokeMode })),
+      updateTransactionClassification: (id, classification) =>
+        set((state) => ({
+          transactions: state.transactions.map((tx) =>
+            tx.id === id
+              ? { ...tx, classification, classificationSource: 'user' as const }
+              : tx
+          ),
+        })),
+
+      toggleBrokeMode: () =>
+        set((state) => {
+          const nextEnabled = !state.isBrokeMode;
+          return {
+            isBrokeMode: nextEnabled,
+            brokeModeConfig: {
+              ...state.brokeModeConfig,
+              enabled: nextEnabled,
+              activatedAt: nextEnabled ? new Date().toISOString() : null,
+            },
+          };
+        }),
+
+      updateBrokeModeConfig: (patch) =>
+        set((state) => {
+          const nextEnabled =
+            patch.enabled !== undefined ? patch.enabled : state.brokeModeConfig.enabled;
+          return {
+            isBrokeMode: nextEnabled,
+            brokeModeConfig: {
+              ...state.brokeModeConfig,
+              ...patch,
+              enabled: nextEnabled,
+              activatedAt:
+                patch.enabled === true && !state.brokeModeConfig.activatedAt
+                  ? new Date().toISOString()
+                  : patch.enabled === false
+                  ? null
+                  : patch.activatedAt !== undefined
+                  ? patch.activatedAt
+                  : state.brokeModeConfig.activatedAt,
+            },
+          };
+        }),
+
+      upsertCategoryLimit: (input) => {
+        const nowIso = new Date().toISOString();
+        const cat = input.category.trim();
+        const threshold = Math.min(99, Math.max(10, Math.round(input.warningThresholdPct ?? 80)));
+        const limitAmount = roundCurrency(Math.max(1, input.limitAmount));
+        const enabled = input.enabled ?? true;
+        const state = get();
+        const existing = input.id
+          ? state.categoryLimits.find((l) => l.id === input.id)
+          : state.categoryLimits.find(
+              (l) =>
+                l.category.toLowerCase() === cat.toLowerCase() && l.period === input.period
+            );
+
+        const nextLimit: CategorySpendingLimit = existing
+          ? {
+              ...existing,
+              category: cat,
+              period: input.period,
+              limitAmount,
+              warningThresholdPct: threshold,
+              enabled,
+              updatedAt: nowIso,
+            }
+          : {
+              id: `catlim-${crypto.randomUUID().slice(0, 8)}`,
+              category: cat,
+              period: input.period,
+              limitAmount,
+              warningThresholdPct: threshold,
+              enabled,
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            };
+
+        const nextLimits = existing
+          ? state.categoryLimits.map((l) => (l.id === existing.id ? nextLimit : l))
+          : [nextLimit, ...state.categoryLimits];
+
+        const nextCaps = { ...state.categoryCaps };
+        if (input.period === 'monthly') {
+          nextCaps[cat] = enabled ? limitAmount : null;
+        }
+
+        set({ categoryLimits: nextLimits, categoryCaps: nextCaps });
+        return nextLimit;
+      },
+
+      deleteCategoryLimit: (id) =>
+        set((state) => {
+          const target = state.categoryLimits.find((l) => l.id === id);
+          const nextLimits = state.categoryLimits.filter((l) => l.id !== id);
+          const nextCaps = { ...state.categoryCaps };
+          if (target && target.period === 'monthly') {
+            const hasRemainingMonthly = nextLimits.some(
+              (l) =>
+                l.enabled &&
+                l.period === 'monthly' &&
+                l.category.toLowerCase() === target.category.toLowerCase()
+            );
+            if (!hasRemainingMonthly) {
+              nextCaps[target.category] = null;
+            }
+          }
+          return { categoryLimits: nextLimits, categoryCaps: nextCaps };
+        }),
+
+      dismissWarRoomAlert: (signature) =>
+        set((state) => ({
+          dismissedWarRoomAlerts: state.dismissedWarRoomAlerts.includes(signature)
+            ? state.dismissedWarRoomAlerts
+            : [signature, ...state.dismissedWarRoomAlerts].slice(0, 100),
+        })),
+
+      restoreDismissedWarRoomAlerts: () => set({ dismissedWarRoomAlerts: [] }),
+
+      startWarRoomChallenge: (input) => {
+        const challenge: FinancialChallenge = {
+          id: `chal-${crypto.randomUUID().slice(0, 8)}`,
+          templateId: input.templateId,
+          title: input.title.trim(),
+          description: input.description.trim(),
+          targetDays: Math.max(1, Math.min(90, Math.round(input.targetDays))),
+          targetCategory: input.targetCategory ?? null,
+          maxAllowedSpend:
+            typeof input.maxAllowedSpend === 'number' && Number.isFinite(input.maxAllowedSpend)
+              ? roundCurrency(Math.max(0, input.maxAllowedSpend))
+              : null,
+          startedAt: new Date().toISOString(),
+          status: 'active',
+          completedAt: null,
+          isCustom: input.isCustom ?? input.templateId === 'custom',
+        };
+        set((state) => ({
+          warRoomChallenges: [challenge, ...state.warRoomChallenges],
+        }));
+        return challenge;
+      },
+
+      completeWarRoomChallenge: (id) =>
+        set((state) => ({
+          warRoomChallenges: state.warRoomChallenges.map((c) =>
+            c.id === id
+              ? { ...c, status: 'completed' as const, completedAt: new Date().toISOString() }
+              : c
+          ),
+        })),
+
+      deleteWarRoomChallenge: (id) =>
+        set((state) => ({
+          warRoomChallenges: state.warRoomChallenges.filter((c) => c.id !== id),
+        })),
+
+      recordDisciplineCheckIn: (dateKey) =>
+        set((state) => {
+          const key = dateKey || toLocalDateKey(new Date());
+          if (state.disciplineCheckIns.includes(key)) return state;
+          return {
+            disciplineCheckIns: [key, ...state.disciplineCheckIns].slice(0, 90),
+          };
+        }),
+
+      addFinancialTarget: (input) => {
+        const nowIso = new Date().toISOString();
+        const target: FinancialTarget = {
+          id: `tgt-${crypto.randomUUID().slice(0, 8)}`,
+          title: input.title.trim(),
+          type: input.type,
+          period: input.period,
+          targetValue: roundCurrency(Math.max(1, input.targetValue)),
+          baselineValue:
+            typeof input.baselineValue === 'number' && Number.isFinite(input.baselineValue)
+              ? roundCurrency(Math.max(0, input.baselineValue))
+              : null,
+          transferredSavings: 0,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        };
+        set((state) => ({
+          warRoomTargets: [target, ...state.warRoomTargets],
+        }));
+        return target;
+      },
+
+      logTargetSavingsTransfer: (id, amount) =>
+        set((state) => {
+          const addAmt = roundCurrency(Math.max(0, amount));
+          if (addAmt <= 0) return state;
+          return {
+            warRoomTargets: state.warRoomTargets.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    transferredSavings: roundCurrency((t.transferredSavings || 0) + addAmt),
+                    updatedAt: new Date().toISOString(),
+                  }
+                : t
+            ),
+          };
+        }),
+
+      deleteFinancialTarget: (id) =>
+        set((state) => ({
+          warRoomTargets: state.warRoomTargets.filter((t) => t.id !== id),
+        })),
+
       setTransactions: (txs) => set({ transactions: txs }),
       setItems: (items) => set({ items }),
 
@@ -1472,9 +1771,47 @@ export const useAppStore = create<AppState>()(
       setSessionBudget: (amount) => set({ sessionBudget: amount }),
       setTotalBudget: (amount) => set({ totalBudget: amount }),
       setCategoryCap: (category, amount) =>
-        set((state) => ({
-          categoryCaps: { ...state.categoryCaps, [category]: amount },
-        })),
+        set((state) => {
+          const nextCaps = { ...state.categoryCaps, [category]: amount };
+          const existingMonthly = state.categoryLimits.find(
+            (l) =>
+              l.period === 'monthly' &&
+              l.category.toLowerCase() === category.toLowerCase()
+          );
+          let nextLimits = state.categoryLimits;
+          const nowIso = new Date().toISOString();
+          if (typeof amount === 'number' && amount > 0) {
+            if (existingMonthly) {
+              nextLimits = state.categoryLimits.map((l) =>
+                l.id === existingMonthly.id
+                  ? { ...l, limitAmount: roundCurrency(amount), enabled: true, updatedAt: nowIso }
+                  : l
+              );
+            } else {
+              nextLimits = [
+                {
+                  id: `catlim-${crypto.randomUUID().slice(0, 8)}`,
+                  category,
+                  period: 'monthly',
+                  limitAmount: roundCurrency(amount),
+                  warningThresholdPct: 80,
+                  enabled: true,
+                  createdAt: nowIso,
+                  updatedAt: nowIso,
+                },
+                ...state.categoryLimits,
+              ];
+            }
+          } else if (existingMonthly) {
+            nextLimits = state.categoryLimits.map((l) =>
+              l.id === existingMonthly.id ? { ...l, enabled: false, updatedAt: nowIso } : l
+            );
+          }
+          return {
+            categoryCaps: nextCaps,
+            categoryLimits: nextLimits,
+          };
+        }),
       setFeeFlags: (flags) => set({ feeFlags: flags }),
       addParsedReceipt: (receipt) =>
         set((state) => ({ parsedReceipts: [receipt, ...state.parsedReceipts].slice(0, 10) })),
@@ -1511,6 +1848,15 @@ export const useAppStore = create<AppState>()(
               ? data.priceObservations
               : migratePurchaseSessionsToObservations(sessions, mergedItems);
 
+          const restoredBrokeConfig: BrokeModeConfig = {
+            ...DEFAULT_BROKE_MODE_CONFIG,
+            ...(data.brokeModeConfig ?? {}),
+            enabled:
+              typeof data.isBrokeMode === 'boolean'
+                ? data.isBrokeMode
+                : data.brokeModeConfig?.enabled ?? false,
+          };
+
           return {
             transactions: data.transactions,
             items: mergedItems,
@@ -1528,6 +1874,17 @@ export const useAppStore = create<AppState>()(
             people: data.people ?? [],
             sharedExpenses: data.sharedExpenses ?? [],
             settlements: data.settlements ?? [],
+            isBrokeMode: restoredBrokeConfig.enabled,
+            brokeModeConfig: restoredBrokeConfig,
+            categoryLimits: Array.isArray(data.categoryLimits) ? data.categoryLimits : [],
+            warRoomChallenges: Array.isArray(data.warRoomChallenges) ? data.warRoomChallenges : [],
+            warRoomTargets: Array.isArray(data.warRoomTargets) ? data.warRoomTargets : [],
+            dismissedWarRoomAlerts: Array.isArray(data.dismissedWarRoomAlerts)
+              ? data.dismissedWarRoomAlerts
+              : [],
+            disciplineCheckIns: Array.isArray(data.disciplineCheckIns)
+              ? data.disciplineCheckIns
+              : [],
           };
         }),
     }),
@@ -1537,6 +1894,12 @@ export const useAppStore = create<AppState>()(
         totalBudget: state.totalBudget,
         sessionBudget: state.sessionBudget,
         isBrokeMode: state.isBrokeMode,
+        brokeModeConfig: state.brokeModeConfig,
+        categoryLimits: state.categoryLimits,
+        warRoomChallenges: state.warRoomChallenges,
+        warRoomTargets: state.warRoomTargets,
+        dismissedWarRoomAlerts: state.dismissedWarRoomAlerts,
+        disciplineCheckIns: state.disciplineCheckIns,
         categories: state.categories,
         categoryConfigs: state.categoryConfigs,
         categoryCaps: state.categoryCaps,
@@ -1571,6 +1934,33 @@ export const useAppStore = create<AppState>()(
               ? existingObs
               : migratePurchaseSessionsToObservations(sessions, migratedItems);
 
+          const mergedBrokeConfig: BrokeModeConfig = {
+            ...DEFAULT_BROKE_MODE_CONFIG,
+            ...(state.brokeModeConfig ?? {}),
+            enabled: Boolean(state.isBrokeMode || state.brokeModeConfig?.enabled),
+          };
+
+          const existingLimits = Array.isArray(state.categoryLimits) ? state.categoryLimits : [];
+          const seededLimits: CategorySpendingLimit[] = [...existingLimits];
+          for (const [cat, cap] of Object.entries(state.categoryCaps ?? {})) {
+            if (typeof cap === 'number' && cap > 0) {
+              const hasMonthly = seededLimits.some(
+                (l) => l.period === 'monthly' && l.category.toLowerCase() === cat.toLowerCase()
+              );
+              if (!hasMonthly) {
+                seededLimits.push({
+                  id: `catlim-seed-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                  category: cat,
+                  period: 'monthly',
+                  limitAmount: roundCurrency(cap),
+                  warningThresholdPct: 80,
+                  enabled: true,
+                  createdAt: new Date().toISOString(),
+                });
+              }
+            }
+          }
+
           useAppStore.setState({
             items: migratedItems,
             categoryConfigs: migratedConfigs,
@@ -1581,6 +1971,17 @@ export const useAppStore = create<AppState>()(
             priceAlerts: Array.isArray(state.priceAlerts) ? state.priceAlerts : [],
             triggeredPriceAlerts: Array.isArray(state.triggeredPriceAlerts)
               ? state.triggeredPriceAlerts
+              : [],
+            isBrokeMode: mergedBrokeConfig.enabled,
+            brokeModeConfig: mergedBrokeConfig,
+            categoryLimits: seededLimits,
+            warRoomChallenges: Array.isArray(state.warRoomChallenges) ? state.warRoomChallenges : [],
+            warRoomTargets: Array.isArray(state.warRoomTargets) ? state.warRoomTargets : [],
+            dismissedWarRoomAlerts: Array.isArray(state.dismissedWarRoomAlerts)
+              ? state.dismissedWarRoomAlerts
+              : [],
+            disciplineCheckIns: Array.isArray(state.disciplineCheckIns)
+              ? state.disciplineCheckIns
               : [],
           });
         }
