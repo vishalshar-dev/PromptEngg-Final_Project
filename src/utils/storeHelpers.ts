@@ -117,5 +117,7 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
     people: Array.isArray(data.people) ? data.people : [],
     sharedExpenses: Array.isArray(data.sharedExpenses) ? data.sharedExpenses : [],
     settlements: Array.isArray(data.settlements) ? data.settlements : [],
+    priceObservations: Array.isArray(data.priceObservations) ? data.priceObservations : undefined,
+    priceAlerts: Array.isArray(data.priceAlerts) ? data.priceAlerts : undefined,
   };
 }

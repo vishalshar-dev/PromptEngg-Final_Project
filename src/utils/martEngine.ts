@@ -441,6 +441,18 @@ export function getDueRecurringItems(items: CartItem[], now: Date = new Date()):
   return items.filter((item) => isRecurringItemDue(item, now));
 }
 
+export function getEffectiveTransactionAmount(tx: Transaction): number {
+  if (!tx) return 0;
+  if (tx.status === 'cancelled') return 0;
+  if (tx.status === 'refunded') {
+    const refunded = typeof tx.refundAmount === 'number' && Number.isFinite(tx.refundAmount)
+      ? tx.refundAmount
+      : tx.amount;
+    return roundCurrency(Math.max(0, tx.amount - refunded));
+  }
+  return Number.isFinite(tx.amount) ? roundCurrency(Math.max(0, tx.amount)) : 0;
+}
+
 export function calculateMonthlyShoppingSpend(
   transactions: Transaction[],
   now: Date = new Date()
@@ -449,9 +461,11 @@ export function calculateMonthlyShoppingSpend(
   const targetMonth = now.getMonth();
   let total = 0;
   for (const tx of transactions) {
+    const effective = getEffectiveTransactionAmount(tx);
+    if (effective <= 0 && tx.status === 'cancelled') continue;
     const d = new Date(tx.timestamp);
     if (!Number.isNaN(d.getTime()) && d.getFullYear() === targetYear && d.getMonth() === targetMonth) {
-      total += tx.amount;
+      total += effective;
     }
   }
   return roundCurrency(total);

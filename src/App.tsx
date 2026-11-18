@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Radar, Shield, Wallet, ScanSearch, Users } from 'lucide-react';
+import { ShoppingBag, Radar, Shield, Wallet, ScanSearch, Users, LineChart } from 'lucide-react';
 import { QuickMartGrid } from './components/mart/QuickMartGrid';
 import { CartDrawer } from './components/mart/CartDrawer';
 import { Ledger } from './components/ledgers/Ledger';
@@ -7,14 +7,17 @@ import { RadarDashboard } from './components/analytics/RadarDashboard';
 import { SurvivalSandbox } from './components/analytics/SurvivalSandbox';
 import { AuditPanel } from './components/audit/AuditPanel';
 import { SplitLedgerDashboard } from './components/splits/SplitLedgerDashboard';
+import { PriceTrackerDashboard } from './components/prices/PriceTrackerDashboard';
 import { useAppStore } from './store/useStore';
 import { formatCurrencyExact } from './utils/categoryStyles';
+import { getEffectiveTransactionAmount } from './utils/martEngine';
 
-type Tab = 'mart' | 'ledger' | 'audit' | 'radar' | 'warroom';
+type Tab = 'mart' | 'ledger' | 'prices' | 'audit' | 'radar' | 'warroom';
 
 const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
   { id: 'mart', label: 'Mart', icon: ShoppingBag },
   { id: 'ledger', label: 'Ledger', icon: Users },
+  { id: 'prices', label: 'Prices', icon: LineChart },
   { id: 'audit', label: 'Audit', icon: ScanSearch },
   { id: 'radar', label: 'Radar', icon: Radar },
   { id: 'warroom', label: 'War Room', icon: Shield },
@@ -27,7 +30,10 @@ export default function App() {
   const totalBudget = useAppStore((s) => s.totalBudget);
   const items = useAppStore((s) => s.items);
 
-  const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const totalSpent = transactions.reduce(
+    (sum, tx) => sum + getEffectiveTransactionAmount(tx),
+    0
+  );
   const remaining = totalBudget - totalSpent;
   const hasCartItems = items.some((i) => i.quantity > 0);
 
@@ -73,7 +79,7 @@ export default function App() {
           </div>
 
           {/* Pill Navigation */}
-          <nav className="flex gap-1 sm:gap-1.5 pb-3 md:max-w-2xl">
+          <nav className="flex items-center justify-between sm:justify-start gap-1 sm:gap-1.5 pb-3 md:max-w-2xl overflow-x-auto no-scrollbar">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -82,7 +88,7 @@ export default function App() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 ${
+                  className={`relative sm:flex-1 shrink-0 flex items-center justify-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-2 rounded-xl text-[11px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 ${
                     active
                       ? 'bg-white/[0.08] text-white border border-white/10 shadow-lg'
                       : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
@@ -119,7 +125,10 @@ export default function App() {
             </div>
           )}
           {activeTab === 'ledger' && <SplitLedgerDashboard />}
-          {activeTab === 'audit' && <AuditPanel />}
+          {activeTab === 'prices' && <PriceTrackerDashboard />}
+          {activeTab === 'audit' && (
+            <AuditPanel onOpenPriceTracker={() => setActiveTab('prices')} />
+          )}
           {activeTab === 'radar' && <RadarDashboard />}
           {activeTab === 'warroom' && <SurvivalSandbox />}
         </div>

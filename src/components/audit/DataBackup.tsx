@@ -20,6 +20,8 @@ export function DataBackup() {
   const people = useAppStore((s) => s.people);
   const sharedExpenses = useAppStore((s) => s.sharedExpenses);
   const settlements = useAppStore((s) => s.settlements);
+  const priceObservations = useAppStore((s) => s.priceObservations);
+  const priceAlerts = useAppStore((s) => s.priceAlerts);
   const importBackupData = useAppStore((s) => s.importBackupData);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -41,6 +43,8 @@ export function DataBackup() {
       categoryConfigs,
       priceHistory,
       purchaseHistory,
+      priceObservations,
+      priceAlerts,
       totalBudget,
       sessionBudget,
       categoryCaps,

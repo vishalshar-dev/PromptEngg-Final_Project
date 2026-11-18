@@ -8,7 +8,11 @@ import { AuditHistory } from './AuditHistory';
 import { DataBackup } from './DataBackup';
 import { CartComparator } from './CartComparator';
 
-export function AuditPanel() {
+export function AuditPanel({
+  onOpenPriceTracker,
+}: {
+  onOpenPriceTracker?: () => void;
+}) {
   return (
     <div className="space-y-5">
       {/* Page Title */}
@@ -47,7 +51,7 @@ export function AuditPanel() {
 
           {/* Price Trends */}
           <div className="glass rounded-2xl p-4">
-            <PriceTrendTracker />
+            <PriceTrendTracker onOpenPriceTracker={onOpenPriceTracker} />
           </div>
 
           {/* Export Report */}

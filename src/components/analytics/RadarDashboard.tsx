@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Radar, TrendingDown, Wallet, Target, PieChart, Pencil, Check, X, AlertOctagon } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { getCategoryStyle, formatCurrency } from '../../utils/categoryStyles';
+import { getEffectiveTransactionAmount } from '../../utils/martEngine';
 import { MonthlyTrendsChart } from './MonthlyTrendsChart';
 
 export function RadarDashboard() {
@@ -35,14 +36,20 @@ export function RadarDashboard() {
     if (e.key === 'Escape') setEditingBudget(false);
   };
 
-  const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const activeTransactions = transactions.filter((tx) => tx.status !== 'cancelled');
+  const totalSpent = transactions.reduce(
+    (sum, tx) => sum + getEffectiveTransactionAmount(tx),
+    0
+  );
   const remaining = totalBudget - totalSpent;
   const percentage = Math.min((totalSpent / totalBudget) * 100, 100);
   const remainingPct = Math.max(100 - percentage, 0);
 
   const categoryTotals = transactions.reduce(
     (acc, tx) => {
-      acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
+      const effective = getEffectiveTransactionAmount(tx);
+      if (effective <= 0) return acc;
+      acc[tx.category] = (acc[tx.category] || 0) + effective;
       return acc;
     },
     {} as Record<string, number>
@@ -239,7 +246,7 @@ export function RadarDashboard() {
         <StatCard
           icon={TrendingDown}
           label="Txns"
-          value={String(transactions.length)}
+          value={String(activeTransactions.length)}
           color="text-brand-400"
           delay={80}
         />

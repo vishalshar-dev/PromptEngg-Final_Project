@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Sparkles,
   Cpu,
+  TrendingUp,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import {
@@ -19,6 +20,7 @@ import {
   parseReceiptText,
   SAMPLE_RECEIPT_TEXT,
 } from '../../utils/auditEngine';
+import { buildReceiptFingerprint } from '../../utils/priceTrackerEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
 
 function fileToBase64(file: File): Promise<string> {
@@ -44,9 +46,12 @@ export function ReceiptUploader() {
   const clearParsedReceipts = useAppStore((s) => s.clearParsedReceipts);
   const addToCart = useAppStore((s) => s.addToCart);
   const items = useAppStore((s) => s.items);
+  const transactions = useAppStore((s) => s.transactions);
   const addSavedAudit = useAppStore((s) => s.addSavedAudit);
+  const recordReceiptAsTransaction = useAppStore((s) => s.recordReceiptAsTransaction);
 
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
+  const [recordFeedback, setRecordFeedback] = useState<{ idx: number; message: string; ok: boolean } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState('');
   const [scanError, setScanError] = useState<string | null>(null);
@@ -489,38 +494,98 @@ export function ReceiptUploader() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={receipt.items.length === 0}
-                  onClick={() =>
-                    receipt.items.forEach((item) => handleImportItem(item.name, item.price))
-                  }
-                  className="flex-1 bg-white/[0.04] hover:bg-brand-500/15 disabled:opacity-40 text-zinc-300 hover:text-brand-400 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-white/[0.06] hover:border-brand-500/30"
-                >
-                  <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} />
-                  Import to cart
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveAudit(idx)}
-                  className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
-                    savedIdx === idx
-                      ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
-                      : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
-                  }`}
-                >
-                  {savedIdx === idx ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Save
-                    </>
-                  )}
-                </button>
-              </div>
+              {(() => {
+                const fp = buildReceiptFingerprint(receipt);
+                const alreadyRecorded = transactions.some(
+                  (tx) => tx.receiptFingerprint === fp && tx.status !== 'cancelled'
+                );
+                return (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={alreadyRecorded || receipt.items.length === 0}
+                      onClick={() => {
+                        const res = recordReceiptAsTransaction(receipt);
+                        setRecordFeedback({
+                          idx,
+                          ok: res.ok,
+                          message: res.ok
+                            ? `Recorded ₹${formatCurrency(receipt.total)} transaction & ${
+                                res.observationsCount ?? 0
+                              } price points${
+                                res.triggeredAlertsCount
+                                  ? ` (${res.triggeredAlertsCount} alert${
+                                      res.triggeredAlertsCount > 1 ? 's' : ''
+                                    } triggered!)`
+                                  : ''
+                              }`
+                            : res.error || 'Already recorded',
+                        });
+                      }}
+                      className={`w-full py-2.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 border ${
+                        alreadyRecorded
+                          ? 'bg-brand-500/15 text-brand-400 border-brand-500/30 cursor-default'
+                          : 'bg-brand-500 hover:bg-brand-400 text-ink-950 border-brand-400'
+                      }`}
+                    >
+                      {alreadyRecorded ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          Recorded to Ledger & Price History
+                        </>
+                      ) : (
+                        <>
+                          <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          Record Expense & Track Prices
+                        </>
+                      )}
+                    </button>
+
+                    {recordFeedback?.idx === idx && (
+                      <p
+                        className={`text-[11px] font-semibold px-2 ${
+                          recordFeedback.ok ? 'text-brand-400' : 'text-amber-400'
+                        }`}
+                      >
+                        {recordFeedback.message}
+                      </p>
+                    )}
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={receipt.items.length === 0}
+                        onClick={() =>
+                          receipt.items.forEach((item) => handleImportItem(item.name, item.price))
+                        }
+                        className="flex-1 bg-white/[0.04] hover:bg-brand-500/15 disabled:opacity-40 text-zinc-300 hover:text-brand-400 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-white/[0.06] hover:border-brand-500/30"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        Import to cart
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveAudit(idx)}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+                          savedIdx === idx
+                            ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
+                            : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
+                        }`}
+                      >
+                        {savedIdx === idx ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Save
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>

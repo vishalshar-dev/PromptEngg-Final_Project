@@ -65,20 +65,27 @@ export function buildMonthlySpendingSeries(
     bucketMap.set(key, bucket);
   }
 
-  // Aggregate transactions into buckets
+  // Aggregate active/effective transactions into buckets
   for (const tx of transactions) {
+    if (tx.status === 'cancelled') continue;
     const parsed = new Date(tx.timestamp);
     if (Number.isNaN(parsed.getTime())) continue;
     const key = getMonthKey(parsed);
     const bucket = bucketMap.get(key);
     if (!bucket) continue;
 
-    const amount = Number.isFinite(tx.amount) ? tx.amount : 0;
-    bucket.spent += amount;
+    const rawAmount = Number.isFinite(tx.amount) ? tx.amount : 0;
+    const effectiveAmount =
+      tx.status === 'refunded'
+        ? Math.max(0, rawAmount - (typeof tx.refundAmount === 'number' ? tx.refundAmount : rawAmount))
+        : rawAmount;
+    if (effectiveAmount <= 0 && tx.status === 'refunded') continue;
+
+    bucket.spent += effectiveAmount;
     bucket.txCount += 1;
     if (tx.category) {
       bucket.categoryTotals[tx.category] =
-        (bucket.categoryTotals[tx.category] || 0) + amount;
+        (bucket.categoryTotals[tx.category] || 0) + effectiveAmount;
     }
   }
 

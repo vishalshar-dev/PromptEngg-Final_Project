@@ -10,7 +10,12 @@ import {
   type FeeFlag,
   type ParsedReceipt,
   type Person,
+  type PriceAlert,
+  type PriceEntryKind,
   type PriceHistory,
+  type PriceObservation,
+  type PriceObservationSource,
+  type PriceTimeframe,
   type PurchaseSession,
   type RecurrenceConfig,
   type SavedAudit,
@@ -18,6 +23,8 @@ import {
   type SharedExpense,
   type SplitMethod,
   type Transaction,
+  type TransactionStatus,
+  type TriggeredPriceAlert,
 } from '../types/models';
 import {
   clampQuantity,
@@ -43,6 +50,14 @@ import {
 } from '../utils/martEngine';
 import { isDuplicateSettlement, roundCurrency } from '../utils/splitLedgerEngine';
 
+import {
+  buildPriceObservation,
+  buildProductPriceSummaries,
+  buildReceiptFingerprint,
+  evaluatePriceAlerts,
+  inferCategoryFromName,
+} from '../utils/priceTrackerEngine';
+
 export type {
   BackupData,
   CartItem,
@@ -53,9 +68,14 @@ export type {
   ParsedReceipt,
   ParsedReceiptItem,
   Person,
+  PriceAlert,
+  PriceEntryKind,
   PriceHistory,
+  PriceObservation,
+  PriceObservationSource,
   PricePoint,
   PriceSource,
+  PriceTimeframe,
   PurchaseSession,
   PurchaseSessionItem,
   RecurrenceConfig,
@@ -66,6 +86,8 @@ export type {
   SharedExpense,
   SplitMethod,
   Transaction,
+  TransactionStatus,
+  TriggeredPriceAlert,
 } from '../types/models';
 
 export interface SharedExpenseInput {
@@ -95,6 +117,27 @@ export interface CategoryInput {
   imageUrl?: string;
 }
 
+export interface ManualPricePurchaseInput {
+  productName: string;
+  explicitProductId?: string;
+  category?: string;
+  brand?: string;
+  quantity: number;
+  packageSize: string;
+  totalPrice: number;
+  purchaseDate: string;
+  entryKind: PriceEntryKind;
+  logExpense?: boolean;
+}
+
+export interface PriceAlertInput {
+  productId: string;
+  productName: string;
+  unitOfMeasurement: string;
+  targetUnitPrice?: number | null;
+  increaseThresholdPct?: number | null;
+}
+
 export interface AppState {
   items: CartItem[];
   transactions: Transaction[];
@@ -106,6 +149,9 @@ export interface AppState {
   categoryCaps: CategoryCaps;
   priceHistory: PriceHistory;
   purchaseHistory: PurchaseSession[];
+  priceObservations: PriceObservation[];
+  priceAlerts: PriceAlert[];
+  triggeredPriceAlerts: TriggeredPriceAlert[];
   lastCheckoutMeta: { signature: string; at: number } | null;
   feeFlags: FeeFlag[];
   parsedReceipts: ParsedReceipt[];
@@ -144,9 +190,30 @@ export interface AppState {
 
   addTransaction: (tx: Omit<Transaction, 'id' | 'timestamp'> & { timestamp?: string }) => void;
   removeTransaction: (id: string) => void;
+  cancelTransaction: (id: string) => void;
+  refundTransaction: (id: string, refundAmount?: number) => void;
   toggleBrokeMode: () => void;
   setTransactions: (txs: Transaction[]) => void;
   setItems: (items: CartItem[]) => void;
+
+  recordReceiptAsTransaction: (receipt: ParsedReceipt) => {
+    ok: boolean;
+    error?: string;
+    transactionId?: string;
+    observationsCount?: number;
+    triggeredAlertsCount?: number;
+  };
+  recordManualPricePurchase: (input: ManualPricePurchaseInput) => {
+    observation: PriceObservation;
+    triggeredAlertsCount: number;
+  };
+  deletePriceObservation: (id: string) => void;
+  addPriceAlert: (input: PriceAlertInput) => PriceAlert;
+  updatePriceAlert: (id: string, patch: Partial<Omit<PriceAlert, 'id' | 'createdAt'>>) => void;
+  togglePriceAlert: (id: string) => void;
+  deletePriceAlert: (id: string) => void;
+  dismissTriggeredAlert: (id: string) => void;
+  clearTriggeredAlerts: () => void;
 
   addPerson: (name: string, contact?: string) => Person;
   updatePerson: (id: string, name: string, contact?: string) => void;
@@ -182,6 +249,83 @@ function formatSharedTxName(name: string, totalAmount: number): string {
   return `${name} (My share of ₹${roundCurrency(totalAmount)})`;
 }
 
+function migratePurchaseSessionsToObservations(
+  sessions: PurchaseSession[],
+  items: CartItem[]
+): PriceObservation[] {
+  const migrated: PriceObservation[] = [];
+  for (const session of sessions) {
+    for (const sItem of session.items) {
+      migrated.push(
+        buildPriceObservation({
+          id: `migrated-${session.id}-${sItem.itemId}`,
+          rawName: sItem.name,
+          explicitProductId: sItem.itemId,
+          category: sItem.category,
+          quantity: sItem.quantity,
+          packageSize: sItem.unit || '1 unit',
+          totalPrice: sItem.subtotal,
+          purchaseDate: session.timestamp,
+          purchaseSource: 'mart',
+          entryKind: 'actual_purchase',
+          transactionId: session.linkedSharedExpenseId ?? null,
+          catalogItems: items,
+          existingObservations: migrated,
+        })
+      );
+    }
+  }
+  return migrated;
+}
+
+function appendObservationsAndEvaluateAlerts(
+  current: Pick<AppState, 'priceObservations' | 'priceAlerts' | 'triggeredPriceAlerts' | 'items'>,
+  candidates: PriceObservation[],
+  nowIso: string = new Date().toISOString()
+): {
+  priceObservations: PriceObservation[];
+  priceAlerts: PriceAlert[];
+  triggeredPriceAlerts: TriggeredPriceAlert[];
+  triggeredCount: number;
+} {
+  const dedupedNew = candidates.filter(
+    (c) =>
+      !current.priceObservations.some(
+        (existing) =>
+          existing.id === c.id ||
+          (c.transactionId != null &&
+            existing.transactionId === c.transactionId &&
+            existing.productId === c.productId &&
+            existing.packageSize === c.packageSize &&
+            existing.totalPrice === c.totalPrice)
+      )
+  );
+
+  if (dedupedNew.length === 0) {
+    return {
+      priceObservations: current.priceObservations,
+      priceAlerts: current.priceAlerts,
+      triggeredPriceAlerts: current.triggeredPriceAlerts,
+      triggeredCount: 0,
+    };
+  }
+
+  const priorSummaries = buildProductPriceSummaries(current.priceObservations, current.items);
+  const { triggered, updatedAlerts } = evaluatePriceAlerts(
+    dedupedNew,
+    priorSummaries,
+    current.priceAlerts,
+    nowIso
+  );
+
+  return {
+    priceObservations: [...dedupedNew, ...current.priceObservations],
+    priceAlerts: updatedAlerts,
+    triggeredPriceAlerts: [...triggered, ...current.triggeredPriceAlerts].slice(0, 50),
+    triggeredCount: triggered.length,
+  };
+}
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -195,6 +339,9 @@ export const useAppStore = create<AppState>()(
       categoryCaps: INITIAL_MART_CATEGORY_CAPS,
       priceHistory: ensureCatalogPriceHistory(INITIAL_MART_ITEMS),
       purchaseHistory: [],
+      priceObservations: [],
+      priceAlerts: [],
+      triggeredPriceAlerts: [],
       lastCheckoutMeta: null,
       feeFlags: [],
       parsedReceipts: [],
@@ -623,7 +770,28 @@ export const useAppStore = create<AppState>()(
             amount: roundCurrency(item.price * item.quantity),
             category: item.category,
             timestamp: nowIso,
+            source: 'mart' as const,
+            status: 'active' as const,
           }));
+
+          const newObs: PriceObservation[] = checkedOut.map((item, idx) =>
+            buildPriceObservation({
+              rawName: item.name,
+              explicitProductId: item.id,
+              category: item.category,
+              quantity: item.quantity,
+              packageSize: item.unit || '1 unit',
+              totalPrice: roundCurrency(item.price * item.quantity),
+              purchaseDate: nowIso,
+              purchaseSource: 'mart',
+              entryKind: 'actual_purchase',
+              transactionId: newTransactions[idx].id,
+              catalogItems: current.items,
+              existingObservations: current.priceObservations,
+            })
+          );
+
+          const obsResult = appendObservationsAndEvaluateAlerts(current, newObs, nowIso);
 
           const session: PurchaseSession = {
             id: crypto.randomUUID(),
@@ -640,6 +808,9 @@ export const useAppStore = create<AppState>()(
             items: updatedItems,
             priceHistory: nextPriceHistory,
             purchaseHistory: [session, ...current.purchaseHistory].slice(0, 100),
+            priceObservations: obsResult.priceObservations,
+            priceAlerts: obsResult.priceAlerts,
+            triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
             lastCheckoutMeta: { signature, at: nowMs },
           });
           return true;
@@ -650,13 +821,14 @@ export const useAppStore = create<AppState>()(
         const sharedId = crypto.randomUUID();
         const userShare = getUserShareFromParticipants(splitConfig.participants);
         const txId = userShare > 0 ? crypto.randomUUID() : null;
+        const purchaseTimestamp = splitConfig.date || nowIso;
 
         const newSharedExpense: SharedExpense = {
           id: sharedId,
           name: splitConfig.name.trim(),
           totalAmount: roundCurrency(splitConfig.totalAmount),
           category: splitConfig.category,
-          date: splitConfig.date || nowIso,
+          date: purchaseTimestamp,
           paidById: splitConfig.paidById,
           splitMethod: splitConfig.splitMethod,
           participants: splitConfig.participants,
@@ -673,16 +845,37 @@ export const useAppStore = create<AppState>()(
                   name: formatSharedTxName(splitConfig.name.trim(), splitConfig.totalAmount),
                   amount: userShare,
                   category: splitConfig.category,
-                  timestamp: splitConfig.date || nowIso,
+                  timestamp: purchaseTimestamp,
                   linkedSharedExpenseId: sharedId,
+                  source: 'mart' as const,
+                  status: 'active' as const,
                 },
                 ...current.transactions,
               ]
             : current.transactions;
 
+        const newObs: PriceObservation[] = checkedOut.map((item) =>
+          buildPriceObservation({
+            rawName: item.name,
+            explicitProductId: item.id,
+            category: item.category,
+            quantity: item.quantity,
+            packageSize: item.unit || '1 unit',
+            totalPrice: roundCurrency(item.price * item.quantity),
+            purchaseDate: purchaseTimestamp,
+            purchaseSource: 'mart',
+            entryKind: 'actual_purchase',
+            transactionId: txId,
+            catalogItems: current.items,
+            existingObservations: current.priceObservations,
+          })
+        );
+
+        const obsResult = appendObservationsAndEvaluateAlerts(current, newObs, nowIso);
+
         const session: PurchaseSession = {
           id: crypto.randomUUID(),
-          timestamp: splitConfig.date || nowIso,
+          timestamp: purchaseTimestamp,
           items: sessionItems,
           totalAmount: roundCurrency(splitConfig.totalAmount),
           personalShare: userShare,
@@ -698,6 +891,9 @@ export const useAppStore = create<AppState>()(
           items: updatedItems,
           priceHistory: nextPriceHistory,
           purchaseHistory: [session, ...current.purchaseHistory].slice(0, 100),
+          priceObservations: obsResult.priceObservations,
+          priceAlerts: obsResult.priceAlerts,
+          triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
           lastCheckoutMeta: { signature, at: nowMs },
         });
         return true;
@@ -753,6 +949,8 @@ export const useAppStore = create<AppState>()(
               amount: roundCurrency(tx.amount),
               id: crypto.randomUUID(),
               timestamp: tx.timestamp ?? new Date().toISOString(),
+              status: tx.status ?? 'active',
+              source: tx.source ?? 'manual',
             },
             ...state.transactions,
           ],
@@ -771,12 +969,238 @@ export const useAppStore = create<AppState>()(
           return {
             transactions: state.transactions.filter((tx) => tx.id !== id),
             sharedExpenses: nextShared,
+            priceObservations: state.priceObservations.filter((obs) => obs.transactionId !== id),
           };
         }),
+
+      cancelTransaction: (id) =>
+        set((state) => ({
+          transactions: state.transactions.map((tx) =>
+            tx.id === id ? { ...tx, status: 'cancelled' } : tx
+          ),
+          priceObservations: state.priceObservations.map((obs) =>
+            obs.transactionId === id ? { ...obs, status: 'cancelled' } : obs
+          ),
+        })),
+
+      refundTransaction: (id, refundAmount) =>
+        set((state) => ({
+          transactions: state.transactions.map((tx) =>
+            tx.id === id
+              ? {
+                  ...tx,
+                  status: 'refunded',
+                  refundAmount:
+                    typeof refundAmount === 'number' && Number.isFinite(refundAmount)
+                      ? roundCurrency(Math.min(tx.amount, Math.max(0, refundAmount)))
+                      : tx.amount,
+                }
+              : tx
+          ),
+          priceObservations: state.priceObservations.map((obs) =>
+            obs.transactionId === id ? { ...obs, status: 'refunded' } : obs
+          ),
+        })),
 
       toggleBrokeMode: () => set((state) => ({ isBrokeMode: !state.isBrokeMode })),
       setTransactions: (txs) => set({ transactions: txs }),
       setItems: (items) => set({ items }),
+
+      recordReceiptAsTransaction: (receipt) => {
+        const current = get();
+        const fingerprint = buildReceiptFingerprint(receipt);
+        const alreadyRecorded = current.transactions.some(
+          (tx) => tx.receiptFingerprint === fingerprint && tx.status !== 'cancelled'
+        );
+        if (alreadyRecorded) {
+          return {
+            ok: false,
+            error: 'This receipt has already been recorded in your centralized ledger.',
+          };
+        }
+
+        const txId = crypto.randomUUID();
+        const nowIso = new Date().toISOString();
+        const purchaseDate = receipt.date || nowIso;
+
+        const createdObservations: PriceObservation[] = [];
+        for (const item of receipt.items) {
+          if (!item.name.trim() || item.price <= 0) continue;
+          const obs = buildPriceObservation({
+            rawName: item.name,
+            totalPrice: item.price,
+            purchaseDate,
+            purchaseSource: 'audit',
+            entryKind: 'actual_purchase',
+            transactionId: txId,
+            receiptRef: {
+              merchant: receipt.merchant,
+              receiptDate: purchaseDate,
+              receiptTotal: roundCurrency(receipt.total),
+              fingerprint,
+            },
+            catalogItems: current.items,
+            existingObservations: [...createdObservations, ...current.priceObservations],
+          });
+          createdObservations.push(obs);
+        }
+
+        // Determine dominant category from matched receipt items
+        const catTotals = new Map<string, number>();
+        for (const obs of createdObservations) {
+          catTotals.set(obs.category, (catTotals.get(obs.category) ?? 0) + obs.totalPrice);
+        }
+        let dominantCategory = 'Groceries';
+        let bestAmt = -1;
+        for (const [cat, amt] of catTotals.entries()) {
+          if (amt > bestAmt) {
+            bestAmt = amt;
+            dominantCategory = cat;
+          }
+        }
+
+        const totalAmt = roundCurrency(
+          receipt.total > 0
+            ? receipt.total
+            : receipt.subtotal + receipt.taxTotal + receipt.deliveryFee
+        );
+
+        const newTx: Transaction = {
+          id: txId,
+          name: `${receipt.merchant} Receipt (${receipt.items.length} items)`,
+          amount: totalAmt,
+          category: dominantCategory,
+          timestamp: purchaseDate,
+          source: 'audit',
+          status: 'active',
+          receiptFingerprint: fingerprint,
+        };
+
+        const obsResult = appendObservationsAndEvaluateAlerts(current, createdObservations, nowIso);
+
+        set({
+          transactions: [newTx, ...current.transactions],
+          priceObservations: obsResult.priceObservations,
+          priceAlerts: obsResult.priceAlerts,
+          triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
+        });
+
+        return {
+          ok: true,
+          transactionId: txId,
+          observationsCount: createdObservations.length,
+          triggeredAlertsCount: obsResult.triggeredCount,
+        };
+      },
+
+      recordManualPricePurchase: (input) => {
+        const current = get();
+        const nowIso = new Date().toISOString();
+        const purchaseDate = input.purchaseDate || nowIso;
+        const shouldLogTransaction =
+          input.entryKind === 'actual_purchase' && input.logExpense !== false;
+        const txId = shouldLogTransaction ? crypto.randomUUID() : null;
+
+        const obs = buildPriceObservation({
+          rawName: input.productName,
+          explicitProductId: input.explicitProductId,
+          category: input.category || inferCategoryFromName(input.productName),
+          brand: input.brand,
+          quantity: input.quantity,
+          packageSize: input.packageSize,
+          totalPrice: input.totalPrice,
+          purchaseDate,
+          purchaseSource: 'manual',
+          entryKind: input.entryKind,
+          transactionId: txId,
+          catalogItems: current.items,
+          existingObservations: current.priceObservations,
+        });
+
+        const obsResult = appendObservationsAndEvaluateAlerts(current, [obs], nowIso);
+
+        const nextTransactions =
+          txId && shouldLogTransaction
+            ? [
+                {
+                  id: txId,
+                  name: `${obs.productName} (${obs.quantity} x ${obs.packageSize})`,
+                  amount: obs.totalPrice,
+                  category: obs.category,
+                  timestamp: purchaseDate,
+                  source: 'manual' as const,
+                  status: 'active' as const,
+                },
+                ...current.transactions,
+              ]
+            : current.transactions;
+
+        set({
+          transactions: nextTransactions,
+          priceObservations: obsResult.priceObservations,
+          priceAlerts: obsResult.priceAlerts,
+          triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
+        });
+
+        return {
+          observation: obs,
+          triggeredAlertsCount: obsResult.triggeredCount,
+        };
+      },
+
+      deletePriceObservation: (id) =>
+        set((state) => ({
+          priceObservations: state.priceObservations.filter((o) => o.id !== id),
+        })),
+
+      addPriceAlert: (input) => {
+        const created: PriceAlert = {
+          id: crypto.randomUUID(),
+          productId: input.productId,
+          productName: input.productName,
+          unitOfMeasurement: input.unitOfMeasurement,
+          targetUnitPrice:
+            typeof input.targetUnitPrice === 'number' && input.targetUnitPrice > 0
+              ? roundCurrency(input.targetUnitPrice)
+              : null,
+          increaseThresholdPct:
+            typeof input.increaseThresholdPct === 'number' && input.increaseThresholdPct > 0
+              ? input.increaseThresholdPct
+              : null,
+          enabled: true,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          priceAlerts: [created, ...state.priceAlerts],
+        }));
+        return created;
+      },
+
+      updatePriceAlert: (id, patch) =>
+        set((state) => ({
+          priceAlerts: state.priceAlerts.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+        })),
+
+      togglePriceAlert: (id) =>
+        set((state) => ({
+          priceAlerts: state.priceAlerts.map((a) =>
+            a.id === id ? { ...a, enabled: !a.enabled } : a
+          ),
+        })),
+
+      deletePriceAlert: (id) =>
+        set((state) => ({
+          priceAlerts: state.priceAlerts.filter((a) => a.id !== id),
+        })),
+
+      dismissTriggeredAlert: (id) =>
+        set((state) => ({
+          triggeredPriceAlerts: state.triggeredPriceAlerts.map((t) =>
+            t.id === id ? { ...t, dismissed: true } : t
+          ),
+        })),
+
+      clearTriggeredAlerts: () => set({ triggeredPriceAlerts: [] }),
 
       addPerson: (name, contact) => {
         const trimmedName = name.trim();
@@ -1081,13 +1505,22 @@ export const useAppStore = create<AppState>()(
             data.transactions
           );
           const mergedHistory = ensureCatalogPriceHistory(mergedItems, data.priceHistory ?? {});
+          const sessions = data.purchaseHistory ?? [];
+          const restoredObs =
+            Array.isArray(data.priceObservations) && data.priceObservations.length > 0
+              ? data.priceObservations
+              : migratePurchaseSessionsToObservations(sessions, mergedItems);
+
           return {
             transactions: data.transactions,
             items: mergedItems,
             categoryConfigs: mergedConfigs,
             categories: mergedConfigs.map((c) => c.name),
             priceHistory: mergedHistory,
-            purchaseHistory: data.purchaseHistory ?? [],
+            purchaseHistory: sessions,
+            priceObservations: restoredObs,
+            priceAlerts: Array.isArray(data.priceAlerts) ? data.priceAlerts : [],
+            triggeredPriceAlerts: [],
             totalBudget: data.totalBudget,
             sessionBudget: data.sessionBudget,
             categoryCaps: data.categoryCaps,
@@ -1112,6 +1545,9 @@ export const useAppStore = create<AppState>()(
         items: state.items,
         priceHistory: state.priceHistory,
         purchaseHistory: state.purchaseHistory,
+        priceObservations: state.priceObservations,
+        priceAlerts: state.priceAlerts,
+        triggeredPriceAlerts: state.triggeredPriceAlerts,
         people: state.people,
         sharedExpenses: state.sharedExpenses,
         settlements: state.settlements,
@@ -1126,12 +1562,26 @@ export const useAppStore = create<AppState>()(
             state.transactions
           );
           const patchedHistory = ensureCatalogPriceHistory(migratedItems, state.priceHistory);
+          const sessions = Array.isArray(state.purchaseHistory) ? state.purchaseHistory : [];
+          const existingObs = Array.isArray(state.priceObservations)
+            ? state.priceObservations
+            : [];
+          const migratedObs =
+            existingObs.length > 0
+              ? existingObs
+              : migratePurchaseSessionsToObservations(sessions, migratedItems);
+
           useAppStore.setState({
             items: migratedItems,
             categoryConfigs: migratedConfigs,
             categories: migratedConfigs.map((c) => c.name),
             priceHistory: patchedHistory,
-            purchaseHistory: Array.isArray(state.purchaseHistory) ? state.purchaseHistory : [],
+            purchaseHistory: sessions,
+            priceObservations: migratedObs,
+            priceAlerts: Array.isArray(state.priceAlerts) ? state.priceAlerts : [],
+            triggeredPriceAlerts: Array.isArray(state.triggeredPriceAlerts)
+              ? state.triggeredPriceAlerts
+              : [],
           });
         }
       },

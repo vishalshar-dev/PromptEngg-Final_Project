@@ -37,6 +37,9 @@ export interface CategoryConfig {
   order: number;
 }
 
+export type TransactionStatus = 'active' | 'cancelled' | 'refunded';
+export type TransactionSource = 'mart' | 'audit' | 'manual' | 'ledger';
+
 export interface Transaction {
   id: string;
   name: string;
@@ -45,6 +48,10 @@ export interface Transaction {
   timestamp: string;
   splitWith?: string | null;
   linkedSharedExpenseId?: string | null;
+  status?: TransactionStatus;
+  refundAmount?: number;
+  source?: TransactionSource;
+  receiptFingerprint?: string;
 }
 
 export type SplitMethod = 'equal' | 'custom' | 'percentage';
@@ -171,6 +178,63 @@ export interface SavedAudit {
   flags: SavedAuditFlag[];
 }
 
+export type PriceObservationSource = 'mart' | 'audit' | 'manual';
+export type PriceEntryKind = 'actual_purchase' | 'manual_estimate';
+export type PriceTimeframe = '7d' | '30d' | '3m' | '6m' | '12m' | 'all';
+
+export interface ReceiptReference {
+  merchant: string;
+  receiptDate: string;
+  receiptTotal: number;
+  fingerprint: string;
+}
+
+export interface PriceObservation {
+  id: string;
+  productId: string;
+  productName: string;
+  category: string;
+  brand?: string;
+  quantity: number;
+  packageSize: string;
+  unitOfMeasurement: string;
+  normalizedQuantity: number;
+  totalPrice: number;
+  unitPrice: number;
+  purchaseDate: string; // ISO string
+  purchaseSource: PriceObservationSource;
+  entryKind: PriceEntryKind;
+  transactionId?: string | null;
+  receiptRef?: ReceiptReference | null;
+  status: 'active' | 'cancelled' | 'refunded';
+}
+
+export interface PriceAlert {
+  id: string;
+  productId: string;
+  productName: string;
+  unitOfMeasurement: string;
+  targetUnitPrice?: number | null;
+  increaseThresholdPct?: number | null;
+  enabled: boolean;
+  createdAt: string;
+  lastTriggeredAt?: string | null;
+  lastTriggerMessage?: string | null;
+}
+
+export interface TriggeredPriceAlert {
+  id: string;
+  alertId: string;
+  productId: string;
+  productName: string;
+  reason: 'target_reached' | 'price_spike';
+  message: string;
+  recordedUnitPrice: number;
+  unitOfMeasurement: string;
+  triggeredAt: string;
+  dismissed?: boolean;
+}
+
 export interface BackupData {
   version: 1;
   exportedAt: string;
@@ -187,4 +251,6 @@ export interface BackupData {
   people?: Person[];
   sharedExpenses?: SharedExpense[];
   settlements?: Settlement[];
+  priceObservations?: PriceObservation[];
+  priceAlerts?: PriceAlert[];
 }

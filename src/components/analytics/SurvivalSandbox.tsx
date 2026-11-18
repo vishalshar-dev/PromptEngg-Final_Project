@@ -1,15 +1,24 @@
 import { Shield, ShieldOff, Lock, Zap, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { getCategoryStyle, formatCurrency } from '../../utils/categoryStyles';
+import { getEffectiveTransactionAmount } from '../../utils/martEngine';
 
 export function SurvivalSandbox() {
   const isBrokeMode = useAppStore((s) => s.isBrokeMode);
   const toggleBrokeMode = useAppStore((s) => s.toggleBrokeMode);
   const transactions = useAppStore((s) => s.transactions);
 
-  const junkTransactions = transactions.filter((tx) => tx.category === 'Junk');
-  const junkTotal = junkTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-  const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const junkTransactions = transactions.filter(
+    (tx) => tx.category === 'Junk' && getEffectiveTransactionAmount(tx) > 0
+  );
+  const junkTotal = junkTransactions.reduce(
+    (sum, tx) => sum + getEffectiveTransactionAmount(tx),
+    0
+  );
+  const totalSpent = transactions.reduce(
+    (sum, tx) => sum + getEffectiveTransactionAmount(tx),
+    0
+  );
   const junkShare = totalSpent > 0 ? (junkTotal / totalSpent) * 100 : 0;
 
   const junkStyle = getCategoryStyle('Junk');
