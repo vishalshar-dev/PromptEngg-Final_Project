@@ -17,6 +17,7 @@ export function CategoryCard({
   onSelect,
 }: CategoryCardProps) {
   const style = getCategoryStyle(category.name, category.accent);
+  const subCount = category.subcategories?.length ?? 0;
 
   return (
     <button
@@ -55,8 +56,9 @@ export function CategoryCard({
         <p className="text-xs font-extrabold text-zinc-100 leading-tight line-clamp-2 min-h-[2rem]">
           {category.name}
         </p>
-        <p className="text-[10px] font-mono text-zinc-500 mt-0.5">
+        <p className="text-[10px] font-mono text-zinc-500 mt-0.5 truncate">
           {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          {subCount > 0 ? ` · ${subCount} sub` : ''}
         </p>
       </div>
     </button>

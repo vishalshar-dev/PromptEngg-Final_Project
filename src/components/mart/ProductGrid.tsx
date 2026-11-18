@@ -1,5 +1,5 @@
 import { PackageSearch, Plus } from 'lucide-react';
-import type { CartItem, CategoryConfig } from '../../store/useStore';
+import type { CartItem, CategoryConfig } from '../../types/models';
 import { ProductCard } from './ProductCard';
 
 export interface ProductGridProps {
@@ -7,10 +7,12 @@ export interface ProductGridProps {
   categoryConfigs: CategoryConfig[];
   isBrokeMode?: boolean;
   restrictedCategories?: string[];
-  onAddToCart: (item: CartItem) => void;
-  onUpdateQuantity: (id: string, delta: number) => void;
+  onAddToCart: (item: CartItem, amount?: number, variantId?: string) => void;
+  onUpdateQuantity: (id: string, delta: number, variantId?: string) => void;
+  onSetQuantity?: (id: string, quantity: number, variantId?: string) => void;
+  onSelectVariant?: (id: string, variantId: string) => void;
   onToggleFavourite: (id: string) => void;
-  onUpdatePrice: (id: string, newPrice: number) => void;
+  onUpdatePrice: (id: string, newPrice: number, variantId?: string) => void;
   onOpenDetails: (item: CartItem) => void;
   onAddCustomProduct?: () => void;
   onResetFilters?: () => void;
@@ -23,6 +25,8 @@ export function ProductGrid({
   restrictedCategories = ['Junk', 'Snacks & Beverages'],
   onAddToCart,
   onUpdateQuantity,
+  onSetQuantity,
+  onSelectVariant,
   onToggleFavourite,
   onUpdatePrice,
   onOpenDetails,
@@ -84,6 +88,8 @@ export function ProductGrid({
             isBrokeWatched={isWatched}
             onAddToCart={onAddToCart}
             onUpdateQuantity={onUpdateQuantity}
+            onSetQuantity={onSetQuantity}
+            onSelectVariant={onSelectVariant}
             onToggleFavourite={onToggleFavourite}
             onUpdatePrice={onUpdatePrice}
             onOpenDetails={onOpenDetails}

@@ -3,6 +3,8 @@ import { Scale, ShoppingBag, TrendingDown, Award, Save, Check, Zap } from 'lucid
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency } from '../../utils/categoryStyles';
 
+import { calculateCartTotals } from '../../utils/martEngine';
+
 const PLATFORMS = ['Zepto', 'Blinkit', 'Swiggy Instamart', 'BigBasket', 'Amazon Fresh', 'JioMart'];
 
 interface CartInput {
@@ -44,10 +46,7 @@ export function CartComparator() {
   });
   const [loggedFlash, setLoggedFlash] = useState(false);
 
-  const cartTotal = useMemo(
-    () => items.filter((i) => i.quantity > 0).reduce((sum, i) => sum + i.price * i.quantity, 0),
-    [items]
-  );
+  const cartTotal = useMemo(() => calculateCartTotals(items).totalAmount, [items]);
 
   const resultA = useMemo(() => calcEffective(cartA), [cartA]);
   const resultB = useMemo(() => calcEffective(cartB), [cartB]);

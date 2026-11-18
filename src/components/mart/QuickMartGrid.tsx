@@ -11,13 +11,28 @@ import {
   Store,
   Check,
   ShieldAlert,
+  RotateCcw,
+  Heart,
+  Sparkles,
+  Receipt,
+  ChevronRight,
+  Clock,
 } from 'lucide-react';
 import { useAppStore, type CartItem } from '../../store/useStore';
-import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
 import {
+  formatCurrencyExact,
+  formatQuantity,
+  getCategoryStyle,
+} from '../../utils/categoryStyles';
+import {
+  calculateCartTotals,
   calculateMonthlyShoppingSpend,
+  computeFrequentlyPurchasedInsights,
+  computeRecentlyPurchasedItems,
   filterAndSortProducts,
   getDueRecurringItems,
+  isRecurringBillItem,
+  type FrequentlyPurchasedInsight,
   type ProductFilterOptions,
 } from '../../utils/martEngine';
 import { computeBrokeModeStatus } from '../../utils/warRoomEngine';
@@ -30,12 +45,16 @@ import { CustomProductForm } from './CustomProductForm';
 import { RecurringItemManager } from './RecurringItemManager';
 import { PurchaseHistory } from './PurchaseHistory';
 import { CategoryIcon } from './CategoryIcon';
+import { ProductVisual } from './ProductVisual';
 
 type MartSection = 'home' | 'catalog' | 'recurring' | 'history';
 
 const DEFAULT_FILTERS: ProductFilterOptions = {
   query: '',
   category: 'All',
+  subcategory: 'All',
+  brand: 'All',
+  productType: 'All',
   minPrice: null,
   maxPrice: null,
   onlyFavourites: false,
@@ -56,9 +75,12 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
 
   const addToCart = useAppStore((s) => s.addToCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
+  const setItemQuantity = useAppStore((s) => s.setItemQuantity);
+  const selectProductVariant = useAppStore((s) => s.selectProductVariant);
   const toggleFavourite = useAppStore((s) => s.toggleFavourite);
   const updateItemPrice = useAppStore((s) => s.updateItemPrice);
   const addDueRecurringToCart = useAppStore((s) => s.addDueRecurringToCart);
+  const quickReorderItem = useAppStore((s) => s.quickReorderItem);
 
   const [section, setSection] = useState<MartSection>('home');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -69,17 +91,10 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const [editingProduct, setEditingProduct] = useState<CartItem | null>(null);
   const [detailProduct, setDetailProduct] = useState<CartItem | null>(null);
   const [dueAddedFlash, setDueAddedFlash] = useState<number | null>(null);
+  const [reorderedFlashKey, setReorderedFlashKey] = useState<string | null>(null);
 
-  // Live metrics
-  const cartItems = useMemo(() => items.filter((i) => i.quantity > 0), [items]);
-  const cartValue = useMemo(
-    () => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0),
-    [cartItems]
-  );
-  const cartUnits = useMemo(
-    () => cartItems.reduce((sum, i) => sum + i.quantity, 0),
-    [cartItems]
-  );
+  // Live variant-aware cart totals
+  const cartSummary = useMemo(() => calculateCartTotals(items), [items]);
   const monthlySpend = useMemo(
     () => calculateMonthlyShoppingSpend(transactions),
     [transactions]
@@ -109,7 +124,10 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       Boolean(filters.onlyRecent) ||
       Boolean(filters.onlyRecurring) ||
       (filters.sortBy && filters.sortBy !== 'default') ||
-      (filters.category && filters.category !== 'All')
+      (filters.category && filters.category !== 'All') ||
+      (filters.subcategory && filters.subcategory !== 'All') ||
+      (filters.brand && filters.brand !== 'All') ||
+      (filters.productType && filters.productType !== 'All')
     );
   }, [filters]);
 
@@ -134,21 +152,59 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
     [categoryConfigs, selectedCategory]
   );
 
+  const activeCategorySubcategories = useMemo(() => {
+    if (!selectedCategory) return [];
+    const set = new Set<string>(activeCategoryConfig?.subcategories ?? []);
+    for (const item of items) {
+      if (item.category === selectedCategory && item.subcategory?.trim()) {
+        set.add(item.subcategory.trim());
+      }
+    }
+    return Array.from(set);
+  }, [selectedCategory, activeCategoryConfig, items]);
+
+  // Real personalization datasets (NEVER fabricated)
+  const frequentInsights = useMemo(
+    () => computeFrequentlyPurchasedInsights(items, purchaseHistory, 6),
+    [items, purchaseHistory]
+  );
+  const recentInsights = useMemo(
+    () => computeRecentlyPurchasedItems(items, purchaseHistory, 6),
+    [items, purchaseHistory]
+  );
+  const favoriteItems = useMemo(
+    () => items.filter((i) => Boolean(i.isFavourite)),
+    [items]
+  );
+  const popularEssentials = useMemo(
+    () => items.filter((i) => i.isPopular && !isRecurringBillItem(i)).slice(0, 6),
+    [items]
+  );
+  const customItems = useMemo(
+    () => items.filter((i) => Boolean(i.isCustom)),
+    [items]
+  );
+  const billItems = useMemo(
+    () => items.filter((i) => isRecurringBillItem(i)).slice(0, 6),
+    [items]
+  );
+
   const handleSelectCategory = (catName: string) => {
     setSelectedCategory(catName);
     setSection('home');
-    setFilters((prev) => ({ ...prev, category: catName }));
+    setFilters((prev) => ({ ...prev, category: catName, subcategory: 'All' }));
   };
 
   const handleBackToHome = () => {
     setSelectedCategory(null);
-    setFilters((prev) => ({ ...prev, category: 'All' }));
+    setFilters((prev) => ({ ...prev, category: 'All', subcategory: 'All' }));
   };
 
   const handleResetFilters = () => {
     setFilters({
       ...DEFAULT_FILTERS,
       category: selectedCategory ?? 'All',
+      subcategory: 'All',
     });
   };
 
@@ -158,6 +214,101 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       setDueAddedFlash(count);
       setTimeout(() => setDueAddedFlash(null), 2200);
     }
+  };
+
+  const handleQuickReorder = (insight: FrequentlyPurchasedInsight) => {
+    const ok = quickReorderItem(insight.item.id, insight.lastVariantId, 1);
+    if (ok) {
+      const flashKey = `${insight.item.id}::${insight.lastVariantId ?? ''}`;
+      setReorderedFlashKey(flashKey);
+      setTimeout(() => setReorderedFlashKey(null), 1600);
+    }
+  };
+
+  const renderReorderCard = (insight: FrequentlyPurchasedInsight, mode: 'frequent' | 'recent') => {
+    const cfg = categoryConfigs.find((c) => c.name === insight.item.category);
+    const flashKey = `${insight.item.id}::${insight.lastVariantId ?? ''}`;
+    const isFlashed = reorderedFlashKey === flashKey;
+    const dateLabel = new Date(insight.lastPurchasedAt).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+    });
+
+    return (
+      <div
+        key={`${mode}-${flashKey}`}
+        className="glass rounded-xl p-2.5 border border-white/[0.07] flex items-center justify-between gap-2.5"
+      >
+        <button
+          type="button"
+          onClick={() => setDetailProduct(insight.item)}
+          className="flex items-center gap-2.5 min-w-0 flex-1 text-left"
+        >
+          <ProductVisual
+            name={insight.item.name}
+            category={insight.item.category}
+            imageUrl={insight.item.imageUrl}
+            iconKey={cfg?.iconKey}
+            accent={cfg?.accent}
+            size="sm"
+          />
+          <div className="min-w-0">
+            <p className="text-xs font-extrabold text-white truncate">
+              {insight.item.name}
+              {insight.lastVariantLabel ? ` · ${insight.lastVariantLabel}` : ''}
+            </p>
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 mt-0.5 flex-wrap">
+              <span className="font-bold text-zinc-200">
+                ₹{formatCurrencyExact(insight.currentPrice)}
+              </span>
+              <span>·</span>
+              {mode === 'frequent' ? (
+                <span>
+                  {insight.orderCount} {insight.orderCount === 1 ? 'order' : 'orders'}
+                </span>
+              ) : (
+                <span>Last: {dateLabel}</span>
+              )}
+              {Math.abs(insight.priceDiff) >= 0.5 && (
+                <span
+                  title={`Previously paid ₹${formatCurrencyExact(insight.lastPaidPrice)}`}
+                  className={`px-1 py-0.2 rounded font-bold ${
+                    insight.priceDiff > 0
+                      ? 'bg-amber-500/15 text-amber-300'
+                      : 'bg-brand-500/15 text-brand-300'
+                  }`}
+                >
+                  {insight.priceDiff > 0 ? `+₹${formatCurrencyExact(insight.priceDiff)}` : `-₹${formatCurrencyExact(Math.abs(insight.priceDiff))}`}
+                </span>
+              )}
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleQuickReorder(insight)}
+          aria-label={`Reorder ${insight.item.name}`}
+          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-extrabold flex items-center gap-1 whitespace-nowrap flex-shrink-0 transition-all ${
+            isFlashed
+              ? 'bg-brand-500 text-ink-950'
+              : 'bg-brand-500/15 hover:bg-brand-500 text-brand-300 hover:text-ink-950 border border-brand-500/35'
+          }`}
+        >
+          {isFlashed ? (
+            <>
+              <Check className="w-3 h-3" strokeWidth={3} />
+              In Cart
+            </>
+          ) : (
+            <>
+              <RotateCcw className="w-3 h-3" strokeWidth={2.5} />
+              Reorder
+            </>
+          )}
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -174,7 +325,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 Quick Mart
               </h2>
               <p className="text-[11px] text-zinc-400 font-medium mt-1 truncate">
-                Personal Shopping & Expense Catalog
+                Personal Shopping & Smart Expense Catalog
               </p>
             </div>
           </div>
@@ -198,7 +349,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               type="button"
               onClick={() => setCategoryManagerOpen(true)}
               aria-label="Manage categories"
-              title="Manage categories"
+              title="Manage categories & subcategories"
               className="w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] flex items-center justify-center text-zinc-300 hover:text-white transition-colors"
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -207,13 +358,13 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             <button
               type="button"
               onClick={() => onOpenCart?.()}
-              aria-label={`Open shopping cart with ${cartUnits} items`}
+              aria-label={`Open shopping cart with ${cartSummary.totalUnits} items`}
               className="relative w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-brand-500/20 border border-white/[0.08] hover:border-brand-500/35 flex items-center justify-center text-zinc-200 hover:text-brand-400 transition-colors"
             >
               <ShoppingCart className="w-4 h-4" strokeWidth={2.3} />
-              {cartUnits > 0 && (
+              {cartSummary.lineCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-500 text-ink-950 text-[10px] font-extrabold flex items-center justify-center">
-                  {cartUnits}
+                  {cartSummary.lineCount}
                 </span>
               )}
             </button>
@@ -227,7 +378,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               Cart Value
             </p>
             <p className="text-sm font-extrabold font-mono text-white tabular-nums mt-0.5">
-              ₹{formatCurrencyExact(cartValue)}
+              ₹{formatCurrencyExact(cartSummary.totalAmount)}
             </p>
           </div>
           <div className="bg-ink-900/70 border border-white/[0.05] rounded-xl px-3 py-2 flex flex-col justify-between">
@@ -235,7 +386,8 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               Cart Items
             </p>
             <p className="text-sm font-extrabold font-mono text-brand-400 tabular-nums mt-0.5">
-              {cartUnits} {cartUnits === 1 ? 'unit' : 'units'}
+              {cartSummary.lineCount} {cartSummary.lineCount === 1 ? 'line' : 'lines'} ·{' '}
+              {formatQuantity(cartSummary.totalUnits)}
             </p>
           </div>
           <div className="bg-ink-900/70 border border-white/[0.05] rounded-xl px-3 py-2 flex flex-col justify-between">
@@ -295,7 +447,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Categories</span>
+            <span>Home</span>
           </button>
 
           <button
@@ -303,7 +455,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             onClick={() => {
               setSection('catalog');
               setSelectedCategory(null);
-              setFilters((p) => ({ ...p, category: 'All' }));
+              setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
             }}
             className={`py-2 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
               section === 'catalog' || Boolean(selectedCategory)
@@ -359,36 +511,65 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         </div>
       </div>
 
-      {/* Persistent Search Bar across Home & Catalog */}
+      {/* Persistent Global Search Bar across Home & Catalog */}
       {(section === 'home' || section === 'catalog') && (
         <ProductSearch
           filters={effectiveFilters}
           categories={categoryConfigs}
+          items={items}
           onChange={(next) => {
             setFilters(next);
-            if (next.category && next.category !== 'All' && selectedCategory && next.category !== selectedCategory) {
+            if (
+              next.category &&
+              next.category !== 'All' &&
+              selectedCategory &&
+              next.category !== selectedCategory
+            ) {
               setSelectedCategory(next.category);
             } else if (next.category === 'All' && selectedCategory) {
               setSelectedCategory(null);
             }
           }}
+          onSelectCategory={handleSelectCategory}
+          onOpenProduct={(item) => setDetailProduct(item)}
           onReset={handleResetFilters}
         />
       )}
 
-      {/* VIEW 1: Dedicated Category Browsing Page */}
+      {/* VIEW 1: Dedicated Category + Subcategory Browsing Page */}
       {section === 'home' && selectedCategory && (
         <div className="space-y-3 animate-fade-in">
+          {/* Quick Category Switcher Strip */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+            <button
+              type="button"
+              onClick={handleBackToHome}
+              className="px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.08] text-[11px] font-bold text-zinc-300 whitespace-nowrap flex items-center gap-1"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              Home
+            </button>
+            {categoryConfigs.map((cat) => {
+              const active = cat.name === selectedCategory;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleSelectCategory(cat.name)}
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border whitespace-nowrap transition-all ${
+                    active
+                      ? 'bg-brand-500/20 border-brand-500/50 text-brand-300'
+                      : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="glass rounded-2xl p-3.5 flex items-center justify-between gap-3 border border-white/[0.08]">
             <div className="flex items-center gap-2.5 min-w-0">
-              <button
-                type="button"
-                onClick={handleBackToHome}
-                aria-label="Back to all categories"
-                className="w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-zinc-300 hover:text-white flex-shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
               <div
                 className={`w-9 h-9 rounded-xl ${
                   getCategoryStyle(selectedCategory, activeCategoryConfig?.accent).bg
@@ -407,6 +588,9 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 </h3>
                 <p className="text-[11px] text-zinc-400">
                   {filteredItems.length} product{filteredItems.length === 1 ? '' : 's'}
+                  {filters.subcategory && filters.subcategory !== 'All'
+                    ? ` in ${filters.subcategory}`
+                    : ''}
                 </p>
               </div>
             </div>
@@ -424,13 +608,60 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             </button>
           </div>
 
+          {/* Subcategory Navigation Pills */}
+          {activeCategorySubcategories.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+              <button
+                type="button"
+                onClick={() => setFilters((p) => ({ ...p, subcategory: 'All' }))}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border whitespace-nowrap transition-all ${
+                  !filters.subcategory || filters.subcategory === 'All'
+                    ? 'bg-white/[0.12] border-white/20 text-white'
+                    : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                All ({categoryItemCounts[selectedCategory] ?? 0})
+              </button>
+              {activeCategorySubcategories.map((sub) => {
+                const subCount = items.filter(
+                  (i) =>
+                    i.category === selectedCategory &&
+                    (i.subcategory ?? '').toLowerCase() === sub.toLowerCase()
+                ).length;
+                const active =
+                  (filters.subcategory ?? '').toLowerCase() === sub.toLowerCase();
+                return (
+                  <button
+                    key={sub}
+                    type="button"
+                    onClick={() =>
+                      setFilters((p) => ({
+                        ...p,
+                        subcategory: active ? 'All' : sub,
+                      }))
+                    }
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border whitespace-nowrap transition-all ${
+                      active
+                        ? 'bg-brand-500/20 border-brand-500/45 text-brand-300'
+                        : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {sub} ({subCount})
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <ProductGrid
             items={filteredItems}
             categoryConfigs={categoryConfigs}
             isBrokeMode={isBrokeMode}
             restrictedCategories={brokeModeConfig.restrictedCategories}
-            onAddToCart={(item) => addToCart(item)}
+            onAddToCart={(item, amt, variantId) => addToCart(item, amt, variantId)}
             onUpdateQuantity={updateQuantity}
+            onSetQuantity={setItemQuantity}
+            onSelectVariant={selectProductVariant}
             onToggleFavourite={toggleFavourite}
             onUpdatePrice={updateItemPrice}
             onOpenDetails={(item) => setDetailProduct(item)}
@@ -443,9 +674,31 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         </div>
       )}
 
-      {/* VIEW 2: Shopping Home Page (Categories + Due Recurring Banner + Search Results when active) */}
+      {/* VIEW 2: Shopping Home Page */}
       {section === 'home' && !selectedCategory && (
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* Quick Category Strip */}
+          {!isSearchingOrFiltering && (
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+              {categoryConfigs.map((cat) => {
+                const style = getCategoryStyle(cat.name, cat.accent);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleSelectCategory(cat.name)}
+                    className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.07] text-[11px] font-bold text-zinc-200 whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 transition-all"
+                  >
+                    <span className={`${style.text}`}>
+                      <CategoryIcon iconKey={cat.iconKey} className="w-3.5 h-3.5" />
+                    </span>
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Due Recurring Quick Action */}
           {dueRecurring.length > 0 && !isSearchingOrFiltering && (
             <div className="glass rounded-2xl p-3.5 border border-sky-500/25 flex items-center justify-between gap-3">
@@ -494,7 +747,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                   onClick={handleResetFilters}
                   className="text-xs font-bold text-brand-400 hover:text-brand-300"
                 >
-                  Back to Categories
+                  Back to Home
                 </button>
               </div>
               <ProductGrid
@@ -502,8 +755,10 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 categoryConfigs={categoryConfigs}
                 isBrokeMode={isBrokeMode}
                 restrictedCategories={brokeModeConfig.restrictedCategories}
-                onAddToCart={(item) => addToCart(item)}
+                onAddToCart={(item, amt, variantId) => addToCart(item, amt, variantId)}
                 onUpdateQuantity={updateQuantity}
+                onSetQuantity={setItemQuantity}
+                onSelectVariant={selectProductVariant}
                 onToggleFavourite={toggleFavourite}
                 onUpdatePrice={updateItemPrice}
                 onOpenDetails={(item) => setDetailProduct(item)}
@@ -515,37 +770,256 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               />
             </div>
           ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-extrabold text-white">
-                    Shop by Category
-                  </h3>
-                  <p className="text-[11px] text-zinc-500">
-                    {categoryConfigs.length} categories · {items.length} products
-                  </p>
+            <>
+              {/* Personalized Real Purchase History Sections */}
+              {(frequentInsights.length > 0 || recentInsights.length > 0) ? (
+                <div className="space-y-4">
+                  {recentInsights.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-brand-400" />
+                          Buy Again · Recently Purchased
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setSection('history')}
+                          className="text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-0.5"
+                        >
+                          Orders <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {recentInsights.map((ins) => renderReorderCard(ins, 'recent'))}
+                      </div>
+                    </div>
+                  )}
+
+                  {frequentInsights.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        Frequently Purchased
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {frequentInsights.map((ins) => renderReorderCard(ins, 'frequent'))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setCategoryManagerOpen(true)}
-                  className="text-xs font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1"
-                >
-                  <SlidersHorizontal className="w-3 h-3" />
-                  Customize
-                </button>
+              ) : (
+                <div className="glass rounded-2xl p-3.5 border border-white/[0.06] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-zinc-400 flex-shrink-0">
+                      <RotateCcw className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-zinc-200">
+                        Buy Again & Frequently Purchased
+                      </p>
+                      <p className="text-[11px] text-zinc-500">
+                        Complete your first checkout to unlock one-tap reorder with live price checks.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Favorites Section */}
+              {favoriteItems.length > 0 && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <Heart className="w-3.5 h-3.5 text-rose-400" fill="currentColor" />
+                      Your Favorites ({favoriteItems.length})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setFilters((p) => ({ ...p, onlyFavourites: true }))}
+                      className="text-[11px] font-bold text-brand-400 hover:text-brand-300"
+                    >
+                      View All
+                    </button>
+                  </div>
+                  <ProductGrid
+                    items={favoriteItems.slice(0, 6)}
+                    categoryConfigs={categoryConfigs}
+                    isBrokeMode={isBrokeMode}
+                    restrictedCategories={brokeModeConfig.restrictedCategories}
+                    onAddToCart={(item, amt, variantId) => addToCart(item, amt, variantId)}
+                    onUpdateQuantity={updateQuantity}
+                    onSetQuantity={setItemQuantity}
+                    onSelectVariant={selectProductVariant}
+                    onToggleFavourite={toggleFavourite}
+                    onUpdatePrice={updateItemPrice}
+                    onOpenDetails={(item) => setDetailProduct(item)}
+                  />
+                </div>
+              )}
+
+              {/* Popular Everyday Essentials */}
+              {popularEssentials.length > 0 && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-brand-400" />
+                        Popular Everyday Essentials
+                      </h3>
+                      <p className="text-[11px] text-zinc-500">
+                        Quick-add staples with pack sizes & weight options
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSection('catalog');
+                        setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
+                      }}
+                      className="text-xs font-bold text-brand-400 hover:text-brand-300 flex items-center gap-0.5"
+                    >
+                      All Products <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <ProductGrid
+                    items={popularEssentials}
+                    categoryConfigs={categoryConfigs}
+                    isBrokeMode={isBrokeMode}
+                    restrictedCategories={brokeModeConfig.restrictedCategories}
+                    onAddToCart={(item, amt, variantId) => addToCart(item, amt, variantId)}
+                    onUpdateQuantity={updateQuantity}
+                    onSetQuantity={setItemQuantity}
+                    onSelectVariant={selectProductVariant}
+                    onToggleFavourite={toggleFavourite}
+                    onUpdatePrice={updateItemPrice}
+                    onOpenDetails={(item) => setDetailProduct(item)}
+                  />
+                </div>
+              )}
+
+              {/* Custom Products Section */}
+              {customItems.length > 0 && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-300">
+                      Your Custom Products ({customItems.length})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingProduct(null);
+                        setProductFormOpen(true);
+                      }}
+                      className="text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Add Custom
+                    </button>
+                  </div>
+                  <ProductGrid
+                    items={customItems.slice(0, 6)}
+                    categoryConfigs={categoryConfigs}
+                    isBrokeMode={isBrokeMode}
+                    restrictedCategories={brokeModeConfig.restrictedCategories}
+                    onAddToCart={(item, amt, variantId) => addToCart(item, amt, variantId)}
+                    onUpdateQuantity={updateQuantity}
+                    onSetQuantity={setItemQuantity}
+                    onSelectVariant={selectProductVariant}
+                    onToggleFavourite={toggleFavourite}
+                    onUpdatePrice={updateItemPrice}
+                    onOpenDetails={(item) => setDetailProduct(item)}
+                  />
+                </div>
+              )}
+
+              {/* Browse All Categories */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white">
+                      Browse All Categories
+                    </h3>
+                    <p className="text-[11px] text-zinc-500">
+                      {categoryConfigs.length} categories · {items.length} products
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCategoryManagerOpen(true)}
+                    className="text-xs font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1"
+                  >
+                    <SlidersHorizontal className="w-3 h-3" />
+                    Customize
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                  {categoryConfigs.map((cat) => (
+                    <CategoryCard
+                      key={cat.id}
+                      category={cat}
+                      itemCount={categoryItemCounts[cat.name] ?? 0}
+                      onSelect={handleSelectCategory}
+                    />
+                  ))}
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-                {categoryConfigs.map((cat) => (
-                  <CategoryCard
-                    key={cat.id}
-                    category={cat}
-                    itemCount={categoryItemCounts[cat.name] ?? 0}
-                    onSelect={handleSelectCategory}
-                  />
-                ))}
-              </div>
-            </div>
+              {/* Clearly Separated Recurring Bills & Subscriptions */}
+              {billItems.length > 0 && (
+                <div className="glass rounded-2xl p-4 border border-sky-500/20 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-400/30 flex items-center justify-center text-sky-300">
+                        <Receipt className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-sky-200">
+                          Recurring Bills & Subscriptions
+                        </h3>
+                        <p className="text-[10px] text-zinc-400">
+                          Separate from pantry items · Logged only after checkout confirmation
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSection('recurring')}
+                      className="text-[11px] font-bold text-sky-300 hover:text-sky-200 whitespace-nowrap"
+                    >
+                      Manage
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {billItems.map((bill) => (
+                      <div
+                        key={bill.id}
+                        className="bg-ink-900/70 border border-white/[0.06] rounded-xl px-3 py-2 flex items-center justify-between gap-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setDetailProduct(bill)}
+                          className="min-w-0 text-left flex-1"
+                        >
+                          <p className="text-xs font-bold text-white truncate">{bill.name}</p>
+                          <p className="text-[10px] font-mono text-zinc-400">
+                            ₹{formatCurrencyExact(bill.price)} ·{' '}
+                            {bill.recurrence?.frequency ?? 'one-off'}
+                          </p>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(bill, 1)}
+                          aria-label={`Add bill ${bill.name} to cart`}
+                          className="px-2.5 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 border border-sky-400/30 text-sky-200 text-[11px] font-extrabold whitespace-nowrap"
+                        >
+                          {bill.quantity > 0 ? `${formatQuantity(bill.quantity)} in Cart` : '+ Add Bill'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -558,7 +1032,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               All Products ({filteredItems.length})
             </p>
             <span className="text-[11px] text-zinc-500">
-              Tap product image/name for details & recurring
+              Tap product image/name for details & variants
             </span>
           </div>
           <ProductGrid
@@ -566,8 +1040,10 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             categoryConfigs={categoryConfigs}
             isBrokeMode={isBrokeMode}
             restrictedCategories={brokeModeConfig.restrictedCategories}
-            onAddToCart={(item) => addToCart(item)}
+            onAddToCart={(item, amt, variantId) => addToCart(item, amt, variantId)}
             onUpdateQuantity={updateQuantity}
+            onSetQuantity={setItemQuantity}
+            onSelectVariant={selectProductVariant}
             onToggleFavourite={toggleFavourite}
             onUpdatePrice={updateItemPrice}
             onOpenDetails={(item) => setDetailProduct(item)}
@@ -598,6 +1074,11 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         isOpen={productFormOpen}
         initialProduct={editingProduct}
         defaultCategory={selectedCategory ?? undefined}
+        defaultSubcategory={
+          filters.subcategory && filters.subcategory !== 'All'
+            ? filters.subcategory
+            : undefined
+        }
         onClose={() => {
           setProductFormOpen(false);
           setEditingProduct(null);

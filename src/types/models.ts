@@ -9,11 +9,22 @@ export interface RecurrenceConfig {
   lastAddedAt?: string; // ISO
 }
 
+export interface ProductVariant {
+  id: string;
+  label: string;
+  unit: string;
+  price: number;
+}
+
 export interface CartItem {
   id: string;
   name: string;
   price: number;
   category: string;
+  subcategory?: string;
+  brand?: string;
+  description?: string;
+  tags?: string[];
   icon: string;
   quantity: number;
   unit?: string;
@@ -21,10 +32,28 @@ export interface CartItem {
   imageUrl?: string;
   isFavourite?: boolean;
   isFrequent?: boolean;
+  isPopular?: boolean;
   isCustom?: boolean;
   lastPurchasedAt?: string;
   purchaseCount?: number;
+  createdAt?: string;
+  allowDecimalQuantity?: boolean;
+  quantityStep?: number;
+  variants?: ProductVariant[];
+  selectedVariantId?: string;
+  variantQuantities?: Record<string, number>;
   recurrence?: RecurrenceConfig | null;
+}
+
+export interface CartLineItem {
+  lineKey: string;
+  item: CartItem;
+  variantId?: string;
+  variantLabel?: string;
+  unit: string;
+  price: number;
+  quantity: number;
+  subtotal: number;
 }
 
 export interface CategoryConfig {
@@ -33,6 +62,7 @@ export interface CategoryConfig {
   iconKey: string;
   accent: string;
   imageUrl?: string;
+  subcategories?: string[];
   isCustom?: boolean;
   order: number;
 }
@@ -107,6 +137,9 @@ export interface PricePoint {
   unit?: string;
   source?: PriceSource;
   productName?: string;
+  variantId?: string;
+  variantLabel?: string;
+  brand?: string;
 }
 
 export interface PriceHistory {
@@ -116,7 +149,11 @@ export interface PriceHistory {
 export interface PurchaseSessionItem {
   itemId: string;
   name: string;
+  brand?: string;
   category: string;
+  subcategory?: string;
+  variantId?: string;
+  variantLabel?: string;
   unit?: string;
   price: number;
   quantity: number;

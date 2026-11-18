@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   ShoppingBag,
   Check,
@@ -7,9 +7,11 @@ import {
   AlertOctagon,
   Users,
   ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
-import { formatCurrencyExact } from '../../utils/categoryStyles';
+import { formatCurrencyExact, formatQuantity } from '../../utils/categoryStyles';
+import { calculateCartTotals } from '../../utils/martEngine';
 import { CartItemRow } from './CartItem';
 import { CheckoutSummary } from './CheckoutSummary';
 
@@ -27,21 +29,26 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
   const sessionBudget = useAppStore((s) => s.sessionBudget);
 
   const [expanded, setExpanded] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutSplitDefault, setCheckoutSplitDefault] = useState(false);
   const [doneBanner, setDoneBanner] = useState(false);
 
-  const cartItems = items.filter((i) => i.quantity > 0);
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const { lines, totalAmount: totalPrice, totalUnits: totalCount, uniqueProducts } = useMemo(
+    () => calculateCartTotals(items),
+    [items]
+  );
 
   const isOverSession = sessionBudget !== null && totalPrice > sessionBudget;
   const isWarningSession =
     sessionBudget !== null && totalPrice > sessionBudget * 0.8 && totalPrice <= sessionBudget;
 
   useEffect(() => {
-    if (cartItems.length === 0) setExpanded(false);
-  }, [cartItems.length]);
+    if (lines.length === 0) {
+      setExpanded(false);
+      setConfirmClear(false);
+    }
+  }, [lines.length]);
 
   useEffect(() => {
     if (externalOpenRequest && externalOpenRequest > 0) {
@@ -50,11 +57,12 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
   }, [externalOpenRequest]);
 
   const catMap = new Map(categoryConfigs.map((c) => [c.name, c]));
-  const hasItems = cartItems.length > 0;
+  const hasItems = lines.length > 0;
 
   const openCheckout = (withSplit: boolean) => {
     if (!hasItems) return;
     setExpanded(false);
+    setConfirmClear(false);
     setCheckoutSplitDefault(withSplit);
     setCheckoutOpen(true);
   };
@@ -64,7 +72,10 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
       {expanded && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
-          onClick={() => setExpanded(false)}
+          onClick={() => {
+            setExpanded(false);
+            setConfirmClear(false);
+          }}
         />
       )}
 
@@ -107,18 +118,18 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                     strokeWidth={2.5}
                   />
                   {hasItems && (
-                    <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-brand-500 text-ink-950 text-[10px] font-extrabold flex items-center justify-center shadow">
-                      {totalCount}
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-brand-500 text-ink-950 text-[10px] font-extrabold flex items-center justify-center shadow">
+                      {lines.length}
                     </span>
                   )}
                 </div>
 
                 <div className="text-left min-w-0">
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider truncate">
                     {doneBanner
                       ? 'Recorded to Budget'
                       : hasItems
-                      ? `${cartItems.length} product${cartItems.length > 1 ? 's' : ''}`
+                      ? `${uniqueProducts} item${uniqueProducts > 1 ? 's' : ''} · ${formatQuantity(totalCount)} qty`
                       : 'Empty Cart'}
                   </p>
                   <p
@@ -176,32 +187,57 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
           {/* Expanded Cart Panel */}
           {expanded && hasItems && (
-            <div className="px-4 pb-4 max-h-[52vh] overflow-y-auto scrollbar-thin animate-slide-up">
+            <div className="px-4 pb-4 max-h-[56vh] overflow-y-auto scrollbar-thin animate-slide-up">
               <div className="h-px bg-white/[0.06] mb-3" />
 
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between gap-2 mb-3">
                 <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                  Shopping Cart ({totalCount} units)
+                  Shopping Cart ({lines.length} {lines.length === 1 ? 'line' : 'lines'} ·{' '}
+                  {formatQuantity(totalCount)} qty)
                 </p>
-                <button
-                  type="button"
-                  onClick={clearCart}
-                  className="text-[11px] font-bold text-zinc-500 hover:text-red-400 flex items-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Clear Cart
-                </button>
+                {confirmClear ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-red-300 font-bold">Clear all?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearCart();
+                        setConfirmClear(false);
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-red-500 text-white text-[11px] font-extrabold"
+                    >
+                      Yes, Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmClear(false)}
+                      className="px-2 py-0.5 rounded-md bg-white/[0.08] text-zinc-300 text-[11px] font-bold"
+                    >
+                      Keep
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClear(true)}
+                    className="text-[11px] font-bold text-zinc-500 hover:text-red-400 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Clear Cart
+                  </button>
+                )}
               </div>
 
               <div className="space-y-2">
-                {cartItems.map((item) => (
+                {lines.map((line) => (
                   <CartItemRow
-                    key={item.id}
-                    item={item}
-                    categoryConfig={catMap.get(item.category)}
+                    key={line.lineKey}
+                    line={line}
+                    categoryConfig={catMap.get(line.item.category)}
                     onUpdateQuantity={updateQuantity}
+                    onSetQuantity={setItemQuantity}
                     onUpdatePrice={updateItemPrice}
-                    onRemove={(id) => setItemQuantity(id, 0)}
+                    onRemove={(id, variantId) => setItemQuantity(id, 0, variantId)}
                   />
                 ))}
               </div>
@@ -238,6 +274,23 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                   </p>
                 </div>
               )}
+
+              <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(false)}
+                  className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Continue Shopping
+                </button>
+                <span className="text-xs font-mono text-zinc-400">
+                  Total:{' '}
+                  <strong className="text-brand-400 font-extrabold">
+                    ₹{formatCurrencyExact(totalPrice)}
+                  </strong>
+                </span>
+              </div>
             </div>
           )}
         </div>

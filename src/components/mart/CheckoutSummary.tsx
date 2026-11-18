@@ -14,7 +14,7 @@ import {
   type SplitMethod,
 } from '../../store/useStore';
 import { SELF_PERSON_ID } from '../../types/models';
-import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
+import { formatCurrencyExact, formatQuantity, getCategoryStyle } from '../../utils/categoryStyles';
 import { buildCheckoutBreakdown } from '../../utils/martEngine';
 import { computeBrokeModeStatus } from '../../utils/warRoomEngine';
 import {
@@ -62,10 +62,10 @@ export function CheckoutSummary({
     const watched = new Set(
       brokeModeConfig.restrictedCategories.map((c) => c.trim().toLowerCase())
     );
-    return breakdown.items
-      .filter((i) => watched.has(i.category.trim().toLowerCase()))
-      .reduce((sum, i) => sum + i.price * i.quantity, 0);
-  }, [breakdown.items, brokeModeConfig.restrictedCategories]);
+    return breakdown.lines
+      .filter((l) => watched.has(l.item.category.trim().toLowerCase()))
+      .reduce((sum, l) => sum + l.subtotal, 0);
+  }, [breakdown.lines, brokeModeConfig.restrictedCategories]);
 
   const [splitEnabled, setSplitEnabled] = useState(defaultSplitEnabled);
   const [expenseName, setExpenseName] = useState('');
@@ -244,22 +244,26 @@ export function CheckoutSummary({
           {/* Itemized List */}
           <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3.5 space-y-2">
             <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">
-              Items ({breakdown.totalCount} units)
+              Items ({formatQuantity(breakdown.totalCount)} units across {breakdown.lines.length}{' '}
+              {breakdown.lines.length === 1 ? 'line' : 'lines'})
             </p>
             <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin pr-1">
-              {breakdown.items.map((item) => (
+              {breakdown.lines.map((line) => (
                 <div
-                  key={item.id}
+                  key={line.lineKey}
                   className="flex items-center justify-between text-xs gap-2"
                 >
                   <div className="min-w-0">
-                    <span className="font-bold text-white">{item.name}</span>
+                    <span className="font-bold text-white">
+                      {line.item.name}
+                      {line.variantLabel ? ` · ${line.variantLabel}` : ''}
+                    </span>
                     <span className="text-zinc-500 font-mono ml-2">
-                      {item.quantity} × ₹{formatCurrencyExact(item.price)} ({item.unit || '1 unit'})
+                      {formatQuantity(line.quantity)} × ₹{formatCurrencyExact(line.price)} ({line.unit})
                     </span>
                   </div>
-                  <span className="font-mono font-extrabold text-zinc-200 tabular-nums">
-                    ₹{formatCurrencyExact(item.price * item.quantity)}
+                  <span className="font-mono font-extrabold text-zinc-200 tabular-nums flex-shrink-0">
+                    ₹{formatCurrencyExact(line.subtotal)}
                   </span>
                 </div>
               ))}

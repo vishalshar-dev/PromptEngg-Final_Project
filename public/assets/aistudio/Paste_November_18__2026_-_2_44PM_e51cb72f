@@ -1,0 +1,1189 @@
+QUICK MART — PHASE 2
+
+Complete Elaborative Development Prompt
+
+Advanced Product Catalogue, Smart Shopping Experience & Interactive Cart System
+
+You are an expert full-stack developer working on my existing Quick Mart application.
+
+Your assignment is to upgrade Quick Mart into a complete, interactive shopping experience inspired by the product discovery and browsing experience of applications like Blinkit, Instamart, and Amazon.
+
+This is Phase 2 of an existing project.
+
+IMPORTANT: Do not rebuild Phase 1. Extend and improve the existing implementation.
+
+The objective is to transform Quick Mart from a simple predefined-item shopping interface into a comprehensive, category-based product catalogue with a smooth shopping and checkout experience.
+
+The application is primarily a personal shopping and budget-management system. It is NOT intended to become an actual online delivery marketplace.
+
+---
+
+PART 1 — INITIAL PROJECT INSPECTION
+
+Before writing any code, inspect the existing Quick Mart implementation.
+
+Understand:
+
+- Existing Quick Mart page and components.
+- Existing predefined products.
+- Existing product categories.
+- Existing custom-item functionality.
+- Existing recurring-item functionality.
+- Existing shopping cart.
+- Existing quantity management.
+- Existing checkout process.
+- Existing split-payment and ledger integration.
+- Existing transaction management system.
+- Existing budget and balance calculations.
+- Existing Price Trend Tracker integration.
+- Existing database and APIs.
+
+Identify which components can be reused and which require upgrades.
+
+Do not unnecessarily replace existing working functionality.
+
+CRITICAL ARCHITECTURAL INSTRUCTION
+
+USE THE EXISTING TRANSACTION SYSTEM IN MY CODE. DO NOT CREATE A SEPARATE ONE.
+
+All purchases must continue using the existing financial architecture.
+
+When a user checks out:
+
+- The purchase must be recorded through the existing transaction system.
+- The user's budget must update correctly.
+- The existing balance calculations must remain accurate.
+- The Ledger must receive the correct financial records.
+- Existing split-payment functionality must remain available.
+- Audit and reporting features must continue working.
+- Price Trend Tracker must remain compatible.
+
+Never create duplicate transaction records.
+
+---
+
+PART 2 — ADVANCED QUICK MART HOMEPAGE
+
+2.1 Main Objective
+
+Redesign the Quick Mart homepage into an interactive shopping dashboard.
+
+The homepage should make it easy for users to discover products, access categories, search for items, and continue their shopping.
+
+2.2 Main Layout
+
+Include the following sections:
+
+1. Quick Mart heading.
+2. Product search bar.
+3. Shopping cart indicator.
+4. Product category navigation.
+5. Frequently purchased items.
+6. Popular or commonly used items.
+7. Recently purchased items.
+8. Favorite products.
+9. Browse all categories.
+10. Custom item addition.
+
+The layout should feel like a modern shopping application while preserving Quick Mart's existing identity.
+
+2.3 Search Bar
+
+Create a prominent search bar.
+
+Allow users to search by:
+
+- Product name.
+- Product category.
+- Brand, if available.
+- Product keywords.
+
+Examples:
+
+- Milk.
+- Eggs.
+- Rice.
+- Biscuits.
+- Cooking oil.
+- Shampoo.
+- Detergent.
+
+Requirements:
+
+- Search should respond quickly.
+- Display matching products.
+- Show a useful empty state.
+- Support partial-name searches.
+- Allow users to clear searches.
+- Provide useful suggestions where appropriate.
+
+Search must work across the complete product catalogue, not just the currently displayed category.
+
+---
+
+PART 3 — CATEGORY-BASED PRODUCT CATALOGUE
+
+3.1 Overview
+
+This is the most important upgrade in Phase 2.
+
+Currently, Quick Mart has predefined items and custom-item functionality, but users need a much larger and better-organized browsing experience.
+
+Build a proper product catalogue organized into categories and subcategories.
+
+Users should be able to select a category and browse the products available inside it.
+
+3.2 Main Categories
+
+Create an extensible category structure.
+
+Suggested categories:
+
+A. Groceries
+
+- Rice and grains.
+- Pulses and lentils.
+- Flour and atta.
+- Cooking oil.
+- Spices and masalas.
+- Sugar and salt.
+- Dry fruits.
+- Other grocery essentials.
+
+B. Dairy, Bread and Eggs
+
+- Milk.
+- Curd.
+- Paneer.
+- Butter.
+- Cheese.
+- Bread.
+- Eggs.
+
+C. Fruits and Vegetables
+
+- Potatoes.
+- Onions.
+- Tomatoes.
+- Bananas.
+- Apples.
+- Seasonal vegetables.
+- Seasonal fruits.
+
+D. Snacks and Packaged Food
+
+- Chips.
+- Biscuits.
+- Namkeen.
+- Chocolates.
+- Instant noodles.
+- Popcorn.
+- Sweets.
+
+E. Beverages
+
+- Soft drinks.
+- Juices.
+- Bottled water.
+- Tea.
+- Coffee.
+- Energy drinks.
+
+F. Household Essentials
+
+- Detergent.
+- Dishwashing liquid.
+- Floor cleaner.
+- Toilet cleaner.
+- Tissue paper.
+- Garbage bags.
+
+G. Personal Care
+
+- Shampoo.
+- Soap.
+- Toothpaste.
+- Toothbrush.
+- Face wash.
+- Deodorant.
+- Skincare essentials.
+
+H. Electronics and Accessories
+
+- Chargers.
+- Cables.
+- Batteries.
+- Earphones.
+- Small accessories.
+
+I. Kitchen and Home
+
+- Kitchen utensils.
+- Storage containers.
+- Cleaning accessories.
+- Other household products.
+
+J. Bills and Recurring Expenses
+
+- Electricity bill.
+- Internet bill.
+- Mobile recharge.
+- Wi-Fi recharge.
+- Petrol.
+- Rent.
+- Subscriptions.
+- Other recurring expenses.
+
+These categories are starting suggestions.
+
+Users should be able to add their own categories and subcategories.
+
+Do not hardcode the entire category structure in a way that prevents future expansion.
+
+3.3 Category Navigation
+
+When a user clicks a category:
+
+- Open the selected category.
+- Display its subcategories.
+- Show products belonging to that category.
+- Display product counts where useful.
+- Allow users to move between categories.
+- Preserve search and filter functionality.
+
+For desktop, a sidebar or structured category navigation may be used.
+
+For mobile, use a compact grid, horizontal category navigation, or a suitable mobile-friendly layout.
+
+3.4 Category Management
+
+Allow users to:
+
+- Create custom categories.
+- Edit category names.
+- Delete categories where safe.
+- Create subcategories.
+- Assign products to categories.
+- Change product categories.
+
+Deleting a category must not silently delete historical transactions or break existing product records.
+
+Use appropriate confirmation and reassignment behaviour.
+
+---
+
+PART 4 — PRODUCT CATALOGUE AND PRODUCT CARDS
+
+4.1 Product Card Design
+
+Create modern product cards similar to shopping applications.
+
+Every product card should support:
+
+- Product image.
+- Product name.
+- Brand, where available.
+- Product size or quantity.
+- Price.
+- Unit information.
+- Favorite button.
+- Add-to-cart button.
+- Quantity selector.
+
+Example:
+
+Product: Amul Milk
+
+Size: 500 ml
+
+Price: ₹30
+
+Action: ADD
+
+Once added, the ADD button should change into a quantity selector.
+
+Example:
+
+[-] 1 [+]
+
+Users should be able to change quantities without reopening the product.
+
+4.2 Product Information
+
+Support product information such as:
+
+- Product name.
+- Brand.
+- Category.
+- Subcategory.
+- Description.
+- Product image.
+- Unit.
+- Pack size.
+- Price.
+- Optional tags.
+- Optional product identifier.
+
+Do not require every field for every product.
+
+For example, fresh vegetables may be sold by kilogram, whereas packaged products may have fixed pack sizes.
+
+4.3 Product Images
+
+The current emoji-based presentation should be upgraded.
+
+Use actual product images wherever possible.
+
+Requirements:
+
+- Support product image URLs or locally stored image assets.
+- Use suitable image dimensions.
+- Maintain consistent image containers.
+- Use appropriate fallback images.
+- Avoid broken-image placeholders.
+- Optimize images for performance.
+
+Do not depend entirely on emojis as product illustrations.
+
+If image assets are unavailable, implement a graceful fallback system.
+
+Do not scrape unauthorized commercial product databases or assume access to live retailer APIs.
+
+4.4 Product Management
+
+Users should be able to:
+
+- Add custom products.
+- Edit product information.
+- Change prices.
+- Change quantities or units.
+- Change categories.
+- Update images.
+- Remove products from their personal catalogue.
+
+Preserve the existing custom-item feature.
+
+A user should never lose previously created custom items during this upgrade.
+
+---
+
+PART 5 — PRODUCT VARIANTS AND QUANTITY MANAGEMENT
+
+5.1 Overview
+
+Support different sizes and variants of similar products.
+
+Examples:
+
+Milk:
+
+- 500 ml.
+- 1 litre.
+- 2 litres.
+
+Rice:
+
+- 1 kg.
+- 5 kg.
+- 10 kg.
+
+Biscuits:
+
+- Small pack.
+- Family pack.
+
+Users should be able to select the appropriate variant.
+
+5.2 Requirements
+
+- Support different product sizes.
+- Support different prices for variants.
+- Display the selected variant clearly.
+- Add the correct variant to the cart.
+- Calculate the correct total.
+- Preserve variant information in the final transaction.
+
+Do not treat different package sizes as identical products when their prices or quantities differ.
+
+5.3 Quantity Controls
+
+Allow users to increase and decrease quantities.
+
+Handle:
+
+- Zero quantity.
+- Negative quantity prevention.
+- Decimal quantities where relevant, such as vegetables sold by weight.
+- Different units.
+- Correct price multiplication.
+
+Example:
+
+Rice: ₹60/kg.
+
+Quantity: 2.5 kg.
+
+Total: ₹150.
+
+All calculations must be accurate.
+
+---
+
+PART 6 — SMART PRODUCT SEARCH, FILTERS AND SORTING
+
+Build a complete product discovery system.
+
+6.1 Filters
+
+Allow users to filter products by:
+
+- Category.
+- Subcategory.
+- Brand.
+- Price range.
+- Product type.
+- Favorites.
+- Recently purchased items.
+
+Only show filters supported by actual product data.
+
+6.2 Sorting
+
+Support:
+
+- Price: Low to High.
+- Price: High to Low.
+- Recently Added.
+- Alphabetical.
+- Frequently Purchased.
+- Most Recently Purchased.
+
+Sorting must work together with search and category filters.
+
+6.3 Search Results
+
+Display:
+
+- Product image.
+- Product name.
+- Price.
+- Available size.
+- Quick-add button.
+- Favorite action.
+
+Users should be able to add products directly from search results.
+
+Do not force users to open a separate product page for ordinary products.
+
+---
+
+PART 7 — FREQUENTLY PURCHASED AND RECENTLY PURCHASED
+
+7.1 Frequently Purchased
+
+Create a personalized section that identifies products the user purchases repeatedly.
+
+Examples:
+
+- Milk.
+- Eggs.
+- Bread.
+- Rice.
+- Petrol.
+- Other recurring purchases.
+
+Use actual purchase history.
+
+Display:
+
+- Product name.
+- Last purchase date.
+- Typical purchase frequency, where enough history exists.
+- Last recorded price.
+- Quick-add action.
+
+7.2 Recently Purchased
+
+Show products from recent completed checkouts.
+
+Allow users to add them to their current cart again.
+
+7.3 Quick Reorder
+
+Provide a convenient way to add previously purchased products back to the cart.
+
+Important:
+
+- Use the current saved product price or ask the user to confirm if the price is outdated.
+- Do not automatically create a transaction.
+- Reordering must only add products to the cart.
+- Checkout must still require user confirmation.
+
+---
+
+PART 8 — FAVORITES AND SAVED PRODUCTS
+
+Create a favorites feature.
+
+Users should be able to:
+
+- Mark products as favorites.
+- Remove favorites.
+- View all favorites.
+- Add favorites directly to the cart.
+- Change quantities before adding.
+
+Persist favorites across sessions.
+
+Favorites should belong to the appropriate user.
+
+If the existing architecture supports local-only products or custom items, ensure they can also be favorited.
+
+---
+
+PART 9 — ADVANCED SHOPPING CART
+
+9.1 Overview
+
+Upgrade the existing cart into a complete shopping cart experience.
+
+Do not create another cart system if Phase 1 already has one.
+
+Extend the existing cart functionality.
+
+9.2 Cart Display
+
+Show:
+
+- Product image.
+- Product name.
+- Selected variant.
+- Unit price.
+- Quantity.
+- Item total.
+- Remove option.
+
+9.3 Cart Calculations
+
+Display:
+
+- Total number of items.
+- Total quantity.
+- Total product cost.
+- Any applicable adjustments supported by the existing application.
+- Final estimated total.
+
+All totals must update immediately when quantities change.
+
+9.4 Cart Interaction
+
+Users should be able to:
+
+- Increase quantities.
+- Decrease quantities.
+- Remove products.
+- Continue shopping.
+- Add more products.
+- Clear the cart after confirmation.
+- Review the estimated total.
+
+9.5 Persistent Cart
+
+The cart should persist appropriately when the user:
+
+- Refreshes the page.
+- Navigates between categories.
+- Leaves and returns to Quick Mart.
+- Closes and reopens the application.
+
+Use the existing persistence architecture.
+
+Do not create duplicate cart records or cause the same items to appear twice after refreshing.
+
+---
+
+PART 10 — CHECKOUT AND FINANCIAL INTEGRATION
+
+This is an extremely important section.
+
+The new catalogue must connect to the existing checkout and financial systems.
+
+10.1 Checkout Review
+
+Before checkout, display:
+
+- All selected products.
+- Quantities.
+- Product prices.
+- Item totals.
+- Grand total.
+
+Require explicit user confirmation.
+
+10.2 Existing Split Functionality
+
+Preserve the existing feature that allows users to split purchases with named people.
+
+Users should continue to be able to:
+
+- Select a purchase.
+- Split the amount.
+- Assign portions to named people.
+- Track who owes whom.
+- Review their outstanding balances.
+
+Do not remove or replace the existing Ledger integration.
+
+If appropriate, allow splitting the entire cart or selected items, while preserving the existing supported split workflow.
+
+10.3 Transaction Integration
+
+After successful checkout:
+
+- Create the appropriate record using the existing transaction system.
+- Update the existing budget.
+- Update the remaining balance.
+- Update the Ledger where applicable.
+- Update spending by category.
+- Make the purchase available to Audit.
+- Make relevant product purchase data available to Price Trend Tracker.
+- Update frequently purchased product statistics.
+
+Ensure one checkout does not generate duplicate transactions.
+
+10.4 Checkout Safety
+
+Do not:
+
+- Automatically deduct money merely because a product was added to the cart.
+- Create transactions before confirmation.
+- Count the same checkout twice.
+- Bypass existing split or ledger logic.
+
+Checkout must remain the single point where the purchase becomes a completed financial transaction.
+
+---
+
+PART 11 — CUSTOM ITEM AND RECURRING ITEM INTEGRATION
+
+Phase 1 already supports custom and recurring items.
+
+Preserve these features.
+
+11.1 Custom Items
+
+Users must still be able to:
+
+- Create custom products.
+- Enter custom prices.
+- Choose categories.
+- Specify units.
+- Add them directly to the cart.
+- Edit existing custom items.
+
+Custom products should appear in the appropriate catalogue categories when possible.
+
+11.2 Recurring Items
+
+Preserve existing recurring-item functionality.
+
+Allow recurring products and expenses to be conveniently accessed from the shopping homepage.
+
+Examples:
+
+- Milk.
+- Eggs.
+- Petrol.
+- Internet bills.
+- Electricity bills.
+- Mobile recharge.
+
+Recurring bills should remain clearly distinguishable from physical shopping products.
+
+Do not incorrectly treat a recurring bill as an ordinary grocery product.
+
+11.3 Recurring Item Reminders
+
+If compatible with the existing architecture, allow users to see upcoming recurring expenses and quickly add them when due.
+
+Do not automatically create transactions without user confirmation.
+
+---
+
+PART 12 — PRICE TREND TRACKER INTEGRATION
+
+Quick Mart already has a Price Trend Tracker.
+
+The new catalogue should integrate with it.
+
+For products with a consistent identity:
+
+- Associate purchases with the correct product.
+- Preserve historical prices.
+- Record purchase dates.
+- Track price changes.
+- Show the latest recorded price.
+- Make historical price information accessible from product details.
+
+For example:
+
+Milk:
+
+- Previous purchase: ₹28.
+- Current purchase: ₹30.
+- Recorded price increase: ₹2.
+
+Important:
+
+Product matching must be reliable.
+
+Do not combine unrelated products merely because their names are similar.
+
+For example, different brands or different package sizes should not automatically share the same price history.
+
+Use product identifiers or normalized product and variant information wherever appropriate.
+
+---
+
+PART 13 — PRODUCT DETAILS PAGE
+
+Provide a product details view where additional information is useful.
+
+Display:
+
+- Product image.
+- Product name.
+- Brand.
+- Category.
+- Description.
+- Unit or pack size.
+- Current saved price.
+- Price history, if available.
+- Favorite action.
+- Quantity selector.
+- Add-to-cart action.
+
+This page should be optional for ordinary quick purchases.
+
+Users should still be able to add products directly from product cards.
+
+---
+
+PART 14 — QUICK MART PERSONALIZATION
+
+Make the shopping experience more personalized using existing purchase data.
+
+Possible sections:
+
+- Buy Again.
+- Your Favorites.
+- Frequently Purchased.
+- Recently Purchased.
+- Your Regular Essentials.
+- Custom Products.
+- Recently Added Products.
+
+Do not generate fake recommendations.
+
+Use actual purchase history and user preferences.
+
+If there is insufficient data, display general catalogue categories instead.
+
+---
+
+PART 15 — USER INTERFACE AND DESIGN
+
+15.1 Design Objective
+
+Quick Mart should now feel like a modern, well-organized shopping application.
+
+Take inspiration from the browsing experience of Blinkit, Instamart and Amazon.
+
+However, do not blindly copy their interfaces.
+
+Maintain the existing Quick Mart identity.
+
+15.2 Homepage Layout
+
+Suggested arrangement:
+
+1. Quick Mart header.
+2. Search bar.
+3. Cart indicator.
+4. Category grid.
+5. Frequently purchased products.
+6. Favorites.
+7. Recently purchased.
+8. Popular catalogue sections.
+9. Custom-item entry.
+
+15.3 Category Page
+
+Suggested arrangement:
+
+1. Category heading.
+2. Subcategory navigation.
+3. Search within category.
+4. Sort and filter controls.
+5. Product grid.
+6. Floating cart summary.
+
+15.4 Product Card Design
+
+Product cards should be:
+
+- Consistent.
+- Compact.
+- Image-focused.
+- Easy to scan.
+- Mobile-friendly.
+
+Ensure prices, sizes and add-to-cart controls are clearly visible.
+
+15.5 Shopping Cart Design
+
+Use a clear cart layout with:
+
+- Item list.
+- Quantity controls.
+- Price calculations.
+- Total amount.
+- Checkout action.
+
+15.6 Responsive Design
+
+Make the entire Quick Mart experience work properly on:
+
+- Mobile.
+- Tablet.
+- Desktop.
+
+Pay particular attention to product grids, category navigation, cart controls and search.
+
+---
+
+PART 16 — DATA STRUCTURE AND BACKEND REQUIREMENTS
+
+Before making schema changes, inspect the existing database.
+
+Potential entities or extensions may include:
+
+- Product catalogue entries.
+- Product variants.
+- Product images.
+- User favorites.
+- Purchase frequency metadata.
+- Product identifiers.
+- Category and subcategory relationships.
+
+Adapt the implementation to the existing architecture.
+
+Do not blindly create every entity listed above.
+
+Data Integrity Requirements
+
+- Preserve existing custom products.
+- Preserve existing recurring items.
+- Preserve transaction history.
+- Preserve historical price records.
+- Associate user-specific data with the correct user.
+- Prevent duplicate products where possible.
+- Handle product deletion without destroying historical transactions.
+- Ensure product price updates do not rewrite old purchase records.
+- Maintain consistent currency and quantity calculations.
+
+Historical transactions must retain the actual purchase price, even when the current catalogue price changes.
+
+---
+
+PART 17 — PERFORMANCE AND RELIABILITY
+
+Ensure:
+
+- Fast product search.
+- Efficient category loading.
+- Optimized product images.
+- Smooth cart updates.
+- Correct persistent state.
+- No duplicate cart entries.
+- No unnecessary repeated database requests.
+- Proper loading states.
+- Proper empty states.
+- Graceful error handling.
+
+The catalogue should remain responsive even when the number of products grows significantly.
+
+---
+
+PART 18 — TESTING REQUIREMENTS
+
+Test the entire Phase 2 implementation.
+
+Product Catalogue
+
+- Category navigation.
+- Subcategory navigation.
+- Product browsing.
+- Product images.
+- Product editing.
+- Custom product preservation.
+
+Search and Filters
+
+- Partial-name search.
+- Category filtering.
+- Price filtering.
+- Sorting.
+- Empty search results.
+
+Product Variants
+
+- Different sizes.
+- Different prices.
+- Correct variant selection.
+- Accurate quantity calculations.
+
+Favorites and Purchase History
+
+- Adding favorites.
+- Removing favorites.
+- Recently purchased products.
+- Frequently purchased products.
+- Quick reorder.
+
+Cart
+
+- Adding products.
+- Increasing quantities.
+- Decreasing quantities.
+- Removing items.
+- Cart persistence.
+- Correct total calculations.
+
+Checkout
+
+- Checkout confirmation.
+- Transaction creation.
+- Budget updates.
+- Balance updates.
+- Ledger integration.
+- Split functionality.
+- Audit integration.
+- Price Trend Tracker integration.
+
+Existing Features
+
+Verify that:
+
+- Custom items still work.
+- Recurring items still work.
+- Quick Mart Phase 1 functionality remains intact.
+- War Room continues working.
+- Radar Room continues working.
+- Existing financial records remain correct.
+
+---
+
+PART 19 — IMPLEMENTATION WORKFLOW
+
+Follow this sequence.
+
+PHASE 1 — CODEBASE AUDIT
+
+Inspect the existing Quick Mart application.
+
+Understand all existing shopping and financial functionality.
+
+Prepare a report identifying:
+
+- Reusable components.
+- Existing catalogue structure.
+- Existing cart architecture.
+- Required upgrades.
+- Required database changes.
+- Potential integration risks.
+
+Do not begin rebuilding Phase 1.
+
+PHASE 2 — CATALOGUE FOUNDATION
+
+Implement:
+
+- Advanced homepage.
+- Category navigation.
+- Subcategories.
+- Product catalogue.
+- Product cards.
+- Product images.
+- Product variants.
+
+PHASE 3 — DISCOVERY SYSTEM
+
+Implement:
+
+- Search.
+- Filters.
+- Sorting.
+- Product details.
+- Favorites.
+- Recently purchased.
+- Frequently purchased.
+
+PHASE 4 — CART UPGRADE
+
+Extend the existing cart.
+
+Implement:
+
+- Quantity management.
+- Cart persistence.
+- Cart summaries.
+- Correct price calculations.
+- Improved shopping interactions.
+
+PHASE 5 — CHECKOUT INTEGRATION
+
+Integrate the catalogue with:
+
+- Existing transaction system.
+- Existing budget.
+- Existing balance.
+- Existing Ledger.
+- Existing split functionality.
+- Existing Audit.
+- Existing Price Trend Tracker.
+
+PHASE 6 — PERSONALIZATION AND POLISH
+
+Complete:
+
+- Buy Again.
+- Favorite products.
+- Frequently purchased products.
+- Responsive UI.
+- Loading states.
+- Empty states.
+- Error handling.
+
+PHASE 7 — TESTING
+
+Test every new feature.
+
+Check all existing application modules for regressions.
+
+Fix issues before declaring the phase complete.
+
+PHASE 8 — GITHUB DELIVERY
+
+Once the implementation is stable:
+
+- Review changed files.
+- Check for accidental secrets.
+- Run available tests.
+- Commit completed work.
+- Push to the existing GitHub repository.
+- Confirm the push succeeded.
+
+Use descriptive commit messages.
+
+Do not overwrite unrelated uncommitted work.
+
+---
+
+PART 20 — STRICT DEVELOPMENT RULES
+
+1. Do not rebuild Quick Mart Phase 1.
+2. Extend the existing implementation.
+3. Reuse the existing cart architecture.
+4. Reuse the existing transaction system.
+5. Do not create a separate financial database.
+6. Do not duplicate transactions.
+7. Preserve custom items.
+8. Preserve recurring items.
+9. Preserve split and Ledger functionality.
+10. Preserve historical price records.
+11. Do not create fake product purchase histories.
+12. Do not assume access to external retailer APIs.
+13. Do not make actual online purchases or payments.
+14. Do not introduce unnecessary dependencies.
+15. Maintain existing application security.
+16. Test all integrations before completion.
+17. Preserve War Room and Radar Room functionality.
+
+If a feature requires infrastructure that does not exist, explain the limitation and implement a compatible solution rather than pretending it works.
+
+---
+
+PART 21 — FINAL ACCEPTANCE CRITERIA
+
+Quick Mart Phase 2 will be considered complete only when:
+
+- The advanced shopping homepage works.
+- Categories and subcategories work.
+- The product catalogue is browsable.
+- Product images are supported.
+- Product variants work.
+- Product search works.
+- Filters and sorting work.
+- Favorites work.
+- Frequently purchased products work.
+- Recently purchased products work.
+- Quick reorder works.
+- Custom products remain supported.
+- Recurring items remain supported.
+- The cart is fully functional.
+- Cart persistence works.
+- Checkout works.
+- Existing split functionality works.
+- Transactions are recorded correctly.
+- Budget and balance update correctly.
+- Ledger integration works.
+- Audit integration works.
+- Price Trend Tracker integration works.
+- Existing modules remain functional.
+- Mobile and desktop interfaces work.
+- Tests pass.
+- Changes are committed and pushed to GitHub.
+
+FINAL DELIVERABLE REPORT
+
+After completion, provide:
+
+1. Summary of Phase 2.
+2. Features implemented.
+3. Frontend files created or modified.
+4. Backend files created or modified.
+5. Database changes.
+6. APIs or services introduced.
+7. Transaction and cart integration details.
+8. Testing results.
+9. Known limitations.
+10. Git commit information.
+11. GitHub push confirmation.
+
+---
+
+FINAL STOPPING INSTRUCTION
+
+Your assignment is to complete QUICK MART PHASE 2 ONLY.
+
+Do not rebuild War Room.
+
+Do not rebuild Radar Room.
+
+Do not create another transaction system.
+
+Do not begin unrelated features.
+
+Once Phase 2 has been completely implemented, tested, integrated, committed and pushed:
+
+1. Provide the final implementation report.
+2. Confirm all existing functionality remains intact.
+3. List any remaining bugs or limitations.
+4. Confirm GitHub push status.
+
+Then STOP and wait for my next instruction.
+
+THE FINAL OBJECTIVE:
+
+Transform Quick Mart into a polished, interactive, category-based personal shopping experience where users can browse products, discover items, manage quantities, maintain favorites, reorder essentials, and complete purchases while keeping every financial record synchronized with their existing Budget Planner system.

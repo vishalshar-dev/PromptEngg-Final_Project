@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { History, RotateCcw, Users, Calendar, Check, ShoppingBag } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
-import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
+import { formatCurrencyExact, formatQuantity, getCategoryStyle } from '../../utils/categoryStyles';
 
 interface PurchaseHistoryProps {
   onRepeated?: () => void;
@@ -73,7 +73,7 @@ export function PurchaseHistory({ onRepeated }: PurchaseHistoryProps) {
                 </div>
                 <p className="text-[11px] text-zinc-500 mt-0.5">
                   {session.items.length} line item{session.items.length === 1 ? '' : 's'} ·{' '}
-                  {session.items.reduce((s, i) => s + i.quantity, 0)} total units
+                  {formatQuantity(session.items.reduce((s, i) => s + i.quantity, 0))} total units
                 </p>
               </div>
 
@@ -91,18 +91,19 @@ export function PurchaseHistory({ onRepeated }: PurchaseHistoryProps) {
 
             {/* Item Breakdown */}
             <div className="bg-ink-900/60 rounded-xl p-2.5 space-y-1.5 border border-white/[0.04]">
-              {session.items.map((item) => (
+              {session.items.map((item, idx) => (
                 <div
-                  key={`${session.id}-${item.itemId}`}
+                  key={`${session.id}-${item.itemId}-${item.variantId ?? idx}`}
                   className="flex items-center justify-between text-xs gap-2"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <ShoppingBag className="w-3 h-3 text-zinc-500 flex-shrink-0" />
                     <span className="text-zinc-200 font-medium truncate">
                       {item.name}
+                      {item.variantLabel ? ` · ${item.variantLabel}` : ''}
                     </span>
                     <span className="text-[10px] font-mono text-zinc-500 whitespace-nowrap">
-                      {item.quantity} × ₹{formatCurrencyExact(item.price)}
+                      {formatQuantity(item.quantity)} × ₹{formatCurrencyExact(item.price)}
                     </span>
                   </div>
                   <span className="font-mono font-bold text-zinc-300 tabular-nums whitespace-nowrap">

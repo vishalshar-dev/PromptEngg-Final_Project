@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Heart,
@@ -12,14 +12,23 @@ import {
   Minus as FlatIcon,
   ShoppingBag,
   Check,
+  Tag,
 } from 'lucide-react';
 import {
   useAppStore,
   type CartItem,
   type RecurrenceFrequency,
 } from '../../store/useStore';
-import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
-import { computeUnitPriceStats, toLocalDateKey } from '../../utils/martEngine';
+import { formatCurrencyExact, formatQuantity, getCategoryStyle } from '../../utils/categoryStyles';
+import {
+  computeUnitPriceStats,
+  getActiveVariant,
+  getDefaultQuantityStep,
+  getItemVariantCartQty,
+  getPriceHistoryPointsForItem,
+  roundQuantity,
+  toLocalDateKey,
+} from '../../utils/martEngine';
 import { ProductVisual } from './ProductVisual';
 
 interface ProductDetailsProps {
@@ -37,21 +46,34 @@ export function ProductDetails({
   const priceHistory = useAppStore((s) => s.priceHistory);
   const addToCart = useAppStore((s) => s.addToCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
+  const selectProductVariant = useAppStore((s) => s.selectProductVariant);
   const toggleFavourite = useAppStore((s) => s.toggleFavourite);
   const setProductRecurrence = useAppStore((s) => s.setProductRecurrence);
   const removeProduct = useAppStore((s) => s.removeProduct);
-
-  const [qtyToAdd, setQtyToAdd] = useState(1);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const liveItem = useAppStore((s) =>
     item ? s.items.find((i) => i.id === item.id) ?? item : null
   );
 
+  const defaultStep = liveItem ? getDefaultQuantityStep(liveItem) : 1;
+  const [qtyToAdd, setQtyToAdd] = useState(defaultStep);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    setConfirmDelete(false);
+    setQtyToAdd(liveItem ? getDefaultQuantityStep(liveItem) : 1);
+  }, [liveItem?.id]);
+
+  const activeVariant = liveItem ? getActiveVariant(liveItem) : null;
+  const displayPrice = activeVariant ? activeVariant.price : liveItem?.price ?? 0;
+  const displayUnit = activeVariant ? activeVariant.unit : liveItem?.unit || '1 unit';
+  const activeCartQty = liveItem ? getItemVariantCartQty(liveItem, activeVariant?.id) : 0;
+
   const stats = useMemo(() => {
     if (!liveItem) return null;
-    return computeUnitPriceStats(priceHistory[liveItem.id] ?? [], liveItem.unit);
-  }, [liveItem, priceHistory]);
+    const points = getPriceHistoryPointsForItem(priceHistory, liveItem, activeVariant?.id);
+    return computeUnitPriceStats(points, displayUnit);
+  }, [liveItem, priceHistory, activeVariant?.id, displayUnit]);
 
   if (!liveItem) return null;
 
@@ -71,8 +93,8 @@ export function ProductDetails({
   };
 
   const handleAddClick = () => {
-    addToCart(liveItem, qtyToAdd);
-    setQtyToAdd(1);
+    addToCart(liveItem, qtyToAdd, activeVariant?.id);
+    setQtyToAdd(defaultStep);
     onClose();
   };
 
@@ -109,7 +131,7 @@ export function ProductDetails({
           <button
             type="button"
             onClick={() => toggleFavourite(liveItem.id)}
-            aria-label="Toggle favourite"
+            aria-label={liveItem.isFavourite ? 'Remove from favourites' : 'Add to favourites'}
             className={`absolute top-6 left-6 w-9 h-9 rounded-xl backdrop-blur-md border flex items-center justify-center ${
               liveItem.isFavourite
                 ? 'bg-rose-500/25 border-rose-400/50 text-rose-300'
@@ -126,42 +148,104 @@ export function ProductDetails({
         {/* Body */}
         <div className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {liveItem.brand && (
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/[0.08] text-zinc-200 border border-white/10">
+                    {liveItem.brand}
+                  </span>
+                )}
                 <span
                   className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${style.bg} ${style.text} border ${style.border}`}
                 >
                   {liveItem.category}
                 </span>
-                <span className="text-[11px] font-mono font-bold text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.06]">
-                  {liveItem.unit || '1 unit'}
-                </span>
-                {liveItem.productType && (
-                  <span className="text-[11px] font-medium text-zinc-500">
-                    · {liveItem.productType}
+                {liveItem.subcategory && (
+                  <span className="text-[10px] font-bold text-zinc-300 bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.06]">
+                    {liveItem.subcategory}
                   </span>
                 )}
+                <span className="text-[10px] font-mono font-bold text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.06]">
+                  {displayUnit}
+                </span>
               </div>
               <h3 className="text-xl font-extrabold text-white mt-2">
                 {liveItem.name}
               </h3>
+              {liveItem.description && (
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  {liveItem.description}
+                </p>
+              )}
+              {liveItem.tags && liveItem.tags.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  <Tag className="w-3 h-3 text-zinc-500" />
+                  {liveItem.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-400 border border-white/[0.05]"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <p className="text-2xl font-extrabold font-mono text-brand-400 tabular-nums">
-                ₹{formatCurrencyExact(liveItem.price)}
+                ₹{formatCurrencyExact(displayPrice)}
               </p>
               <p className="text-[10px] text-zinc-500 font-mono">
-                per {liveItem.unit || 'unit'}
+                per {displayUnit}
               </p>
             </div>
           </div>
 
-          {/* Unit-Compatible Price Summary */}
+          {/* Interactive Pack Size / Variant Picker */}
+          {liveItem.variants && liveItem.variants.length > 0 && (
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2">
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">
+                Select Pack Size / Variant
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {liveItem.variants.map((variant) => {
+                  const isSelected = activeVariant?.id === variant.id;
+                  const varQty = getItemVariantCartQty(liveItem, variant.id);
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      onClick={() => selectProductVariant(liveItem.id, variant.id)}
+                      className={`px-3 py-2 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'bg-brand-500/15 border-brand-500/50 text-white'
+                          : 'bg-ink-900/70 border-white/[0.08] text-zinc-300 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-extrabold">{variant.label}</span>
+                        {varQty > 0 && (
+                          <span className="text-[10px] font-mono font-bold text-brand-400">
+                            {formatQuantity(varQty)} in cart
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs font-mono font-bold text-brand-400 mt-0.5">
+                        ₹{formatCurrencyExact(variant.price)}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Unit-Compatible & Variant-Isolated Price Summary */}
           {stats && stats.compatiblePoints.length > 0 && (
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">
-                  Price History ({liveItem.unit || '1 unit'})
+                  Price History ({displayUnit})
                 </p>
                 <div className="flex items-center gap-1 text-xs font-mono font-bold">
                   {stats.deltaFromAvg < -0.5 ? (
@@ -300,7 +384,7 @@ export function ProductDetails({
                   className="px-3 py-2 rounded-xl bg-red-500 text-xs font-extrabold text-white flex items-center gap-1"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  Confirm Delete
+                  Confirm Remove
                 </button>
                 <button
                   type="button"
@@ -312,26 +396,33 @@ export function ProductDetails({
               </div>
             )}
           </div>
+          {confirmDelete && (
+            <p className="text-[10px] text-zinc-400">
+              Removing from your personal catalogue preserves all past financial transactions & audit logs.
+            </p>
+          )}
         </div>
 
         {/* Bottom Action Bar */}
         <div className="p-4 border-t border-white/[0.08] bg-ink-950/60 flex items-center gap-3">
-          {liveItem.quantity > 0 ? (
+          {activeCartQty > 0 ? (
             <div className="flex items-center justify-between w-full gap-3">
               <div className="flex items-center gap-2 bg-ink-900 rounded-xl p-1 border border-white/[0.08]">
                 <button
                   type="button"
-                  onClick={() => updateQuantity(liveItem.id, -1)}
+                  onClick={() => updateQuantity(liveItem.id, -defaultStep, activeVariant?.id)}
+                  aria-label="Decrease quantity"
                   className="w-9 h-9 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-white"
                 >
                   <Minus className="w-4 h-4" strokeWidth={3} />
                 </button>
-                <span className="w-8 text-center font-mono font-extrabold text-white">
-                  {liveItem.quantity}
+                <span className="min-w-[2.25rem] px-1 text-center font-mono font-extrabold text-white">
+                  {formatQuantity(activeCartQty)}
                 </span>
                 <button
                   type="button"
-                  onClick={() => updateQuantity(liveItem.id, 1)}
+                  onClick={() => updateQuantity(liveItem.id, defaultStep, activeVariant?.id)}
+                  aria-label="Increase quantity"
                   className="w-9 h-9 rounded-lg bg-brand-500 text-ink-950 flex items-center justify-center"
                 >
                   <Plus className="w-4 h-4" strokeWidth={3} />
@@ -342,7 +433,7 @@ export function ProductDetails({
                 onClick={onClose}
                 className="flex-1 bg-brand-500 hover:bg-brand-400 text-ink-950 py-3 rounded-xl text-sm font-extrabold"
               >
-                Done · ₹{formatCurrencyExact(liveItem.price * liveItem.quantity)} in Cart
+                Done · ₹{formatCurrencyExact(displayPrice * activeCartQty)} in Cart
               </button>
             </div>
           ) : (
@@ -350,17 +441,21 @@ export function ProductDetails({
               <div className="flex items-center gap-1.5 bg-ink-900 rounded-xl p-1 border border-white/[0.08]">
                 <button
                   type="button"
-                  onClick={() => setQtyToAdd((q) => Math.max(1, q - 1))}
+                  onClick={() =>
+                    setQtyToAdd((q) => Math.max(defaultStep, roundQuantity(q - defaultStep)))
+                  }
+                  aria-label="Decrease add quantity"
                   className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center text-white"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-7 text-center font-mono font-extrabold text-sm text-white">
-                  {qtyToAdd}
+                <span className="min-w-[2rem] px-1 text-center font-mono font-extrabold text-sm text-white">
+                  {formatQuantity(qtyToAdd)}
                 </span>
                 <button
                   type="button"
-                  onClick={() => setQtyToAdd((q) => q + 1)}
+                  onClick={() => setQtyToAdd((q) => roundQuantity(q + defaultStep))}
+                  aria-label="Increase add quantity"
                   className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center text-white"
                 >
                   <Plus className="w-4 h-4" />
@@ -372,7 +467,7 @@ export function ProductDetails({
                 className="flex-1 bg-brand-500 hover:bg-brand-400 text-ink-950 py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2"
               >
                 <ShoppingBag className="w-4 h-4" strokeWidth={2.5} />
-                Add to Cart · ₹{formatCurrencyExact(liveItem.price * qtyToAdd)}
+                Add{activeVariant ? ` (${activeVariant.label})` : ''} · ₹{formatCurrencyExact(displayPrice * qtyToAdd)}
               </button>
             </>
           )}

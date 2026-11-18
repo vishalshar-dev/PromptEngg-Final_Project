@@ -115,6 +115,7 @@ const categoryAccentMap: Record<string, string> = {
   'Meat & Eggs': 'rose',
   'Personal Care': 'pink',
   'Household Essentials': 'teal',
+  'Kitchen & Home': 'cyan',
   'Cleaning Supplies': 'cyan',
   Electronics: 'indigo',
   'Clothing & Accessories': 'violet',
@@ -124,6 +125,7 @@ const categoryAccentMap: Record<string, string> = {
   'Electricity & Utilities': 'yellow',
   'Fuel & Transportation': 'orange',
   Entertainment: 'violet',
+  Beverages: 'amber',
   'Other Expenses': 'slate',
   // Legacy names
   Junk: 'orange',
@@ -151,6 +153,11 @@ export function formatCurrencyExact(amount: number): string {
     minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   }).format(rounded);
+}
+
+export function formatQuantity(qty: number): string {
+  const safe = Number.isFinite(qty) ? Math.max(0, Math.round(qty * 100) / 100) : 0;
+  return Number.isInteger(safe) ? String(safe) : String(Number(safe.toFixed(2)));
 }
 
 export function formatCompact(amount: number): string {

@@ -1,8 +1,12 @@
 import type {
   CartItem,
+  CartLineItem,
   CategoryConfig,
+  PriceHistory,
   PricePoint,
   PriceSource,
+  ProductVariant,
+  PurchaseSession,
   RecurrenceConfig,
   Transaction,
 } from '../types/models';
@@ -116,6 +120,160 @@ function normalizeContainerToken(token: string): string {
   return token;
 }
 
+export function roundQuantity(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.round(value * 100) / 100);
+}
+
+export function getDefaultQuantityStep(
+  item: Pick<CartItem, 'allowDecimalQuantity' | 'quantityStep'>
+): number {
+  if (typeof item.quantityStep === 'number' && Number.isFinite(item.quantityStep) && item.quantityStep > 0) {
+    return roundQuantity(item.quantityStep);
+  }
+  return item.allowDecimalQuantity ? 0.5 : 1;
+}
+
+export function getActiveVariant(
+  item: Pick<CartItem, 'variants' | 'selectedVariantId'>,
+  variantId?: string | null
+): ProductVariant | null {
+  if (!item.variants || item.variants.length === 0) return null;
+  const targetId = variantId ?? item.selectedVariantId;
+  if (targetId) {
+    const found = item.variants.find((v) => v.id === targetId);
+    if (found) return found;
+  }
+  return item.variants[0];
+}
+
+export function getEffectivePriceAndUnit(
+  item: CartItem,
+  variantId?: string | null
+): { price: number; unit: string; variant: ProductVariant | null } {
+  const variant = getActiveVariant(item, variantId);
+  if (variant) {
+    return {
+      price: variant.price,
+      unit: variant.unit,
+      variant,
+    };
+  }
+  return {
+    price: item.price,
+    unit: item.unit || '1 unit',
+    variant: null,
+  };
+}
+
+export function getItemVariantCartQty(item: CartItem, variantId?: string | null): number {
+  if (!item.variants || item.variants.length === 0) {
+    return roundQuantity(item.quantity);
+  }
+  const active = getActiveVariant(item, variantId);
+  if (!active) return roundQuantity(item.quantity);
+  if (item.variantQuantities && active.id in item.variantQuantities) {
+    return roundQuantity(item.variantQuantities[active.id] ?? 0);
+  }
+  // Backward compat if an item with variants has quantity > 0 without variantQuantities map
+  if (
+    item.quantity > 0 &&
+    (!item.variantQuantities || Object.keys(item.variantQuantities).length === 0) &&
+    active.id === (item.selectedVariantId ?? item.variants[0].id)
+  ) {
+    return roundQuantity(item.quantity);
+  }
+  return 0;
+}
+
+export function expandCartLines(items: CartItem[]): CartLineItem[] {
+  const lines: CartLineItem[] = [];
+  for (const item of items) {
+    if (item.variants && item.variants.length > 0 && item.variantQuantities) {
+      let matchedAnyVariant = false;
+      for (const variant of item.variants) {
+        const qty = roundQuantity(item.variantQuantities[variant.id] ?? 0);
+        if (qty > 0) {
+          matchedAnyVariant = true;
+          lines.push({
+            lineKey: `${item.id}::${variant.id}`,
+            item,
+            variantId: variant.id,
+            variantLabel: variant.label,
+            unit: variant.unit,
+            price: variant.price,
+            quantity: qty,
+            subtotal: roundCurrency(variant.price * qty),
+          });
+        }
+      }
+      if (matchedAnyVariant) continue;
+    }
+
+    const qty = roundQuantity(item.quantity);
+    if (qty > 0) {
+      const variant = getActiveVariant(item);
+      const price = variant ? variant.price : item.price;
+      const unit = variant ? variant.unit : item.unit || '1 unit';
+      lines.push({
+        lineKey: variant ? `${item.id}::${variant.id}` : item.id,
+        item,
+        variantId: variant?.id,
+        variantLabel: variant?.label,
+        unit,
+        price,
+        quantity: qty,
+        subtotal: roundCurrency(price * qty),
+      });
+    }
+  }
+  return lines;
+}
+
+export function calculateCartTotals(items: CartItem[]): {
+  lines: CartLineItem[];
+  totalAmount: number;
+  totalUnits: number;
+  lineCount: number;
+  uniqueProducts: number;
+} {
+  const lines = expandCartLines(items);
+  const totalAmount = roundCurrency(lines.reduce((s, l) => s + l.subtotal, 0));
+  const totalUnits = roundQuantity(lines.reduce((s, l) => s + l.quantity, 0));
+  const uniqueProducts = new Set(lines.map((l) => l.item.id)).size;
+  return {
+    lines,
+    totalAmount,
+    totalUnits,
+    lineCount: lines.length,
+    uniqueProducts,
+  };
+}
+
+export function getPriceHistoryKey(itemId: string, variantId?: string | null): string {
+  return variantId ? `${itemId}::${variantId}` : itemId;
+}
+
+export function getPriceHistoryPointsForItem(
+  priceHistory: PriceHistory,
+  item: Pick<CartItem, 'id' | 'variants' | 'selectedVariantId'>,
+  variantId?: string | null
+): PricePoint[] {
+  const active = getActiveVariant(item, variantId);
+  if (active) {
+    const scopedKey = getPriceHistoryKey(item.id, active.id);
+    if (priceHistory[scopedKey] && priceHistory[scopedKey].length > 0) {
+      return priceHistory[scopedKey];
+    }
+    const isPrimary = item.variants && item.variants[0]?.id === active.id;
+    if (isPrimary && priceHistory[item.id] && priceHistory[item.id].length > 0) {
+      return priceHistory[item.id];
+    }
+    return [];
+  }
+  return priceHistory[item.id] ?? [];
+}
+
 export function parseUnitSpec(unit?: string | null): ParsedUnitSpec {
   const raw = (unit ?? '').trim();
   if (!raw) {
@@ -192,7 +350,6 @@ export function areUnitsCompatible(unitA?: string | null, unitB?: string | null)
     return { compatible: true, conversionMultiplier: 1 };
   }
   if (!unitA || !unitB) {
-    // When a legacy point has no explicit unit, treat it as matching the target item unit
     return { compatible: true, conversionMultiplier: 1 };
   }
 
@@ -322,11 +479,21 @@ export function computeUnitPriceStats(
   };
 }
 
-export type ProductSortOption = 'default' | 'price_asc' | 'price_desc' | 'alpha_asc' | 'recent';
+export type ProductSortOption =
+  | 'default'
+  | 'price_asc'
+  | 'price_desc'
+  | 'alpha_asc'
+  | 'recent'
+  | 'frequent'
+  | 'newest';
 
 export interface ProductFilterOptions {
   query?: string;
   category?: string; // 'All' or category name
+  subcategory?: string; // 'All' or subcategory name
+  brand?: string; // 'All' or brand name
+  productType?: string; // 'All' or productType
   minPrice?: number | null;
   maxPrice?: number | null;
   onlyFavourites?: boolean;
@@ -336,34 +503,60 @@ export interface ProductFilterOptions {
   sortBy?: ProductSortOption;
 }
 
+export function getSearchableProductText(item: CartItem): string {
+  const variantText = (item.variants ?? []).map((v) => `${v.label} ${v.unit}`).join(' ');
+  const tagText = (item.tags ?? []).join(' ');
+  return [
+    item.name,
+    item.brand ?? '',
+    item.category,
+    item.subcategory ?? '',
+    item.productType ?? '',
+    item.description ?? '',
+    item.unit ?? '',
+    tagText,
+    variantText,
+  ]
+    .join(' ')
+    .toLowerCase();
+}
+
 export function filterAndSortProducts(
   items: CartItem[],
   filters: ProductFilterOptions
 ): CartItem[] {
-  const query = (filters.query ?? '').trim().toLowerCase();
+  const rawQuery = (filters.query ?? '').trim().toLowerCase();
+  const queryTokens = rawQuery ? rawQuery.split(/\s+/).filter(Boolean) : [];
   const category = filters.category && filters.category !== 'All' ? filters.category : null;
+  const subcategory =
+    filters.subcategory && filters.subcategory !== 'All' ? filters.subcategory : null;
+  const brand = filters.brand && filters.brand !== 'All' ? filters.brand : null;
+  const productType =
+    filters.productType && filters.productType !== 'All' ? filters.productType : null;
   const minPrice = filters.minPrice ?? null;
   const maxPrice = filters.maxPrice ?? null;
 
   const filtered = items.filter((item) => {
     if (category && item.category !== category) return false;
-    if (minPrice !== null && item.price < minPrice) return false;
-    if (maxPrice !== null && item.price > maxPrice) return false;
+    if (subcategory && (item.subcategory ?? '').toLowerCase() !== subcategory.toLowerCase()) {
+      return false;
+    }
+    if (brand && (item.brand ?? '').toLowerCase() !== brand.toLowerCase()) return false;
+    if (productType && (item.productType ?? '').toLowerCase() !== productType.toLowerCase()) {
+      return false;
+    }
+
+    const { price: effectivePrice } = getEffectivePriceAndUnit(item);
+    if (minPrice !== null && effectivePrice < minPrice) return false;
+    if (maxPrice !== null && effectivePrice > maxPrice) return false;
     if (filters.onlyFavourites && !item.isFavourite) return false;
     if (filters.onlyFrequent && !item.isFrequent && (item.purchaseCount ?? 0) < 2) return false;
     if (filters.onlyRecent && !item.lastPurchasedAt) return false;
     if (filters.onlyRecurring && !item.recurrence) return false;
 
-    if (query) {
-      const haystack = [
-        item.name,
-        item.category,
-        item.productType ?? '',
-        item.unit ?? '',
-      ]
-        .join(' ')
-        .toLowerCase();
-      if (!haystack.includes(query)) return false;
+    if (queryTokens.length > 0) {
+      const haystack = getSearchableProductText(item);
+      if (!queryTokens.every((token) => haystack.includes(token))) return false;
     }
 
     return true;
@@ -373,13 +566,26 @@ export function filterAndSortProducts(
   if (sortBy === 'default') return filtered;
 
   return [...filtered].sort((a, b) => {
+    const priceA = getEffectivePriceAndUnit(a).price;
+    const priceB = getEffectivePriceAndUnit(b).price;
     switch (sortBy) {
       case 'price_asc':
-        return a.price - b.price || a.name.localeCompare(b.name);
+        return priceA - priceB || a.name.localeCompare(b.name);
       case 'price_desc':
-        return b.price - a.price || a.name.localeCompare(b.name);
+        return priceB - priceA || a.name.localeCompare(b.name);
       case 'alpha_asc':
         return a.name.localeCompare(b.name);
+      case 'frequent':
+        return (
+          (b.purchaseCount ?? 0) - (a.purchaseCount ?? 0) ||
+          Number(Boolean(b.isFrequent)) - Number(Boolean(a.isFrequent)) ||
+          a.name.localeCompare(b.name)
+        );
+      case 'newest': {
+        const cA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const cB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return cB - cA || Number(Boolean(b.isCustom)) - Number(Boolean(a.isCustom));
+      }
       case 'recent': {
         const tA = a.lastPurchasedAt ? new Date(a.lastPurchasedAt).getTime() : 0;
         const tB = b.lastPurchasedAt ? new Date(b.lastPurchasedAt).getTime() : 0;
@@ -389,6 +595,207 @@ export function filterAndSortProducts(
         return 0;
     }
   });
+}
+
+export interface SearchSuggestion {
+  type: 'product' | 'category' | 'brand';
+  label: string;
+  sublabel?: string;
+  query: string;
+  item?: CartItem;
+}
+
+export function getSearchSuggestions(
+  items: CartItem[],
+  query: string,
+  limit: number = 8
+): SearchSuggestion[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  const suggestions: SearchSuggestion[] = [];
+  const seenLabels = new Set<string>();
+
+  for (const item of items) {
+    if (item.name.toLowerCase().includes(q) || (item.tags ?? []).some((t) => t.toLowerCase().includes(q))) {
+      const key = `p:${item.id}`;
+      if (!seenLabels.has(key)) {
+        seenLabels.add(key);
+        suggestions.push({
+          type: 'product',
+          label: item.name,
+          sublabel: [item.brand, item.category].filter(Boolean).join(' · '),
+          query: item.name,
+          item,
+        });
+      }
+    }
+    if (suggestions.length >= limit) return suggestions;
+  }
+
+  for (const item of items) {
+    if (item.brand && item.brand.toLowerCase().includes(q)) {
+      const key = `b:${item.brand.toLowerCase()}`;
+      if (!seenLabels.has(key)) {
+        seenLabels.add(key);
+        suggestions.push({
+          type: 'brand',
+          label: item.brand,
+          sublabel: 'Brand',
+          query: item.brand,
+        });
+      }
+    }
+    if (item.category.toLowerCase().includes(q)) {
+      const key = `c:${item.category.toLowerCase()}`;
+      if (!seenLabels.has(key)) {
+        seenLabels.add(key);
+        suggestions.push({
+          type: 'category',
+          label: item.category,
+          sublabel: 'Category',
+          query: item.category,
+        });
+      }
+    }
+    if (suggestions.length >= limit) break;
+  }
+
+  return suggestions.slice(0, limit);
+}
+
+export interface FrequentlyPurchasedInsight {
+  item: CartItem;
+  purchaseCount: number;
+  orderCount: number;
+  lastPurchasedAt: string;
+  lastPaidPrice: number;
+  currentPrice: number;
+  priceDiff: number;
+  lastVariantId?: string;
+  lastVariantLabel?: string;
+}
+
+export function computeFrequentlyPurchasedInsights(
+  items: CartItem[],
+  purchaseHistory: PurchaseSession[],
+  limit: number = 8
+): FrequentlyPurchasedInsight[] {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const agg = new Map<
+    string,
+    {
+      item: CartItem;
+      purchaseCount: number;
+      orderCount: number;
+      lastPurchasedAt: string;
+      lastPaidPrice: number;
+      lastVariantId?: string;
+      lastVariantLabel?: string;
+    }
+  >();
+
+  // Sort oldest-to-newest so latest purchase naturally overwrites lastPaidPrice & lastVariant
+  const sortedSessions = [...purchaseHistory].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+
+  for (const session of sortedSessions) {
+    const seenInSession = new Set<string>();
+    for (const sItem of session.items) {
+      const catalogItem = byId.get(sItem.itemId);
+      if (!catalogItem) continue;
+      const existing = agg.get(sItem.itemId);
+      const isNewOrder = !seenInSession.has(sItem.itemId);
+      seenInSession.add(sItem.itemId);
+
+      if (!existing) {
+        agg.set(sItem.itemId, {
+          item: catalogItem,
+          purchaseCount: roundQuantity(sItem.quantity),
+          orderCount: 1,
+          lastPurchasedAt: session.timestamp,
+          lastPaidPrice: sItem.price,
+          lastVariantId: sItem.variantId,
+          lastVariantLabel: sItem.variantLabel,
+        });
+      } else {
+        agg.set(sItem.itemId, {
+          item: catalogItem,
+          purchaseCount: roundQuantity(existing.purchaseCount + sItem.quantity),
+          orderCount: existing.orderCount + (isNewOrder ? 1 : 0),
+          lastPurchasedAt: session.timestamp,
+          lastPaidPrice: sItem.price,
+          lastVariantId: sItem.variantId ?? existing.lastVariantId,
+          lastVariantLabel: sItem.variantLabel ?? existing.lastVariantLabel,
+        });
+      }
+    }
+  }
+
+  // Fallback for items that recorded lastPurchasedAt / purchaseCount on item itself without session history
+  for (const item of items) {
+    if (!agg.has(item.id) && (item.purchaseCount ?? 0) > 0 && item.lastPurchasedAt) {
+      const { price, variant } = getEffectivePriceAndUnit(item);
+      agg.set(item.id, {
+        item,
+        purchaseCount: roundQuantity(item.purchaseCount ?? 1),
+        orderCount: 1,
+        lastPurchasedAt: item.lastPurchasedAt,
+        lastPaidPrice: price,
+        lastVariantId: variant?.id,
+        lastVariantLabel: variant?.label,
+      });
+    }
+  }
+
+  return Array.from(agg.values())
+    .map((entry) => {
+      const { price: currentPrice } = getEffectivePriceAndUnit(
+        entry.item,
+        entry.lastVariantId
+      );
+      return {
+        ...entry,
+        currentPrice,
+        priceDiff: roundCurrency(currentPrice - entry.lastPaidPrice),
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.orderCount - a.orderCount ||
+        b.purchaseCount - a.purchaseCount ||
+        new Date(b.lastPurchasedAt).getTime() - new Date(a.lastPurchasedAt).getTime()
+    )
+    .slice(0, limit);
+}
+
+export function computeRecentlyPurchasedItems(
+  items: CartItem[],
+  purchaseHistory: PurchaseSession[],
+  limit: number = 8
+): FrequentlyPurchasedInsight[] {
+  const allPurchased = computeFrequentlyPurchasedInsights(items, purchaseHistory, 200);
+  return allPurchased
+    .sort(
+      (a, b) =>
+        new Date(b.lastPurchasedAt).getTime() - new Date(a.lastPurchasedAt).getTime()
+    )
+    .slice(0, limit);
+}
+
+export function isRecurringBillItem(item: CartItem): boolean {
+  const catLower = item.category.toLowerCase();
+  const typeLower = (item.productType ?? '').toLowerCase();
+  return (
+    catLower.includes('bill') ||
+    catLower.includes('utilit') ||
+    catLower.includes('entertainment') ||
+    typeLower.includes('bill') ||
+    typeLower.includes('subscription') ||
+    typeLower.includes('telecom') ||
+    typeLower.includes('broadband')
+  );
 }
 
 export function getRecurrenceIntervalDays(recurrence: RecurrenceConfig): number {
@@ -473,6 +880,7 @@ export function calculateMonthlyShoppingSpend(
 
 export interface CheckoutBreakdown {
   items: CartItem[];
+  lines: CartLineItem[];
   totalAmount: number;
   totalCount: number;
   categoryTotals: Record<string, number>;
@@ -481,21 +889,23 @@ export interface CheckoutBreakdown {
 }
 
 export function buildCheckoutBreakdown(items: CartItem[]): CheckoutBreakdown {
+  const lines = expandCartLines(items);
   const cartItems = items.filter((i) => i.quantity > 0);
   const categoryTotals: Record<string, number> = {};
   let totalAmount = 0;
   let totalCount = 0;
 
-  for (const item of cartItems) {
-    const sub = roundCurrency(item.price * item.quantity);
-    totalAmount += sub;
-    totalCount += item.quantity;
-    categoryTotals[item.category] = roundCurrency((categoryTotals[item.category] ?? 0) + sub);
+  for (const line of lines) {
+    totalAmount += line.subtotal;
+    totalCount = roundQuantity(totalCount + line.quantity);
+    categoryTotals[line.item.category] = roundCurrency(
+      (categoryTotals[line.item.category] ?? 0) + line.subtotal
+    );
   }
 
   totalAmount = roundCurrency(totalAmount);
 
-  let dominantCategory = cartItems[0]?.category ?? 'Groceries';
+  let dominantCategory = lines[0]?.item.category ?? cartItems[0]?.category ?? 'Groceries';
   let bestVal = -1;
   for (const [cat, amt] of Object.entries(categoryTotals)) {
     if (amt > bestVal) {
@@ -504,16 +914,20 @@ export function buildCheckoutBreakdown(items: CartItem[]): CheckoutBreakdown {
     }
   }
 
-  const labelItems = cartItems.slice(0, 3).map((i) => i.name).join(', ');
+  const labelItems = lines
+    .slice(0, 3)
+    .map((l) => (l.variantLabel ? `${l.item.name} (${l.variantLabel})` : l.item.name))
+    .join(', ');
   const summaryTitle =
-    cartItems.length === 0
+    lines.length === 0
       ? 'Empty Cart'
-      : cartItems.length > 3
-      ? `Mart: ${labelItems} +${cartItems.length - 3}`
+      : lines.length > 3
+      ? `Mart: ${labelItems} +${lines.length - 3}`
       : `Mart: ${labelItems}`;
 
   return {
     items: cartItems,
+    lines,
     totalAmount,
     totalCount,
     categoryTotals,
@@ -526,9 +940,9 @@ export function buildCheckoutSignature(
   items: CartItem[],
   splitSignature?: string
 ): string {
-  const itemPart = items
-    .filter((i) => i.quantity > 0)
-    .map((i) => `${i.id}:${i.quantity}@${i.price}`)
+  const lines = expandCartLines(items);
+  const itemPart = lines
+    .map((l) => `${l.lineKey}:${l.quantity}@${l.price}`)
     .sort()
     .join('|');
   return `${itemPart}__${splitSignature ?? 'nosplit'}`;
@@ -563,3 +977,4 @@ export function reorderCategoryList(
   copy.splice(toIndex, 0, moved);
   return copy.map((cat, idx) => ({ ...cat, order: idx }));
 }
+

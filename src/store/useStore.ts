@@ -51,10 +51,13 @@ import {
 import {
   buildCheckoutBreakdown,
   buildCheckoutSignature,
+  getActiveVariant,
   getDueRecurringItems,
   getNextDueDateString,
+  getPriceHistoryKey,
   isDuplicateCheckoutAttempt,
   reorderCategoryList,
+  roundQuantity,
   toLocalDateKey,
 } from '../utils/martEngine';
 import { isDuplicateSettlement, roundCurrency } from '../utils/splitLedgerEngine';
@@ -125,6 +128,7 @@ export interface CategoryInput {
   iconKey?: string;
   accent?: string;
   imageUrl?: string;
+  subcategories?: string[];
 }
 
 export interface ManualPricePurchaseInput {
@@ -182,27 +186,29 @@ export interface AppState {
   renameCategoryConfig: (id: string, newName: string) => void;
   updateCategoryAppearance: (
     id: string,
-    patch: { iconKey?: string; accent?: string; imageUrl?: string }
+    patch: { iconKey?: string; accent?: string; imageUrl?: string; subcategories?: string[] }
   ) => void;
-  deleteCategoryConfig: (id: string) => boolean;
+  deleteCategoryConfig: (id: string, reassignToCategory?: string) => boolean;
   reorderCategories: (fromIndex: number, toIndex: number) => void;
 
   addCustomItem: (item: Omit<CartItem, 'quantity'>) => void;
   updateProduct: (id: string, patch: Partial<Omit<CartItem, 'id'>>) => void;
   removeCustomItem: (id: string) => void;
   removeProduct: (id: string) => void;
-  updateItemPrice: (id: string, newPrice: number) => void;
+  updateItemPrice: (id: string, newPrice: number, variantId?: string) => void;
+  selectProductVariant: (id: string, variantId: string) => void;
   toggleFavourite: (id: string) => void;
   setProductRecurrence: (id: string, recurrence: RecurrenceConfig | null) => void;
   addDueRecurringToCart: () => number;
 
-  addToCart: (item: Omit<CartItem, 'quantity'> | CartItem, amount?: number) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, delta: number) => void;
-  setItemQuantity: (id: string, quantity: number) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'> | CartItem, amount?: number, variantId?: string) => void;
+  removeFromCart: (id: string, variantId?: string) => void;
+  updateQuantity: (id: string, delta: number, variantId?: string) => void;
+  setItemQuantity: (id: string, quantity: number, variantId?: string) => void;
   checkoutCart: (splitConfig?: Omit<SharedExpenseInput, 'source'>) => boolean;
   clearCart: () => void;
   repeatPurchaseSession: (sessionId: string) => number;
+  quickReorderItem: (itemId: string, variantId?: string, quantity?: number) => boolean;
 
   addTransaction: (tx: Omit<Transaction, 'id' | 'timestamp'> & { timestamp?: string }) => void;
   updateTransaction: (
@@ -424,12 +430,17 @@ export const useAppStore = create<AppState>()(
         );
         if (duplicate) return duplicate;
 
+        const cleanSubs = Array.from(
+          new Set((input.subcategories ?? []).map((s) => s.trim()).filter(Boolean))
+        );
+
         const created: CategoryConfig = {
           id: `cat-custom-${crypto.randomUUID().slice(0, 8)}`,
           name: trimmed,
           iconKey: input.iconKey || 'package',
           accent: input.accent || 'teal',
           imageUrl: input.imageUrl?.trim() || undefined,
+          subcategories: cleanSubs.length > 0 ? cleanSubs : undefined,
           isCustom: true,
           order: state.categoryConfigs.length,
         };
@@ -504,17 +515,27 @@ export const useAppStore = create<AppState>()(
                   iconKey: patch.iconKey ?? c.iconKey,
                   accent: patch.accent ?? c.accent,
                   imageUrl: patch.imageUrl !== undefined ? patch.imageUrl || undefined : c.imageUrl,
+                  subcategories:
+                    patch.subcategories !== undefined
+                      ? Array.from(
+                          new Set(patch.subcategories.map((s) => s.trim()).filter(Boolean))
+                        )
+                      : c.subcategories,
                 }
               : c
           ),
         })),
 
-      deleteCategoryConfig: (id) => {
+      deleteCategoryConfig: (id, reassignToCategory) => {
         const state = get();
         const target = state.categoryConfigs.find((c) => c.id === id);
         if (!target || !target.isCustom) return false;
 
         const fallbackCategory =
+          (reassignToCategory &&
+            state.categoryConfigs.find(
+              (c) => c.id !== id && c.name === reassignToCategory
+            )?.name) ??
           state.categoryConfigs.find((c) => c.id !== id && c.name === 'Other Expenses')?.name ??
           state.categoryConfigs.find((c) => c.id !== id)?.name ??
           'Other Expenses';
@@ -527,7 +548,9 @@ export const useAppStore = create<AppState>()(
           categoryConfigs: nextConfigs,
           categories: nextConfigs.map((c) => c.name),
           items: state.items.map((item) =>
-            item.category === target.name ? { ...item, category: fallbackCategory } : item
+            item.category === target.name
+              ? { ...item, category: fallbackCategory, subcategory: undefined }
+              : item
           ),
         });
         return true;
@@ -545,18 +568,33 @@ export const useAppStore = create<AppState>()(
       addCustomItem: (item) =>
         set((state) => {
           const nowIso = new Date().toISOString();
+          const primaryVariant = item.variants?.[0];
           const created: CartItem = {
             ...item,
             quantity: 0,
-            unit: item.unit?.trim() || '1 unit',
+            unit: primaryVariant?.unit || item.unit?.trim() || '1 unit',
+            price: primaryVariant?.price ?? item.price,
+            selectedVariantId: item.selectedVariantId ?? primaryVariant?.id,
+            createdAt: item.createdAt ?? nowIso,
             isCustom: item.isCustom ?? true,
           };
           const nextItems = [created, ...state.items];
+          const subClean = created.subcategory?.trim();
+
           const hasCat = state.categoryConfigs.some(
             (c) => c.name.toLowerCase() === item.category.toLowerCase()
           );
           const nextConfigs = hasCat
-            ? state.categoryConfigs
+            ? state.categoryConfigs.map((c) => {
+                if (
+                  c.name.toLowerCase() === item.category.toLowerCase() &&
+                  subClean &&
+                  !(c.subcategories ?? []).some((s) => s.toLowerCase() === subClean.toLowerCase())
+                ) {
+                  return { ...c, subcategories: [...(c.subcategories ?? []), subClean] };
+                }
+                return c;
+              })
             : [
                 ...state.categoryConfigs,
                 {
@@ -564,27 +602,51 @@ export const useAppStore = create<AppState>()(
                   name: item.category,
                   iconKey: 'package',
                   accent: 'teal',
+                  subcategories: subClean ? [subClean] : undefined,
                   isCustom: true,
                   order: state.categoryConfigs.length,
                 },
               ];
 
+          const nextHistory: PriceHistory = {
+            ...state.priceHistory,
+            [created.id]: [
+              {
+                date: nowIso,
+                price: created.price,
+                unit: created.unit,
+                source: 'user_purchase',
+                productName: created.name,
+                variantId: primaryVariant?.id,
+                variantLabel: primaryVariant?.label,
+                brand: created.brand,
+              },
+            ],
+          };
+
+          if (created.variants && created.variants.length > 0) {
+            for (const variant of created.variants) {
+              const key = getPriceHistoryKey(created.id, variant.id);
+              nextHistory[key] = [
+                {
+                  date: nowIso,
+                  price: variant.price,
+                  unit: variant.unit,
+                  source: 'user_purchase',
+                  productName: created.name,
+                  variantId: variant.id,
+                  variantLabel: variant.label,
+                  brand: created.brand,
+                },
+              ];
+            }
+          }
+
           return {
             items: nextItems,
             categoryConfigs: nextConfigs,
             categories: nextConfigs.map((c) => c.name),
-            priceHistory: {
-              ...state.priceHistory,
-              [item.id]: [
-                {
-                  date: nowIso,
-                  price: item.price,
-                  unit: created.unit,
-                  source: 'user_purchase',
-                  productName: item.name,
-                },
-              ],
-            },
+            priceHistory: nextHistory,
           };
         }),
 
@@ -593,27 +655,87 @@ export const useAppStore = create<AppState>()(
           const existing = state.items.find((i) => i.id === id);
           if (!existing) return state;
 
+          const nowIso = new Date().toISOString();
+          const nextVariants = patch.variants !== undefined ? patch.variants : existing.variants;
+          const activeVariant =
+            nextVariants && nextVariants.length > 0
+              ? nextVariants.find(
+                  (v) => v.id === (patch.selectedVariantId ?? existing.selectedVariantId)
+                ) ?? nextVariants[0]
+              : null;
+
           const nextPrice =
-            typeof patch.price === 'number' && patch.price > 0 ? patch.price : existing.price;
-          const nextUnit = patch.unit !== undefined ? patch.unit.trim() || '1 unit' : existing.unit;
-          const nextName = patch.name !== undefined ? patch.name.trim() || existing.name : existing.name;
+            activeVariant
+              ? activeVariant.price
+              : typeof patch.price === 'number' && patch.price > 0
+              ? patch.price
+              : existing.price;
+          const nextUnit =
+            activeVariant
+              ? activeVariant.unit
+              : patch.unit !== undefined
+              ? patch.unit.trim() || '1 unit'
+              : existing.unit;
+          const nextName =
+            patch.name !== undefined ? patch.name.trim() || existing.name : existing.name;
+          const nextBrand = patch.brand !== undefined ? patch.brand.trim() || undefined : existing.brand;
           const priceChanged = Math.abs(nextPrice - existing.price) > 0.001;
 
-          const nextHistory = priceChanged
-            ? {
-                ...state.priceHistory,
-                [id]: [
-                  ...(state.priceHistory[id] ?? []),
+          const nextHistory: PriceHistory = { ...state.priceHistory };
+          if (priceChanged) {
+            nextHistory[id] = [
+              ...(nextHistory[id] ?? []),
+              {
+                date: nowIso,
+                price: nextPrice,
+                unit: nextUnit,
+                source: 'user_purchase',
+                productName: nextName,
+                variantId: activeVariant?.id,
+                variantLabel: activeVariant?.label,
+                brand: nextBrand,
+              },
+            ];
+          }
+          if (nextVariants && nextVariants.length > 0) {
+            for (const variant of nextVariants) {
+              const key = getPriceHistoryKey(id, variant.id);
+              const prevList = nextHistory[key] ?? [];
+              const lastPt = prevList[prevList.length - 1];
+              if (!lastPt || Math.abs(lastPt.price - variant.price) > 0.001) {
+                nextHistory[key] = [
+                  ...prevList,
                   {
-                    date: new Date().toISOString(),
-                    price: nextPrice,
-                    unit: nextUnit,
-                    source: 'user_purchase' as const,
+                    date: nowIso,
+                    price: variant.price,
+                    unit: variant.unit,
+                    source: 'user_purchase',
                     productName: nextName,
+                    variantId: variant.id,
+                    variantLabel: variant.label,
+                    brand: nextBrand,
                   },
-                ],
+                ];
               }
-            : state.priceHistory;
+            }
+          }
+
+          const nextSubclean = patch.subcategory?.trim();
+          const nextCategory = patch.category ?? existing.category;
+          const nextConfigs =
+            nextSubclean
+              ? state.categoryConfigs.map((c) => {
+                  if (
+                    c.name.toLowerCase() === nextCategory.toLowerCase() &&
+                    !(c.subcategories ?? []).some(
+                      (s) => s.toLowerCase() === nextSubclean.toLowerCase()
+                    )
+                  ) {
+                    return { ...c, subcategories: [...(c.subcategories ?? []), nextSubclean] };
+                  }
+                  return c;
+                })
+              : state.categoryConfigs;
 
           return {
             items: state.items.map((item) =>
@@ -622,11 +744,15 @@ export const useAppStore = create<AppState>()(
                     ...item,
                     ...patch,
                     name: nextName,
+                    brand: nextBrand,
                     price: nextPrice,
                     unit: nextUnit,
+                    variants: nextVariants,
+                    selectedVariantId: activeVariant?.id ?? patch.selectedVariantId,
                   }
                 : item
             ),
+            categoryConfigs: nextConfigs,
             priceHistory: nextHistory,
           };
         }),
@@ -639,31 +765,102 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const nextHistory = { ...state.priceHistory };
           delete nextHistory[id];
+          for (const key of Object.keys(nextHistory)) {
+            if (key.startsWith(`${id}::`)) delete nextHistory[key];
+          }
           return {
             items: state.items.filter((i) => i.id !== id),
             priceHistory: nextHistory,
           };
         }),
 
-      updateItemPrice: (id, newPrice) =>
+      selectProductVariant: (id, variantId) =>
+        set((state) => ({
+          items: state.items.map((item) => {
+            if (item.id !== id || !item.variants?.length) return item;
+            const found = item.variants.find((v) => v.id === variantId);
+            if (!found) return item;
+            return {
+              ...item,
+              selectedVariantId: found.id,
+              price: found.price,
+              unit: found.unit,
+            };
+          }),
+        })),
+
+      updateItemPrice: (id, newPrice, variantId) =>
         set((state) => {
           if (!Number.isFinite(newPrice) || newPrice <= 0) return state;
           const target = state.items.find((i) => i.id === id);
-          return {
-            items: state.items.map((i) => (i.id === id ? { ...i, price: newPrice } : i)),
-            priceHistory: {
-              ...state.priceHistory,
-              [id]: [
-                ...(state.priceHistory[id] ?? []),
+          if (!target) return state;
+
+          const activeVariant = getActiveVariant(target, variantId);
+          const nowIso = new Date().toISOString();
+          const nextHistory: PriceHistory = { ...state.priceHistory };
+
+          if (activeVariant) {
+            const scopedKey = getPriceHistoryKey(id, activeVariant.id);
+            nextHistory[scopedKey] = [
+              ...(nextHistory[scopedKey] ?? []),
+              {
+                date: nowIso,
+                price: newPrice,
+                unit: activeVariant.unit,
+                source: 'user_purchase',
+                productName: target.name,
+                variantId: activeVariant.id,
+                variantLabel: activeVariant.label,
+                brand: target.brand,
+              },
+            ];
+            if (target.variants?.[0]?.id === activeVariant.id) {
+              nextHistory[id] = [
+                ...(nextHistory[id] ?? []),
                 {
-                  date: new Date().toISOString(),
+                  date: nowIso,
                   price: newPrice,
-                  unit: target?.unit ?? '1 unit',
+                  unit: activeVariant.unit,
                   source: 'user_purchase',
-                  productName: target?.name,
+                  productName: target.name,
+                  variantId: activeVariant.id,
+                  variantLabel: activeVariant.label,
+                  brand: target.brand,
                 },
-              ],
-            },
+              ];
+            }
+          } else {
+            nextHistory[id] = [
+              ...(nextHistory[id] ?? []),
+              {
+                date: nowIso,
+                price: newPrice,
+                unit: target.unit ?? '1 unit',
+                source: 'user_purchase',
+                productName: target.name,
+                brand: target.brand,
+              },
+            ];
+          }
+
+          return {
+            items: state.items.map((item) => {
+              if (item.id !== id) return item;
+              if (activeVariant && item.variants) {
+                const updatedVariants = item.variants.map((v) =>
+                  v.id === activeVariant.id ? { ...v, price: newPrice } : v
+                );
+                const isSelected =
+                  (item.selectedVariantId ?? item.variants[0]?.id) === activeVariant.id;
+                return {
+                  ...item,
+                  variants: updatedVariants,
+                  price: isSelected ? newPrice : item.price,
+                };
+              }
+              return { ...item, price: newPrice };
+            }),
+            priceHistory: nextHistory,
           };
         }),
 
@@ -690,6 +887,23 @@ export const useAppStore = create<AppState>()(
         set({
           items: state.items.map((item) => {
             if (!dueIds.has(item.id)) return item;
+            const active = getActiveVariant(item);
+            if (active && item.variants?.length) {
+              const prevMap = item.variantQuantities ?? {};
+              const curVarQty = prevMap[active.id] ?? 0;
+              const nextMap = { ...prevMap, [active.id]: Math.max(curVarQty, 1) };
+              const total = roundQuantity(
+                Object.values(nextMap).reduce((s, q) => s + q, 0)
+              );
+              return {
+                ...item,
+                quantity: total,
+                variantQuantities: nextMap,
+                recurrence: item.recurrence
+                  ? { ...item.recurrence, lastAddedAt: nowIso }
+                  : item.recurrence,
+              };
+            }
             return {
               ...item,
               quantity: Math.max(item.quantity, 1),
@@ -702,21 +916,49 @@ export const useAppStore = create<AppState>()(
         return dueItems.length;
       },
 
-      addToCart: (item, amount = 1) =>
+      addToCart: (item, amount = 1, variantId) =>
         set((state) => {
-          const step = Math.max(1, Math.round(amount));
+          const step = roundQuantity(Math.max(0.01, amount));
           const existingIndex = state.items.findIndex((i) => i.id === item.id);
           if (existingIndex > -1) {
+            const existing = state.items[existingIndex];
+            const active = getActiveVariant(existing, variantId);
             const newItems = [...state.items];
-            newItems[existingIndex] = {
-              ...newItems[existingIndex],
-              quantity: newItems[existingIndex].quantity + step,
-            };
+
+            if (active && existing.variants?.length) {
+              const prevMap = { ...(existing.variantQuantities ?? {}) };
+              if (
+                existing.quantity > 0 &&
+                Object.keys(prevMap).length === 0 &&
+                existing.variants[0]
+              ) {
+                const legacyVarId = existing.selectedVariantId ?? existing.variants[0].id;
+                prevMap[legacyVarId] = existing.quantity;
+              }
+              prevMap[active.id] = roundQuantity((prevMap[active.id] ?? 0) + step);
+              const total = roundQuantity(
+                Object.values(prevMap).reduce((s, q) => s + q, 0)
+              );
+              newItems[existingIndex] = {
+                ...existing,
+                selectedVariantId: active.id,
+                price: active.price,
+                unit: active.unit,
+                variantQuantities: prevMap,
+                quantity: total,
+              };
+            } else {
+              newItems[existingIndex] = {
+                ...existing,
+                quantity: roundQuantity(existing.quantity + step),
+              };
+            }
             return { items: newItems };
           }
+
           const newItem: CartItem = {
             ...item,
-            quantity: ('quantity' in item ? item.quantity : 0) + step,
+            quantity: roundQuantity(('quantity' in item ? item.quantity : 0) + step),
             unit: item.unit || '1 unit',
           };
           return {
@@ -731,37 +973,86 @@ export const useAppStore = create<AppState>()(
                     unit: newItem.unit,
                     source: 'user_purchase',
                     productName: newItem.name,
+                    brand: newItem.brand,
                   },
                 ],
             },
           };
         }),
 
-      removeFromCart: (id) =>
+      removeFromCart: (id, variantId) => {
+        get().updateQuantity(id, -1, variantId);
+      },
+
+      updateQuantity: (id, delta, variantId) =>
         set((state) => ({
-          items: state.items.map((i) =>
-            i.id === id ? { ...i, quantity: Math.max(i.quantity - 1, 0) } : i
-          ),
+          items: state.items.map((item) => {
+            if (item.id !== id) return item;
+            const active = getActiveVariant(item, variantId);
+            if (active && item.variants?.length) {
+              const prevMap = { ...(item.variantQuantities ?? {}) };
+              if (
+                item.quantity > 0 &&
+                Object.keys(prevMap).length === 0 &&
+                item.variants[0]
+              ) {
+                const legacyVarId = item.selectedVariantId ?? item.variants[0].id;
+                prevMap[legacyVarId] = item.quantity;
+              }
+              const nextVarQty = roundQuantity(Math.max(0, (prevMap[active.id] ?? 0) + delta));
+              if (nextVarQty <= 0) {
+                delete prevMap[active.id];
+              } else {
+                prevMap[active.id] = nextVarQty;
+              }
+              const total = roundQuantity(
+                Object.values(prevMap).reduce((s, q) => s + q, 0)
+              );
+              return {
+                ...item,
+                variantQuantities: Object.keys(prevMap).length > 0 ? prevMap : undefined,
+                quantity: total,
+              };
+            }
+            return {
+              ...item,
+              quantity: roundQuantity(clampQuantity(item.quantity, delta)),
+            };
+          }),
         })),
 
-      updateQuantity: (id, delta) =>
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.id === id ? { ...i, quantity: clampQuantity(i.quantity, delta) } : i
-          ),
-        })),
-
-      setItemQuantity: (id, quantity) =>
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.id === id ? { ...i, quantity: Math.max(0, Math.round(quantity)) } : i
-          ),
-        })),
+      setItemQuantity: (id, quantity, variantId) =>
+        set((state) => {
+          const safeQty = roundQuantity(Math.max(0, quantity));
+          return {
+            items: state.items.map((item) => {
+              if (item.id !== id) return item;
+              const active = getActiveVariant(item, variantId);
+              if (active && item.variants?.length) {
+                const prevMap = { ...(item.variantQuantities ?? {}) };
+                if (safeQty <= 0) {
+                  delete prevMap[active.id];
+                } else {
+                  prevMap[active.id] = safeQty;
+                }
+                const total = roundQuantity(
+                  Object.values(prevMap).reduce((s, q) => s + q, 0)
+                );
+                return {
+                  ...item,
+                  variantQuantities: Object.keys(prevMap).length > 0 ? prevMap : undefined,
+                  quantity: total,
+                };
+              }
+              return { ...item, quantity: safeQty };
+            }),
+          };
+        }),
 
       checkoutCart: (splitConfig) => {
         const current = get();
-        const checkedOut = current.items.filter((i) => i.quantity > 0);
-        if (checkedOut.length === 0) return false;
+        const breakdown = buildCheckoutBreakdown(current.items);
+        if (breakdown.lines.length === 0) return false;
 
         const now = new Date();
         const nowMs = now.getTime();
@@ -772,22 +1063,29 @@ export const useAppStore = create<AppState>()(
               .map((p) => `${p.personId}=${p.amount}`)
               .join(',')}`
           : 'nosplit';
-        const signature = buildCheckoutSignature(checkedOut, splitSig);
+        const signature = buildCheckoutSignature(current.items, splitSig);
 
         if (isDuplicateCheckoutAttempt(current.lastCheckoutMeta, signature, nowMs)) {
           return false;
         }
 
-        const breakdown = buildCheckoutBreakdown(checkedOut);
-        const checkedOutIds = new Set(checkedOut.map((i) => i.id));
+        const checkedOutQtyByItem = new Map<string, number>();
+        for (const line of breakdown.lines) {
+          checkedOutQtyByItem.set(
+            line.item.id,
+            roundQuantity((checkedOutQtyByItem.get(line.item.id) ?? 0) + line.quantity)
+          );
+        }
 
         const updatedItems: CartItem[] = current.items.map((item) => {
-          if (!checkedOutIds.has(item.id)) return item;
+          const boughtQty = checkedOutQtyByItem.get(item.id);
+          if (!boughtQty) return item;
           return {
             ...item,
             quantity: 0,
+            variantQuantities: undefined,
             lastPurchasedAt: nowIso,
-            purchaseCount: (item.purchaseCount ?? 0) + item.quantity,
+            purchaseCount: roundQuantity((item.purchaseCount ?? 0) + boughtQty),
             recurrence: item.recurrence
               ? {
                   ...item.recurrence,
@@ -799,49 +1097,68 @@ export const useAppStore = create<AppState>()(
         });
 
         const nextPriceHistory: PriceHistory = { ...current.priceHistory };
-        for (const item of checkedOut) {
-          const prevPoints = nextPriceHistory[item.id] ?? [];
-          nextPriceHistory[item.id] = [
-            ...prevPoints,
-            {
-              date: nowIso,
-              price: item.price,
-              unit: item.unit ?? '1 unit',
-              source: 'user_purchase',
-              productName: item.name,
-            },
-          ];
+        for (const line of breakdown.lines) {
+          const itemKey = getPriceHistoryKey(line.item.id, line.variantId);
+          const point = {
+            date: nowIso,
+            price: line.price,
+            unit: line.unit,
+            source: 'user_purchase' as const,
+            productName: line.item.name,
+            variantId: line.variantId,
+            variantLabel: line.variantLabel,
+            brand: line.item.brand,
+          };
+          nextPriceHistory[itemKey] = [...(nextPriceHistory[itemKey] ?? []), point];
+          if (line.variantId && (!line.item.variants || line.item.variants[0]?.id === line.variantId)) {
+            nextPriceHistory[line.item.id] = [
+              ...(nextPriceHistory[line.item.id] ?? []),
+              point,
+            ];
+          }
         }
 
-        const sessionItems = checkedOut.map((item) => ({
-          itemId: item.id,
-          name: item.name,
-          category: item.category,
-          unit: item.unit,
-          price: item.price,
-          quantity: item.quantity,
-          subtotal: roundCurrency(item.price * item.quantity),
+        const sessionItems = breakdown.lines.map((line) => ({
+          itemId: line.item.id,
+          name: line.item.name,
+          brand: line.item.brand,
+          category: line.item.category,
+          subcategory: line.item.subcategory,
+          variantId: line.variantId,
+          variantLabel: line.variantLabel,
+          unit: line.unit,
+          price: line.price,
+          quantity: line.quantity,
+          subtotal: line.subtotal,
         }));
 
         if (!splitConfig) {
-          const newTransactions = checkedOut.map((item) => ({
-            id: crypto.randomUUID(),
-            name: `${item.name} (x${item.quantity})`,
-            amount: roundCurrency(item.price * item.quantity),
-            category: item.category,
-            timestamp: nowIso,
-            source: 'mart' as const,
-            status: 'active' as const,
-          }));
+          const newTransactions = breakdown.lines.map((line) => {
+            const label = line.variantLabel
+              ? `${line.item.name} · ${line.variantLabel}`
+              : line.item.name;
+            return {
+              id: crypto.randomUUID(),
+              name: `${label} (x${line.quantity})`,
+              amount: line.subtotal,
+              category: line.item.category,
+              timestamp: nowIso,
+              source: 'mart' as const,
+              status: 'active' as const,
+            };
+          });
 
-          const newObs: PriceObservation[] = checkedOut.map((item, idx) =>
+          const newObs: PriceObservation[] = breakdown.lines.map((line, idx) =>
             buildPriceObservation({
-              rawName: item.name,
-              explicitProductId: item.id,
-              category: item.category,
-              quantity: item.quantity,
-              packageSize: item.unit || '1 unit',
-              totalPrice: roundCurrency(item.price * item.quantity),
+              rawName: line.variantLabel
+                ? `${line.item.name} ${line.variantLabel}`
+                : line.item.name,
+              explicitProductId: line.item.id,
+              category: line.item.category,
+              brand: line.item.brand,
+              quantity: line.quantity,
+              packageSize: line.unit || '1 unit',
+              totalPrice: line.subtotal,
               purchaseDate: nowIso,
               purchaseSource: 'mart',
               entryKind: 'actual_purchase',
@@ -877,7 +1194,6 @@ export const useAppStore = create<AppState>()(
         }
 
         // Split Checkout: create ONE SharedExpense and at most ONE linked personal Transaction
-        // for the user's own share so personal budget never counts others' shares or duplicates!
         const sharedId = crypto.randomUUID();
         const userShare = getUserShareFromParticipants(splitConfig.participants);
         const txId = userShare > 0 ? crypto.randomUUID() : null;
@@ -914,14 +1230,17 @@ export const useAppStore = create<AppState>()(
               ]
             : current.transactions;
 
-        const newObs: PriceObservation[] = checkedOut.map((item) =>
+        const newObs: PriceObservation[] = breakdown.lines.map((line) =>
           buildPriceObservation({
-            rawName: item.name,
-            explicitProductId: item.id,
-            category: item.category,
-            quantity: item.quantity,
-            packageSize: item.unit || '1 unit',
-            totalPrice: roundCurrency(item.price * item.quantity),
+            rawName: line.variantLabel
+              ? `${line.item.name} ${line.variantLabel}`
+              : line.item.name,
+            explicitProductId: line.item.id,
+            category: line.item.category,
+            brand: line.item.brand,
+            quantity: line.quantity,
+            packageSize: line.unit || '1 unit',
+            totalPrice: line.subtotal,
             purchaseDate: purchaseTimestamp,
             purchaseSource: 'mart',
             entryKind: 'actual_purchase',
@@ -960,45 +1279,47 @@ export const useAppStore = create<AppState>()(
       },
 
       clearCart: () =>
-        set((state) => ({ items: state.items.map((i) => ({ ...i, quantity: 0 })) })),
+        set((state) => ({
+          items: state.items.map((i) => ({ ...i, quantity: 0, variantQuantities: undefined })),
+        })),
 
       repeatPurchaseSession: (sessionId) => {
         const state = get();
         const session = state.purchaseHistory.find((s) => s.id === sessionId);
         if (!session) return 0;
 
-        const itemQtyMap = new Map<string, number>();
         for (const sItem of session.items) {
-          itemQtyMap.set(sItem.itemId, (itemQtyMap.get(sItem.itemId) ?? 0) + sItem.quantity);
-        }
-
-        const existingIds = new Set(state.items.map((i) => i.id));
-        const restoredMissing: CartItem[] = [];
-
-        for (const sItem of session.items) {
-          if (!existingIds.has(sItem.itemId)) {
-            restoredMissing.push({
-              id: sItem.itemId,
-              name: sItem.name,
-              price: sItem.price,
-              category: sItem.category,
-              icon: '📦',
-              unit: sItem.unit || '1 unit',
-              quantity: sItem.quantity,
-              isCustom: true,
-            });
-            existingIds.add(sItem.itemId);
+          const existing = state.items.find((i) => i.id === sItem.itemId);
+          if (existing) {
+            state.addToCart(existing, sItem.quantity, sItem.variantId);
+          } else {
+            state.addToCart(
+              {
+                id: sItem.itemId,
+                name: sItem.name,
+                brand: sItem.brand,
+                price: sItem.price,
+                category: sItem.category,
+                subcategory: sItem.subcategory,
+                icon: '📦',
+                unit: sItem.unit || '1 unit',
+                quantity: 0,
+                isCustom: true,
+              },
+              sItem.quantity,
+              sItem.variantId
+            );
           }
         }
+        return roundQuantity(session.items.reduce((sum, i) => sum + i.quantity, 0));
+      },
 
-        const updatedExisting = state.items.map((item) => {
-          const addQty = itemQtyMap.get(item.id);
-          if (!addQty) return item;
-          return { ...item, quantity: item.quantity + addQty };
-        });
-
-        set({ items: [...restoredMissing, ...updatedExisting] });
-        return session.items.reduce((sum, i) => sum + i.quantity, 0);
+      quickReorderItem: (itemId, variantId, quantity = 1) => {
+        const state = get();
+        const found = state.items.find((i) => i.id === itemId);
+        if (!found) return false;
+        state.addToCart(found, quantity, variantId);
+        return true;
       },
 
       addTransaction: (tx) =>

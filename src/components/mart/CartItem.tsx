@@ -1,34 +1,51 @@
 import { useState } from 'react';
 import { Plus, Minus, Trash2, Pencil, Check, X } from 'lucide-react';
-import type { CartItem as CartItemModel, CategoryConfig } from '../../store/useStore';
-import { formatCurrencyExact } from '../../utils/categoryStyles';
+import type { CartLineItem, CategoryConfig } from '../../types/models';
+import { formatCurrencyExact, formatQuantity } from '../../utils/categoryStyles';
+import { getDefaultQuantityStep } from '../../utils/martEngine';
 import { ProductVisual } from './ProductVisual';
 
 export interface CartItemRowProps {
-  item: CartItemModel;
+  line: CartLineItem;
   categoryConfig?: CategoryConfig;
-  onUpdateQuantity: (id: string, delta: number) => void;
-  onUpdatePrice: (id: string, newPrice: number) => void;
-  onRemove: (id: string) => void;
+  onUpdateQuantity: (id: string, delta: number, variantId?: string) => void;
+  onSetQuantity: (id: string, qty: number, variantId?: string) => void;
+  onUpdatePrice: (id: string, newPrice: number, variantId?: string) => void;
+  onRemove: (id: string, variantId?: string) => void;
 }
 
 export function CartItemRow({
-  item,
+  line,
   categoryConfig,
   onUpdateQuantity,
+  onSetQuantity,
   onUpdatePrice,
   onRemove,
 }: CartItemRowProps) {
+  const { item, variantId, variantLabel, unit, price, quantity, subtotal } = line;
   const [editingPrice, setEditingPrice] = useState(false);
   const [tempPrice, setTempPrice] = useState('');
+  const [editingQty, setEditingQty] = useState(false);
+  const [tempQty, setTempQty] = useState('');
+
+  const step = getDefaultQuantityStep(item);
 
   const commitPrice = () => {
     const val = Number(tempPrice);
     if (tempPrice && Number.isFinite(val) && val > 0) {
-      onUpdatePrice(item.id, val);
+      onUpdatePrice(item.id, val, variantId);
     }
     setEditingPrice(false);
     setTempPrice('');
+  };
+
+  const commitQty = () => {
+    const val = Number(tempQty);
+    if (tempQty !== '' && Number.isFinite(val) && val >= 0) {
+      onSetQuantity(item.id, val, variantId);
+    }
+    setEditingQty(false);
+    setTempQty('');
   };
 
   return (
@@ -43,7 +60,18 @@ export function CartItemRow({
       />
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-white truncate">{item.name}</p>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+          {variantLabel && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-300 border border-brand-500/25 flex-shrink-0">
+              {variantLabel}
+            </span>
+          )}
+        </div>
+        {item.brand && (
+          <p className="text-[10px] text-zinc-500 font-medium truncate">{item.brand}</p>
+        )}
+
         {editingPrice ? (
           <div className="flex items-center gap-1 mt-1">
             <span className="text-xs text-brand-400 font-bold">₹</span>
@@ -86,14 +114,14 @@ export function CartItemRow({
           </div>
         ) : (
           <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-mono">
-            <span>₹{formatCurrencyExact(item.price)}</span>
+            <span>₹{formatCurrencyExact(price)}</span>
             <span>·</span>
-            <span>{item.unit || '1 unit'}</span>
+            <span>{unit}</span>
             <button
               type="button"
               onClick={() => {
                 setEditingPrice(true);
-                setTempPrice(String(item.price));
+                setTempPrice(String(price));
               }}
               aria-label={`Edit price of ${item.name}`}
               className="text-zinc-500 hover:text-brand-400 p-0.5"
@@ -104,22 +132,53 @@ export function CartItemRow({
         )}
       </div>
 
-      {/* Quantity Controls */}
+      {/* Quantity Controls (supports decimal & direct input) */}
       <div className="flex items-center gap-1 bg-ink-900 rounded-lg p-1 border border-white/[0.06]">
         <button
           type="button"
-          onClick={() => onUpdateQuantity(item.id, -1)}
+          onClick={() => onUpdateQuantity(item.id, -step, variantId)}
           aria-label={`Decrease ${item.name} quantity`}
           className="w-6 h-6 rounded-md bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center"
         >
           <Minus className="w-3 h-3 text-white" strokeWidth={3} />
         </button>
-        <span className="text-xs font-extrabold text-white font-mono w-5 text-center tabular-nums">
-          {item.quantity}
-        </span>
+
+        {editingQty ? (
+          <input
+            type="number"
+            min="0"
+            step={step}
+            aria-label={`Exact quantity for ${item.name}`}
+            value={tempQty}
+            onChange={(e) => setTempQty(e.target.value)}
+            onBlur={commitQty}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitQty();
+              if (e.key === 'Escape') {
+                setEditingQty(false);
+                setTempQty('');
+              }
+            }}
+            className="w-11 bg-ink-950 border border-brand-500/40 rounded px-1 py-0.5 text-xs text-white font-mono text-center outline-none"
+            autoFocus
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingQty(true);
+              setTempQty(String(quantity));
+            }}
+            title="Click to enter exact quantity"
+            className="text-xs font-extrabold text-white font-mono min-w-[1.75rem] px-1 text-center tabular-nums hover:text-brand-300"
+          >
+            {formatQuantity(quantity)}
+          </button>
+        )}
+
         <button
           type="button"
-          onClick={() => onUpdateQuantity(item.id, 1)}
+          onClick={() => onUpdateQuantity(item.id, step, variantId)}
           aria-label={`Increase ${item.name} quantity`}
           className="w-6 h-6 rounded-md bg-brand-500/20 hover:bg-brand-500/30 flex items-center justify-center"
         >
@@ -129,12 +188,12 @@ export function CartItemRow({
 
       {/* Subtotal + Remove */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-xs font-extrabold text-brand-400 font-mono tabular-nums w-14 text-right">
-          ₹{formatCurrencyExact(item.price * item.quantity)}
+        <span className="text-xs font-extrabold text-brand-400 font-mono tabular-nums w-16 text-right">
+          ₹{formatCurrencyExact(subtotal)}
         </span>
         <button
           type="button"
-          onClick={() => onRemove(item.id)}
+          onClick={() => onRemove(item.id, variantId)}
           aria-label={`Remove ${item.name} from cart`}
           className="w-6 h-6 rounded-md text-zinc-600 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors"
         >
