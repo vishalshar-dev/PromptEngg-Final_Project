@@ -1,0 +1,8 @@
+{
+  "name": "CartAudit — Smart Budget Radar",
+  "description": "Smart quick-commerce budget radar, multi-app cart comparator, hidden-fee detector, and multimodal receipt scanner.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

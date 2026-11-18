@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Radar, TrendingDown, Wallet, Target, PieChart, Pencil, Check, X, AlertOctagon } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { getCategoryStyle, formatCurrency } from '../../utils/categoryStyles';
+import { MonthlyTrendsChart } from './MonthlyTrendsChart';
 
 export function RadarDashboard() {
   const transactions = useAppStore((s) => s.transactions);
@@ -75,8 +76,9 @@ export function RadarDashboard() {
         <h2 className="text-lg font-extrabold tracking-tight">Budget Radar</h2>
       </div>
 
-      {/* Main Budget Ring Card */}
-      <div className="glass rounded-2xl p-5 shadow-xl animate-fade-in-up">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Main Budget Ring Card */}
+        <div className="lg:col-span-5 glass rounded-2xl p-5 shadow-xl animate-fade-in-up">
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
@@ -214,10 +216,12 @@ export function RadarDashboard() {
             />
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-3 gap-2.5 animate-fade-in-up">
+        {/* Right Column: Stats + Category Breakdown */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* Stat Cards */}
+          <div className="grid grid-cols-3 gap-2.5 animate-fade-in-up">
         <StatCard
           icon={Wallet}
           label="Spent"
@@ -305,8 +309,12 @@ export function RadarDashboard() {
               );
             })
           )}
+            </div>
+          </div>
         </div>
       </div>
+
+      <MonthlyTrendsChart />
     </div>
   );
 }

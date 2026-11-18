@@ -2,16 +2,24 @@ import { useState, useRef } from 'react';
 import { Download, Upload, Database, Check, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency } from '../../utils/categoryStyles';
+import { normalizeBackupPayload } from '../../utils/storeHelpers';
 
 type ToastState = { type: 'success' | 'error'; message: string } | null;
 
 export function DataBackup() {
   const transactions = useAppStore((s) => s.transactions);
   const items = useAppStore((s) => s.items);
+  const categories = useAppStore((s) => s.categories);
+  const categoryConfigs = useAppStore((s) => s.categoryConfigs);
+  const priceHistory = useAppStore((s) => s.priceHistory);
+  const purchaseHistory = useAppStore((s) => s.purchaseHistory);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const sessionBudget = useAppStore((s) => s.sessionBudget);
   const categoryCaps = useAppStore((s) => s.categoryCaps);
   const savedAudits = useAppStore((s) => s.savedAudits);
+  const people = useAppStore((s) => s.people);
+  const sharedExpenses = useAppStore((s) => s.sharedExpenses);
+  const settlements = useAppStore((s) => s.settlements);
   const importBackupData = useAppStore((s) => s.importBackupData);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -23,16 +31,23 @@ export function DataBackup() {
   };
 
   const handleExport = () => {
-    const customItems = items.filter((i) => !i.id.startsWith('item-'));
+    const customItems = items;
     const backup = {
       version: 1 as const,
       exportedAt: new Date().toISOString(),
       transactions,
       customItems,
+      categories,
+      categoryConfigs,
+      priceHistory,
+      purchaseHistory,
       totalBudget,
       sessionBudget,
       categoryCaps,
       savedAudits,
+      people,
+      sharedExpenses,
+      settlements,
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -62,27 +77,17 @@ export function DataBackup() {
           showToast('error', 'Invalid file format');
           return;
         }
-        const data = JSON.parse(raw);
-
-        if (!data.version || !Array.isArray(data.transactions)) {
-          showToast('error', 'Invalid backup file — missing required fields');
-          return;
-        }
-
-        importBackupData({
-          version: 1,
-          exportedAt: data.exportedAt ?? new Date().toISOString(),
-          transactions: data.transactions ?? [],
-          customItems: data.customItems ?? [],
-          totalBudget: data.totalBudget ?? 5000,
-          sessionBudget: data.sessionBudget ?? null,
-          categoryCaps: data.categoryCaps ?? {},
-          savedAudits: data.savedAudits ?? [],
-        });
-
+        const parsed = JSON.parse(raw);
+        const normalized = normalizeBackupPayload(parsed);
+        importBackupData(normalized);
         showToast('success', 'Backup restored successfully');
-      } catch {
-        showToast('error', 'Failed to parse backup file');
+      } catch (err) {
+        showToast(
+          'error',
+          err instanceof Error && err.message.startsWith('Invalid backup')
+            ? err.message
+            : 'Failed to parse backup file'
+        );
       }
     };
     reader.onerror = () => showToast('error', 'Failed to read file');
@@ -98,7 +103,7 @@ export function DataBackup() {
       </div>
 
       <p className="text-[11px] text-zinc-500 font-medium leading-relaxed">
-        Export a full JSON backup of your transactions, custom items, budgets, and saved audits. Restore from a previous backup file anytime.
+        Export a full JSON backup of your transactions, custom items, categories, budgets, and saved audits. Restore from a previous backup file anytime.
       </p>
 
       {/* Backup Stats */}
@@ -120,6 +125,7 @@ export function DataBackup() {
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-2.5">
         <button
+          type="button"
           onClick={handleExport}
           className="bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-white/[0.06] hover:border-violet-500/30"
         >
@@ -127,6 +133,7 @@ export function DataBackup() {
           Export Data
         </button>
         <button
+          type="button"
           onClick={handleImportClick}
           className="bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-white/[0.06] hover:border-violet-500/30"
         >
@@ -138,6 +145,7 @@ export function DataBackup() {
       <input
         ref={fileInputRef}
         type="file"
+        aria-label="Import backup JSON file"
         accept="application/json,.json"
         onChange={handleImportFile}
         className="hidden"
@@ -146,6 +154,7 @@ export function DataBackup() {
       {/* Toast */}
       {toast && (
         <div
+          role="status"
           className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl border shadow-2xl animate-slide-up flex items-center gap-2 ${
             toast.type === 'success'
               ? 'bg-ink-850 border-brand-500/30 glow-brand'

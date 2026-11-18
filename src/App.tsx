@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Radar, Shield, Wallet, ScanSearch } from 'lucide-react';
+import { ShoppingBag, Radar, Shield, Wallet, ScanSearch, Users } from 'lucide-react';
 import { QuickMartGrid } from './components/mart/QuickMartGrid';
 import { CartDrawer } from './components/mart/CartDrawer';
 import { Ledger } from './components/ledgers/Ledger';
 import { RadarDashboard } from './components/analytics/RadarDashboard';
 import { SurvivalSandbox } from './components/analytics/SurvivalSandbox';
 import { AuditPanel } from './components/audit/AuditPanel';
+import { SplitLedgerDashboard } from './components/splits/SplitLedgerDashboard';
 import { useAppStore } from './store/useStore';
-import { formatCurrency } from './utils/categoryStyles';
+import { formatCurrencyExact } from './utils/categoryStyles';
 
-type Tab = 'mart' | 'audit' | 'radar' | 'warroom';
+type Tab = 'mart' | 'ledger' | 'audit' | 'radar' | 'warroom';
 
 const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
   { id: 'mart', label: 'Mart', icon: ShoppingBag },
+  { id: 'ledger', label: 'Ledger', icon: Users },
   { id: 'audit', label: 'Audit', icon: ScanSearch },
   { id: 'radar', label: 'Radar', icon: Radar },
   { id: 'warroom', label: 'War Room', icon: Shield },
@@ -20,11 +22,14 @@ const tabs: { id: Tab; label: string; icon: typeof ShoppingBag }[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('mart');
+  const [cartOpenSignal, setCartOpenSignal] = useState(0);
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
+  const items = useAppStore((s) => s.items);
 
   const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
   const remaining = totalBudget - totalSpent;
+  const hasCartItems = items.some((i) => i.quantity > 0);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -34,7 +39,7 @@ export default function App() {
     <div className="min-h-screen bg-ink-950 text-white pb-32 font-sans selection:bg-brand-500 selection:text-black">
       {/* Top Bar */}
       <header className="glass-nav sticky top-0 z-40 border-b border-white/[0.06]">
-        <div className="max-w-md mx-auto px-4">
+        <div className="max-w-md md:max-w-5xl mx-auto px-4 md:px-6">
           {/* Logo + Balance */}
           <div className="flex items-center justify-between py-3.5">
             <div className="flex items-center gap-2.5">
@@ -62,33 +67,34 @@ export default function App() {
                   remaining > 500 ? 'text-brand-400' : 'text-red-400'
                 }`}
               >
-                ₹{formatCurrency(remaining)}
+                ₹{formatCurrencyExact(remaining)}
               </p>
             </div>
           </div>
 
           {/* Pill Navigation */}
-          <nav className="flex gap-1.5 pb-3">
+          <nav className="flex gap-1 sm:gap-1.5 pb-3 md:max-w-2xl">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-300 ${
+                  className={`relative flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-2.5 px-1 sm:px-2 rounded-xl text-[11px] sm:text-[13px] font-bold whitespace-nowrap transition-all duration-300 ${
                     active
                       ? 'bg-white/[0.08] text-white border border-white/10 shadow-lg'
                       : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
                   }`}
                 >
                   <Icon
-                    className={`w-4 h-4 transition-transform duration-300 ${
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform duration-300 ${
                       active ? 'scale-110' : ''
                     }`}
                     strokeWidth={2.5}
                   />
-                  {tab.label}
+                  <span>{tab.label}</span>
                   {active && (
                     <span className="absolute -bottom-px left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-brand-400 glow-brand" />
                   )}
@@ -100,22 +106,27 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-4 pt-5">
+      <main className="max-w-md md:max-w-5xl mx-auto px-4 md:px-6 pt-5">
         <div key={activeTab} className="animate-fade-in-up">
           {activeTab === 'mart' && (
-            <div className="space-y-5">
-              <QuickMartGrid />
-              <Ledger />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-7">
+                <QuickMartGrid onOpenCart={() => setCartOpenSignal((n) => n + 1)} />
+              </div>
+              <div className="lg:col-span-5 lg:sticky lg:top-32">
+                <Ledger onOpenSplitLedger={() => setActiveTab('ledger')} />
+              </div>
             </div>
           )}
+          {activeTab === 'ledger' && <SplitLedgerDashboard />}
           {activeTab === 'audit' && <AuditPanel />}
           {activeTab === 'radar' && <RadarDashboard />}
           {activeTab === 'warroom' && <SurvivalSandbox />}
         </div>
       </main>
 
-      {/* Floating Checkout Bar */}
-      <CartDrawer />
+      {/* Floating Checkout Bar (visible on Mart tab or whenever cart has items) */}
+      {(activeTab === 'mart' || hasCartItems) && <CartDrawer openSignal={cartOpenSignal} />}
     </div>
   );
 }

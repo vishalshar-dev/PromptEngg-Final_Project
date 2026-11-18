@@ -22,14 +22,15 @@ export function SurvivalSandbox() {
         <h2 className="text-lg font-extrabold tracking-tight">War Room</h2>
       </div>
 
-      {/* Main Control Card */}
-      <div
-        className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-500 animate-fade-in-up ${
-          isBrokeMode
-            ? 'bg-red-950/20 border-red-500/20 glow-red-lg'
-            : 'glass border-white/[0.06]'
-        }`}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Main Control Card */}
+        <div
+          className={`lg:col-span-6 relative overflow-hidden rounded-2xl border p-6 transition-all duration-500 animate-fade-in-up ${
+            isBrokeMode
+              ? 'bg-red-950/20 border-red-500/20 glow-red-lg'
+              : 'glass border-white/[0.06]'
+          }`}
+        >
         {/* Animated Background Pulse */}
         {isBrokeMode && (
           <div className="absolute inset-0 opacity-30">
@@ -108,8 +109,10 @@ export function SurvivalSandbox() {
         </div>
       </div>
 
-      {/* Junk Spending Insight */}
-      <div className="glass rounded-2xl p-4 animate-fade-in-up">
+      {/* Right Column: Audit & Discipline */}
+      <div className="lg:col-span-6 space-y-4">
+        {/* Junk Spending Insight */}
+        <div className="glass rounded-2xl p-4 animate-fade-in-up">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-orange-400" strokeWidth={2.5} />
           <h3 className="text-sm font-extrabold tracking-tight">
@@ -193,6 +196,8 @@ export function SurvivalSandbox() {
               : 'AT RISK'}
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );
