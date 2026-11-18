@@ -131,6 +131,9 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
       ? data.dismissedWarRoomAlerts
       : undefined,
     disciplineCheckIns: Array.isArray(data.disciplineCheckIns) ? data.disciplineCheckIns : undefined,
+    basketTemplates: Array.isArray(data.basketTemplates) ? data.basketTemplates : undefined,
+    basketTemplatesSeeded:
+      typeof data.basketTemplatesSeeded === 'boolean' ? data.basketTemplatesSeeded : undefined,
   };
 }
 

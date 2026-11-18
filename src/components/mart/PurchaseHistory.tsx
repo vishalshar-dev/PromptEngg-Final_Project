@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { History, RotateCcw, Users, Calendar, Check, ShoppingBag } from 'lucide-react';
+import { History, RotateCcw, Users, Calendar, Check, ShoppingBag, BookmarkPlus } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrencyExact, formatQuantity, getCategoryStyle } from '../../utils/categoryStyles';
 
 interface PurchaseHistoryProps {
   onRepeated?: () => void;
+  onSavedBasket?: () => void;
 }
 
-export function PurchaseHistory({ onRepeated }: PurchaseHistoryProps) {
+export function PurchaseHistory({ onRepeated, onSavedBasket }: PurchaseHistoryProps) {
   const purchaseHistory = useAppStore((s) => s.purchaseHistory);
   const repeatPurchaseSession = useAppStore((s) => s.repeatPurchaseSession);
+  const saveSessionAsBasket = useAppStore((s) => s.saveSessionAsBasket);
   const [repeatedId, setRepeatedId] = useState<string | null>(null);
+  const [savedBasketId, setSavedBasketId] = useState<string | null>(null);
 
   const handleRepeat = (sessionId: string) => {
     const count = repeatPurchaseSession(sessionId);
@@ -18,6 +21,15 @@ export function PurchaseHistory({ onRepeated }: PurchaseHistoryProps) {
       setRepeatedId(sessionId);
       setTimeout(() => setRepeatedId(null), 1800);
       onRepeated?.();
+    }
+  };
+
+  const handleSaveAsBasket = (sessionId: string) => {
+    const created = saveSessionAsBasket(sessionId);
+    if (created) {
+      setSavedBasketId(sessionId);
+      setTimeout(() => setSavedBasketId(null), 1800);
+      onSavedBasket?.();
     }
   };
 
@@ -129,27 +141,51 @@ export function PurchaseHistory({ onRepeated }: PurchaseHistoryProps) {
                 })}
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleRepeat(session.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all whitespace-nowrap ${
-                  isRepeated
-                    ? 'bg-brand-500 text-ink-950'
-                    : 'bg-white/[0.06] hover:bg-brand-500 text-zinc-200 hover:text-ink-950 border border-white/[0.08]'
-                }`}
-              >
-                {isRepeated ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
-                    Added to Cart
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    Repeat Purchase
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handleSaveAsBasket(session.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap border ${
+                    savedBasketId === session.id
+                      ? 'bg-brand-500/20 border-brand-500/40 text-brand-300'
+                      : 'bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 border-white/[0.08]'
+                  }`}
+                >
+                  {savedBasketId === session.id ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                      Basket Saved
+                    </>
+                  ) : (
+                    <>
+                      <BookmarkPlus className="w-3.5 h-3.5" strokeWidth={2.3} />
+                      Save Basket
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleRepeat(session.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                    isRepeated
+                      ? 'bg-brand-500 text-ink-950'
+                      : 'bg-white/[0.06] hover:bg-brand-500 text-zinc-200 hover:text-ink-950 border border-white/[0.08]'
+                  }`}
+                >
+                  {isRepeated ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                      Added to Cart
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      Repeat Purchase
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         );

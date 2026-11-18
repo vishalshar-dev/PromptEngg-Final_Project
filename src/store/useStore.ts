@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import {
   SELF_PERSON_ID,
   type BackupData,
+  type BasketTemplate,
   type BrokeModeConfig,
   type CartItem,
   type CategoryCaps,
@@ -40,6 +41,7 @@ import {
   mergeCategories,
 } from '../utils/storeHelpers';
 import {
+  INITIAL_BASKET_TEMPLATES,
   INITIAL_CATEGORY_CONFIGS,
   INITIAL_MART_CATEGORIES,
   INITIAL_MART_CATEGORY_CAPS,
@@ -49,8 +51,13 @@ import {
   migratePersistedMartItems,
 } from '../data/martCatalog';
 import {
+  applyBasketTemplateToItems,
+  buildBasketItemsFromCart,
+  buildBasketItemsFromSession,
   buildCheckoutBreakdown,
   buildCheckoutSignature,
+  computeBasketSavedTotal,
+  evaluateBasketTemplate,
   getActiveVariant,
   getDueRecurringItems,
   getNextDueDateString,
@@ -169,6 +176,8 @@ export interface AppState {
   categoryCaps: CategoryCaps;
   priceHistory: PriceHistory;
   purchaseHistory: PurchaseSession[];
+  basketTemplates: BasketTemplate[];
+  basketTemplatesSeeded: boolean;
   priceObservations: PriceObservation[];
   priceAlerts: PriceAlert[];
   triggeredPriceAlerts: TriggeredPriceAlert[];
@@ -209,6 +218,15 @@ export interface AppState {
   clearCart: () => void;
   repeatPurchaseSession: (sessionId: string) => number;
   quickReorderItem: (itemId: string, variantId?: string, quantity?: number) => boolean;
+
+  saveCartAsBasket: (name: string, description?: string) => BasketTemplate | null;
+  saveSessionAsBasket: (sessionId: string, name?: string) => BasketTemplate | null;
+  loadBasketTemplateToCart: (basketId: string, mode?: 'merge' | 'replace') => number;
+  updateBasketFromCart: (basketId: string) => boolean;
+  refreshBasketBaselinePrices: (basketId: string) => boolean;
+  renameBasketTemplate: (basketId: string, name: string, description?: string) => void;
+  removeBasketTemplateItem: (basketId: string, itemId: string, variantId?: string) => void;
+  deleteBasketTemplate: (basketId: string) => void;
 
   addTransaction: (tx: Omit<Transaction, 'id' | 'timestamp'> & { timestamp?: string }) => void;
   updateTransaction: (
@@ -405,6 +423,8 @@ export const useAppStore = create<AppState>()(
       categoryCaps: INITIAL_MART_CATEGORY_CAPS,
       priceHistory: ensureCatalogPriceHistory(INITIAL_MART_ITEMS),
       purchaseHistory: [],
+      basketTemplates: INITIAL_BASKET_TEMPLATES,
+      basketTemplatesSeeded: true,
       priceObservations: [],
       priceAlerts: [],
       triggeredPriceAlerts: [],
@@ -1322,6 +1342,174 @@ export const useAppStore = create<AppState>()(
         return true;
       },
 
+      saveCartAsBasket: (name, description) => {
+        const trimmedName = name.trim();
+        if (!trimmedName) return null;
+        const state = get();
+        const basketItems = buildBasketItemsFromCart(state.items);
+        if (basketItems.length === 0) return null;
+        const nowIso = new Date().toISOString();
+        const created: BasketTemplate = {
+          id: `basket-${crypto.randomUUID().slice(0, 8)}`,
+          name: trimmedName,
+          description: description?.trim() || undefined,
+          items: basketItems,
+          savedTotal: computeBasketSavedTotal(basketItems),
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          lastLoadedAt: null,
+          isPreset: false,
+        };
+        set((s) => ({
+          basketTemplates: [created, ...s.basketTemplates],
+          basketTemplatesSeeded: true,
+        }));
+        return created;
+      },
+
+      saveSessionAsBasket: (sessionId, name) => {
+        const state = get();
+        const session = state.purchaseHistory.find((s) => s.id === sessionId);
+        if (!session || session.items.length === 0) return null;
+        const basketItems = buildBasketItemsFromSession(session, state.items);
+        if (basketItems.length === 0) return null;
+
+        const nowIso = new Date().toISOString();
+        const dateLabel = new Date(session.timestamp).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+        });
+        const resolvedName = name?.trim() || `Order Basket (${dateLabel})`;
+        const created: BasketTemplate = {
+          id: `basket-${crypto.randomUUID().slice(0, 8)}`,
+          name: resolvedName,
+          description: `Saved from order on ${dateLabel}`,
+          items: basketItems,
+          savedTotal: computeBasketSavedTotal(basketItems),
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          lastLoadedAt: null,
+          isPreset: false,
+        };
+        set((s) => ({
+          basketTemplates: [created, ...s.basketTemplates],
+          basketTemplatesSeeded: true,
+        }));
+        return created;
+      },
+
+      loadBasketTemplateToCart: (basketId, mode = 'merge') => {
+        const state = get();
+        const target = state.basketTemplates.find((b) => b.id === basketId);
+        if (!target || target.items.length === 0) return 0;
+
+        const { nextItems, loadedLinesCount } = applyBasketTemplateToItems(
+          state.items,
+          target,
+          mode
+        );
+        if (loadedLinesCount === 0) return 0;
+
+        const nowIso = new Date().toISOString();
+        set({
+          items: nextItems,
+          basketTemplates: state.basketTemplates.map((b) =>
+            b.id === basketId ? { ...b, lastLoadedAt: nowIso } : b
+          ),
+        });
+        return loadedLinesCount;
+      },
+
+      updateBasketFromCart: (basketId) => {
+        const state = get();
+        const target = state.basketTemplates.find((b) => b.id === basketId);
+        if (!target) return false;
+        const basketItems = buildBasketItemsFromCart(state.items);
+        if (basketItems.length === 0) return false;
+        const nowIso = new Date().toISOString();
+        set({
+          basketTemplates: state.basketTemplates.map((b) =>
+            b.id === basketId
+              ? {
+                  ...b,
+                  items: basketItems,
+                  savedTotal: computeBasketSavedTotal(basketItems),
+                  updatedAt: nowIso,
+                  isPreset: false,
+                }
+              : b
+          ),
+        });
+        return true;
+      },
+
+      refreshBasketBaselinePrices: (basketId) => {
+        const state = get();
+        const target = state.basketTemplates.find((b) => b.id === basketId);
+        if (!target) return false;
+        const evaluated = evaluateBasketTemplate(target, state.items);
+        const updatedItems = evaluated.lines.map((line) => ({
+          ...line.templateItem,
+          savedPrice: line.currentPrice,
+        }));
+        const nowIso = new Date().toISOString();
+        set({
+          basketTemplates: state.basketTemplates.map((b) =>
+            b.id === basketId
+              ? {
+                  ...b,
+                  items: updatedItems,
+                  savedTotal: computeBasketSavedTotal(updatedItems),
+                  updatedAt: nowIso,
+                }
+              : b
+          ),
+        });
+        return true;
+      },
+
+      renameBasketTemplate: (basketId, name, description) =>
+        set((state) => {
+          const trimmed = name.trim();
+          if (!trimmed) return state;
+          const nowIso = new Date().toISOString();
+          return {
+            basketTemplates: state.basketTemplates.map((b) =>
+              b.id === basketId
+                ? {
+                    ...b,
+                    name: trimmed,
+                    description:
+                      description !== undefined ? description.trim() || undefined : b.description,
+                    updatedAt: nowIso,
+                  }
+                : b
+            ),
+          };
+        }),
+
+      removeBasketTemplateItem: (basketId, itemId, variantId) =>
+        set((state) => ({
+          basketTemplates: state.basketTemplates.map((b) => {
+            if (b.id !== basketId) return b;
+            const filtered = b.items.filter(
+              (it) => !(it.itemId === itemId && (it.variantId ?? '') === (variantId ?? ''))
+            );
+            return {
+              ...b,
+              items: filtered,
+              savedTotal: computeBasketSavedTotal(filtered),
+              updatedAt: new Date().toISOString(),
+            };
+          }),
+        })),
+
+      deleteBasketTemplate: (basketId) =>
+        set((state) => ({
+          basketTemplates: state.basketTemplates.filter((b) => b.id !== basketId),
+          basketTemplatesSeeded: true,
+        })),
+
       addTransaction: (tx) =>
         set((state) => ({
           transactions: [
@@ -2185,6 +2373,13 @@ export const useAppStore = create<AppState>()(
             categories: mergedConfigs.map((c) => c.name),
             priceHistory: mergedHistory,
             purchaseHistory: sessions,
+            basketTemplates: Array.isArray(data.basketTemplates)
+              ? data.basketTemplates
+              : INITIAL_BASKET_TEMPLATES,
+            basketTemplatesSeeded:
+              typeof data.basketTemplatesSeeded === 'boolean'
+                ? data.basketTemplatesSeeded
+                : true,
             priceObservations: restoredObs,
             priceAlerts: Array.isArray(data.priceAlerts) ? data.priceAlerts : [],
             triggeredPriceAlerts: [],
@@ -2229,6 +2424,8 @@ export const useAppStore = create<AppState>()(
         items: state.items,
         priceHistory: state.priceHistory,
         purchaseHistory: state.purchaseHistory,
+        basketTemplates: state.basketTemplates,
+        basketTemplatesSeeded: state.basketTemplatesSeeded,
         priceObservations: state.priceObservations,
         priceAlerts: state.priceAlerts,
         triggeredPriceAlerts: state.triggeredPriceAlerts,
@@ -2288,6 +2485,13 @@ export const useAppStore = create<AppState>()(
             categories: migratedConfigs.map((c) => c.name),
             priceHistory: patchedHistory,
             purchaseHistory: sessions,
+            basketTemplates:
+              state.basketTemplatesSeeded && Array.isArray(state.basketTemplates)
+                ? state.basketTemplates
+                : Array.isArray(state.basketTemplates) && state.basketTemplates.length > 0
+                ? state.basketTemplates
+                : INITIAL_BASKET_TEMPLATES,
+            basketTemplatesSeeded: true,
             priceObservations: migratedObs,
             priceAlerts: Array.isArray(state.priceAlerts) ? state.priceAlerts : [],
             triggeredPriceAlerts: Array.isArray(state.triggeredPriceAlerts)

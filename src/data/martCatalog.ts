@@ -1,5 +1,17 @@
-import type { CartItem, CategoryCaps, CategoryConfig, PriceHistory } from '../types/models';
-import { getPriceHistoryKey, toLocalDateKey } from '../utils/martEngine';
+import type {
+  BasketTemplate,
+  BasketTemplateItem,
+  CartItem,
+  CategoryCaps,
+  CategoryConfig,
+  PriceHistory,
+} from '../types/models';
+import {
+  computeBasketSavedTotal,
+  getEffectivePriceAndUnit,
+  getPriceHistoryKey,
+  toLocalDateKey,
+} from '../utils/martEngine';
 
 import groceriesImg from '../assets/images/product_groceries_staples_1794985498688.jpg';
 import produceImg from '../assets/images/product_fresh_produce_1794985499454.jpg';
@@ -1422,4 +1434,85 @@ export function migrateCategoryConfigs(
     .sort((a, b) => a.order - b.order)
     .map((cfg, idx) => ({ ...cfg, order: idx }));
 }
+
+function buildPresetBasket(
+  id: string,
+  name: string,
+  description: string,
+  specs: { itemId: string; variantId?: string; quantity: number }[]
+): BasketTemplate {
+  const catalogMap = new Map(INITIAL_MART_ITEMS.map((item) => [item.id, item]));
+  const nowIso = new Date().toISOString();
+  const basketItems: BasketTemplateItem[] = [];
+
+  for (const spec of specs) {
+    const item = catalogMap.get(spec.itemId);
+    if (!item) continue;
+    const { price, unit, variant } = getEffectivePriceAndUnit(item, spec.variantId);
+    basketItems.push({
+      itemId: item.id,
+      name: item.name,
+      brand: item.brand,
+      category: item.category,
+      subcategory: item.subcategory,
+      variantId: variant?.id,
+      variantLabel: variant?.label,
+      unit,
+      quantity: spec.quantity,
+      savedPrice: price,
+    });
+  }
+
+  return {
+    id,
+    name,
+    description,
+    items: basketItems,
+    savedTotal: computeBasketSavedTotal(basketItems),
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    lastLoadedAt: null,
+    isPreset: true,
+  };
+}
+
+export const INITIAL_BASKET_TEMPLATES: BasketTemplate[] = [
+  buildPresetBasket(
+    'basket-weekly-kitchen',
+    'Weekly Kitchen Essentials',
+    'Dairy, fresh produce & protein staples for a standard week',
+    [
+      { itemId: 'item-milk', variantId: 'var-milk-1l', quantity: 2 },
+      { itemId: 'item-eggs', variantId: 'var-eggs-6', quantity: 1 },
+      { itemId: 'item-bread', quantity: 1 },
+      { itemId: 'item-tomatoes', quantity: 1.5 },
+      { itemId: 'item-onions', quantity: 1 },
+      { itemId: 'item-bananas', variantId: 'var-ban-6', quantity: 1 },
+    ]
+  ),
+  buildPresetBasket(
+    'basket-monthly-staples',
+    'Monthly Staples Bulk',
+    'Bulk grains, atta, cooking oil, dal & salt pantry refill',
+    [
+      { itemId: 'item-rice', variantId: 'var-rice-5kg', quantity: 1 },
+      { itemId: 'item-wheat-flour', variantId: 'var-atta-5kg', quantity: 1 },
+      { itemId: 'item-cooking-oil', variantId: 'var-oil-2l', quantity: 1 },
+      { itemId: 'item-pulses', variantId: 'var-dal-1kg', quantity: 1 },
+      { itemId: 'item-salt', quantity: 1 },
+    ]
+  ),
+  buildPresetBasket(
+    'basket-breakfast-chai',
+    'Breakfast & Chai Refill',
+    'Morning bread, butter, milk pouches, chai & sugar',
+    [
+      { itemId: 'item-milk', variantId: 'var-milk-500ml', quantity: 2 },
+      { itemId: 'item-butter', variantId: 'var-butter-100g', quantity: 1 },
+      { itemId: 'item-bread', quantity: 1 },
+      { itemId: 'item-tata-tea', quantity: 1 },
+      { itemId: 'item-sugar', quantity: 1 },
+    ]
+  ),
+];
 

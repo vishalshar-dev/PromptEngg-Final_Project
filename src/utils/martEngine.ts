@@ -1,4 +1,6 @@
 import type {
+  BasketTemplate,
+  BasketTemplateItem,
   CartItem,
   CartLineItem,
   CategoryConfig,
@@ -976,5 +978,233 @@ export function reorderCategoryList(
   const [moved] = copy.splice(fromIndex, 1);
   copy.splice(toIndex, 0, moved);
   return copy.map((cat, idx) => ({ ...cat, order: idx }));
+}
+
+export interface EvaluatedBasketLine {
+  templateItem: BasketTemplateItem;
+  catalogItem: CartItem | null;
+  currentPrice: number;
+  savedPrice: number;
+  currentSubtotal: number;
+  savedSubtotal: number;
+  unitPriceDiff: number;
+  lineDiff: number;
+  isMissingFromCatalog: boolean;
+}
+
+export interface EvaluatedBasketTemplate {
+  basket: BasketTemplate;
+  lines: EvaluatedBasketLine[];
+  savedTotal: number;
+  currentTotal: number;
+  priceDiff: number;
+  priceDiffPct: number;
+  totalUnits: number;
+  lineCount: number;
+  missingItemsCount: number;
+}
+
+export function computeBasketSavedTotal(basketItems: BasketTemplateItem[]): number {
+  return roundCurrency(
+    basketItems.reduce((sum, item) => sum + item.savedPrice * roundQuantity(item.quantity), 0)
+  );
+}
+
+export function buildBasketItemsFromCart(items: CartItem[]): BasketTemplateItem[] {
+  const lines = expandCartLines(items);
+  return lines.map((line) => ({
+    itemId: line.item.id,
+    name: line.item.name,
+    brand: line.item.brand,
+    category: line.item.category,
+    subcategory: line.item.subcategory,
+    variantId: line.variantId,
+    variantLabel: line.variantLabel,
+    unit: line.unit,
+    quantity: roundQuantity(line.quantity),
+    savedPrice: line.price,
+  }));
+}
+
+export function buildBasketItemsFromSession(
+  session: PurchaseSession,
+  catalogItems: CartItem[]
+): BasketTemplateItem[] {
+  const byId = new Map(catalogItems.map((i) => [i.id, i]));
+  return session.items.map((sItem) => {
+    const catalog = byId.get(sItem.itemId);
+    const variant = catalog ? getActiveVariant(catalog, sItem.variantId) : null;
+    return {
+      itemId: sItem.itemId,
+      name: catalog?.name ?? sItem.name,
+      brand: catalog?.brand ?? sItem.brand,
+      category: catalog?.category ?? sItem.category,
+      subcategory: catalog?.subcategory ?? sItem.subcategory,
+      variantId: variant?.id ?? sItem.variantId,
+      variantLabel: variant?.label ?? sItem.variantLabel,
+      unit: variant?.unit ?? sItem.unit ?? catalog?.unit ?? '1 unit',
+      quantity: roundQuantity(sItem.quantity),
+      savedPrice: sItem.price,
+    };
+  });
+}
+
+export function evaluateBasketTemplate(
+  basket: BasketTemplate,
+  catalogItems: CartItem[]
+): EvaluatedBasketTemplate {
+  const byId = new Map(catalogItems.map((i) => [i.id, i]));
+  let savedTotal = 0;
+  let currentTotal = 0;
+  let totalUnits = 0;
+  let missingItemsCount = 0;
+
+  const lines: EvaluatedBasketLine[] = basket.items.map((tplItem) => {
+    const qty = roundQuantity(tplItem.quantity);
+    const catalogItem = byId.get(tplItem.itemId) ?? null;
+    const isMissingFromCatalog = !catalogItem;
+    if (isMissingFromCatalog) {
+      missingItemsCount += 1;
+    }
+
+    let currentPrice = tplItem.savedPrice;
+    if (catalogItem) {
+      const resolvedVariant = tplItem.variantId
+        ? catalogItem.variants?.find((v) => v.id === tplItem.variantId) ?? null
+        : null;
+      if (resolvedVariant) {
+        currentPrice = resolvedVariant.price;
+      } else if (!tplItem.variantId) {
+        currentPrice = getEffectivePriceAndUnit(catalogItem).price;
+      } else {
+        // Specific saved variant was removed even if product exists; use effective catalog price
+        currentPrice = getEffectivePriceAndUnit(catalogItem).price;
+      }
+    }
+
+    const savedSubtotal = roundCurrency(tplItem.savedPrice * qty);
+    const currentSubtotal = roundCurrency(currentPrice * qty);
+    savedTotal += savedSubtotal;
+    currentTotal += currentSubtotal;
+    totalUnits = roundQuantity(totalUnits + qty);
+
+    return {
+      templateItem: tplItem,
+      catalogItem,
+      currentPrice,
+      savedPrice: tplItem.savedPrice,
+      currentSubtotal,
+      savedSubtotal,
+      unitPriceDiff: roundCurrency(currentPrice - tplItem.savedPrice),
+      lineDiff: roundCurrency(currentSubtotal - savedSubtotal),
+      isMissingFromCatalog,
+    };
+  });
+
+  savedTotal = roundCurrency(savedTotal);
+  currentTotal = roundCurrency(currentTotal);
+  const priceDiff = roundCurrency(currentTotal - savedTotal);
+  const priceDiffPct = savedTotal > 0 ? roundCurrency((priceDiff / savedTotal) * 100) : 0;
+
+  return {
+    basket,
+    lines,
+    savedTotal,
+    currentTotal,
+    priceDiff,
+    priceDiffPct,
+    totalUnits,
+    lineCount: lines.length,
+    missingItemsCount,
+  };
+}
+
+export function applyBasketTemplateToItems(
+  catalogItems: CartItem[],
+  basket: BasketTemplate,
+  mode: 'merge' | 'replace' = 'merge'
+): { nextItems: CartItem[]; loadedLinesCount: number } {
+  const working: CartItem[] = catalogItems.map((item) =>
+    mode === 'replace'
+      ? { ...item, quantity: 0, variantQuantities: undefined }
+      : {
+          ...item,
+          variantQuantities: item.variantQuantities ? { ...item.variantQuantities } : undefined,
+        }
+  );
+
+  const indexById = new Map(working.map((item, idx) => [item.id, idx]));
+  let loadedLinesCount = 0;
+
+  for (const tplItem of basket.items) {
+    const qtyToAdd = roundQuantity(tplItem.quantity);
+    if (qtyToAdd <= 0) continue;
+    loadedLinesCount += 1;
+
+    const existingIdx = indexById.get(tplItem.itemId);
+    if (existingIdx !== undefined) {
+      const existing = working[existingIdx];
+      const matchedVariant = tplItem.variantId
+        ? existing.variants?.find((v) => v.id === tplItem.variantId) ?? getActiveVariant(existing)
+        : getActiveVariant(existing);
+
+      if (matchedVariant && existing.variants && existing.variants.length > 0) {
+        const prevMap = { ...(existing.variantQuantities ?? {}) };
+        if (
+          mode === 'merge' &&
+          existing.quantity > 0 &&
+          Object.keys(prevMap).length === 0
+        ) {
+          const legacyVarId = existing.selectedVariantId ?? existing.variants[0].id;
+          prevMap[legacyVarId] = existing.quantity;
+        }
+        prevMap[matchedVariant.id] = roundQuantity((prevMap[matchedVariant.id] ?? 0) + qtyToAdd);
+        const total = roundQuantity(Object.values(prevMap).reduce((s, q) => s + q, 0));
+        working[existingIdx] = {
+          ...existing,
+          selectedVariantId: matchedVariant.id,
+          price: matchedVariant.price,
+          unit: matchedVariant.unit,
+          variantQuantities: prevMap,
+          quantity: total,
+        };
+      } else {
+        working[existingIdx] = {
+          ...existing,
+          quantity: roundQuantity(existing.quantity + qtyToAdd),
+        };
+      }
+    } else {
+      const recreated: CartItem = {
+        id: tplItem.itemId,
+        name: tplItem.name,
+        brand: tplItem.brand,
+        price: tplItem.savedPrice,
+        category: tplItem.category,
+        subcategory: tplItem.subcategory,
+        icon: '📦',
+        unit: tplItem.unit || '1 unit',
+        quantity: qtyToAdd,
+        isCustom: true,
+        selectedVariantId: tplItem.variantId,
+        variants: tplItem.variantId
+          ? [
+              {
+                id: tplItem.variantId,
+                label: tplItem.variantLabel || tplItem.unit || 'Standard',
+                unit: tplItem.unit || '1 unit',
+                price: tplItem.savedPrice,
+              },
+            ]
+          : undefined,
+        variantQuantities: tplItem.variantId ? { [tplItem.variantId]: qtyToAdd } : undefined,
+      };
+      working.unshift(recreated);
+      indexById.clear();
+      working.forEach((it, idx) => indexById.set(it.id, idx));
+    }
+  }
+
+  return { nextItems: working, loadedLinesCount };
 }
 

@@ -13,6 +13,8 @@ export function DataBackup() {
   const categoryConfigs = useAppStore((s) => s.categoryConfigs);
   const priceHistory = useAppStore((s) => s.priceHistory);
   const purchaseHistory = useAppStore((s) => s.purchaseHistory);
+  const basketTemplates = useAppStore((s) => s.basketTemplates);
+  const basketTemplatesSeeded = useAppStore((s) => s.basketTemplatesSeeded);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const sessionBudget = useAppStore((s) => s.sessionBudget);
   const categoryCaps = useAppStore((s) => s.categoryCaps);
@@ -50,6 +52,8 @@ export function DataBackup() {
       categoryConfigs,
       priceHistory,
       purchaseHistory,
+      basketTemplates,
+      basketTemplatesSeeded,
       priceObservations,
       priceAlerts,
       totalBudget,

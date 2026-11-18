@@ -17,6 +17,8 @@ import {
   Receipt,
   ChevronRight,
   Clock,
+  Bookmark,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAppStore, type CartItem } from '../../store/useStore';
 import {
@@ -29,6 +31,7 @@ import {
   calculateMonthlyShoppingSpend,
   computeFrequentlyPurchasedInsights,
   computeRecentlyPurchasedItems,
+  evaluateBasketTemplate,
   filterAndSortProducts,
   getDueRecurringItems,
   isRecurringBillItem,
@@ -46,8 +49,9 @@ import { RecurringItemManager } from './RecurringItemManager';
 import { PurchaseHistory } from './PurchaseHistory';
 import { CategoryIcon } from './CategoryIcon';
 import { ProductVisual } from './ProductVisual';
+import { BasketTemplatesPanel } from './BasketTemplatesPanel';
 
-type MartSection = 'home' | 'catalog' | 'recurring' | 'history';
+type MartSection = 'home' | 'catalog' | 'baskets' | 'recurring' | 'history';
 
 const DEFAULT_FILTERS: ProductFilterOptions = {
   query: '',
@@ -72,6 +76,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const purchaseHistory = useAppStore((s) => s.purchaseHistory);
   const isBrokeMode = useAppStore((s) => s.isBrokeMode);
   const brokeModeConfig = useAppStore((s) => s.brokeModeConfig);
+  const basketTemplates = useAppStore((s) => s.basketTemplates);
 
   const addToCart = useAppStore((s) => s.addToCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
@@ -81,6 +86,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const updateItemPrice = useAppStore((s) => s.updateItemPrice);
   const addDueRecurringToCart = useAppStore((s) => s.addDueRecurringToCart);
   const quickReorderItem = useAppStore((s) => s.quickReorderItem);
+  const loadBasketTemplateToCart = useAppStore((s) => s.loadBasketTemplateToCart);
 
   const [section, setSection] = useState<MartSection>('home');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -92,6 +98,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const [detailProduct, setDetailProduct] = useState<CartItem | null>(null);
   const [dueAddedFlash, setDueAddedFlash] = useState<number | null>(null);
   const [reorderedFlashKey, setReorderedFlashKey] = useState<string | null>(null);
+  const [basketLoadedFlashId, setBasketLoadedFlashId] = useState<string | null>(null);
 
   // Live variant-aware cart totals
   const cartSummary = useMemo(() => calculateCartTotals(items), [items]);
@@ -188,6 +195,10 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
     () => items.filter((i) => isRecurringBillItem(i)).slice(0, 6),
     [items]
   );
+  const evaluatedHomeBaskets = useMemo(
+    () => basketTemplates.slice(0, 3).map((b) => evaluateBasketTemplate(b, items)),
+    [basketTemplates, items]
+  );
 
   const handleSelectCategory = (catName: string) => {
     setSelectedCategory(catName);
@@ -222,6 +233,14 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       const flashKey = `${insight.item.id}::${insight.lastVariantId ?? ''}`;
       setReorderedFlashKey(flashKey);
       setTimeout(() => setReorderedFlashKey(null), 1600);
+    }
+  };
+
+  const handleQuickLoadBasket = (basketId: string) => {
+    const count = loadBasketTemplateToCart(basketId, 'merge');
+    if (count > 0) {
+      setBasketLoadedFlashId(basketId);
+      setTimeout(() => setBasketLoadedFlashId(null), 1800);
     }
   };
 
@@ -433,20 +452,20 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         )}
 
         {/* Section Navigation */}
-        <div className="grid grid-cols-4 gap-1.5 bg-ink-900/70 p-1 rounded-xl border border-white/[0.05]">
+        <div className="flex sm:grid sm:grid-cols-5 items-center gap-1 bg-ink-900/70 p-1 rounded-xl border border-white/[0.05] overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => {
               setSection('home');
               setSelectedCategory(null);
             }}
-            className={`py-2 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+            className={`shrink-0 sm:shrink py-2 px-3 sm:px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 sm:gap-1 whitespace-nowrap transition-all ${
               section === 'home' && !selectedCategory
                 ? 'bg-white/[0.1] text-white'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
+            <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" />
             <span>Home</span>
           </button>
 
@@ -457,14 +476,35 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               setSelectedCategory(null);
               setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
             }}
-            className={`py-2 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+            className={`shrink-0 sm:shrink py-2 px-3 sm:px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 sm:gap-1 whitespace-nowrap transition-all ${
               section === 'catalog' || Boolean(selectedCategory)
                 ? 'bg-white/[0.1] text-white'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Package className="w-3.5 h-3.5" />
+            <Package className="w-3.5 h-3.5 flex-shrink-0" />
             <span>Catalog</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSection('baskets');
+              setSelectedCategory(null);
+            }}
+            className={`shrink-0 sm:shrink py-2 px-3 sm:px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 sm:gap-1 whitespace-nowrap transition-all ${
+              section === 'baskets'
+                ? 'bg-white/[0.1] text-white'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Bookmark className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Baskets</span>
+            {basketTemplates.length > 0 && (
+              <span className="font-mono text-[10px] text-brand-400">
+                {basketTemplates.length}
+              </span>
+            )}
           </button>
 
           <button
@@ -473,16 +513,16 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               setSection('recurring');
               setSelectedCategory(null);
             }}
-            className={`py-2 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+            className={`shrink-0 sm:shrink py-2 px-3 sm:px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 sm:gap-1 whitespace-nowrap transition-all ${
               section === 'recurring'
                 ? 'bg-white/[0.1] text-white'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Repeat className="w-3.5 h-3.5" />
+            <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
             <span>Recurring</span>
             {dueRecurring.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-mono">
+              <span className="font-mono text-[10px] text-sky-300">
                 {dueRecurring.length}
               </span>
             )}
@@ -494,16 +534,16 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               setSection('history');
               setSelectedCategory(null);
             }}
-            className={`py-2 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+            className={`shrink-0 sm:shrink py-2 px-3 sm:px-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 sm:gap-1 whitespace-nowrap transition-all ${
               section === 'history'
                 ? 'bg-white/[0.1] text-white'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <History className="w-3.5 h-3.5" />
+            <History className="w-3.5 h-3.5 flex-shrink-0" />
             <span>History</span>
             {purchaseHistory.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 text-[9px] font-mono">
+              <span className="font-mono text-[10px] text-brand-300">
                 {purchaseHistory.length}
               </span>
             )}
@@ -825,6 +865,86 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 </div>
               )}
 
+              {/* Quick Saved Baskets Shelf */}
+              {evaluatedHomeBaskets.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <ShoppingBag className="w-3.5 h-3.5 text-brand-400" />
+                      Saved Baskets ({basketTemplates.length})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setSection('baskets')}
+                      className="text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-0.5 whitespace-nowrap"
+                    >
+                      Manage Baskets <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {evaluatedHomeBaskets.map((ev) => {
+                      const flashed = basketLoadedFlashId === ev.basket.id;
+                      const hasDiff = Math.abs(ev.priceDiff) >= 0.5;
+                      return (
+                        <div
+                          key={ev.basket.id}
+                          className="glass rounded-xl p-3 border border-white/[0.07] flex flex-col justify-between gap-2.5"
+                        >
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setSection('baskets')}
+                              className="text-left w-full"
+                            >
+                              <p className="text-xs font-extrabold text-white truncate">
+                                {ev.basket.name}
+                              </p>
+                              <p className="text-[10px] font-mono text-zinc-400 mt-0.5 tabular-nums">
+                                {ev.lineCount} items · ₹{formatCurrencyExact(ev.currentTotal)}
+                                {hasDiff && (
+                                  <span
+                                    className={
+                                      ev.priceDiff > 0 ? ' text-amber-300' : ' text-brand-400'
+                                    }
+                                  >
+                                    {' '}
+                                    ({ev.priceDiff > 0 ? '+' : '-'}₹
+                                    {formatCurrencyExact(Math.abs(ev.priceDiff))})
+                                  </span>
+                                )}
+                              </p>
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleQuickLoadBasket(ev.basket.id)}
+                            aria-label={`Load basket ${ev.basket.name}`}
+                            className={`w-full py-1.5 px-2.5 rounded-lg text-[11px] font-extrabold flex items-center justify-center gap-1 whitespace-nowrap transition-all ${
+                              flashed
+                                ? 'bg-brand-500 text-ink-950'
+                                : 'bg-brand-500/15 hover:bg-brand-500 text-brand-300 hover:text-ink-950 border border-brand-500/30'
+                            }`}
+                          >
+                            {flashed ? (
+                              <>
+                                <Check className="w-3 h-3" strokeWidth={3} />
+                                Loaded to Cart
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="w-3 h-3" strokeWidth={2.5} />
+                                Load Basket
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Favorites Section */}
               {favoriteItems.length > 0 && (
                 <div className="space-y-2.5">
@@ -1056,13 +1176,18 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         </div>
       )}
 
-      {/* VIEW 4: Recurring Items */}
+      {/* VIEW 4: Saved Baskets */}
+      {section === 'baskets' && <BasketTemplatesPanel />}
+
+      {/* VIEW 5: Recurring Items */}
       {section === 'recurring' && (
         <RecurringItemManager onOpenDetails={(item) => setDetailProduct(item)} />
       )}
 
-      {/* VIEW 5: Purchase History */}
-      {section === 'history' && <PurchaseHistory />}
+      {/* VIEW 6: Purchase History */}
+      {section === 'history' && (
+        <PurchaseHistory onSavedBasket={() => setSection('baskets')} />
+      )}
 
       {/* Modals */}
       <CategoryManagerModal

@@ -172,6 +172,31 @@ export interface PurchaseSession {
   splitSummaryText?: string;
 }
 
+export interface BasketTemplateItem {
+  itemId: string;
+  name: string;
+  brand?: string;
+  category: string;
+  subcategory?: string;
+  variantId?: string;
+  variantLabel?: string;
+  unit?: string;
+  quantity: number;
+  savedPrice: number;
+}
+
+export interface BasketTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  items: BasketTemplateItem[];
+  savedTotal: number;
+  createdAt: string;
+  updatedAt: string;
+  lastLoadedAt?: string | null;
+  isPreset?: boolean;
+}
+
 export interface FeeFlag {
   id: string;
   itemId: string;
@@ -368,5 +393,7 @@ export interface BackupData {
   warRoomTargets?: FinancialTarget[];
   dismissedWarRoomAlerts?: string[];
   disciplineCheckIns?: string[];
+  basketTemplates?: BasketTemplate[];
+  basketTemplatesSeeded?: boolean;
 }
 

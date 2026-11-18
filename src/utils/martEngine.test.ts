@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type {
+  BasketTemplate,
   CartItem,
   CategoryConfig,
   PriceHistory,
@@ -9,14 +10,19 @@ import type {
   Transaction,
 } from '../types/models';
 import {
+  applyBasketTemplateToItems,
   areUnitsCompatible,
+  buildBasketItemsFromCart,
+  buildBasketItemsFromSession,
   buildCheckoutBreakdown,
   buildCheckoutSignature,
   calculateCartTotals,
   calculateMonthlyShoppingSpend,
+  computeBasketSavedTotal,
   computeFrequentlyPurchasedInsights,
   computeRecentlyPurchasedItems,
   computeUnitPriceStats,
+  evaluateBasketTemplate,
   expandCartLines,
   filterAndSortProducts,
   getActiveVariant,
@@ -368,4 +374,121 @@ test('calculateMonthlyShoppingSpend sums only current month transactions and reo
   const reordered = reorderCategoryList(cats, 2, 0);
   assert.deepEqual(reordered.map((c) => c.id), ['3', '1', '2']);
   assert.deepEqual(reordered.map((c) => c.order), [0, 1, 2]);
+});
+
+test('basket template helpers preserve multi-variant & decimal lines, evaluate inflation diffs, and load in merge vs replace modes', () => {
+  const catalogBefore: CartItem[] = [
+    {
+      id: 'milk',
+      name: 'Fresh Milk',
+      brand: 'Amul',
+      price: 56,
+      category: 'Dairy & Bakery',
+      icon: '🥛',
+      quantity: 3,
+      selectedVariantId: 'v-1l',
+      variants: [
+        { id: 'v-500', label: '500 ml', unit: '500 ml', price: 29 },
+        { id: 'v-1l', label: '1 L', unit: '1 L', price: 56 },
+      ],
+      variantQuantities: { 'v-500': 1, 'v-1l': 2 },
+    },
+    {
+      id: 'tomatoes',
+      name: 'Tomatoes',
+      price: 40,
+      category: 'Fruits & Vegetables',
+      icon: '🍅',
+      quantity: 1.5,
+      unit: '1 kg',
+      allowDecimalQuantity: true,
+      quantityStep: 0.5,
+    },
+  ];
+
+  const tplItems = buildBasketItemsFromCart(catalogBefore);
+  assert.equal(tplItems.length, 3);
+  assert.equal(computeBasketSavedTotal(tplItems), 29 + 56 * 2 + 40 * 1.5); // 201
+
+  const basket: BasketTemplate = {
+    id: 'b-weekly',
+    name: 'Weekly Test',
+    items: [
+      ...tplItems,
+      {
+        itemId: 'deleted-custom',
+        name: 'Artisan Jam',
+        category: 'Groceries',
+        unit: '250 g',
+        quantity: 1,
+        savedPrice: 120,
+      },
+    ],
+    savedTotal: 321,
+    createdAt: '2026-11-01T00:00:00.000Z',
+    updatedAt: '2026-11-01T00:00:00.000Z',
+  };
+
+  // Catalog prices changed: Milk 1L went 56 -> 60 (+4/unit = +8 total), Tomatoes 40 -> 36 (-4/kg = -6 total)
+  const catalogUpdated: CartItem[] = [
+    {
+      ...catalogBefore[0],
+      quantity: 1,
+      variantQuantities: { 'v-1l': 1 },
+      variants: [
+        { id: 'v-500', label: '500 ml', unit: '500 ml', price: 29 },
+        { id: 'v-1l', label: '1 L', unit: '1 L', price: 60 },
+      ],
+    },
+    { ...catalogBefore[1], price: 36, quantity: 0 },
+  ];
+
+  const evaluated = evaluateBasketTemplate(basket, catalogUpdated);
+  assert.equal(evaluated.savedTotal, 321);
+  assert.equal(evaluated.currentTotal, 323); // 201 + 8 - 6 + 120
+  assert.equal(evaluated.priceDiff, 2);
+  assert.equal(evaluated.missingItemsCount, 1);
+
+  // Merge mode adds onto existing 1x Milk 1L -> Milk 1L becomes 3, Milk 500ml becomes 1, Tomatoes 1.5, custom recreated 1
+  const merged = applyBasketTemplateToItems(catalogUpdated, basket, 'merge');
+  assert.equal(merged.loadedLinesCount, 4);
+  const mergedMilk = merged.nextItems.find((i) => i.id === 'milk')!;
+  assert.equal(getItemVariantCartQty(mergedMilk, 'v-1l'), 3);
+  assert.equal(getItemVariantCartQty(mergedMilk, 'v-500'), 1);
+  assert.equal(merged.nextItems.find((i) => i.id === 'tomatoes')?.quantity, 1.5);
+  assert.equal(merged.nextItems.find((i) => i.id === 'deleted-custom')?.quantity, 1);
+
+  // Replace mode resets existing cart first
+  const replaced = applyBasketTemplateToItems(catalogUpdated, basket, 'replace');
+  const replacedMilk = replaced.nextItems.find((i) => i.id === 'milk')!;
+  assert.equal(getItemVariantCartQty(replacedMilk, 'v-1l'), 2);
+  assert.equal(getItemVariantCartQty(replacedMilk, 'v-500'), 1);
+
+  // Build from purchase session
+  const session: PurchaseSession = {
+    id: 'ps-1',
+    timestamp: '2026-11-10T10:00:00.000Z',
+    items: [
+      {
+        itemId: 'milk',
+        name: 'Fresh Milk',
+        category: 'Dairy & Bakery',
+        variantId: 'v-500',
+        variantLabel: '500 ml',
+        unit: '500 ml',
+        price: 29,
+        quantity: 2,
+        subtotal: 58,
+      },
+    ],
+    totalAmount: 58,
+    personalShare: 58,
+    categoryTotals: { 'Dairy & Bakery': 58 },
+    isSplit: false,
+  };
+  const fromSession = buildBasketItemsFromSession(session, catalogUpdated);
+  assert.equal(fromSession.length, 1);
+  assert.equal(fromSession[0].variantId, 'v-500');
+  assert.equal(fromSession[0].quantity, 2);
+  assert.equal(fromSession[0].savedPrice, 29);
 });
