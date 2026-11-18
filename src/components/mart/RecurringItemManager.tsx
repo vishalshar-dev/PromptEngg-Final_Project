@@ -3,6 +3,7 @@ import { Repeat, ShoppingCart, Plus, Check, Calendar, Trash2 } from 'lucide-reac
 import { useAppStore, type CartItem } from '../../store/useStore';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
 import { getDueRecurringItems, isRecurringItemDue } from '../../utils/martEngine';
+import { EmptyState } from '../ui/EmptyState';
 import { ProductVisual } from './ProductVisual';
 
 interface RecurringItemManagerProps {
@@ -31,14 +32,14 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 glass rounded-2xl p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 flex-shrink-0">
-            <Repeat className="w-5 h-5" strokeWidth={2.3} />
+          <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center flex-shrink-0">
+            <Repeat className="w-5 h-5" strokeWidth={2.2} />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-white">Recurring Purchases</h3>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <h3 className="text-sm font-bold text-[#151922]">Recurring Purchases</h3>
+            <p className="text-xs text-[#697386] mt-0.5">
               {dueItems.length > 0
                 ? `${dueItems.length} item${dueItems.length === 1 ? ' is' : 's are'} due now · Expenses are only recorded at checkout`
                 : 'All recurring items are up to date'}
@@ -50,16 +51,16 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
           type="button"
           onClick={handleAddAllDue}
           disabled={dueItems.length === 0}
-          className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-white/[0.05] disabled:text-zinc-600 text-ink-950 text-xs font-extrabold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all"
+          className="px-4 py-2.5 rounded-xl bg-[#365FE8] hover:bg-[#294FCC] disabled:bg-[#F1F3F6] disabled:text-[#929BAB] text-white text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-colors"
         >
           {addedToast ? (
             <>
-              <Check className="w-4 h-4" strokeWidth={3} />
+              <Check className="w-4 h-4" strokeWidth={2.5} />
               {addedToast}
             </>
           ) : (
             <>
-              <ShoppingCart className="w-4 h-4" strokeWidth={2.5} />
+              <ShoppingCart className="w-4 h-4" strokeWidth={2.2} />
               Add All Due to Cart ({dueItems.length})
             </>
           )}
@@ -67,13 +68,11 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
       </div>
 
       {recurringItems.length === 0 ? (
-        <div className="glass rounded-2xl p-8 text-center">
-          <Repeat className="w-7 h-7 text-zinc-600 mx-auto mb-2" />
-          <p className="text-sm font-bold text-zinc-300">No recurring items configured</p>
-          <p className="text-xs text-zinc-500 mt-1">
-            Open any product to set a Daily, Weekly, Monthly, or Custom schedule.
-          </p>
-        </div>
+        <EmptyState
+          icon={Repeat}
+          title="No recurring items configured"
+          description="Open any product to set a Daily, Weekly, Monthly, or Custom schedule."
+        />
       ) : (
         <div className="space-y-2.5">
           {recurringItems.map((item) => {
@@ -87,8 +86,8 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
             return (
               <div
                 key={item.id}
-                className={`glass rounded-2xl p-3 flex items-center justify-between gap-3 border ${
-                  isDue ? 'border-sky-500/25' : 'border-white/[0.06]'
+                className={`bg-white rounded-2xl p-3.5 flex items-center justify-between gap-3 border shadow-card ${
+                  isDue ? 'border-[#365FE8]/35' : 'border-[#E7EAF0]'
                 }`}
               >
                 <button
@@ -106,29 +105,29 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
                   />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-white truncate">{item.name}</p>
+                      <p className="text-sm font-bold text-[#151922] truncate">{item.name}</p>
                       <span
-                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${
+                        className={`text-[11px] font-semibold capitalize px-2 py-0.5 rounded-md border ${
                           isDue
-                            ? 'bg-sky-500/15 border-sky-400/30 text-sky-300'
-                            : 'bg-white/[0.04] border-white/[0.08] text-zinc-400'
+                            ? 'bg-[#EDF2FF] border-[#365FE8]/25 text-[#365FE8]'
+                            : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386]'
                         }`}
                       >
                         {freqLabel}
                       </span>
                       {isDue && (
-                        <span className="text-[10px] font-extrabold text-brand-400">
+                        <span className="text-[11px] font-bold text-[#15966B]">
                           Due now
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-mono mt-0.5">
+                    <div className="flex items-center gap-2 text-xs text-[#697386] font-mono mt-0.5 tabular-nums">
                       <span>₹{formatCurrencyExact(item.price)}</span>
-                      <span>·</span>
+                      <span aria-hidden="true">·</span>
                       <span>{item.unit || '1 unit'}</span>
                       {item.recurrence?.nextDueDate && (
                         <>
-                          <span>·</span>
+                          <span aria-hidden="true">·</span>
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {item.recurrence.nextDueDate}
@@ -144,13 +143,13 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
                     type="button"
                     onClick={() => addToCart(item)}
                     aria-label={`Add ${item.name} to cart`}
-                    className={`px-3 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1 transition-all ${
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1 whitespace-nowrap transition-colors ${
                       item.quantity > 0
-                        ? 'bg-brand-500/20 border border-brand-500/40 text-brand-300'
-                        : 'bg-white/[0.06] hover:bg-brand-500 text-zinc-200 hover:text-ink-950'
+                        ? 'bg-[#EDF2FF] border border-[#365FE8]/30 text-[#365FE8]'
+                        : 'bg-[#F7F8FA] hover:bg-[#365FE8] border border-[#E7EAF0] text-[#151922] hover:text-white'
                     }`}
                   >
-                    <Plus className="w-3.5 h-3.5" strokeWidth={3} />
+                    <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
                     {item.quantity > 0 ? `${item.quantity} in cart` : 'Add'}
                   </button>
                   <button
@@ -158,7 +157,7 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
                     onClick={() => setProductRecurrence(item.id, null)}
                     aria-label={`Disable recurrence for ${item.name}`}
                     title="Stop recurring"
-                    className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-red-500/15 text-zinc-500 hover:text-red-400 flex items-center justify-center transition-colors"
+                    className="w-9 h-9 rounded-xl bg-[#F7F8FA] hover:bg-[#FDECEC] border border-[#E7EAF0] text-[#697386] hover:text-[#DE5252] flex items-center justify-center transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

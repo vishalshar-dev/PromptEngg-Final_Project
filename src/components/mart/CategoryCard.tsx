@@ -24,13 +24,13 @@ export function CategoryCard({
       type="button"
       onClick={() => onSelect(category.name)}
       aria-pressed={selected}
-      className={`group relative text-left rounded-2xl border p-2.5 transition-all duration-200 flex flex-col gap-2 ${
+      className={`group relative text-left rounded-2xl border p-3 transition-all duration-150 flex flex-col gap-2.5 ${
         selected
-          ? 'bg-brand-500/15 border-brand-500/40 ring-1 ring-brand-500/30 shadow-lg'
-          : 'glass hover:bg-white/[0.06] hover:border-white/15 hover:-translate-y-0.5'
+          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20 shadow-card'
+          : 'bg-white border-[#E7EAF0] shadow-card hover:border-[#D5DBE5] hover:-translate-y-0.5'
       }`}
     >
-      <div className="relative w-full h-16 rounded-xl overflow-hidden">
+      <div className="relative w-full h-20 rounded-xl overflow-hidden">
         {category.imageUrl ? (
           <ProductVisual
             name={category.name}
@@ -39,13 +39,13 @@ export function CategoryCard({
             iconKey={category.iconKey}
             accent={category.accent}
             size="md"
-            className="!h-16"
+            className="!h-20"
           />
         ) : (
           <div
             className={`w-full h-full rounded-xl bg-gradient-to-br ${style.gradient} border ${style.border} flex items-center justify-center`}
           >
-            <div className={`w-9 h-9 rounded-xl bg-ink-950/50 border border-white/[0.08] flex items-center justify-center ${style.text}`}>
+            <div className={`w-10 h-10 rounded-xl bg-white border border-[#E7EAF0] shadow-xs flex items-center justify-center ${style.text}`}>
               <CategoryIcon iconKey={category.iconKey} className="w-5 h-5" strokeWidth={2} />
             </div>
           </div>
@@ -53,10 +53,10 @@ export function CategoryCard({
       </div>
 
       <div className="min-w-0 px-0.5">
-        <p className="text-xs font-extrabold text-zinc-100 leading-tight line-clamp-2 min-h-[2rem]">
+        <p className="text-xs font-bold text-[#151922] leading-snug line-clamp-2 min-h-[2rem]">
           {category.name}
         </p>
-        <p className="text-[10px] font-mono text-zinc-500 mt-0.5 truncate">
+        <p className="text-[11px] font-mono text-[#697386] mt-0.5 truncate tabular-nums">
           {itemCount} {itemCount === 1 ? 'item' : 'items'}
           {subCount > 0 ? ` · ${subCount} sub` : ''}
         </p>

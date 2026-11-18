@@ -48,32 +48,32 @@ function PriceChartTooltip({ active, payload }: CustomTooltipProps) {
   if (!d) return null;
 
   return (
-    <div className="glass-strong rounded-xl px-3.5 py-2.5 shadow-2xl border border-white/10 min-w-[200px] space-y-1.5">
+    <div className="bg-white rounded-xl px-3.5 py-2.5 shadow-lg border border-[#E7EAF0] min-w-[200px] space-y-1.5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-extrabold text-white">{d.fullDate}</span>
-        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] text-zinc-300">
+        <span className="text-xs font-bold text-[#151922]">{d.fullDate}</span>
+        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-[#F1F3F6] text-[#697386]">
           {d.sourceLabel}
         </span>
       </div>
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[11px] text-zinc-400">Unit Price</span>
-        <span className="text-sm font-extrabold font-mono text-brand-400 tabular-nums">
+        <span className="text-[11px] text-[#697386]">Unit Price</span>
+        <span className="text-sm font-bold font-mono text-[#365FE8] tabular-nums">
           ₹{formatCurrencyExact(d.unitPrice)}/{d.unitOfMeasurement}
         </span>
       </div>
       <div className="flex items-baseline justify-between gap-4 text-[11px]">
-        <span className="text-zinc-400">Paid</span>
-        <span className="font-mono font-bold text-zinc-200 tabular-nums">
+        <span className="text-[#697386]">Paid</span>
+        <span className="font-mono font-semibold text-[#151922] tabular-nums">
           ₹{formatCurrencyExact(d.totalPrice)} ({d.quantity} × {d.packageSize})
         </span>
       </div>
       {d.brand && (
         <div className="flex items-baseline justify-between gap-4 text-[11px]">
-          <span className="text-zinc-400">Brand</span>
-          <span className="font-semibold text-zinc-200">{d.brand}</span>
+          <span className="text-[#697386]">Brand</span>
+          <span className="font-semibold text-[#151922]">{d.brand}</span>
         </div>
       )}
-      <div className="pt-1 border-t border-white/[0.06] text-[10px] text-zinc-500">
+      <div className="pt-1 border-t border-[#E7EAF0] text-[10px] text-[#929BAB]">
         {d.entryKindLabel}
       </div>
     </div>
@@ -150,15 +150,15 @@ export function PriceHistoryChart({
   }, [chartData, showAverageLine, averagePrice]);
 
   return (
-    <div className="glass rounded-2xl p-4 sm:p-5 space-y-4">
+    <div className="surface-card p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <LineChartIcon className="w-4 h-4 text-sky-400" strokeWidth={2.5} />
+          <LineChartIcon className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
           <div>
-            <h4 className="text-sm font-extrabold text-white">
+            <h4 className="text-sm font-bold text-[#151922]">
               Recorded Unit Price History (₹/{unitOfMeasurement})
             </h4>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-xs text-[#697386]">
               {chartData.length} actual recorded point{chartData.length === 1 ? '' : 's'} in range
             </p>
           </div>
@@ -166,7 +166,7 @@ export function PriceHistoryChart({
 
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="inline-flex items-center bg-ink-900/90 border border-white/[0.06] rounded-xl p-0.5"
+            className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
             role="group"
             aria-label="Chart timeframe"
           >
@@ -178,10 +178,10 @@ export function PriceHistoryChart({
                   type="button"
                   onClick={() => setTimeframe(tf.id)}
                   aria-pressed={active}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                  className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
                     active
-                      ? 'bg-white/[0.12] text-white'
-                      : 'text-zinc-500 hover:text-zinc-300'
+                      ? 'bg-[#365FE8] text-white shadow-xs'
+                      : 'text-[#697386] hover:text-[#151922]'
                   }`}
                 >
                   {tf.label}
@@ -194,10 +194,10 @@ export function PriceHistoryChart({
             type="button"
             onClick={() => setShowAverageLine((v) => !v)}
             aria-pressed={showAverageLine}
-            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border flex items-center gap-1.5 transition-all ${
+            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
               showAverageLine
-                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                : 'bg-white/[0.04] text-zinc-400 border-white/[0.06] hover:text-white'
+                ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
+                : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
             }`}
           >
             {showAverageLine ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -207,12 +207,12 @@ export function PriceHistoryChart({
       </div>
 
       {chartData.length === 0 ? (
-        <div className="h-56 rounded-xl bg-ink-900/50 border border-dashed border-white/[0.08] flex flex-col items-center justify-center text-center px-4">
-          <Calendar className="w-5 h-5 text-zinc-500 mb-2" />
-          <p className="text-xs font-bold text-zinc-300">
+        <div className="h-56 rounded-xl bg-[#F7F8FA] border border-dashed border-[#D5DBE6] flex flex-col items-center justify-center text-center px-4">
+          <Calendar className="w-5 h-5 text-[#929BAB] mb-2" />
+          <p className="text-xs font-semibold text-[#151922]">
             No recorded purchases in the selected timeframe
           </p>
-          <p className="text-[11px] text-zinc-500 mt-1">
+          <p className="text-xs text-[#697386] mt-1">
             Switch timeframe to All to inspect earlier observations.
           </p>
         </div>
@@ -222,14 +222,14 @@ export function PriceHistoryChart({
             <LineChart data={chartData} margin={{ top: 14, right: 26, left: -4, bottom: 4 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.06)"
+                stroke="#E7EAF0"
                 vertical={false}
               />
               <XAxis
                 dataKey="dateLabel"
                 padding={{ left: 16, right: 20 }}
                 tick={{
-                  fill: '#71717a',
+                  fill: '#697386',
                   fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
@@ -241,7 +241,7 @@ export function PriceHistoryChart({
                 domain={yDomain}
                 tickFormatter={(v: number) => `₹${v}`}
                 tick={{
-                  fill: '#71717a',
+                  fill: '#697386',
                   fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
@@ -251,7 +251,7 @@ export function PriceHistoryChart({
               />
               <Tooltip
                 cursor={{
-                  stroke: 'rgba(255,255,255,0.16)',
+                  stroke: '#D5DBE6',
                   strokeDasharray: '3 3',
                 }}
                 content={<PriceChartTooltip />}
@@ -259,13 +259,13 @@ export function PriceHistoryChart({
               {showAverageLine && averagePrice > 0 && (
                 <ReferenceLine
                   y={averagePrice}
-                  stroke="#f59e0b"
+                  stroke="#E5A23B"
                   strokeDasharray="5 5"
-                  strokeOpacity={0.85}
+                  strokeOpacity={0.9}
                   label={{
                     value: `Avg ₹${formatCurrencyExact(averagePrice)}`,
                     position: 'insideTopRight',
-                    fill: '#fbbf24',
+                    fill: '#9E6614',
                     fontSize: 10,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
@@ -274,18 +274,19 @@ export function PriceHistoryChart({
               <Line
                 type="linear"
                 dataKey="unitPrice"
-                stroke="#38bdf8"
+                stroke="#365FE8"
                 strokeWidth={2.5}
+                isAnimationActive={false}
                 dot={{
                   r: 4.5,
-                  fill: '#09090b',
-                  stroke: '#10b981',
+                  fill: '#FFFFFF',
+                  stroke: '#365FE8',
                   strokeWidth: 2.2,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: '#34d399',
-                  stroke: '#09090b',
+                  fill: '#365FE8',
+                  stroke: '#FFFFFF',
                   strokeWidth: 2,
                 }}
               />
@@ -295,7 +296,7 @@ export function PriceHistoryChart({
       )}
 
       {chartData.length === 1 && (
-        <p className="text-[11px] text-zinc-500">
+        <p className="text-xs text-[#697386]">
           Only 1 recorded point so far. Record another purchase to draw a multi-point price curve.
         </p>
       )}

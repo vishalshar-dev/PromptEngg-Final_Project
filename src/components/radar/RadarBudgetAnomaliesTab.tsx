@@ -67,23 +67,23 @@ export function RadarBudgetAnomaliesTab({
   return (
     <div className="space-y-5">
       {/* Budget Performance Monitor */}
-      <section className="glass rounded-2xl p-5">
+      <section className="surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-brand-400" />
-              <h3 className="text-sm font-extrabold text-white">
+              <Target className="w-4 h-4 text-[#365FE8]" />
+              <h3 className="text-sm font-bold text-[#151922]">
                 Budget Performance Monitor ({budgetResult.monthLabel})
               </h3>
             </div>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              Connected directly to Quick Mart&apos;s monthly budget &amp; category caps
+            <p className="text-xs text-[#697386] mt-0.5">
+              Connected directly to your monthly budget &amp; category caps
             </p>
           </div>
 
           {editingBudget ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-brand-400">₹</span>
+              <span className="text-xs font-bold text-[#365FE8]">₹</span>
               <input
                 type="number"
                 min={1}
@@ -94,20 +94,20 @@ export function RadarBudgetAnomaliesTab({
                   if (e.key === 'Enter') handleSaveTotalBudget();
                   if (e.key === 'Escape') setEditingBudget(false);
                 }}
-                className="w-28 bg-ink-900 border border-brand-500/40 rounded-lg px-2.5 py-1 text-xs font-mono text-white outline-none"
+                className="input-field w-28 px-2.5 py-1 text-xs font-mono"
               />
               <button
                 type="button"
                 onClick={handleSaveTotalBudget}
                 aria-label="Save budget target"
-                className="px-2.5 py-1 rounded-lg bg-brand-500 text-ink-950 text-xs font-bold"
+                className="btn-primary px-2.5 py-1 text-xs"
               >
                 Save
               </button>
               <button
                 type="button"
                 onClick={() => setEditingBudget(false)}
-                className="px-2 py-1 rounded-lg bg-white/[0.06] text-zinc-300 text-xs font-bold"
+                className="btn-secondary px-2 py-1 text-xs"
               >
                 Cancel
               </button>
@@ -119,9 +119,9 @@ export function RadarBudgetAnomaliesTab({
                 setBudgetVal(String(budgetResult.totalBudget));
                 setEditingBudget(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-xs font-bold text-zinc-200 whitespace-nowrap"
+              className="btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs whitespace-nowrap"
             >
-              <Pencil className="w-3.5 h-3.5 text-brand-400" />
+              <Pencil className="w-3.5 h-3.5 text-[#365FE8]" />
               Edit Monthly Budget
             </button>
           )}
@@ -133,42 +133,42 @@ export function RadarBudgetAnomaliesTab({
           <MiniStat
             label="Month Spent"
             value={`₹${formatCurrencyExact(budgetResult.totalMonthSpent)}`}
-            valueClass={budgetResult.isOverBudget ? 'text-red-400' : 'text-white'}
+            valueClass={budgetResult.isOverBudget ? 'text-[#DE5252]' : 'text-[#151922]'}
           />
           <MiniStat
             label="Remaining"
             value={`${budgetResult.remainingBudget < 0 ? '-' : ''}₹${formatCurrencyExact(Math.abs(budgetResult.remainingBudget))}`}
-            valueClass={budgetResult.isOverBudget ? 'text-red-400' : 'text-brand-400'}
+            valueClass={budgetResult.isOverBudget ? 'text-[#DE5252]' : 'text-[#15966B]'}
           />
           <MiniStat
             label="Utilisation"
             value={`${budgetResult.utilisationPct}%`}
             valueClass={
               budgetResult.isOverBudget
-                ? 'text-red-400'
+                ? 'text-[#DE5252]'
                 : budgetResult.utilisationPct >= 80
-                  ? 'text-amber-400'
-                  : 'text-brand-400'
+                  ? 'text-[#9E6614]'
+                  : 'text-[#15966B]'
             }
           />
           <MiniStat
             label="Over Cap"
             value={String(budgetResult.categoriesExceedingCount)}
-            valueClass={budgetResult.categoriesExceedingCount > 0 ? 'text-red-400' : 'text-white'}
+            valueClass={budgetResult.categoriesExceedingCount > 0 ? 'text-[#DE5252]' : 'text-[#151922]'}
           />
           <MiniStat
             label="Within Cap"
             value={String(budgetResult.categoriesWithinCapCount)}
-            valueClass="text-brand-400"
+            valueClass="text-[#15966B]"
           />
         </div>
 
         {/* Budget Performance Observations */}
         {budgetResult.insights.length > 0 && (
-          <div className="rounded-xl bg-ink-900/60 border border-white/[0.05] p-3.5 mb-4 space-y-1.5">
+          <div className="surface-subtle p-3.5 mb-4 space-y-1.5">
             {budgetResult.insights.map((msg, i) => (
-              <p key={i} className="text-xs text-zinc-300 flex items-start gap-2">
-                <Info className="w-3.5 h-3.5 text-brand-400 shrink-0 mt-0.5" />
+              <p key={i} className="text-xs text-[#151922] flex items-start gap-2">
+                <Info className="w-3.5 h-3.5 text-[#365FE8] shrink-0 mt-0.5" />
                 <span>{msg}</span>
               </p>
             ))}
@@ -179,32 +179,32 @@ export function RadarBudgetAnomaliesTab({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[680px]">
             <thead>
-              <tr className="border-b border-white/[0.08] text-[11px] uppercase tracking-wider text-zinc-400">
-                <th className="py-2 pr-3 font-bold">Category</th>
-                <th className="py-2 px-3 font-bold text-right">Allocated Cap</th>
-                <th className="py-2 px-3 font-bold text-right">Actual ({budgetResult.monthLabel})</th>
-                <th className="py-2 px-3 font-bold text-right">Remaining</th>
-                <th className="py-2 px-3 font-bold text-right">Utilisation</th>
-                <th className="py-2 px-3 font-bold text-right">vs {budgetResult.previousMonthLabel}</th>
-                <th className="py-2 pl-3 font-bold text-right">Actions</th>
+              <tr className="border-b border-[#E7EAF0] text-[11px] uppercase tracking-wider text-[#697386]">
+                <th className="py-2 pr-3 font-semibold">Category</th>
+                <th className="py-2 px-3 font-semibold text-right">Allocated Cap</th>
+                <th className="py-2 px-3 font-semibold text-right">Actual ({budgetResult.monthLabel})</th>
+                <th className="py-2 px-3 font-semibold text-right">Remaining</th>
+                <th className="py-2 px-3 font-semibold text-right">Utilisation</th>
+                <th className="py-2 px-3 font-semibold text-right">vs {budgetResult.previousMonthLabel}</th>
+                <th className="py-2 pl-3 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.05] text-xs">
+            <tbody className="divide-y divide-[#E7EAF0] text-xs">
               {budgetResult.rows.map((row) => {
                 const isEditing = editingCapCat === row.category;
                 const statusBadge =
                   row.status === 'exceeded'
-                    ? 'text-red-400'
+                    ? 'text-[#DE5252]'
                     : row.status === 'approaching'
-                      ? 'text-amber-400'
+                      ? 'text-[#9E6614]'
                       : row.status === 'within'
-                        ? 'text-brand-400'
-                        : 'text-zinc-500';
+                        ? 'text-[#15966B]'
+                        : 'text-[#929BAB]';
 
                 return (
-                  <tr key={row.category} className="hover:bg-white/[0.02]">
-                    <td className="py-2.5 pr-3 font-bold text-white">{row.category}</td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-zinc-200">
+                  <tr key={row.category} className="hover:bg-[#F7F8FA]">
+                    <td className="py-2.5 pr-3 font-semibold text-[#151922]">{row.category}</td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#151922]">
                       {isEditing ? (
                         <div className="inline-flex items-center gap-1">
                           <input
@@ -217,13 +217,13 @@ export function RadarBudgetAnomaliesTab({
                               if (e.key === 'Enter') handleSaveCap(row.category);
                               if (e.key === 'Escape') setEditingCapCat(null);
                             }}
-                            className="w-20 bg-ink-900 border border-brand-500/40 rounded px-2 py-0.5 text-xs font-mono text-white text-right outline-none"
+                            className="input-field w-20 px-2 py-0.5 text-xs font-mono text-right"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveCap(row.category)}
                             aria-label={`Save cap for ${row.category}`}
-                            className="p-1 text-brand-400 hover:text-brand-300"
+                            className="p-1 text-[#15966B] hover:text-[#107855]"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
@@ -231,7 +231,7 @@ export function RadarBudgetAnomaliesTab({
                             type="button"
                             onClick={() => setEditingCapCat(null)}
                             aria-label={`Cancel cap edit for ${row.category}`}
-                            className="p-1 text-zinc-400 hover:text-white"
+                            className="p-1 text-[#697386] hover:text-[#151922]"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -239,29 +239,29 @@ export function RadarBudgetAnomaliesTab({
                       ) : row.allocatedBudget !== null ? (
                         `₹${formatCurrency(row.allocatedBudget)}`
                       ) : (
-                        <span className="text-zinc-500">Unallocated</span>
+                        <span className="text-[#929BAB]">Unallocated</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-white">
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-[#151922]">
                       ₹{formatCurrencyExact(row.actualSpend)}
                     </td>
                     <td
-                      className={`py-2.5 px-3 text-right font-mono tabular-nums font-bold ${
+                      className={`py-2.5 px-3 text-right font-mono tabular-nums font-semibold ${
                         row.remaining === null
-                          ? 'text-zinc-500'
+                          ? 'text-[#929BAB]'
                           : row.remaining < 0
-                            ? 'text-red-400'
-                            : 'text-brand-400'
+                            ? 'text-[#DE5252]'
+                            : 'text-[#15966B]'
                       }`}
                     >
                       {row.remaining === null
                         ? '—'
                         : `${row.remaining < 0 ? '-' : ''}₹${formatCurrencyExact(Math.abs(row.remaining))}`}
                     </td>
-                    <td className={`py-2.5 px-3 text-right font-mono tabular-nums font-bold ${statusBadge}`}>
+                    <td className={`py-2.5 px-3 text-right font-mono tabular-nums font-semibold ${statusBadge}`}>
                       {row.utilisationPct !== null ? `${row.utilisationPct}%` : '—'}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-zinc-400">
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#697386]">
                       {row.deltaFromPrevPct !== null
                         ? `${row.deltaFromPrevPct > 0 ? '+' : ''}${row.deltaFromPrevPct}%`
                         : row.previousMonthSpend > 0
@@ -278,7 +278,7 @@ export function RadarBudgetAnomaliesTab({
                               row.allocatedBudget !== null ? String(row.allocatedBudget) : ''
                             );
                           }}
-                          className="text-xs font-bold text-brand-400 hover:text-brand-300 whitespace-nowrap"
+                          className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] whitespace-nowrap"
                         >
                           {row.allocatedBudget !== null ? 'Edit cap' : '+ Cap'}
                         </button>
@@ -287,7 +287,7 @@ export function RadarBudgetAnomaliesTab({
                             type="button"
                             onClick={() => setCategoryCap(row.category, null)}
                             aria-label={`Remove cap for ${row.category}`}
-                            className="p-1 text-zinc-500 hover:text-red-400"
+                            className="p-1 text-[#929BAB] hover:text-[#DE5252]"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -303,30 +303,30 @@ export function RadarBudgetAnomaliesTab({
       </section>
 
       {/* Statistical Unusual Spending Detection */}
-      <section className="glass rounded-2xl p-5">
+      <section className="surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              <h3 className="text-sm font-extrabold text-white">
+              <AlertTriangle className="w-4 h-4 text-[#C7851F]" />
+              <h3 className="text-sm font-bold text-[#151922]">
                 Unusual Spending Observations ({anomalies.length})
               </h3>
             </div>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-[#697386] mt-0.5">
               Explainable statistical deviations (median &amp; standard deviation baselines) — not fraud detection.
             </p>
           </div>
         </div>
 
         {anomalies.length === 0 ? (
-          <div className="rounded-xl bg-ink-900/50 border border-dashed border-white/[0.08] p-5 flex items-start gap-3">
-            <ShieldCheck className="w-5 h-5 text-brand-400 shrink-0 mt-0.5" />
+          <div className="rounded-xl bg-[#F7F8FA] border border-dashed border-[#D5DBE6] p-5 flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-[#15966B] shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-bold text-zinc-200">
+              <p className="text-xs font-semibold text-[#151922]">
                 No statistically unusual spending detected in this period
               </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Radar Room requires established category or daily history (4+ active records) and significant statistical deviation before flagging an anomaly so normal fluctuations do not create false alarms.
+              <p className="text-xs text-[#697386] mt-1">
+                Insights requires established category or daily history (4+ active records) and significant statistical deviation before flagging an anomaly so normal fluctuations do not create false alarms.
               </p>
             </div>
           </div>
@@ -335,27 +335,33 @@ export function RadarBudgetAnomaliesTab({
             {anomalies.map((a) => {
               const sevColor =
                 a.severity === 'high'
-                  ? 'text-red-400 border-red-500/25 bg-red-500/[0.04]'
+                  ? 'border-[#F6B8B8] bg-[#FDECEC]'
                   : a.severity === 'moderate'
-                    ? 'text-amber-400 border-amber-500/25 bg-amber-500/[0.04]'
-                    : 'text-sky-400 border-sky-500/25 bg-sky-500/[0.04]';
+                    ? 'border-[#F3D8A8] bg-[#FEF6E7]'
+                    : 'border-[#D4E0FF] bg-[#EDF2FF]';
+              const sevText =
+                a.severity === 'high'
+                  ? 'text-[#DE5252]'
+                  : a.severity === 'moderate'
+                    ? 'text-[#9E6614]'
+                    : 'text-[#365FE8]';
               return (
                 <div key={a.id} className={`rounded-xl border p-3.5 ${sevColor}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold uppercase tracking-wider">
+                      <p className={`text-xs font-bold uppercase tracking-wider ${sevText}`}>
                         {a.severity} deviation · +{a.deviationPct}%
                       </p>
-                      <p className="text-sm font-extrabold text-white mt-0.5 truncate">
+                      <p className="text-sm font-bold text-[#151922] mt-0.5 truncate">
                         {a.subject}
                       </p>
                     </div>
-                    <span className="font-mono tabular-nums font-extrabold text-sm text-white shrink-0">
+                    <span className="font-mono tabular-nums font-bold text-sm text-[#151922] shrink-0">
                       ₹{formatCurrencyExact(a.amount)}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-300 mt-2">{a.reason}</p>
-                  <p className="text-[11px] text-zinc-500 mt-2">
+                  <p className="text-xs text-[#151922] mt-2">{a.reason}</p>
+                  <p className="text-[11px] text-[#697386] mt-2">
                     {a.baselineLabel} ·{' '}
                     {new Date(a.date).toLocaleDateString('en-IN', {
                       day: 'numeric',
@@ -371,22 +377,22 @@ export function RadarBudgetAnomaliesTab({
       </section>
 
       {/* Financial Insights Engine */}
-      <section className="glass rounded-2xl p-5">
+      <section className="surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Lightbulb className="w-4 h-4 text-brand-400" />
-              <h3 className="text-sm font-extrabold text-white">
+              <Lightbulb className="w-4 h-4 text-[#365FE8]" />
+              <h3 className="text-sm font-bold text-[#151922]">
                 Financial Insights Engine
               </h3>
             </div>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-[#697386] mt-0.5">
               Deterministic observations backed by live records; potential savings are clearly labeled as estimates
             </p>
           </div>
 
           <div
-            className="inline-flex flex-wrap items-center bg-ink-900 border border-white/[0.06] rounded-xl p-0.5"
+            className="inline-flex flex-wrap items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
             role="group"
             aria-label="Filter insights by category"
           >
@@ -404,10 +410,10 @@ export function RadarBudgetAnomaliesTab({
                 key={k}
                 type="button"
                 onClick={() => setInsightFilter(k)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                   insightFilter === k
-                    ? 'bg-white/[0.1] text-white'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                    ? 'bg-[#365FE8] text-white shadow-xs'
+                    : 'text-[#697386] hover:text-[#151922]'
                 }`}
               >
                 {label}
@@ -420,35 +426,35 @@ export function RadarBudgetAnomaliesTab({
           {filteredInsights.map((ins) => (
             <div
               key={ins.id}
-              className="rounded-xl bg-ink-900/70 border border-white/[0.06] p-4 flex flex-col justify-between"
+              className="surface-subtle p-4 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-bold text-zinc-400">
+                  <span className="text-[11px] font-semibold text-[#697386]">
                     {ins.periodLabel}
                     {ins.isEstimate ? ' · ESTIMATE ONLY' : ''}
                   </span>
                   {ins.metricLabel && (
                     <span
-                      className={`font-mono tabular-nums text-xs font-extrabold ${
+                      className={`font-mono tabular-nums text-xs font-bold ${
                         ins.tone === 'positive'
-                          ? 'text-brand-400'
+                          ? 'text-[#15966B]'
                           : ins.tone === 'caution'
-                            ? 'text-amber-400'
-                            : 'text-zinc-200'
+                            ? 'text-[#9E6614]'
+                            : 'text-[#151922]'
                       }`}
                     >
                       {ins.metricLabel}
                     </span>
                   )}
                 </div>
-                <p className="text-sm font-extrabold text-white mt-1.5 flex items-center gap-1.5">
+                <p className="text-sm font-bold text-[#151922] mt-1.5 flex items-center gap-1.5">
                   {ins.tone === 'caution' && (
-                    <AlertOctagon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <AlertOctagon className="w-3.5 h-3.5 text-[#C7851F] shrink-0" />
                   )}
                   <span>{ins.title}</span>
                 </p>
-                <p className="text-xs text-zinc-300 mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#697386] mt-1.5 leading-relaxed">
                   {ins.description}
                 </p>
               </div>
@@ -463,16 +469,16 @@ export function RadarBudgetAnomaliesTab({
 function MiniStat({
   label,
   value,
-  valueClass = 'text-white',
+  valueClass = 'text-[#151922]',
 }: {
   label: string;
   value: string;
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl bg-ink-900/70 border border-white/[0.05] px-3 py-2.5">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 truncate">{label}</p>
-      <p className={`text-base font-extrabold font-mono tabular-nums mt-0.5 ${valueClass}`}>
+    <div className="surface-subtle px-3 py-2.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] truncate">{label}</p>
+      <p className={`text-base font-bold font-mono tabular-nums mt-0.5 ${valueClass}`}>
         {value}
       </p>
     </div>

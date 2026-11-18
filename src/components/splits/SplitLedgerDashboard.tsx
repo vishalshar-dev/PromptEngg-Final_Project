@@ -41,12 +41,10 @@ export function SplitLedgerDashboard() {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [activeSubView, setActiveSubView] = useState<'expenses' | 'repayments'>('expenses');
 
-  // Filters & sorting
   const [filter, setFilter] = useState<LedgerFilter>('all');
   const [sortBy, setSortBy] = useState<LedgerSortBy>('date');
   const [sortOrder, setSortOrder] = useState<LedgerSortOrder>('desc');
 
-  // Modals
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<SharedExpense | undefined>(undefined);
   const [peopleModalOpen, setPeopleModalOpen] = useState(false);
@@ -58,7 +56,6 @@ export function SplitLedgerDashboard() {
     expenseId?: string;
   }>({ isOpen: false });
 
-  // Delete confirmations
   const [confirmDeleteExpenseId, setConfirmDeleteExpenseId] = useState<string | null>(null);
   const [confirmDeleteSettlementId, setConfirmDeleteSettlementId] = useState<string | null>(null);
 
@@ -92,7 +89,6 @@ export function SplitLedgerDashboard() {
     });
   };
 
-  // Individual Person Ledger View
   const activePersonSummary = selectedPersonId
     ? ledger.personSummaries[selectedPersonId]
     : undefined;
@@ -124,12 +120,12 @@ export function SplitLedgerDashboard() {
       {/* Header + Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-brand-400" strokeWidth={2.5} />
+          <Users className="w-5 h-5 text-[#365FE8]" strokeWidth={2.2} />
           <div>
-            <h2 className="text-lg font-extrabold tracking-tight text-white">
-              Expense Split Ledger
+            <h2 className="text-base font-bold tracking-tight text-[#151922]">
+              Shared Expense Splits
             </h2>
-            <p className="text-xs text-zinc-500 font-medium">
+            <p className="text-xs text-[#697386]">
               Multi-person balances, shared bills, and repayments
             </p>
           </div>
@@ -142,80 +138,80 @@ export function SplitLedgerDashboard() {
               setEditingExpense(undefined);
               setExpenseModalOpen(true);
             }}
-            className="bg-brand-500 hover:bg-brand-400 text-ink-950 px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-colors"
+            className="btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
           >
-            <Plus className="w-4 h-4" strokeWidth={3} />
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
             Add Expense
           </button>
           <button
             type="button"
             onClick={() => openSettle({})}
             disabled={people.length === 0 || (dashboard.totalIOwe === 0 && dashboard.totalOwedToMe === 0)}
-            className="bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-40 disabled:cursor-not-allowed text-white border border-white/[0.08] px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="btn-secondary disabled:opacity-45 disabled:cursor-not-allowed px-3 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
           >
-            <ShieldCheck className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
+            <ShieldCheck className="w-4 h-4 text-[#15966B]" strokeWidth={2.2} />
             Settle Up
           </button>
           <button
             type="button"
             onClick={() => setPeopleModalOpen(true)}
-            className="bg-white/[0.06] hover:bg-white/[0.12] text-zinc-200 border border-white/[0.08] px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="btn-secondary px-3 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
           >
-            <UserPlus className="w-4 h-4 text-zinc-400" strokeWidth={2.5} />
+            <UserPlus className="w-4 h-4 text-[#697386]" strokeWidth={2.2} />
             People ({people.length})
           </button>
         </div>
       </div>
 
-      {/* 4 Dashboard Cards */}
+      {/* 4 Split Dashboard Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="glass rounded-2xl p-4">
+        <div className="surface-card p-4">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <ArrowUpRight className="w-4 h-4 text-red-400" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <ArrowUpRight className="w-4 h-4 text-[#DE5252]" strokeWidth={2.2} />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               Total I Owe
             </span>
           </div>
           <p
             data-testid="dashboard-total-i-owe"
-            className="text-xl font-extrabold font-mono tabular-nums text-red-400"
+            className="text-xl font-bold font-mono tabular-nums text-[#DE5252]"
           >
             ₹{formatCurrencyExact(dashboard.totalIOwe)}
           </p>
-          <p className="text-[10px] text-zinc-500 mt-0.5">Payable to others</p>
+          <p className="text-[11px] text-[#929BAB] mt-0.5">Payable to others</p>
         </div>
 
-        <div className="glass rounded-2xl p-4">
+        <div className="surface-card p-4">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <ArrowDownLeft className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <ArrowDownLeft className="w-4 h-4 text-[#15966B]" strokeWidth={2.2} />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               Owed to Me
             </span>
           </div>
           <p
             data-testid="dashboard-total-owed-to-me"
-            className="text-xl font-extrabold font-mono tabular-nums text-brand-400"
+            className="text-xl font-bold font-mono tabular-nums text-[#15966B]"
           >
             ₹{formatCurrencyExact(dashboard.totalOwedToMe)}
           </p>
-          <p className="text-[10px] text-zinc-500 mt-0.5">Receivable from others</p>
+          <p className="text-[11px] text-[#929BAB] mt-0.5">Receivable from others</p>
         </div>
 
-        <div className="glass rounded-2xl p-4">
+        <div className="surface-card p-4">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <Scale className="w-4 h-4 text-zinc-400" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <Scale className="w-4 h-4 text-[#697386]" strokeWidth={2.2} />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               Net Balance
             </span>
           </div>
           <p
             data-testid="dashboard-net-balance"
-            className={`text-xl font-extrabold font-mono tabular-nums ${
+            className={`text-xl font-bold font-mono tabular-nums ${
               dashboard.overallNetBalance > 0
-                ? 'text-brand-400'
+                ? 'text-[#15966B]'
                 : dashboard.overallNetBalance < 0
-                ? 'text-red-400'
-                : 'text-zinc-200'
+                ? 'text-[#DE5252]'
+                : 'text-[#151922]'
             }`}
           >
             {dashboard.overallNetBalance > 0
@@ -224,7 +220,7 @@ export function SplitLedgerDashboard() {
               ? `-₹${formatCurrencyExact(Math.abs(dashboard.overallNetBalance))}`
               : '₹0'}
           </p>
-          <p className="text-[10px] text-zinc-500 mt-0.5">
+          <p className="text-[11px] text-[#929BAB] mt-0.5">
             {dashboard.overallNetBalance > 0
               ? 'Net receivable'
               : dashboard.overallNetBalance < 0
@@ -233,36 +229,36 @@ export function SplitLedgerDashboard() {
           </p>
         </div>
 
-        <div className="glass rounded-2xl p-4">
+        <div className="surface-card p-4">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <Clock className="w-4 h-4 text-amber-400" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <Clock className="w-4 h-4 text-[#C7851F]" strokeWidth={2.2} />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               Unsettled Txns
             </span>
           </div>
           <p
             data-testid="dashboard-unsettled-count"
-            className="text-xl font-extrabold font-mono tabular-nums text-white"
+            className="text-xl font-bold font-mono tabular-nums text-[#151922]"
           >
             {dashboard.unsettledCount}
           </p>
-          <p className="text-[10px] text-zinc-500 mt-0.5">
+          <p className="text-[11px] text-[#929BAB] mt-0.5">
             {dashboard.settledCount} settled of {dashboard.totalSharedCount}
           </p>
         </div>
       </div>
 
       {/* People Balances Section */}
-      <section className="glass rounded-2xl p-4 space-y-3" aria-label="People Balances">
+      <section className="surface-card p-5 space-y-3" aria-label="People Balances">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-            <Users className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
-            People & Balances
+          <h3 className="text-sm font-bold text-[#151922] flex items-center gap-2">
+            <Users className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+            People &amp; Balances
           </h3>
           <button
             type="button"
             onClick={() => setPeopleModalOpen(true)}
-            className="text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1"
+            className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1"
           >
             <UserPlus className="w-3.5 h-3.5" />
             Manage
@@ -270,23 +266,23 @@ export function SplitLedgerDashboard() {
         </div>
 
         {people.length === 0 ? (
-          <div className="text-center py-6 bg-ink-900/40 rounded-xl border border-dashed border-white/[0.08]">
-            <p className="text-xs font-semibold text-zinc-400">
+          <div className="text-center py-6 bg-[#F7F8FA] rounded-xl border border-dashed border-[#D5DBE6]">
+            <p className="text-xs font-semibold text-[#151922]">
               No people added yet
             </p>
-            <p className="text-[11px] text-zinc-500 mt-1">
+            <p className="text-xs text-[#697386] mt-1">
               Add friends or roommates to track who owes whom.
             </p>
             <button
               type="button"
               onClick={() => setPeopleModalOpen(true)}
-              className="mt-3 bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-white/[0.08]"
+              className="btn-secondary mt-3 text-xs px-3.5 py-2"
             >
               + Add Your First Person
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {people.map((person) => {
               const summary = ledger.personSummaries[person.id];
               const net = summary?.netBalance ?? 0;
@@ -296,7 +292,7 @@ export function SplitLedgerDashboard() {
               return (
                 <div
                   key={person.id}
-                  className="bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] rounded-xl p-3 flex flex-col justify-between gap-2.5 transition-all"
+                  className="bg-[#F7F8FA] hover:bg-white border border-[#E7EAF0] rounded-xl p-3.5 flex flex-col justify-between gap-2.5 transition-colors"
                 >
                   <button
                     type="button"
@@ -305,25 +301,25 @@ export function SplitLedgerDashboard() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold text-white group-hover:text-brand-400 transition-colors truncate">
+                        <p className="text-sm font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">
                           {person.name}
                         </p>
-                        <p className="text-[10px] text-zinc-500 truncate">
+                        <p className="text-[11px] text-[#697386] truncate">
                           {person.contact || `${summary?.transactions.length ?? 0} shared bills`}
                         </p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:text-brand-400 shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-[#929BAB] group-hover:text-[#365FE8] shrink-0" />
                     </div>
 
-                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-white/[0.05] text-xs">
-                      <span className="text-zinc-500 font-medium">Net</span>
+                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#E7EAF0] text-xs">
+                      <span className="text-[#697386] font-medium">Net</span>
                       <span
-                        className={`font-mono font-extrabold ${
+                        className={`font-mono font-bold ${
                           net > 0
-                            ? 'text-brand-400'
+                            ? 'text-[#15966B]'
                             : net < 0
-                            ? 'text-red-400'
-                            : 'text-zinc-400'
+                            ? 'text-[#DE5252]'
+                            : 'text-[#697386]'
                         }`}
                       >
                         {net > 0
@@ -336,8 +332,8 @@ export function SplitLedgerDashboard() {
                   </button>
 
                   {(owedToMe > 0 || iOwe > 0) && (
-                    <div className="flex items-center justify-between gap-2 text-[10px]">
-                      <span className="text-zinc-500">
+                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="text-[#697386] font-mono tabular-nums">
                         In: ₹{formatCurrencyExact(owedToMe)} · Out: ₹
                         {formatCurrencyExact(iOwe)}
                       </span>
@@ -349,7 +345,7 @@ export function SplitLedgerDashboard() {
                             direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
                           })
                         }
-                        className="font-bold text-brand-400 hover:text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2 py-1 rounded-lg"
+                        className="font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] border border-[#D4E0FF] px-2.5 py-1 rounded-lg whitespace-nowrap"
                       >
                         Settle
                       </button>
@@ -363,16 +359,16 @@ export function SplitLedgerDashboard() {
       </section>
 
       {/* History Panel: Shared Expenses vs Repayments */}
-      <section className="glass rounded-2xl p-4 space-y-4">
+      <section className="surface-card p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="inline-flex bg-ink-900 p-1 rounded-xl border border-white/[0.06] self-start">
+          <div className="inline-flex bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0] self-start">
             <button
               type="button"
               onClick={() => setActiveSubView('expenses')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                 activeSubView === 'expenses'
-                  ? 'bg-white/[0.1] text-white'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-[#365FE8] text-white shadow-xs'
+                  : 'text-[#697386] hover:text-[#151922]'
               }`}
             >
               <Receipt className="w-3.5 h-3.5" />
@@ -381,10 +377,10 @@ export function SplitLedgerDashboard() {
             <button
               type="button"
               onClick={() => setActiveSubView('repayments')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                 activeSubView === 'repayments'
-                  ? 'bg-white/[0.1] text-white'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-[#365FE8] text-white shadow-xs'
+                  : 'text-[#697386] hover:text-[#151922]'
               }`}
             >
               <History className="w-3.5 h-3.5" />
@@ -401,7 +397,7 @@ export function SplitLedgerDashboard() {
                 id="ledger-sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as LedgerSortBy)}
-                className="bg-ink-900 border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs font-bold text-zinc-200 outline-none"
+                className="input-field px-2.5 py-1.5 text-xs font-medium"
               >
                 <option value="date">Sort: Date</option>
                 <option value="amount">Sort: Amount</option>
@@ -414,7 +410,7 @@ export function SplitLedgerDashboard() {
                 aria-label={`Sort direction ${
                   sortOrder === 'desc' ? 'descending' : 'ascending'
                 }`}
-                className="bg-ink-900 border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs font-bold text-zinc-300 hover:text-white flex items-center gap-1"
+                className="btn-secondary px-2.5 py-1.5 text-xs flex items-center gap-1 whitespace-nowrap"
               >
                 <ArrowUpDown className="w-3.5 h-3.5" />
                 {sortOrder === 'desc' ? 'High/New' : 'Low/Old'}
@@ -443,10 +439,10 @@ export function SplitLedgerDashboard() {
                     type="button"
                     onClick={() => setFilter(f.id)}
                     aria-pressed={active}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors whitespace-nowrap ${
                       active
-                        ? 'bg-brand-500/15 text-brand-400 border-brand-500/30'
-                        : 'bg-white/[0.03] text-zinc-400 border-white/[0.06] hover:text-white'
+                        ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
+                        : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
                     }`}
                   >
                     {f.label}
@@ -457,18 +453,18 @@ export function SplitLedgerDashboard() {
 
             {filteredExpenses.length === 0 ? (
               <div
-                className="text-center py-10 bg-ink-900/40 rounded-xl border border-dashed border-white/[0.08]"
+                className="text-center py-10 bg-[#F7F8FA] rounded-xl border border-dashed border-[#D5DBE6]"
                 data-testid="shared-expenses-empty"
               >
-                <Receipt className="w-8 h-8 text-zinc-600 mx-auto mb-2.5" />
-                <p className="text-sm font-bold text-zinc-300">
+                <Receipt className="w-8 h-8 text-[#929BAB] mx-auto mb-2.5" />
+                <p className="text-sm font-semibold text-[#151922]">
                   {sharedExpenses.length === 0
                     ? 'No shared expenses yet'
                     : 'No transactions match this filter'}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                <p className="text-xs text-[#697386] mt-1 max-w-sm mx-auto">
                   {sharedExpenses.length === 0
-                    ? 'Click "Add Expense" above or split a grocery basket directly from the Mart checkout.'
+                    ? 'Click "Add Expense" above or split a grocery basket directly from Shopping checkout.'
                     : 'Try switching filters above to view other shared transactions.'}
                 </p>
               </div>
@@ -480,7 +476,6 @@ export function SplitLedgerDashboard() {
                   const isSettled = view.status === 'settled';
                   const isPartial = view.status === 'partial';
 
-                  // Find first counterparty for quick settle button
                   const otherParticipantId =
                     expense.paidById === SELF_PERSON_ID
                       ? expense.participants.find((p) => p.personId !== SELF_PERSON_ID)
@@ -490,47 +485,47 @@ export function SplitLedgerDashboard() {
                   return (
                     <div
                       key={expense.id}
-                      className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2.5"
+                      className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-4 space-y-2.5"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-extrabold text-white">
+                            <span className="text-sm font-bold text-[#151922]">
                               {expense.name}
                             </span>
                             <span
-                              className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}
                             >
                               {expense.category}
                             </span>
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-white/[0.05] text-zinc-400">
+                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-white border border-[#E7EAF0] text-[#697386]">
                               {expense.splitMethod}
                             </span>
                           </div>
-                          <p className="text-[11px] text-zinc-500 mt-0.5">
+                          <p className="text-xs text-[#697386] mt-0.5">
                             {new Date(expense.date).toLocaleDateString('en-IN', {
                               day: 'numeric',
                               month: 'short',
                               year: 'numeric',
                             })}{' '}
                             · Paid by{' '}
-                            <span className="text-zinc-300 font-semibold">
+                            <span className="text-[#151922] font-semibold">
                               {view.paidByName}
                             </span>
                           </p>
                         </div>
 
                         <div className="text-right">
-                          <p className="text-sm font-extrabold font-mono text-white">
+                          <p className="text-sm font-bold font-mono text-[#151922] tabular-nums">
                             ₹{formatCurrencyExact(expense.totalAmount)}
                           </p>
                           <span
-                            className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border mt-1 ${
+                            className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border mt-1 ${
                               isSettled
-                                ? 'bg-brand-500/10 text-brand-400 border-brand-500/20'
+                                ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
                                 : isPartial
-                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
+                                : 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
                             }`}
                           >
                             {isSettled ? (
@@ -544,7 +539,7 @@ export function SplitLedgerDashboard() {
                       </div>
 
                       {/* Participant Share Chips */}
-                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.05]">
+                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#E7EAF0]">
                         {expense.participants.map((part) => {
                           const pName =
                             ledger.personNameMap[part.personId] ?? 'Unknown';
@@ -552,7 +547,7 @@ export function SplitLedgerDashboard() {
                           return isSelf ? (
                             <span
                               key={part.personId}
-                              className="text-[11px] font-semibold bg-ink-900 border border-white/[0.06] text-zinc-300 px-2 py-1 rounded-lg"
+                              className="text-xs font-medium bg-white border border-[#E7EAF0] text-[#697386] px-2.5 py-1 rounded-lg"
                             >
                               You: ₹{formatCurrencyExact(part.amount)}
                             </span>
@@ -561,7 +556,7 @@ export function SplitLedgerDashboard() {
                               key={part.personId}
                               type="button"
                               onClick={() => setSelectedPersonId(part.personId)}
-                              className="text-[11px] font-semibold bg-ink-900 hover:bg-white/[0.06] border border-white/[0.06] text-zinc-200 hover:text-brand-400 px-2 py-1 rounded-lg transition-colors"
+                              className="text-xs font-semibold bg-white hover:bg-[#EDF2FF] border border-[#E7EAF0] hover:border-[#D4E0FF] text-[#151922] hover:text-[#365FE8] px-2.5 py-1 rounded-lg transition-colors"
                             >
                               {pName}: ₹{formatCurrencyExact(part.amount)}
                             </button>
@@ -573,15 +568,15 @@ export function SplitLedgerDashboard() {
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5">
                         <div className="text-xs font-semibold">
                           {view.remainingAmount === 0 ? (
-                            <span className="text-brand-400">
+                            <span className="text-[#15966B]">
                               Fully settled (₹{formatCurrencyExact(view.originalOwedAmount)})
                             </span>
                           ) : view.direction === 'owed_to_me' ? (
-                            <span className="text-brand-400">
+                            <span className="text-[#15966B]">
                               Owed to you: ₹{formatCurrencyExact(view.remainingAmount)}
                             </span>
                           ) : (
-                            <span className="text-red-400">
+                            <span className="text-[#DE5252]">
                               You owe: ₹{formatCurrencyExact(view.remainingAmount)}
                             </span>
                           )}
@@ -599,7 +594,7 @@ export function SplitLedgerDashboard() {
                                   expenseId: expense.id,
                                 })
                               }
-                              className="text-[11px] font-bold bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 border border-brand-500/25 px-2.5 py-1 rounded-lg transition-colors"
+                              className="text-xs font-semibold bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8] border border-[#D4E0FF] px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
                             >
                               Settle
                             </button>
@@ -611,27 +606,27 @@ export function SplitLedgerDashboard() {
                               setExpenseModalOpen(true);
                             }}
                             aria-label={`Edit shared expense ${expense.name}`}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                            className="p-1.5 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-white transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
 
                           {confirmDeleteExpenseId === expense.id ? (
-                            <div className="flex items-center gap-1 animate-scale-in">
+                            <div className="flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => {
                                   removeSharedExpense(expense.id);
                                   setConfirmDeleteExpenseId(null);
                                 }}
-                                className="text-[10px] font-bold bg-red-500 text-white px-2 py-1 rounded-md"
+                                className="text-[11px] font-semibold bg-[#DE5252] text-white px-2 py-1 rounded-md"
                               >
                                 Delete
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteExpenseId(null)}
-                                className="text-[10px] font-bold bg-white/[0.08] text-zinc-300 px-2 py-1 rounded-md"
+                                className="text-[11px] font-semibold bg-white border border-[#E7EAF0] text-[#697386] px-2 py-1 rounded-md"
                               >
                                 Cancel
                               </button>
@@ -641,7 +636,7 @@ export function SplitLedgerDashboard() {
                               type="button"
                               onClick={() => setConfirmDeleteExpenseId(expense.id)}
                               aria-label={`Delete shared expense ${expense.name}`}
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="p-1.5 rounded-lg text-[#697386] hover:text-[#DE5252] hover:bg-[#FDECEC] transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -655,10 +650,10 @@ export function SplitLedgerDashboard() {
             )}
           </>
         ) : sortedSettlements.length === 0 ? (
-          <div className="text-center py-10 bg-ink-900/40 rounded-xl border border-dashed border-white/[0.08]">
-            <History className="w-8 h-8 text-zinc-600 mx-auto mb-2.5" />
-            <p className="text-sm font-bold text-zinc-300">No repayments recorded yet</p>
-            <p className="text-xs text-zinc-500 mt-1">
+          <div className="text-center py-10 bg-[#F7F8FA] rounded-xl border border-dashed border-[#D5DBE6]">
+            <History className="w-8 h-8 text-[#929BAB] mx-auto mb-2.5" />
+            <p className="text-sm font-semibold text-[#151922]">No repayments recorded yet</p>
+            <p className="text-xs text-[#697386] mt-1">
               Repayments you record will appear here with full history preserved.
             </p>
           </div>
@@ -674,13 +669,13 @@ export function SplitLedgerDashboard() {
               return (
                 <div
                   key={st.id}
-                  className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex items-center justify-between gap-2"
+                  className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white">
+                    <p className="text-xs font-bold text-[#151922]">
                       {fromName} → {toName}
                     </p>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                    <p className="text-[11px] text-[#697386] mt-0.5">
                       {new Date(st.date).toLocaleDateString('en-IN', {
                         day: 'numeric',
                         month: 'short',
@@ -692,7 +687,7 @@ export function SplitLedgerDashboard() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-extrabold font-mono text-brand-400">
+                    <span className="text-sm font-bold font-mono text-[#15966B] tabular-nums">
                       ₹{formatCurrencyExact(st.amount)}
                     </span>
                     {confirmDeleteSettlementId === st.id ? (
@@ -703,14 +698,14 @@ export function SplitLedgerDashboard() {
                             removeSettlement(st.id);
                             setConfirmDeleteSettlementId(null);
                           }}
-                          className="text-[10px] font-bold bg-red-500 text-white px-2 py-1 rounded-md"
+                          className="text-[11px] font-semibold bg-[#DE5252] text-white px-2 py-1 rounded-md"
                         >
                           Confirm
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteSettlementId(null)}
-                          className="text-[10px] font-bold bg-white/[0.08] text-zinc-300 px-2 py-1 rounded-md"
+                          className="text-[11px] font-semibold bg-white border border-[#E7EAF0] text-[#697386] px-2 py-1 rounded-md"
                         >
                           Cancel
                         </button>
@@ -720,7 +715,7 @@ export function SplitLedgerDashboard() {
                         type="button"
                         onClick={() => setConfirmDeleteSettlementId(st.id)}
                         aria-label={`Delete repayment ${fromName} to ${toName}`}
-                        className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        className="p-1.5 rounded-lg text-[#697386] hover:text-[#DE5252] hover:bg-[#FDECEC] transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

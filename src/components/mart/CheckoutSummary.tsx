@@ -14,7 +14,7 @@ import {
   type SplitMethod,
 } from '../../store/useStore';
 import { SELF_PERSON_ID } from '../../types/models';
-import { formatCurrencyExact, formatQuantity, getCategoryStyle } from '../../utils/categoryStyles';
+import { formatCurrencyExact, formatQuantity } from '../../utils/categoryStyles';
 import { buildCheckoutBreakdown } from '../../utils/martEngine';
 import { computeBrokeModeStatus } from '../../utils/warRoomEngine';
 import {
@@ -76,7 +76,6 @@ export function CheckoutSummary({
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
   const [customPcts, setCustomPcts] = useState<Record<string, string>>({});
 
-  // Quick add person inline
   const [addingPerson, setAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState('');
   const [newPersonContact, setNewPersonContact] = useState('');
@@ -212,20 +211,20 @@ export function CheckoutSummary({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-xl max-h-[92vh] flex flex-col glass-strong border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-xl max-h-[92vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7EAF0]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400">
-              <ShoppingBag className="w-4 h-4" strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+              <ShoppingBag className="w-4 h-4" strokeWidth={2.2} />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Checkout Summary</h3>
-              <p className="text-[11px] text-zinc-500">
-                Review itemized basket & record expenditure
+              <h3 className="text-base font-bold text-[#151922]">Checkout Summary</h3>
+              <p className="text-xs text-[#697386]">
+                Review itemized basket &amp; record expenditure
               </p>
             </div>
           </div>
@@ -233,7 +232,7 @@ export function CheckoutSummary({
             type="button"
             onClick={onClose}
             aria-label="Close checkout summary"
-            className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-zinc-400 hover:text-white"
+            className="w-8 h-8 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#697386] hover:text-[#151922]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -242,8 +241,8 @@ export function CheckoutSummary({
         {/* Scrollable Content */}
         <div className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
           {/* Itemized List */}
-          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3.5 space-y-2">
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">
+          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-2xl p-4 space-y-2.5">
+            <p className="text-xs font-semibold text-[#697386]">
               Items ({formatQuantity(breakdown.totalCount)} units across {breakdown.lines.length}{' '}
               {breakdown.lines.length === 1 ? 'line' : 'lines'})
             </p>
@@ -254,54 +253,51 @@ export function CheckoutSummary({
                   className="flex items-center justify-between text-xs gap-2"
                 >
                   <div className="min-w-0">
-                    <span className="font-bold text-white">
+                    <span className="font-semibold text-[#151922]">
                       {line.item.name}
                       {line.variantLabel ? ` · ${line.variantLabel}` : ''}
                     </span>
-                    <span className="text-zinc-500 font-mono ml-2">
+                    <span className="text-[#697386] font-mono ml-2 tabular-nums">
                       {formatQuantity(line.quantity)} × ₹{formatCurrencyExact(line.price)} ({line.unit})
                     </span>
                   </div>
-                  <span className="font-mono font-extrabold text-zinc-200 tabular-nums flex-shrink-0">
+                  <span className="font-mono font-bold text-[#151922] tabular-nums flex-shrink-0">
                     ₹{formatCurrencyExact(line.subtotal)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-2 border-t border-white/[0.06] flex flex-wrap gap-1.5">
-              {categoryEntries.map(([cat, amt]) => {
-                const st = getCategoryStyle(cat);
-                return (
-                  <span
-                    key={cat}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${st.bg} ${st.text} ${st.border}`}
-                  >
-                    {cat}: ₹{formatCurrencyExact(amt)}
-                  </span>
-                );
-              })}
+            <div className="pt-2 border-t border-[#E7EAF0] flex flex-wrap gap-2 text-xs text-[#697386]">
+              {categoryEntries.map(([cat, amt], i) => (
+                <span key={cat} className="tabular-nums">
+                  {i > 0 && <span className="mr-2 text-[#D5DBE5]" aria-hidden="true">·</span>}
+                  {cat}: <span className="font-mono font-semibold text-[#151922]">₹{formatCurrencyExact(amt)}</span>
+                </span>
+              ))}
             </div>
 
-            <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+            <div className="pt-2.5 border-t border-[#E7EAF0] flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#697386]">
                 Cart Total
               </span>
-              <span className="text-xl font-extrabold font-mono text-white tabular-nums">
+              <span className="text-xl font-bold font-mono text-[#151922] tabular-nums">
                 ₹{formatCurrencyExact(breakdown.totalAmount)}
               </span>
             </div>
           </div>
 
           {/* Optional Expense Splitting */}
-          <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4 space-y-3">
+          <div className="bg-white border border-[#E7EAF0] rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Split className="w-4 h-4 text-brand-400" strokeWidth={2.4} />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center shrink-0">
+                  <Split className="w-4 h-4" strokeWidth={2.2} />
+                </div>
                 <div>
-                  <p className="text-sm font-extrabold text-white">Split This Purchase</p>
-                  <p className="text-[11px] text-zinc-500">
-                    Track shared balances & charge only your personal share to budget
+                  <p className="text-sm font-bold text-[#151922]">Split This Purchase</p>
+                  <p className="text-xs text-[#697386]">
+                    Track shared balances &amp; charge only your personal share to budget
                   </p>
                 </div>
               </div>
@@ -311,12 +307,12 @@ export function CheckoutSummary({
                 aria-checked={splitEnabled}
                 aria-label="Toggle split expense"
                 onClick={() => setSplitEnabled((v) => !v)}
-                className={`w-11 h-6 rounded-full transition-colors p-0.5 ${
-                  splitEnabled ? 'bg-brand-500' : 'bg-white/[0.12]'
+                className={`w-11 h-6 rounded-full transition-colors p-0.5 shrink-0 ${
+                  splitEnabled ? 'bg-[#365FE8]' : 'bg-[#D5DBE5]'
                 }`}
               >
                 <div
-                  className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                  className={`w-5 h-5 rounded-full bg-white shadow-xs transition-transform ${
                     splitEnabled ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
@@ -324,28 +320,28 @@ export function CheckoutSummary({
             </div>
 
             {splitEnabled && (
-              <div className="space-y-3 pt-2 border-t border-white/[0.06] animate-fade-in">
+              <div className="space-y-3 pt-3 border-t border-[#E7EAF0] animate-fade-in">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+                    <label className="text-xs font-semibold text-[#4B5565] block mb-1">
                       Expense Label
                     </label>
                     <input
                       type="text"
                       value={expenseName}
                       onChange={(e) => setExpenseName(e.target.value)}
-                      className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white outline-none"
+                      className="input-field py-2 text-xs"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+                    <label className="text-xs font-semibold text-[#4B5565] block mb-1">
                       Paid By
                     </label>
                     <select
                       aria-label="Paid by"
                       value={paidById}
                       onChange={(e) => setPaidById(e.target.value)}
-                      className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white outline-none"
+                      className="input-field py-2 text-xs"
                     >
                       {allPeopleChoices.map((person) => (
                         <option key={person.id} value={person.id}>
@@ -359,21 +355,21 @@ export function CheckoutSummary({
                 {/* Participants */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
-                      <Users className="w-3 h-3" /> Participants ({selectedIds.length})
+                    <span className="text-xs font-semibold text-[#4B5565] flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" /> Participants ({selectedIds.length})
                     </span>
                     <button
                       type="button"
                       onClick={() => setAddingPerson((v) => !v)}
-                      className="text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1"
+                      className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
                     >
-                      <UserPlus className="w-3 h-3" />
+                      <UserPlus className="w-3.5 h-3.5" />
                       Add Person
                     </button>
                   </div>
 
                   {addingPerson && (
-                    <div className="bg-ink-900 border border-white/[0.08] rounded-xl p-2.5 mb-2 space-y-2">
+                    <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3 mb-2 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="text"
@@ -381,31 +377,31 @@ export function CheckoutSummary({
                           aria-label="New participant name"
                           value={newPersonName}
                           onChange={(e) => setNewPersonName(e.target.value)}
-                          className="bg-ink-950 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                          className="input-field py-1.5 text-xs"
                         />
                         <input
                           type="text"
                           placeholder="Phone or email (optional)"
                           value={newPersonContact}
                           onChange={(e) => setNewPersonContact(e.target.value)}
-                          className="bg-ink-950 border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                          className="input-field py-1.5 text-xs"
                         />
                       </div>
                       {personError && (
-                        <p className="text-[11px] text-red-400">{personError}</p>
+                        <p className="text-xs text-[#DE5252]">{personError}</p>
                       )}
                       <div className="flex justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => setAddingPerson(false)}
-                          className="px-2.5 py-1 rounded-lg bg-white/[0.06] text-[11px] font-bold text-zinc-400"
+                          className="btn-secondary py-1 px-2.5 text-xs"
                         >
                           Cancel
                         </button>
                         <button
                           type="button"
                           onClick={handleQuickAddPerson}
-                          className="px-3 py-1 rounded-lg bg-brand-500 text-[11px] font-extrabold text-ink-950"
+                          className="btn-primary py-1 px-3 text-xs"
                         >
                           Add
                         </button>
@@ -421,10 +417,10 @@ export function CheckoutSummary({
                           key={p.id}
                           type="button"
                           onClick={() => toggleParticipant(p.id)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                             active
-                              ? 'bg-brand-500/20 border-brand-500/40 text-brand-300'
-                              : 'bg-ink-900 border-white/[0.06] text-zinc-400 hover:text-white'
+                              ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
+                              : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
                           }`}
                         >
                           {p.name}
@@ -441,10 +437,10 @@ export function CheckoutSummary({
                       key={m}
                       type="button"
                       onClick={() => setSplitMethod(m)}
-                      className={`py-1.5 rounded-lg text-xs font-bold capitalize border ${
+                      className={`py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
                         splitMethod === m
-                          ? 'bg-brand-500/20 border-brand-500/40 text-brand-300'
-                          : 'bg-ink-900 border-white/[0.06] text-zinc-400'
+                          ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
+                          : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386]'
                       }`}
                     >
                       {m}
@@ -453,7 +449,7 @@ export function CheckoutSummary({
                 </div>
 
                 {/* Per-person share breakdown */}
-                <div className="space-y-1.5 bg-ink-900/70 rounded-xl p-2.5 border border-white/[0.05]">
+                <div className="space-y-1.5 bg-[#F7F8FA] rounded-xl p-3 border border-[#E7EAF0]">
                   {selectedIds.map((pid) => {
                     const label =
                       allPeopleChoices.find((c) => c.id === pid)?.name ?? 'Participant';
@@ -465,9 +461,9 @@ export function CheckoutSummary({
                         key={pid}
                         className="flex items-center justify-between gap-2 text-xs"
                       >
-                        <span className="font-bold text-zinc-200">{label}</span>
+                        <span className="font-semibold text-[#151922]">{label}</span>
                         {splitMethod === 'equal' ? (
-                          <span className="font-mono font-bold text-brand-400">
+                          <span className="font-mono font-bold text-[#365FE8] tabular-nums">
                             ₹{formatCurrencyExact(equalAmt)}
                           </span>
                         ) : splitMethod === 'custom' ? (
@@ -483,7 +479,7 @@ export function CheckoutSummary({
                                 [pid]: e.target.value,
                               }))
                             }
-                            className="w-24 bg-ink-950 border border-white/[0.1] rounded px-2 py-1 text-right font-mono text-white"
+                            className="w-24 bg-white border border-[#E7EAF0] rounded px-2 py-1 text-right font-mono text-[#151922]"
                           />
                         ) : (
                           <div className="flex items-center gap-1">
@@ -500,9 +496,9 @@ export function CheckoutSummary({
                                   [pid]: e.target.value,
                                 }))
                               }
-                              className="w-16 bg-ink-950 border border-white/[0.1] rounded px-2 py-1 text-right font-mono text-white"
+                              className="w-16 bg-white border border-[#E7EAF0] rounded px-2 py-1 text-right font-mono text-[#151922]"
                             />
-                            <span className="text-zinc-400">%</span>
+                            <span className="text-[#697386]">%</span>
                           </div>
                         )}
                       </div>
@@ -511,7 +507,7 @@ export function CheckoutSummary({
                 </div>
 
                 {!splitValidation.ok && splitValidation.error && (
-                  <p className="text-xs text-red-400 flex items-center gap-1.5">
+                  <p className="text-xs text-[#DE5252] flex items-center gap-1.5">
                     <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                     {splitValidation.error}
                   </p>
@@ -521,16 +517,16 @@ export function CheckoutSummary({
           </div>
 
           {/* Personal Budget Impact */}
-          <div className="rounded-xl p-3 bg-brand-500/10 border border-brand-500/25 flex items-center justify-between">
+          <div className="rounded-xl p-3.5 bg-[#E8F7F1] border border-[#B7E4D3] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-brand-400 flex-shrink-0" />
-              <span className="text-xs font-bold text-brand-300">
+              <ShieldCheck className="w-4 h-4 text-[#15966B] flex-shrink-0" />
+              <span className="text-xs font-semibold text-[#15966B]">
                 {splitEnabled
                   ? 'Your personal share charged to budget'
                   : 'Amount charged to monthly budget'}
               </span>
             </div>
-            <span className="text-base font-extrabold font-mono text-brand-400 tabular-nums">
+            <span className="text-base font-bold font-mono text-[#15966B] tabular-nums">
               ₹
               {formatCurrencyExact(
                 splitEnabled ? splitValidation.userShare : breakdown.totalAmount
@@ -542,12 +538,12 @@ export function CheckoutSummary({
             (watchedBasketSpend > 0 ||
               brokeStatus.spent + (splitEnabled ? splitValidation.userShare : breakdown.totalAmount) >
                 brokeStatus.limit) && (
-              <div className="rounded-xl p-3 bg-amber-500/10 border border-amber-500/30 space-y-1">
-                <p className="text-xs font-extrabold text-amber-300 flex items-center gap-1.5">
+              <div className="rounded-xl p-3.5 bg-[#FEF6E7] border border-[#F3D8A8] space-y-1">
+                <p className="text-xs font-bold text-[#9E6614] flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   Broke Mode Accountability Notice
                 </p>
-                <p className="text-[11px] text-amber-200/85 leading-relaxed">
+                <p className="text-xs text-[#9E6614] leading-relaxed">
                   {watchedBasketSpend > 0
                     ? `Cart includes ₹${formatCurrencyExact(watchedBasketSpend)} in watched discretionary categories. Remaining non-essential allowance: ₹${formatCurrencyExact(brokeStatus.nonEssentialRemaining)}. `
                     : ''}
@@ -562,7 +558,7 @@ export function CheckoutSummary({
             )}
 
           {submitError && (
-            <p className="text-xs text-red-400 flex items-center gap-1.5">
+            <p className="text-xs text-[#DE5252] flex items-center gap-1.5">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {submitError}
             </p>
@@ -570,11 +566,11 @@ export function CheckoutSummary({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/[0.08] bg-ink-950/70 flex items-center gap-3">
+        <div className="p-4 border-t border-[#E7EAF0] bg-[#F7F8FA] flex items-center gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300"
+            className="btn-secondary px-4 py-3 text-xs"
           >
             Back to Cart
           </button>
@@ -582,9 +578,9 @@ export function CheckoutSummary({
             type="button"
             onClick={handleConfirmPurchase}
             disabled={breakdown.items.length === 0}
-            className="flex-1 bg-brand-500 hover:bg-brand-400 disabled:bg-white/[0.04] disabled:text-zinc-600 text-ink-950 py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2 transition-all"
+            className="flex-1 btn-primary py-3 text-sm disabled:bg-[#E7EAF0] disabled:text-[#929BAB]"
           >
-            <Check className="w-4 h-4" strokeWidth={3} />
+            <Check className="w-4 h-4" strokeWidth={2.5} />
             Confirm Purchase
           </button>
         </div>

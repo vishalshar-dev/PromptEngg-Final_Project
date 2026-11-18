@@ -1,0 +1,1133 @@
+MASTER PROMPT: COMPLETE UI/UX REDESIGN AND IMPLEMENTATION OF CARTAUDIT
+
+PROJECT IDENTITY
+
+You are acting as a Senior Product Designer, Senior Frontend Engineer, UI/UX Architect, and Design Systems Engineer.
+
+Your task is to completely redesign and implement the frontend experience of an existing application called:
+
+CartAudit – Smart Budget Radar
+
+Original GitHub repository:
+https://github.com/vishalshar-dev/PromptEngg-Final_Project
+
+This is an existing, functional application. You are NOT being asked to build a new application from scratch, create a static prototype, or merely suggest improvements.
+
+You must inspect the existing repository, understand its architecture and functionality, and then execute a comprehensive UI/UX redesign.
+
+The goal is to transform CartAudit into a polished, premium, production-quality consumer fintech application.
+
+You have permission to:
+
+- Inspect the entire repository.
+- Modify existing frontend components.
+- Create, delete, rename, and reorganize frontend files when appropriate.
+- Introduce reusable components and design-system utilities.
+- Refactor frontend architecture when necessary.
+- Improve responsive behavior and accessibility.
+- Add appropriate animations and interactions.
+- Install additional dependencies if genuinely necessary.
+- Implement the redesign directly in the codebase.
+
+However, you must preserve the existing application functionality and business logic.
+
+---
+
+1. THE PRODUCT VISION
+
+CartAudit is a smart shopping and personal budget-management application.
+
+It combines shopping, spending tracking, price intelligence, receipt auditing, and financial insights into one experience.
+
+The application should feel like a combination of:
+
+- A premium fintech dashboard.
+- A modern shopping intelligence platform.
+- A sophisticated personal finance application.
+- A beautifully designed consumer-tech product.
+
+The current application already contains multiple functional modules, but the experience needs a complete design overhaul.
+
+The new interface must feel intentional, structured, elegant, and extremely easy to navigate.
+
+Think of the quality bar as a professionally designed startup product, not a college project dashboard.
+
+Core design philosophy
+
+Less clutter. More clarity. Better hierarchy.
+
+The interface should never overwhelm users by displaying every feature simultaneously.
+
+Users should immediately understand:
+
+1. How much money they have available.
+2. How much they have spent.
+3. What they can do next.
+4. Where to find shopping, analytics, and other advanced tools.
+
+Advanced functionality should remain accessible without competing for attention with everyday tasks.
+
+---
+
+2. FIRST: AUDIT THE ENTIRE EXISTING REPOSITORY
+
+Before changing anything, explore the existing codebase.
+
+Do not immediately start replacing components.
+
+Understand the architecture, state management, business logic, dependencies, and current user flows.
+
+The known technology stack includes:
+
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Zustand
+- Express 5
+- Recharts
+- Tesseract.js
+- Google GenAI
+- lucide-react
+
+Important existing files include:
+
+- "src/App.tsx"
+- "src/main.tsx"
+- "src/store/useStore.ts"
+- "src/components/prices/PriceTrackerDashboard.tsx"
+- "src/components/audit/AuditPanel.tsx"
+- "src/components/mart/ProductVisual.tsx"
+- "src/data/martCatalog.ts"
+- "server.ts"
+- "package.json"
+
+These are starting points, NOT the complete list of files you should inspect.
+
+Explore the full source tree and identify every important component.
+
+Understand these things before implementation:
+
+1. Existing application routing and tab navigation.
+2. Global state and Zustand store.
+3. Shopping cart functionality.
+4. Product catalog and product visualization.
+5. Budget calculations.
+6. Expense and transaction management.
+7. Price tracking and price history.
+8. Receipt scanning and OCR functionality.
+9. Audit functionality.
+10. Radar dashboard and financial insights.
+11. Financial wellness / War Room functionality.
+12. Existing API endpoints and backend dependencies.
+13. Existing loading, error, and empty states.
+14. Mobile and desktop layouts.
+
+Create an internal functionality map so that no existing feature is accidentally lost.
+
+IMPORTANT: Do not remove functionality simply because its current implementation is visually inconvenient. Redesign its presentation instead.
+
+---
+
+3. THE NEW VISUAL DESIGN LANGUAGE
+
+Overall aesthetic
+
+Use a premium LIGHT theme.
+
+The design should feel:
+
+- Minimal.
+- Sophisticated.
+- Spacious.
+- Modern.
+- Trustworthy.
+- Financially intelligent.
+- Visually polished.
+
+Avoid the typical generic AI-generated dashboard aesthetic.
+
+Do not use excessive gradients, excessive glassmorphism, random colorful cards, or unnecessary decorative elements.
+
+Use subtle visual treatments and strong typography.
+
+Color palette
+
+Use a consistent design-token system.
+
+Suggested palette:
+
+Primary background:
+"#F7F8FA"
+
+Main surface:
+"#FFFFFF"
+
+Secondary surface:
+"#F1F3F6"
+
+Primary text:
+"#151922"
+
+Secondary text:
+"#697386"
+
+Muted text:
+"#929BAB"
+
+Primary brand color:
+"#365FE8"
+
+Primary brand hover:
+"#294FCC"
+
+Success:
+"#15966B"
+
+Warning:
+"#E5A23B"
+
+Danger:
+"#DE5252"
+
+Border:
+"#E7EAF0"
+
+Subtle blue surface:
+"#EDF2FF"
+
+You may refine these colors, but maintain a cohesive visual system.
+
+Do not use pure black backgrounds.
+
+Do not make every component blue.
+
+Use colors to communicate meaning rather than decoration.
+
+Typography
+
+Choose a modern, highly readable typeface.
+
+Preferred options:
+
+- Inter
+- Geist
+- Manrope
+
+Establish a clear hierarchy:
+
+- Large dashboard metrics.
+- Strong page headings.
+- Medium-weight section titles.
+- Readable body text.
+- Small muted metadata.
+
+Use consistent font weights, line heights, and spacing.
+
+Design details
+
+Use:
+
+- Rounded corners, generally 12–18px.
+- Thin, subtle borders.
+- Restrained shadows.
+- Generous whitespace.
+- Consistent card padding.
+- Carefully aligned icons.
+- Consistent button heights.
+- Clearly defined hover and focus states.
+
+Avoid:
+
+- Excessive rounded pill buttons.
+- Oversized cards.
+- Inconsistent spacing.
+- Tiny unreadable text.
+- Too many competing accent colors.
+- Unnecessary separators.
+
+---
+
+4. COMPLETE APPLICATION INFORMATION ARCHITECTURE
+
+Redesign the application around the following navigation structure.
+
+Primary navigation
+
+1. Overview
+2. Shopping
+3. Insights
+4. Expenses
+5. Receipt Scanner
+6. Financial Wellness
+
+The names may be adapted to existing functionality, but every existing module must remain accessible.
+
+Navigation mapping
+
+New navigation| Existing functionality
+Overview| Main dashboard
+Shopping| QuickMart and cart
+Insights| Radar and price tracking
+Expenses| Ledger and transaction history
+Receipt Scanner| AuditPanel
+Financial Wellness| War Room / Survival Sandbox
+
+Do not unnecessarily duplicate screens.
+
+If existing functionality logically belongs inside a section, organize it there.
+
+For example, price trends and Radar can be presented as subsections within Insights.
+
+Desktop navigation
+
+Use a persistent left sidebar.
+
+Suggested structure:
+
+Top:
+
+- CartAudit logo.
+- Product name.
+
+Navigation:
+
+- Overview.
+- Shopping.
+- Insights.
+- Expenses.
+- Receipt Scanner.
+- Financial Wellness.
+
+Bottom:
+
+- Budget status.
+- Optional settings/profile entry if supported by the existing application.
+
+The sidebar should be approximately 240–260px wide.
+
+The main content should use the remaining available viewport width.
+
+Avoid constraining the entire desktop application to a narrow mobile-sized container.
+
+Mobile navigation
+
+The mobile experience must be designed independently, not simply squeezed from the desktop layout.
+
+Use:
+
+- Compact header.
+- Clear page title.
+- Bottom navigation or another appropriate mobile navigation pattern.
+- Touch-friendly controls.
+- Responsive cards.
+- Proper spacing.
+- Scrollable content without horizontal overflow.
+
+Ensure the most frequently used actions are easily reachable.
+
+---
+
+5. DESIGN THE OVERVIEW DASHBOARD
+
+This is the most important screen.
+
+It should give users an immediate understanding of their financial situation.
+
+The dashboard should be visually impressive but not cluttered.
+
+Section A: Header
+
+Display:
+
+- Greeting or welcome message.
+- Current date or contextual subtitle.
+- Notification/settings controls only if supported.
+- User/profile control only if an existing identity system exists.
+
+Keep the header clean.
+
+Section B: Main budget overview
+
+Create a prominent budget overview section.
+
+Display:
+
+- Total budget.
+- Total spent.
+- Remaining balance.
+- Budget utilization percentage.
+
+Use a sophisticated progress visualization.
+
+Example:
+
+TOTAL BUDGET
+₹10,000
+
+SPENT
+₹3,450
+
+REMAINING
+₹6,550
+
+UTILIZATION
+34.5%
+
+These are illustrative values only.
+
+All actual values must come from the existing Zustand store.
+
+Do not hardcode financial values.
+
+Use the existing budget calculations and transaction logic.
+
+The remaining balance should be visually prominent.
+
+Use meaningful color changes:
+
+- Normal budget usage.
+- Approaching budget limit.
+- Exceeded budget.
+
+Do not use alarming red colors for ordinary spending.
+
+Section C: Quick actions
+
+Create a clean quick-action area.
+
+Possible actions:
+
+- Start Shopping.
+- Add Expense.
+- Scan Receipt.
+- View Insights.
+
+Every button must navigate to or activate the corresponding existing feature.
+
+Do not create decorative buttons that do nothing.
+
+Section D: Spending overview
+
+Provide a compact visualization of spending.
+
+Use existing transaction data.
+
+Possible visualizations:
+
+- Spending distribution.
+- Recent spending trend.
+- Category breakdown.
+
+Use Recharts if appropriate.
+
+Charts must:
+
+- Have readable labels.
+- Use consistent colors.
+- Have useful tooltips.
+- Handle empty data gracefully.
+- Adapt to mobile width.
+
+Do not create fake analytics.
+
+Section E: Recent activity
+
+Show recent transactions.
+
+Each entry should clearly display:
+
+- Merchant or transaction title.
+- Category.
+- Date.
+- Amount.
+
+Provide an action to view the complete expense ledger.
+
+Section F: Insights
+
+Show a few useful insights when the underlying data supports them.
+
+Examples:
+
+- Budget utilization.
+- Recent spending changes.
+- Potential overspending.
+- Price-related opportunities.
+
+Never fabricate AI-generated recommendations or financial data.
+
+---
+
+6. SHOPPING EXPERIENCE
+
+This section contains the existing QuickMart functionality.
+
+It must become a polished shopping experience.
+
+The current implementation combines QuickMartGrid and Ledger in a two-column layout. This creates unnecessary visual competition.
+
+Separate shopping from expense management.
+
+Shopping page structure
+
+Header:
+
+- Shopping.
+- Short contextual description.
+- Cart indicator.
+
+Search:
+
+- Search products.
+- Category filtering.
+- Sorting if supported.
+
+Product grid:
+
+- Responsive product cards.
+- Clear product images.
+- Product name.
+- Price.
+- Category.
+- Add-to-cart action.
+
+Product cards
+
+Design attractive, consistent cards.
+
+Each product card should contain:
+
+1. Product image or existing ProductVisual fallback.
+2. Product name.
+3. Price.
+4. Relevant product information.
+5. Add button.
+
+Use the existing catalog data.
+
+Preserve existing product image URLs and fallback icons.
+
+Do not replace working product data with invented products.
+
+Shopping cart
+
+The cart should have a polished interaction model.
+
+Desktop:
+
+- A drawer or dedicated panel.
+
+Mobile:
+
+- A full-width drawer or dedicated cart screen.
+
+Display:
+
+- Product name.
+- Quantity.
+- Unit price.
+- Total price.
+- Quantity controls.
+- Remove item action.
+- Cart subtotal.
+- Relevant budget information.
+
+Preserve all existing cart operations and calculations.
+
+Ensure the cart remains synchronized with the global store.
+
+Show meaningful empty-cart states.
+
+---
+
+7. INSIGHTS: RADAR AND PRICE TRACKING
+
+This section should present the intelligence features of CartAudit.
+
+It should feel like a professional financial intelligence dashboard.
+
+Organize existing RadarDashboard and PriceTrackerDashboard functionality into a coherent interface.
+
+Insights landing page
+
+Provide a clear overview with two major areas:
+
+A. Smart Radar
+
+Show existing radar insights and recommendations.
+
+Preserve:
+
+- Existing calculations.
+- Existing recommendation logic.
+- Existing data sources.
+- Existing interactions.
+
+Improve:
+
+- Layout.
+- Typography.
+- Information hierarchy.
+- Insight cards.
+- Empty states.
+- Loading states.
+
+Each insight should clearly explain:
+
+- What the insight is.
+- Why it matters.
+- What the user can do next.
+
+B. Price Intelligence
+
+Present existing price tracking functionality.
+
+Include, where supported:
+
+- Tracked products.
+- Price history.
+- Current prices.
+- Historical comparisons.
+- Price trends.
+- Potential savings.
+
+Charts must use actual available data.
+
+Design price-history cards with:
+
+- Product identity.
+- Current price.
+- Previous or historical price.
+- Change percentage.
+- Trend indicator.
+
+Do not fabricate historical price records.
+
+Make the interface easy to understand for users who are not financially sophisticated.
+
+---
+
+8. EXPENSE MANAGEMENT / LEDGER
+
+The existing SplitLedgerDashboard functionality must remain intact.
+
+Create a dedicated Expenses section.
+
+It should feel like a premium personal finance transaction manager.
+
+Main elements
+
+At the top:
+
+- Total spent.
+- Transaction count if available.
+- Relevant budget context.
+
+Transaction list:
+
+- Merchant.
+- Transaction description.
+- Category.
+- Date.
+- Amount.
+
+Include filtering or search if the existing data model supports it.
+
+Use clear category icons and restrained color coding.
+
+Provide a polished empty state when no transactions exist.
+
+Preserve all existing transaction operations and calculations.
+
+Do not change the meaning of the existing financial data.
+
+---
+
+9. RECEIPT SCANNER AND AUDIT
+
+The existing AuditPanel is a major feature.
+
+It must be redesigned without removing any of its functionality.
+
+The backend currently includes an Express endpoint:
+
+"/api/scan-receipt"
+
+It uses Google GenAI to parse receipts or quick-commerce screenshots into structured information such as:
+
+- Merchant.
+- Date.
+- Items.
+- Subtotal.
+- Tax.
+- Delivery charges.
+- Total.
+
+The application also uses Tesseract.js.
+
+Preserve the existing scanning and parsing flow.
+
+New visual direction
+
+Create a clean receipt-auditing workspace.
+
+Main area:
+
+- Clear page heading.
+- Short description.
+- Upload or scan area.
+- Supported file information.
+- Processing state.
+
+After scanning:
+
+- Merchant details.
+- Itemized receipt.
+- Subtotal.
+- Tax.
+- Delivery charges.
+- Final total.
+- Any existing audit findings.
+
+Make the output easy to inspect.
+
+Upload experience
+
+Design a professional drag-and-drop upload area.
+
+Include:
+
+- Upload icon.
+- Clear instructions.
+- File selection.
+- Supported format information based on the actual implementation.
+
+Display processing progress where available.
+
+Include:
+
+- Loading state.
+- Success state.
+- Error state.
+- Retry action.
+
+Never make the interface appear frozen while scanning.
+
+Audit results
+
+Display extracted information in an organized manner.
+
+Use clear visual hierarchy to distinguish:
+
+- Receipt information.
+- Individual items.
+- Financial breakdown.
+- Audit findings.
+
+Preserve all existing validation and auditing logic.
+
+Do not invent receipt errors or claim that an item was overpriced unless the existing logic actually supports that conclusion.
+
+---
+
+10. FINANCIAL WELLNESS / WAR ROOM
+
+The existing SurvivalSandbox / War Room functionality must be preserved.
+
+This section should feel like a financial planning and decision-support workspace.
+
+Do not remove any existing scenarios, calculations, or controls.
+
+First inspect the component and understand its actual functionality.
+
+Then redesign the interface around:
+
+- Clear scenario inputs.
+- Understandable financial metrics.
+- Meaningful visualizations.
+- Clear results.
+- Actionable explanations.
+
+Separate inputs from results.
+
+Use progressive disclosure if there are many controls.
+
+Avoid presenting every advanced control simultaneously.
+
+Make the experience accessible to beginners.
+
+---
+
+11. GLOBAL DESIGN SYSTEM
+
+Build a reusable design system rather than styling every page independently.
+
+Create reusable components where appropriate.
+
+Potential components:
+
+- AppShell
+- Sidebar
+- MobileNavigation
+- PageHeader
+- BudgetOverview
+- MetricCard
+- SectionHeader
+- PrimaryButton
+- SecondaryButton
+- IconButton
+- ProductCard
+- TransactionRow
+- InsightCard
+- EmptyState
+- LoadingState
+- ErrorState
+- ProgressBar
+- ChartContainer
+- Modal
+- Drawer
+- Toast
+
+These are suggestions, not mandatory file names.
+
+Use a consistent spacing scale.
+
+Suggested spacing:
+
+- 4px
+- 8px
+- 12px
+- 16px
+- 24px
+- 32px
+- 40px
+- 48px
+- 64px
+
+Create centralized color and typography tokens.
+
+Avoid repeated arbitrary values throughout the codebase.
+
+Use lucide-react consistently.
+
+Do not mix random icon libraries.
+
+---
+
+12. INTERACTIONS AND MICRO-ANIMATIONS
+
+The interface should feel responsive and polished.
+
+Use subtle animations for:
+
+- Sidebar transitions.
+- Navigation changes.
+- Card hover.
+- Button interactions.
+- Drawer opening and closing.
+- Modal transitions.
+- Progress indicators.
+- Loading states.
+- Toast notifications.
+
+Use Framer Motion only if it materially improves the experience and is compatible with the project.
+
+Otherwise use CSS transitions.
+
+Animations must be restrained.
+
+Avoid:
+
+- Excessive bouncing.
+- Unnecessary animated backgrounds.
+- Large transition delays.
+- Animations that interfere with usability.
+
+Respect "prefers-reduced-motion".
+
+---
+
+13. RESPONSIVENESS
+
+The application must work properly on:
+
+- Small Android phones.
+- Large Android phones.
+- iPhones.
+- Tablets.
+- Laptops.
+- Desktop monitors.
+
+Pay special attention to the small-screen experience.
+
+The original application currently uses narrow content constraints in places. Do not carry those constraints into the redesigned desktop experience.
+
+Desktop should take advantage of available screen space.
+
+Mobile should remain focused and readable.
+
+Check:
+
+- No horizontal overflow.
+- No overlapping buttons.
+- No clipped charts.
+- No tiny text.
+- No inaccessible drawers.
+- No broken navigation.
+- No excessively tall cards.
+- No fixed-width elements that break small screens.
+
+---
+
+14. ACCESSIBILITY
+
+Implement proper accessibility.
+
+Include:
+
+- Semantic HTML.
+- Correct heading hierarchy.
+- Accessible button labels.
+- Keyboard navigation.
+- Visible focus indicators.
+- Adequate color contrast.
+- Appropriate ARIA attributes.
+- Accessible dialogs and drawers.
+- Reduced-motion support.
+
+Do not use color alone to communicate financial status.
+
+---
+
+15. TECHNICAL AND FUNCTIONAL REQUIREMENTS
+
+This is extremely important.
+
+The redesign must not break the existing application.
+
+Preserve:
+
+- Zustand store behavior.
+- Budget calculations.
+- Transaction logic.
+- Shopping cart logic.
+- Product catalog.
+- Price tracking functionality.
+- Radar calculations.
+- Receipt scanning.
+- OCR processing.
+- Gemini API integration.
+- Express API endpoints.
+- Financial wellness functionality.
+
+Do not rewrite working business logic unnecessarily.
+
+Do not replace real functionality with static mock data.
+
+Do not remove existing environment variables.
+
+Do not expose API keys in frontend code.
+
+Do not change backend API contracts unless absolutely necessary, and if a change is necessary, update all dependent code.
+
+Keep the existing development and production workflows working.
+
+---
+
+16. IMPLEMENTATION STRATEGY
+
+Work in phases.
+
+Phase 1: Repository analysis
+
+Inspect all relevant files.
+
+Understand the current application architecture.
+
+Create a functionality checklist.
+
+Identify:
+
+- Existing components.
+- Existing routes/tabs.
+- State dependencies.
+- API dependencies.
+- Components that need redesign.
+- Components that can be reused.
+
+Do not start with superficial global CSS changes.
+
+Phase 2: Design foundation
+
+Implement:
+
+- Design tokens.
+- Typography.
+- Global light theme.
+- Base layout.
+- Reusable buttons.
+- Cards.
+- Inputs.
+- Navigation.
+
+Ensure the foundation is consistent before implementing every screen.
+
+Phase 3: Application shell
+
+Implement:
+
+- Desktop sidebar.
+- Mobile navigation.
+- Responsive page container.
+- Page headers.
+- Main content layout.
+
+The shell must work across all sections.
+
+Phase 4: Individual screens
+
+Redesign in this order:
+
+1. Overview.
+2. Shopping.
+3. Insights.
+4. Expenses.
+5. Receipt Scanner.
+6. Financial Wellness.
+
+Ensure every screen uses the shared design system.
+
+Phase 5: Interaction refinement
+
+Implement:
+
+- Drawers.
+- Modals.
+- Hover states.
+- Loading states.
+- Empty states.
+- Error states.
+- Navigation transitions.
+- Responsive interactions.
+
+Phase 6: Quality assurance
+
+Run:
+
+"npm run lint"
+
+"npm run build"
+
+Also run the application using its existing development command.
+
+Fix all TypeScript errors and build failures.
+
+Check the browser experience.
+
+Test all major interactions.
+
+Do not declare completion merely because the application compiles.
+
+---
+
+17. IMPORTANT DESIGN RULES
+
+Follow these rules throughout the project:
+
+1. Do not make every section look like a collection of identical white cards.
+2. Use different layouts where the information architecture requires them.
+3. Give the budget overview strong visual importance.
+4. Do not overload the overview dashboard.
+5. Keep shopping visually separate from expense management.
+6. Make charts readable and useful.
+7. Use whitespace intentionally.
+8. Maintain consistent typography.
+9. Avoid unnecessary decorative gradients.
+10. Avoid excessive shadows.
+11. Do not use dark-themed components inside the new light interface.
+12. Ensure existing dark-theme classes and styles are audited and properly migrated.
+13. Do not use emoji as substitutes for professional icons.
+14. Do not introduce fake transactions or products.
+15. Do not introduce nonfunctional UI controls.
+16. Do not leave placeholder sections.
+17. Do not sacrifice functionality for aesthetics.
+18. Do not merely change colors; redesign the actual layouts.
+19. Do not make the desktop interface look like an enlarged mobile screen.
+20. Do not stop after redesigning only the dashboard.
+
+---
+
+18. VISUAL QUALITY EXPECTATIONS
+
+Before considering a screen complete, ask:
+
+- Does it look like a professionally designed product?
+- Is the visual hierarchy immediately understandable?
+- Can users identify the primary action quickly?
+- Are the financial numbers easy to read?
+- Does the screen feel spacious rather than empty?
+- Are all components aligned?
+- Are the interactions intuitive?
+- Does the screen work on mobile?
+- Does it maintain visual consistency with the rest of CartAudit?
+
+The finished product should look credible enough to be demonstrated to potential users, investors, or evaluators.
+
+The result should feel like a cohesive product rather than six unrelated React components.
+
+---
+
+19. GIT AND DELIVERY REQUIREMENTS
+
+Work safely.
+
+If the original repository is available:
+
+- Prefer creating a separate redesign branch.
+- Never force-push.
+- Never overwrite the original repository history.
+- Keep changes organized into meaningful commits.
+
+If a separate repository is being used:
+
+- Make sure it contains the complete working application.
+- Do not create a frontend-only shell that lacks the original backend and application logic.
+
+When finished, provide:
+
+1. A summary of the redesign.
+2. A list of major files changed.
+3. A list of new components created.
+4. Confirmation that original functionality was preserved.
+5. Build and lint results.
+6. Any remaining limitations.
+7. Instructions for running the application.
+
+If browser automation or screenshots are available, capture the redesigned desktop and mobile screens and inspect them for visual defects.
+
+---
+
+20. FINAL INSTRUCTION
+
+Do not respond with a design proposal.
+
+Do not respond with a list of suggestions.
+
+Do not simply explain what should be changed.
+
+Actually inspect, redesign, implement, test, and refine the application.
+
+You are responsible for delivering a complete, functional, polished CartAudit redesign.
+
+Make reasonable design decisions independently.
+
+If you encounter a technical obstacle, investigate it and find a safe solution rather than abandoning the redesign.
+
+Preserve the product's identity and functionality while dramatically improving its usability and visual quality.
+
+The final result should make someone opening CartAudit think:
+
+"This looks like a real, professionally designed fintech product."
+
+Begin by auditing the repository, then proceed through implementation until the complete application has been redesigned and tested.

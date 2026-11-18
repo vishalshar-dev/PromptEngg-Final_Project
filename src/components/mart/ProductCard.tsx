@@ -73,12 +73,12 @@ export function ProductCard({
 
   return (
     <div
-      className={`group glass rounded-2xl p-2.5 flex flex-col justify-between transition-all duration-200 border ${
+      className={`group rounded-2xl p-3 flex flex-col justify-between transition-all duration-150 border ${
         totalItemCartQty > 0
-          ? 'border-brand-500/40 bg-brand-500/[0.04] shadow-lg'
+          ? 'bg-[#EDF2FF]/35 border-[#365FE8]/45 shadow-card'
           : isBrokeWatched
-          ? 'border-amber-500/25 hover:border-amber-500/40'
-          : 'border-white/[0.06] hover:border-white/[0.15] hover:-translate-y-0.5'
+          ? 'bg-white border-[#F3D8A8] shadow-card hover:border-[#E5A23B]'
+          : 'bg-white border-[#E7EAF0] shadow-card hover:border-[#D5DBE5] hover:-translate-y-0.5'
       }`}
     >
       <div>
@@ -86,7 +86,7 @@ export function ProductCard({
           <button
             type="button"
             onClick={() => onOpenDetails(item)}
-            className="w-full block text-left focus:outline-none"
+            className="w-full block text-left focus-visible:outline-none rounded-xl"
             aria-label={`View details for ${item.name}`}
           >
             <ProductVisual
@@ -100,12 +100,12 @@ export function ProductCard({
             />
           </button>
 
-          {/* Top-left subtle contextual tag (max 1) */}
+          {/* Top-left subtle contextual indicator */}
           <div className="absolute top-1.5 left-1.5 flex items-center gap-1 pointer-events-none">
             {isBrokeWatched ? (
               <span
                 title="Watched by Broke Mode"
-                className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-amber-500/90 text-ink-950 shadow flex items-center gap-0.5"
+                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#FEF6E7] border border-[#F3D8A8] text-[#9E6614] shadow-xs flex items-center gap-1"
               >
                 <AlertTriangle className="w-2.5 h-2.5" strokeWidth={2.5} />
                 Cap
@@ -113,17 +113,17 @@ export function ProductCard({
             ) : item.recurrence ? (
               <span
                 title={isDue ? 'Recurring item due now' : `Recurring (${item.recurrence.frequency})`}
-                className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md backdrop-blur-md border flex items-center gap-0.5 ${
+                className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border shadow-xs flex items-center gap-1 ${
                   isDue
-                    ? 'bg-sky-500/90 border-sky-300 text-ink-950'
-                    : 'bg-ink-950/75 border-white/15 text-zinc-200'
+                    ? 'bg-[#365FE8] border-[#365FE8] text-white'
+                    : 'bg-white/95 border-[#E7EAF0] text-[#4B5565]'
                 }`}
               >
                 <Repeat className="w-2.5 h-2.5" strokeWidth={2.5} />
                 {isDue ? 'Due' : item.recurrence.frequency}
               </span>
             ) : item.isCustom ? (
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-ink-950/80 border border-white/15 text-brand-300">
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-white/95 border border-[#E7EAF0] text-[#365FE8] shadow-xs">
                 Custom
               </span>
             ) : null}
@@ -139,15 +139,15 @@ export function ProductCard({
                 : `Add ${item.name} to favourites`
             }
             aria-pressed={Boolean(item.isFavourite)}
-            className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-lg backdrop-blur-md border flex items-center justify-center transition-all ${
+            className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-lg border shadow-xs flex items-center justify-center transition-colors ${
               item.isFavourite
-                ? 'bg-rose-500/25 border-rose-400/40 text-rose-400'
-                : 'bg-ink-950/65 border-white/10 text-zinc-400 hover:text-white'
+                ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+                : 'bg-white/95 border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
             }`}
           >
             <Heart
               className="w-3.5 h-3.5"
-              strokeWidth={2.3}
+              strokeWidth={2.2}
               fill={item.isFavourite ? 'currentColor' : 'none'}
             />
           </button>
@@ -157,22 +157,22 @@ export function ProductCard({
         <button
           type="button"
           onClick={() => onOpenDetails(item)}
-          className="w-full text-left mt-2 focus:outline-none"
+          className="w-full text-left mt-2.5 focus-visible:outline-none"
         >
-          <div className="flex items-center justify-between gap-1 text-[9px] font-bold uppercase tracking-wider truncate">
-            <span className="text-zinc-400 truncate">{item.brand || item.category}</span>
+          <div className="flex items-center justify-between gap-1 text-[11px] font-medium truncate">
+            <span className="text-[#697386] truncate">{item.brand || item.category}</span>
             {item.subcategory && (
-              <span className={`${style.text} truncate opacity-85`}>{item.subcategory}</span>
+              <span className={`${style.text} truncate font-semibold`}>{item.subcategory}</span>
             )}
           </div>
-          <p className="text-xs font-extrabold text-zinc-100 leading-snug line-clamp-2 min-h-[2rem] mt-0.5">
+          <p className="text-xs font-bold text-[#151922] leading-snug line-clamp-2 min-h-[2rem] mt-0.5">
             {item.name}
           </p>
         </button>
 
         {/* Variant Switcher OR Unit Label */}
         {item.variants && item.variants.length > 0 ? (
-          <div className="mt-1.5">
+          <div className="mt-2">
             {item.variants.length <= 3 ? (
               <div className="flex items-center gap-1 flex-wrap">
                 {item.variants.map((variant) => {
@@ -183,14 +183,14 @@ export function ProductCard({
                       key={variant.id}
                       type="button"
                       onClick={() => onSelectVariant?.(item.id, variant.id)}
-                      className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold border transition-all flex items-center gap-1 ${
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-colors flex items-center gap-1 whitespace-nowrap ${
                         selected
-                          ? 'bg-brand-500/20 border-brand-500/50 text-brand-300'
-                          : 'bg-ink-900/90 border-white/[0.08] text-zinc-400 hover:text-zinc-200'
+                          ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
+                          : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#4B5565] hover:text-[#151922]'
                       }`}
                     >
                       <span>{variant.unit}</span>
-                      {varQty > 0 && <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />}
+                      {varQty > 0 && <span className="text-[9px] font-mono">({formatQuantity(varQty)})</span>}
                     </button>
                   );
                 })}
@@ -200,7 +200,7 @@ export function ProductCard({
                 aria-label={`Select pack size for ${item.name}`}
                 value={activeVariant?.id ?? ''}
                 onChange={(e) => onSelectVariant?.(item.id, e.target.value)}
-                className="w-full bg-ink-900 border border-white/[0.1] rounded-lg px-2 py-1 text-[10px] font-bold text-zinc-200 outline-none"
+                className="w-full bg-[#F7F8FA] border border-[#E7EAF0] rounded-lg px-2 py-1 text-[11px] font-semibold text-[#151922] outline-none focus:border-[#365FE8]"
               >
                 {item.variants.map((variant) => (
                   <option key={variant.id} value={variant.id}>
@@ -211,22 +211,22 @@ export function ProductCard({
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 mt-1 min-h-[1.25rem]">
-            <span className="text-[10px] font-mono text-zinc-400 bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06]">
+          <div className="flex items-center gap-1.5 mt-1.5 min-h-[1.25rem]">
+            <span className="text-[11px] font-mono text-[#697386]">
               {displayUnit}
             </span>
             {item.allowDecimalQuantity && (
-              <span className="text-[9px] text-zinc-500 font-medium">step {step}</span>
+              <span className="text-[10px] text-[#929BAB] font-medium">· step {step}</span>
             )}
           </div>
         )}
       </div>
 
       {/* Price + Inline Cart Action Footer */}
-      <div className="mt-2.5 pt-2 border-t border-white/[0.06]">
+      <div className="mt-3 pt-2.5 border-t border-[#E7EAF0]">
         {editingPrice ? (
           <div className="flex items-center gap-1">
-            <span className="text-xs font-bold text-brand-400">₹</span>
+            <span className="text-xs font-bold text-[#365FE8]">₹</span>
             <input
               type="number"
               min="1"
@@ -241,14 +241,14 @@ export function ProductCard({
                   setTempPrice('');
                 }
               }}
-              className="w-16 bg-ink-900 border border-brand-500/40 rounded-lg px-1.5 py-1 text-xs font-mono text-white outline-none"
+              className="w-16 bg-white border border-[#365FE8] rounded-lg px-1.5 py-1 text-xs font-mono text-[#151922] outline-none"
               autoFocus
             />
             <button
               type="button"
               onClick={commitPrice}
               aria-label="Save price"
-              className="w-6 h-6 rounded-lg bg-brand-500 text-ink-950 flex items-center justify-center"
+              className="w-6 h-6 rounded-lg bg-[#365FE8] text-white flex items-center justify-center"
             >
               <Check className="w-3 h-3" strokeWidth={3} />
             </button>
@@ -259,7 +259,7 @@ export function ProductCard({
                 setTempPrice('');
               }}
               aria-label="Cancel price edit"
-              className="w-6 h-6 rounded-lg bg-white/[0.08] text-zinc-400 flex items-center justify-center"
+              className="w-6 h-6 rounded-lg bg-[#F1F3F6] text-[#697386] flex items-center justify-center"
             >
               <X className="w-3 h-3" />
             </button>
@@ -268,7 +268,7 @@ export function ProductCard({
           <div className="flex items-center justify-between gap-1.5">
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-sm font-extrabold font-mono text-white tabular-nums">
+                <span className="text-sm font-bold font-mono text-[#151922] tabular-nums">
                   ₹{formatCurrencyExact(displayPrice)}
                 </span>
                 <button
@@ -278,13 +278,13 @@ export function ProductCard({
                     setTempPrice(String(displayPrice));
                   }}
                   aria-label={`Edit price for ${item.name}`}
-                  className="text-zinc-600 hover:text-brand-400 p-0.5 transition-colors"
+                  className="text-[#929BAB] hover:text-[#365FE8] p-0.5 transition-colors"
                 >
-                  <Pencil className="w-2.5 h-2.5" />
+                  <Pencil className="w-3 h-3" />
                 </button>
               </div>
               {otherVariantsInCart && (
-                <p className="text-[9px] text-brand-400/90 font-mono">
+                <p className="text-[10px] text-[#365FE8] font-mono font-semibold">
                   {formatQuantity(totalItemCartQty)} total
                 </p>
               )}
@@ -295,13 +295,13 @@ export function ProductCard({
                 type="button"
                 onClick={() => onAddToCart(item, step, activeVariant?.id)}
                 aria-label={`Add ${item.name} to cart`}
-                className="px-3 py-1.5 rounded-xl bg-brand-500/15 hover:bg-brand-500 text-brand-400 hover:text-ink-950 border border-brand-500/35 text-[11px] font-extrabold uppercase tracking-wide flex items-center gap-1 transition-all flex-shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white border border-[#365FE8]/25 text-xs font-semibold flex items-center gap-1 transition-colors flex-shrink-0 whitespace-nowrap"
               >
-                <Plus className="w-3 h-3" strokeWidth={3} />
+                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
                 Add
               </button>
             ) : (
-              <div className="flex items-center gap-0.5 bg-brand-500 rounded-xl p-0.5 text-ink-950 shadow flex-shrink-0">
+              <div className="flex items-center gap-0.5 bg-[#365FE8] rounded-xl p-0.5 text-white shadow-xs flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => onUpdateQuantity(item.id, -step, activeVariant?.id)}
@@ -326,7 +326,7 @@ export function ProductCard({
                         setTempQty('');
                       }
                     }}
-                    className="w-9 bg-white/90 text-ink-950 rounded px-0.5 text-[11px] font-extrabold font-mono text-center outline-none"
+                    className="w-9 bg-white text-[#151922] rounded px-0.5 text-[11px] font-bold font-mono text-center outline-none"
                     autoFocus
                   />
                 ) : (
@@ -339,7 +339,7 @@ export function ProductCard({
                       }
                     }}
                     title="Click to type exact quantity"
-                    className="text-xs font-extrabold font-mono min-w-[1.25rem] px-1 text-center tabular-nums"
+                    className="text-xs font-bold font-mono min-w-[1.25rem] px-1 text-center tabular-nums"
                   >
                     {formatQuantity(activeQty)}
                   </button>

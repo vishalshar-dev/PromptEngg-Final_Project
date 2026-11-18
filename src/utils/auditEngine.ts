@@ -300,14 +300,14 @@ export const FEE_SEVERITY_STYLES: Record<
   { text: string; bg: string; border: string }
 > = {
   warning: {
-    text: 'text-orange-300',
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/20',
+    text: 'text-amber-800',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
   },
   critical: {
-    text: 'text-red-300',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/20',
+    text: 'text-red-700',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
   },
 };
 

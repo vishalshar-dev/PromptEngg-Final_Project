@@ -106,10 +106,10 @@ export function ProductDetails({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col glass-strong border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
         {/* Top Visual Header */}
         <div className="relative p-4 pb-0">
           <ProductVisual
@@ -124,7 +124,7 @@ export function ProductDetails({
             type="button"
             onClick={onClose}
             aria-label="Close product details"
-            className="absolute top-6 right-6 w-9 h-9 rounded-xl bg-ink-950/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white"
+            className="absolute top-6 right-6 w-9 h-9 rounded-xl bg-white/95 border border-[#E7EAF0] shadow-card flex items-center justify-center text-[#697386] hover:text-[#151922]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -132,10 +132,10 @@ export function ProductDetails({
             type="button"
             onClick={() => toggleFavourite(liveItem.id)}
             aria-label={liveItem.isFavourite ? 'Remove from favourites' : 'Add to favourites'}
-            className={`absolute top-6 left-6 w-9 h-9 rounded-xl backdrop-blur-md border flex items-center justify-center ${
+            className={`absolute top-6 left-6 w-9 h-9 rounded-xl border shadow-card flex items-center justify-center ${
               liveItem.isFavourite
-                ? 'bg-rose-500/25 border-rose-400/50 text-rose-300'
-                : 'bg-ink-950/80 border-white/10 text-zinc-300 hover:text-rose-300'
+                ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+                : 'bg-white/95 border-[#E7EAF0] text-[#697386] hover:text-[#DE5252]'
             }`}
           >
             <Heart
@@ -149,42 +149,37 @@ export function ProductDetails({
         <div className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap text-xs text-[#697386]">
                 {liveItem.brand && (
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/[0.08] text-zinc-200 border border-white/10">
-                    {liveItem.brand}
-                  </span>
+                  <>
+                    <span className="font-semibold text-[#151922]">{liveItem.brand}</span>
+                    <span aria-hidden="true">·</span>
+                  </>
                 )}
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${style.bg} ${style.text} border ${style.border}`}
-                >
-                  {liveItem.category}
-                </span>
+                <span className={`font-semibold ${style.text}`}>{liveItem.category}</span>
                 {liveItem.subcategory && (
-                  <span className="text-[10px] font-bold text-zinc-300 bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.06]">
-                    {liveItem.subcategory}
-                  </span>
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>{liveItem.subcategory}</span>
+                  </>
                 )}
-                <span className="text-[10px] font-mono font-bold text-zinc-400 bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/[0.06]">
-                  {displayUnit}
-                </span>
+                <span aria-hidden="true">·</span>
+                <span className="font-mono">{displayUnit}</span>
               </div>
-              <h3 className="text-xl font-extrabold text-white mt-2">
+              <h3 className="text-xl font-bold text-[#151922] mt-1.5">
                 {liveItem.name}
               </h3>
               {liveItem.description && (
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-xs text-[#697386] mt-1 leading-relaxed">
                   {liveItem.description}
                 </p>
               )}
               {liveItem.tags && liveItem.tags.length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  <Tag className="w-3 h-3 text-zinc-500" />
-                  {liveItem.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-400 border border-white/[0.05]"
-                    >
+                <div className="flex items-center gap-1.5 flex-wrap mt-2 text-[11px] text-[#697386]">
+                  <Tag className="w-3 h-3 text-[#929BAB]" />
+                  {liveItem.tags.map((tag, i) => (
+                    <span key={tag}>
+                      {i > 0 && <span className="mr-1.5 text-[#D5DBE5]" aria-hidden="true">·</span>}
                       #{tag}
                     </span>
                   ))}
@@ -192,10 +187,10 @@ export function ProductDetails({
               )}
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-2xl font-extrabold font-mono text-brand-400 tabular-nums">
+              <p className="text-2xl font-bold font-mono text-[#365FE8] tabular-nums">
                 ₹{formatCurrencyExact(displayPrice)}
               </p>
-              <p className="text-[10px] text-zinc-500 font-mono">
+              <p className="text-xs text-[#697386] font-mono">
                 per {displayUnit}
               </p>
             </div>
@@ -203,8 +198,8 @@ export function ProductDetails({
 
           {/* Interactive Pack Size / Variant Picker */}
           {liveItem.variants && liveItem.variants.length > 0 && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">
+            <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5">
+              <p className="text-xs font-semibold text-[#697386]">
                 Select Pack Size / Variant
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -216,21 +211,21 @@ export function ProductDetails({
                       key={variant.id}
                       type="button"
                       onClick={() => selectProductVariant(liveItem.id, variant.id)}
-                      className={`px-3 py-2 rounded-xl border text-left transition-all ${
+                      className={`px-3 py-2 rounded-xl border text-left transition-colors ${
                         isSelected
-                          ? 'bg-brand-500/15 border-brand-500/50 text-white'
-                          : 'bg-ink-900/70 border-white/[0.08] text-zinc-300 hover:border-white/20'
+                          ? 'bg-[#EDF2FF] border-[#365FE8] text-[#151922]'
+                          : 'bg-white border-[#E7EAF0] text-[#4B5565] hover:border-[#D5DBE5]'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-xs font-extrabold">{variant.label}</span>
+                        <span className="text-xs font-bold">{variant.label}</span>
                         {varQty > 0 && (
-                          <span className="text-[10px] font-mono font-bold text-brand-400">
-                            {formatQuantity(varQty)} in cart
+                          <span className="text-[11px] font-mono font-semibold text-[#365FE8]">
+                            {formatQuantity(varQty)}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs font-mono font-bold text-brand-400 mt-0.5">
+                      <p className="text-xs font-mono font-semibold text-[#365FE8] mt-0.5 tabular-nums">
                         ₹{formatCurrencyExact(variant.price)}
                       </p>
                     </button>
@@ -240,26 +235,26 @@ export function ProductDetails({
             </div>
           )}
 
-          {/* Unit-Compatible & Variant-Isolated Price Summary */}
+          {/* Unit-Compatible Price Summary */}
           {stats && stats.compatiblePoints.length > 0 && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2.5">
+            <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-zinc-400">
+                <p className="text-xs font-semibold text-[#697386]">
                   Price History ({displayUnit})
                 </p>
-                <div className="flex items-center gap-1 text-xs font-mono font-bold">
+                <div className="flex items-center gap-1 text-xs font-mono font-semibold tabular-nums">
                   {stats.deltaFromAvg < -0.5 ? (
-                    <span className="text-brand-400 flex items-center gap-1">
+                    <span className="text-[#15966B] flex items-center gap-1">
                       <TrendingDown className="w-3.5 h-3.5" />
                       {stats.deltaPctFromAvg}% vs avg
                     </span>
                   ) : stats.deltaFromAvg > 0.5 ? (
-                    <span className="text-red-400 flex items-center gap-1">
+                    <span className="text-[#DE5252] flex items-center gap-1">
                       <TrendingUp className="w-3.5 h-3.5" />
                       +{stats.deltaPctFromAvg}% vs avg
                     </span>
                   ) : (
-                    <span className="text-zinc-400 flex items-center gap-1">
+                    <span className="text-[#697386] flex items-center gap-1">
                       <FlatIcon className="w-3.5 h-3.5" />
                       At average
                     </span>
@@ -267,26 +262,26 @@ export function ProductDetails({
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-ink-900/70 rounded-lg p-2">
-                  <p className="text-[9px] font-bold uppercase text-zinc-500">Average</p>
-                  <p className="text-xs font-extrabold font-mono text-zinc-200 mt-0.5">
+                <div className="bg-white border border-[#E7EAF0] rounded-lg p-2">
+                  <p className="text-[11px] font-medium text-[#697386]">Average</p>
+                  <p className="text-xs font-bold font-mono text-[#151922] mt-0.5 tabular-nums">
                     ₹{formatCurrencyExact(stats.average)}
                   </p>
                 </div>
-                <div className="bg-ink-900/70 rounded-lg p-2">
-                  <p className="text-[9px] font-bold uppercase text-zinc-500">Lowest</p>
-                  <p className="text-xs font-extrabold font-mono text-brand-400 mt-0.5">
+                <div className="bg-white border border-[#E7EAF0] rounded-lg p-2">
+                  <p className="text-[11px] font-medium text-[#697386]">Lowest</p>
+                  <p className="text-xs font-bold font-mono text-[#15966B] mt-0.5 tabular-nums">
                     ₹{formatCurrencyExact(stats.min)}
                   </p>
                 </div>
-                <div className="bg-ink-900/70 rounded-lg p-2">
-                  <p className="text-[9px] font-bold uppercase text-zinc-500">Highest</p>
-                  <p className="text-xs font-extrabold font-mono text-orange-400 mt-0.5">
+                <div className="bg-white border border-[#E7EAF0] rounded-lg p-2">
+                  <p className="text-[11px] font-medium text-[#697386]">Highest</p>
+                  <p className="text-xs font-bold font-mono text-[#C7851F] mt-0.5 tabular-nums">
                     ₹{formatCurrencyExact(stats.max)}
                   </p>
                 </div>
               </div>
-              <p className="text-[10px] text-zinc-500">
+              <p className="text-[11px] text-[#697386]">
                 {stats.userPurchaseCount} user purchase{stats.userPurchaseCount === 1 ? '' : 's'} ·{' '}
                 {stats.referenceCount} reference price{stats.referenceCount === 1 ? '' : 's'}
                 {stats.excludedIncompatibleCount > 0 &&
@@ -296,16 +291,16 @@ export function ProductDetails({
           )}
 
           {/* Recurring Schedule */}
-          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2.5">
+          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Repeat className="w-3.5 h-3.5 text-sky-400" />
-                <span className="text-xs font-extrabold text-zinc-200">
+                <Repeat className="w-3.5 h-3.5 text-[#365FE8]" />
+                <span className="text-xs font-bold text-[#151922]">
                   Recurring Schedule
                 </span>
               </div>
               {liveItem.recurrence?.nextDueDate && (
-                <span className="text-[10px] font-mono text-sky-300">
+                <span className="text-[11px] font-mono text-[#365FE8]">
                   Next due: {liveItem.recurrence.nextDueDate}
                 </span>
               )}
@@ -321,10 +316,10 @@ export function ProductDetails({
                     key={freq}
                     type="button"
                     onClick={() => handleRecurrenceSelect(freq)}
-                    className={`py-1.5 rounded-lg text-[11px] font-bold capitalize border transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
                       active
-                        ? 'bg-sky-500/20 border-sky-400/40 text-sky-300'
-                        : 'bg-ink-900/70 border-white/[0.06] text-zinc-400 hover:text-white'
+                        ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
+                        : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
                     }`}
                   >
                     {freq === 'none' ? 'Off' : freq}
@@ -334,7 +329,7 @@ export function ProductDetails({
             </div>
             {liveItem.recurrence?.frequency === 'custom' && (
               <div className="flex items-center gap-2 pt-1">
-                <label className="text-xs text-zinc-400">Repeat every</label>
+                <label className="text-xs text-[#697386]">Repeat every</label>
                 <input
                   type="number"
                   min="1"
@@ -346,9 +341,9 @@ export function ProductDetails({
                       intervalDays: Math.max(1, Number(e.target.value) || 1),
                     })
                   }
-                  className="w-16 bg-ink-900 border border-white/[0.08] rounded-lg px-2 py-1 text-xs font-mono text-white text-center"
+                  className="w-16 bg-white border border-[#E7EAF0] rounded-lg px-2 py-1 text-xs font-mono text-[#151922] text-center"
                 />
-                <span className="text-xs text-zinc-400">days</span>
+                <span className="text-xs text-[#697386]">days</span>
               </div>
             )}
           </div>
@@ -361,7 +356,7 @@ export function ProductDetails({
                 onClose();
                 onEditProduct(liveItem);
               }}
-              className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-200 flex items-center gap-1.5"
+              className="btn-secondary text-xs"
             >
               <Pencil className="w-3.5 h-3.5" />
               Edit Product
@@ -371,7 +366,7 @@ export function ProductDetails({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-bold text-red-400 flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl bg-[#FDECEC] hover:bg-[#F9DADA] border border-[#F6B8B8] text-xs font-semibold text-[#DE5252] flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Delete
@@ -381,7 +376,7 @@ export function ProductDetails({
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="px-3 py-2 rounded-xl bg-red-500 text-xs font-extrabold text-white flex items-center gap-1"
+                  className="px-3 py-2 rounded-xl bg-[#DE5252] text-xs font-semibold text-white flex items-center gap-1"
                 >
                   <Check className="w-3.5 h-3.5" />
                   Confirm Remove
@@ -389,7 +384,7 @@ export function ProductDetails({
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(false)}
-                  className="px-2.5 py-2 rounded-xl bg-white/[0.06] text-xs font-bold text-zinc-400"
+                  className="btn-secondary py-2 px-3 text-xs"
                 >
                   Cancel
                 </button>
@@ -397,66 +392,66 @@ export function ProductDetails({
             )}
           </div>
           {confirmDelete && (
-            <p className="text-[10px] text-zinc-400">
-              Removing from your personal catalogue preserves all past financial transactions & audit logs.
+            <p className="text-xs text-[#697386]">
+              Removing from your personal catalogue preserves all past financial transactions &amp; audit logs.
             </p>
           )}
         </div>
 
         {/* Bottom Action Bar */}
-        <div className="p-4 border-t border-white/[0.08] bg-ink-950/60 flex items-center gap-3">
+        <div className="p-4 border-t border-[#E7EAF0] bg-[#F7F8FA] flex items-center gap-3">
           {activeCartQty > 0 ? (
             <div className="flex items-center justify-between w-full gap-3">
-              <div className="flex items-center gap-2 bg-ink-900 rounded-xl p-1 border border-white/[0.08]">
+              <div className="flex items-center gap-1.5 bg-white rounded-xl p-1 border border-[#E7EAF0]">
                 <button
                   type="button"
                   onClick={() => updateQuantity(liveItem.id, -defaultStep, activeVariant?.id)}
                   aria-label="Decrease quantity"
-                  className="w-9 h-9 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-white"
+                  className="w-9 h-9 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#151922]"
                 >
-                  <Minus className="w-4 h-4" strokeWidth={3} />
+                  <Minus className="w-4 h-4" strokeWidth={2.5} />
                 </button>
-                <span className="min-w-[2.25rem] px-1 text-center font-mono font-extrabold text-white">
+                <span className="min-w-[2.25rem] px-1 text-center font-mono font-bold text-[#151922] tabular-nums">
                   {formatQuantity(activeCartQty)}
                 </span>
                 <button
                   type="button"
                   onClick={() => updateQuantity(liveItem.id, defaultStep, activeVariant?.id)}
                   aria-label="Increase quantity"
-                  className="w-9 h-9 rounded-lg bg-brand-500 text-ink-950 flex items-center justify-center"
+                  className="w-9 h-9 rounded-lg bg-[#365FE8] text-white flex items-center justify-center"
                 >
-                  <Plus className="w-4 h-4" strokeWidth={3} />
+                  <Plus className="w-4 h-4" strokeWidth={2.5} />
                 </button>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 bg-brand-500 hover:bg-brand-400 text-ink-950 py-3 rounded-xl text-sm font-extrabold"
+                className="flex-1 btn-primary py-3 text-sm"
               >
                 Done · ₹{formatCurrencyExact(displayPrice * activeCartQty)} in Cart
               </button>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-1.5 bg-ink-900 rounded-xl p-1 border border-white/[0.08]">
+              <div className="flex items-center gap-1.5 bg-white rounded-xl p-1 border border-[#E7EAF0]">
                 <button
                   type="button"
                   onClick={() =>
                     setQtyToAdd((q) => Math.max(defaultStep, roundQuantity(q - defaultStep)))
                   }
                   aria-label="Decrease add quantity"
-                  className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center text-white"
+                  className="w-9 h-9 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#151922]"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="min-w-[2rem] px-1 text-center font-mono font-extrabold text-sm text-white">
+                <span className="min-w-[2rem] px-1 text-center font-mono font-bold text-sm text-[#151922] tabular-nums">
                   {formatQuantity(qtyToAdd)}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQtyToAdd((q) => roundQuantity(q + defaultStep))}
                   aria-label="Increase add quantity"
-                  className="w-9 h-9 rounded-lg bg-white/[0.06] flex items-center justify-center text-white"
+                  className="w-9 h-9 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#151922]"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -464,9 +459,9 @@ export function ProductDetails({
               <button
                 type="button"
                 onClick={handleAddClick}
-                className="flex-1 bg-brand-500 hover:bg-brand-400 text-ink-950 py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2"
+                className="flex-1 btn-primary py-3 text-sm"
               >
-                <ShoppingBag className="w-4 h-4" strokeWidth={2.5} />
+                <ShoppingBag className="w-4 h-4" strokeWidth={2.2} />
                 Add{activeVariant ? ` (${activeVariant.label})` : ''} · ₹{formatCurrencyExact(displayPrice * qtyToAdd)}
               </button>
             </>

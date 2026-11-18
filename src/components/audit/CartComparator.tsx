@@ -1,11 +1,27 @@
 import { useState, useMemo } from 'react';
-import { Scale, ShoppingBag, TrendingDown, Award, Save, Check, Zap } from 'lucide-react';
+import {
+  Scale,
+  ShoppingBag,
+  TrendingDown,
+  Award,
+  Save,
+  Check,
+  Package,
+  CloudRain,
+  ShoppingCart,
+} from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency } from '../../utils/categoryStyles';
-
 import { calculateCartTotals } from '../../utils/martEngine';
 
-const PLATFORMS = ['Zepto', 'Blinkit', 'Swiggy Instamart', 'BigBasket', 'Amazon Fresh', 'JioMart'];
+const PLATFORMS = [
+  'Zepto',
+  'Blinkit',
+  'Swiggy Instamart',
+  'BigBasket',
+  'Amazon Fresh',
+  'JioMart',
+];
 
 interface CartInput {
   platform: string;
@@ -25,10 +41,15 @@ const emptyCart: CartInput = {
   discount: 0,
 };
 
-function calcEffective(cart: CartInput): { total: number; overheadPct: number; extraFees: number } {
+function calcEffective(cart: CartInput): {
+  total: number;
+  overheadPct: number;
+  extraFees: number;
+} {
   const extraFees = cart.handlingFee + cart.surgeFee + cart.smallCartFee;
   const total = cart.baseTotal + extraFees - cart.discount;
-  const overheadPct = cart.baseTotal > 0 ? (extraFees / cart.baseTotal) * 100 : 0;
+  const overheadPct =
+    cart.baseTotal > 0 ? (extraFees / cart.baseTotal) * 100 : 0;
   return { total: Math.max(total, 0), overheadPct, extraFees };
 }
 
@@ -47,19 +68,21 @@ export function CartComparator() {
   const [loggedFlash, setLoggedFlash] = useState(false);
 
   const cartTotal = useMemo(() => calculateCartTotals(items).totalAmount, [items]);
-
   const resultA = useMemo(() => calcEffective(cartA), [cartA]);
   const resultB = useMemo(() => calcEffective(cartB), [cartB]);
 
   const winner = resultA.total <= resultB.total ? 'A' : 'B';
-  const loser = winner === 'A' ? 'B' : 'A';
   const winnerCart = winner === 'A' ? cartA : cartB;
   const winnerResult = winner === 'A' ? resultA : resultB;
   const loserResult = winner === 'A' ? resultB : resultA;
   const savings = loserResult.total - winnerResult.total;
   const isTie = Math.abs(resultA.total - resultB.total) < 0.01;
 
-  const updateCart = (side: 'A' | 'B', field: keyof CartInput, value: string | number) => {
+  const updateCart = (
+    side: 'A' | 'B',
+    field: keyof CartInput,
+    value: string | number
+  ) => {
     const setter = side === 'A' ? setCartA : setCartB;
     setter((prev) => ({ ...prev, [field]: value }));
   };
@@ -70,7 +93,12 @@ export function CartComparator() {
   };
 
   const handleLog = () => {
-    const flags: { type: string; severity: 'warning' | 'critical'; message: string; estimatedCost: number }[] = [];
+    const flags: {
+      type: string;
+      severity: 'warning' | 'critical';
+      message: string;
+      estimatedCost: number;
+    }[] = [];
 
     const loserCart = winner === 'A' ? cartB : cartA;
     const loserExtra = winner === 'A' ? resultB.extraFees : resultA.extraFees;
@@ -118,18 +146,23 @@ export function CartComparator() {
   const hasData = cartA.baseTotal > 0 || cartB.baseTotal > 0;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Scale className="w-4 h-4 text-sky-400" strokeWidth={2.5} />
-        <h3 className="text-sm font-extrabold tracking-tight">Multi-App Cart Comparator</h3>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+          <Scale className="w-4 h-4" strokeWidth={2.25} />
+        </div>
+        <div>
+          <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+            Multi-App Cart Comparator
+          </h3>
+          <p className="text-xs text-[#697386]">
+            Compare effective checkout totals across quick-commerce platforms
+          </p>
+        </div>
       </div>
 
-      <p className="text-[11px] text-zinc-500 font-medium leading-relaxed">
-        Compare effective checkout totals across quick-commerce platforms. Enter fees from each app to find the cheapest option.
-      </p>
-
       {/* Side-by-Side Inputs */}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <CartColumn
           label="App A"
           cart={cartA}
@@ -154,60 +187,76 @@ export function CartComparator() {
 
       {/* Winner Banner */}
       {hasData && !isTie && (
-        <div className="rounded-2xl border border-brand-500/30 bg-brand-500/10 p-4 animate-scale-in glow-brand">
-          <div className="flex items-center justify-between">
+        <div className="rounded-2xl border border-[#B7E4D3] bg-[#E8F7F1] p-4">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center">
-                <Award className="w-5 h-5 text-brand-400" strokeWidth={2.5} />
+              <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#B7E4D3] flex items-center justify-center text-[#15966B]">
+                <Award className="w-5 h-5" strokeWidth={2.25} />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-brand-400/70">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#15966B]">
                   Best Deal
                 </p>
-                <p className="text-sm font-extrabold text-white">
+                <p className="text-sm font-bold text-[#151922]">
                   {winnerCart.platform}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">You Save</p>
-              <p className="text-lg font-extrabold font-mono text-brand-400">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+                You Save
+              </p>
+              <p className="text-lg font-bold font-mono tabular-nums text-[#15966B]">
                 ₹{formatCurrency(savings)}
               </p>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-brand-500/20 flex items-center justify-between text-[11px]">
-            <span className="text-zinc-400 font-medium">
-              {winnerCart.platform}: <span className="font-mono text-white">₹{formatCurrency(winnerResult.total)}</span>
+          <div className="mt-3 pt-3 border-t border-[#B7E4D3] flex items-center justify-between text-xs">
+            <span className="text-[#4F5869] font-medium">
+              {winnerCart.platform}:{' '}
+              <span className="font-mono font-bold text-[#151922]">
+                ₹{formatCurrency(winnerResult.total)}
+              </span>
             </span>
-            <span className="text-zinc-400 font-medium">
-              {(winner === 'A' ? cartB : cartA).platform}: <span className="font-mono text-zinc-300">₹{formatCurrency(loserResult.total)}</span>
+            <span className="text-[#4F5869] font-medium">
+              {(winner === 'A' ? cartB : cartA).platform}:{' '}
+              <span className="font-mono font-semibold text-[#697386]">
+                ₹{formatCurrency(loserResult.total)}
+              </span>
             </span>
           </div>
         </div>
       )}
 
       {hasData && isTie && (
-        <div className="glass rounded-xl p-3 text-center animate-fade-in">
-          <p className="text-sm font-bold text-zinc-300">Both apps cost the same</p>
-          <p className="text-[11px] text-zinc-500 mt-0.5">₹{formatCurrency(resultA.total)} each — pick either one</p>
+        <div className="surface-subtle p-3.5 text-center">
+          <p className="text-sm font-bold text-[#151922]">
+            Both apps cost the same
+          </p>
+          <p className="text-xs text-[#697386] mt-0.5">
+            ₹{formatCurrency(resultA.total)} each — pick either one
+          </p>
         </div>
       )}
 
-      {/* Log Button */}
       {hasData && (
         <button
+          type="button"
           onClick={handleLog}
-          className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+          className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
             loggedFlash
-              ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
-              : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
+              ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+              : 'btn-secondary'
           }`}
         >
           {loggedFlash ? (
-            <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Logged to Audit History</>
+            <>
+              <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Logged to Audit History
+            </>
           ) : (
-            <><Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Log Comparison to History</>
+            <>
+              <Save className="w-3.5 h-3.5" strokeWidth={2.25} /> Log Comparison to History
+            </>
           )}
         </button>
       )}
@@ -244,96 +293,133 @@ function CartColumn({
 
   return (
     <div
-      className={`rounded-xl border p-3 space-y-2.5 transition-all duration-300 ${
+      className={`rounded-xl border p-3.5 space-y-2.5 transition-colors ${
         isWinner
-          ? 'border-brand-500/30 bg-brand-500/5'
+          ? 'border-[#B7E4D3] bg-[#F5FCF9]'
           : isLoser
-          ? 'border-red-500/15 bg-red-500/[0.02]'
-          : 'border-white/[0.06] bg-white/[0.02]'
+          ? 'border-[#F6B8B8] bg-[#FFF9F9]'
+          : 'border-[#E7EAF0] bg-[#F7F8FA]'
       }`}
     >
-      {/* Label + Winner Badge */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{label}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#697386]">
+          {label}
+        </span>
         {isWinner && (
-          <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-400 border border-brand-500/25 flex items-center gap-0.5 animate-fade-in">
-            <Award className="w-2.5 h-2.5" strokeWidth={2.5} />
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#E8F7F1] text-[#15966B] border border-[#B7E4D3] flex items-center gap-1">
+            <Award className="w-3 h-3" strokeWidth={2.25} />
             Best
           </span>
         )}
       </div>
 
-      {/* Platform Selector */}
       <select
+        aria-label={`${label} platform`}
         value={cart.platform}
         onChange={(e) => onUpdate('platform', e.target.value)}
-        className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs font-bold text-white outline-none focus:border-brand-500/40 transition-colors"
+        className="input-field w-full px-2.5 py-2 text-xs font-semibold"
       >
         {PLATFORMS.map((p) => (
-          <option key={p} value={p}>{p}</option>
+          <option key={p} value={p}>
+            {p}
+          </option>
         ))}
       </select>
 
-      {/* Base Total + Load Cart */}
       <div>
-        <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 block mb-1">Base Item Total</label>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-[#697386] block mb-1">
+          Base Item Total
+        </label>
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">₹</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#697386]">
+            ₹
+          </span>
           <input
+            aria-label={`${label} base item total`}
             {...numField('baseTotal', '0')}
-            className="w-full bg-ink-900 border border-white/[0.08] rounded-lg pl-7 pr-2 py-2 text-xs text-white outline-none focus:border-brand-500/40 transition-colors font-mono"
+            className="input-field w-full pl-7 pr-2 py-2 text-xs font-mono tabular-nums"
           />
         </div>
         {cartTotal > 0 && (
           <button
+            type="button"
             onClick={onLoadCart}
-            className="w-full mt-1.5 text-[10px] font-bold text-brand-400/70 hover:text-brand-400 bg-brand-500/5 hover:bg-brand-500/10 py-1.5 rounded-md transition-all flex items-center justify-center gap-1 border border-brand-500/15"
+            className="w-full mt-1.5 text-[11px] font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] hover:bg-[#DFE8FF] py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1 border border-[#D4E0FF]"
           >
-            <ShoppingBag className="w-2.5 h-2.5" strokeWidth={2.5} />
-            Load Current Cart (₹{formatCurrency(cartTotal)})
+            <ShoppingBag className="w-3 h-3" strokeWidth={2.25} />
+            Load Cart (₹{formatCurrency(cartTotal)})
           </button>
         )}
       </div>
 
-      {/* Fee Inputs */}
-      <FeeInput label="Handling / Packaging" icon="📦" {...numField('handlingFee', '0')} />
-      <FeeInput label="Rain / Surge" icon="🌧️" {...numField('surgeFee', '0')} />
-      <FeeInput label="Small-Cart Fee" icon="🛒" {...numField('smallCartFee', '0')} />
+      <FeeInput
+        label="Handling / Packaging"
+        icon={Package}
+        ariaLabel={`${label} handling fee`}
+        {...numField('handlingFee', '0')}
+      />
+      <FeeInput
+        label="Rain / Surge"
+        icon={CloudRain}
+        ariaLabel={`${label} surge fee`}
+        {...numField('surgeFee', '0')}
+      />
+      <FeeInput
+        label="Small-Cart Fee"
+        icon={ShoppingCart}
+        ariaLabel={`${label} small cart fee`}
+        {...numField('smallCartFee', '0')}
+      />
 
-      {/* Discount */}
       <div>
-        <label className="text-[9px] font-bold uppercase tracking-wider text-emerald-500/60 block mb-1">Coupon / Wallet Discount</label>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-[#15966B] block mb-1">
+          Coupon / Wallet Discount
+        </label>
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-500">−₹</span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#15966B]">
+            −₹
+          </span>
           <input
+            aria-label={`${label} discount`}
             {...numField('discount', '0')}
-            className="w-full bg-ink-900 border border-emerald-500/15 rounded-lg pl-9 pr-2 py-2 text-xs text-white outline-none focus:border-emerald-500/40 transition-colors font-mono"
+            className="input-field w-full pl-9 pr-2 py-2 text-xs font-mono tabular-nums border-[#B7E4D3]"
           />
         </div>
       </div>
 
-      {/* Result */}
-      <div className={`pt-2.5 mt-0.5 border-t ${
-        isWinner ? 'border-brand-500/20' : 'border-white/[0.06]'
-      }`}>
+      <div
+        className={`pt-2.5 border-t ${
+          isWinner ? 'border-[#B7E4D3]' : 'border-[#E7EAF0]'
+        }`}
+      >
         <div className="flex items-baseline justify-between mb-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Effective Total</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+            Effective Total
+          </span>
           {result.overheadPct > 0 && (
-            <span className={`text-[9px] font-bold font-mono flex items-center gap-0.5 ${
-              result.overheadPct > 15 ? 'text-red-400' : result.overheadPct > 5 ? 'text-orange-400' : 'text-zinc-500'
-            }`}>
-              <TrendingDown className="w-2.5 h-2.5" strokeWidth={2.5} />
-              {result.overheadPct.toFixed(1)}% overhead
+            <span
+              className={`text-[10px] font-bold font-mono flex items-center gap-0.5 ${
+                result.overheadPct > 15
+                  ? 'text-[#DE5252]'
+                  : result.overheadPct > 5
+                  ? 'text-[#9E6614]'
+                  : 'text-[#697386]'
+              }`}
+            >
+              <TrendingDown className="w-3 h-3" strokeWidth={2.25} />
+              {result.overheadPct.toFixed(1)}%
             </span>
           )}
         </div>
-        <p className={`text-lg font-extrabold font-mono tabular-nums ${
-          isWinner ? 'text-brand-400' : 'text-white'
-        }`}>
+        <p
+          className={`text-lg font-bold font-mono tabular-nums ${
+            isWinner ? 'text-[#15966B]' : 'text-[#151922]'
+          }`}
+        >
           ₹{formatCurrency(result.total)}
         </p>
         {result.extraFees > 0 && (
-          <p className="text-[10px] text-orange-400/70 font-mono mt-0.5">
+          <p className="text-[11px] text-[#9E6614] font-mono mt-0.5">
             +₹{formatCurrency(result.extraFees)} in fees
           </p>
         )}
@@ -344,11 +430,13 @@ function CartColumn({
 
 function FeeInput({
   label,
-  icon,
+  icon: Icon,
+  ariaLabel,
   ...inputProps
 }: {
   label: string;
-  icon: string;
+  icon: typeof Package;
+  ariaLabel: string;
   type: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -356,14 +444,18 @@ function FeeInput({
 }) {
   return (
     <div>
-      <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600 block mb-1">
-        {icon} {label}
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1 mb-1">
+        <Icon className="w-3 h-3 text-[#929BAB]" strokeWidth={2.25} />
+        {label}
       </label>
       <div className="relative">
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">₹</span>
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#697386]">
+          ₹
+        </span>
         <input
+          aria-label={ariaLabel}
           {...inputProps}
-          className="w-full bg-ink-900 border border-white/[0.08] rounded-lg pl-7 pr-2 py-2 text-xs text-white outline-none focus:border-brand-500/40 transition-colors font-mono"
+          className="input-field w-full pl-7 pr-2 py-2 text-xs font-mono tabular-nums"
         />
       </div>
     </div>

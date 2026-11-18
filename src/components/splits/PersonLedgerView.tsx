@@ -37,7 +37,7 @@ export function PersonLedgerView({
   const hasOpenBalance = owedToMe > 0 || iOwe > 0;
 
   return (
-    <div className="space-y-4 animate-fade-in-up">
+    <div className="space-y-4">
       {/* Top Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -45,15 +45,15 @@ export function PersonLedgerView({
             type="button"
             onClick={onBack}
             aria-label="Back to Ledger Dashboard"
-            className="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] flex items-center justify-center text-zinc-300 hover:text-white transition-colors"
+            className="w-9 h-9 rounded-xl bg-white hover:bg-[#F1F3F6] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
+            <ArrowLeft className="w-4 h-4" strokeWidth={2.2} />
           </button>
           <div>
-            <h2 className="text-lg font-extrabold tracking-tight text-white">
+            <h2 className="text-lg font-bold tracking-tight text-[#151922]">
               {person.name}
             </h2>
-            <p className="text-[11px] text-zinc-500 font-medium">
+            <p className="text-xs text-[#697386]">
               {person.contact || 'Individual Person Ledger'}
             </p>
           </div>
@@ -68,9 +68,9 @@ export function PersonLedgerView({
                 direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
               })
             }
-            className="bg-brand-500 hover:bg-brand-400 text-ink-950 px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-colors"
+            className="btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
           >
-            <ShieldCheck className="w-4 h-4" strokeWidth={2.5} />
+            <ShieldCheck className="w-4 h-4" strokeWidth={2.2} />
             Record Repayment
           </button>
         )}
@@ -78,41 +78,41 @@ export function PersonLedgerView({
 
       {/* Person Balance Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="glass rounded-2xl p-4">
+        <div className="surface-card p-4">
           <div className="flex items-center gap-1.5 mb-1">
-            <ArrowDownLeft className="w-3.5 h-3.5 text-brand-400" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <ArrowDownLeft className="w-3.5 h-3.5 text-[#15966B]" strokeWidth={2.2} />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               Owed to You
             </span>
           </div>
-          <p className="text-xl font-extrabold font-mono tabular-nums text-brand-400">
+          <p className="text-xl font-bold font-mono tabular-nums text-[#15966B]">
             ₹{formatCurrencyExact(owedToMe)}
           </p>
         </div>
 
-        <div className="glass rounded-2xl p-4">
+        <div className="surface-card p-4">
           <div className="flex items-center gap-1.5 mb-1">
-            <ArrowUpRight className="w-3.5 h-3.5 text-red-400" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#DE5252]" strokeWidth={2.2} />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               You Owe {person.name}
             </span>
           </div>
-          <p className="text-xl font-extrabold font-mono tabular-nums text-red-400">
+          <p className="text-xl font-bold font-mono tabular-nums text-[#DE5252]">
             ₹{formatCurrencyExact(iOwe)}
           </p>
         </div>
 
-        <div className="glass rounded-2xl p-4">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+        <div className="surface-card p-4">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] block mb-1">
             Net Balance
           </span>
           <p
-            className={`text-xl font-extrabold font-mono tabular-nums ${
+            className={`text-xl font-bold font-mono tabular-nums ${
               netBalance > 0
-                ? 'text-brand-400'
+                ? 'text-[#15966B]'
                 : netBalance < 0
-                ? 'text-red-400'
-                : 'text-zinc-300'
+                ? 'text-[#DE5252]'
+                : 'text-[#151922]'
             }`}
           >
             {netBalance > 0
@@ -121,7 +121,7 @@ export function PersonLedgerView({
               ? `-₹${formatCurrencyExact(Math.abs(netBalance))}`
               : '₹0'}
           </p>
-          <p className="text-[10px] text-zinc-500 font-medium mt-0.5">
+          <p className="text-[11px] text-[#697386] mt-0.5">
             {netBalance > 0
               ? `${person.name} owes you`
               : netBalance < 0
@@ -132,19 +132,19 @@ export function PersonLedgerView({
       </div>
 
       {/* Transaction History */}
-      <div className="glass rounded-2xl p-4 space-y-3">
+      <div className="surface-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-            <Receipt className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
+          <h3 className="text-sm font-bold text-[#151922] flex items-center gap-2">
+            <Receipt className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
             Shared Transaction History
           </h3>
-          <span className="text-[11px] font-bold text-zinc-500">
+          <span className="text-xs font-medium text-[#697386]">
             {transactions.length} {transactions.length === 1 ? 'expense' : 'expenses'}
           </span>
         </div>
 
         {transactions.length === 0 ? (
-          <div className="text-center py-8 text-xs text-zinc-500">
+          <div className="text-center py-8 text-xs text-[#697386]">
             No shared expenses recorded with {person.name} yet.
           </div>
         ) : (
@@ -157,26 +157,26 @@ export function PersonLedgerView({
               return (
                 <div
                   key={tx.expenseId}
-                  className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 space-y-2.5"
+                  className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-white">{tx.name}</span>
+                        <span className="text-sm font-bold text-[#151922]">{tx.name}</span>
                         <span
-                          className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}
                         >
                           {tx.category}
                         </span>
                       </div>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                      <p className="text-xs text-[#697386] mt-0.5">
                         {new Date(tx.date).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
                         })}{' '}
                         · Paid by{' '}
-                        <span className="text-zinc-300 font-semibold">
+                        <span className="text-[#151922] font-semibold">
                           {tx.paidByName}
                         </span>{' '}
                         (₹{formatCurrencyExact(tx.totalAmount)})
@@ -185,12 +185,12 @@ export function PersonLedgerView({
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-1 rounded-lg border flex items-center gap-1 ${
+                        className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-lg border flex items-center gap-1 ${
                           isSettled
-                            ? 'bg-brand-500/10 text-brand-400 border-brand-500/20'
+                            ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
                             : isPartial
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                            ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
+                            : 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
                         }`}
                       >
                         {isSettled ? (
@@ -204,33 +204,33 @@ export function PersonLedgerView({
                   </div>
 
                   {/* Shares & Owed Breakdown */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/[0.05] text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#E7EAF0] text-xs">
                     <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-500">
+                      <p className="text-[10px] font-semibold uppercase text-[#697386]">
                         Total Bill
                       </p>
-                      <p className="font-mono font-bold text-zinc-200">
+                      <p className="font-mono font-semibold text-[#151922]">
                         ₹{formatCurrencyExact(tx.totalAmount)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-500">
+                      <p className="text-[10px] font-semibold uppercase text-[#697386]">
                         Your Share
                       </p>
-                      <p className="font-mono font-bold text-zinc-200">
+                      <p className="font-mono font-semibold text-[#151922]">
                         ₹{formatCurrencyExact(tx.userShare)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-500">
+                      <p className="text-[10px] font-semibold uppercase text-[#697386]">
                         {person.name}&apos;s Share
                       </p>
-                      <p className="font-mono font-bold text-zinc-200">
+                      <p className="font-mono font-semibold text-[#151922]">
                         ₹{formatCurrencyExact(tx.personShare)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-500">
+                      <p className="text-[10px] font-semibold uppercase text-[#697386]">
                         {tx.direction === 'owed_to_me'
                           ? 'Owed to You'
                           : tx.direction === 'i_owe'
@@ -238,17 +238,17 @@ export function PersonLedgerView({
                           : 'Balance'}
                       </p>
                       <p
-                        className={`font-mono font-extrabold ${
+                        className={`font-mono font-bold ${
                           tx.remainingOwed === 0
-                            ? 'text-zinc-400'
+                            ? 'text-[#697386]'
                             : tx.direction === 'owed_to_me'
-                            ? 'text-brand-400'
-                            : 'text-red-400'
+                            ? 'text-[#15966B]'
+                            : 'text-[#DE5252]'
                         }`}
                       >
                         ₹{formatCurrencyExact(tx.remainingOwed)}
                         {tx.settledAmount > 0 && tx.remainingOwed > 0 && (
-                          <span className="text-[10px] text-zinc-500 font-normal ml-1">
+                          <span className="text-[11px] text-[#697386] font-normal ml-1">
                             (of ₹{formatCurrencyExact(tx.originalOwed)})
                           </span>
                         )}
@@ -269,7 +269,7 @@ export function PersonLedgerView({
                             expenseId: tx.expenseId,
                           })
                         }
-                        className="text-[11px] font-bold bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 border border-brand-500/25 px-3 py-1.5 rounded-lg transition-colors"
+                        className="text-xs font-semibold bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8] border border-[#D4E0FF] px-3 py-1.5 rounded-lg transition-colors"
                       >
                         {tx.direction === 'i_owe' ? 'Pay / Settle' : 'Mark Received'} (₹
                         {formatCurrencyExact(tx.remainingOwed)})
@@ -284,16 +284,16 @@ export function PersonLedgerView({
       </div>
 
       {/* Repayment History */}
-      <div className="glass rounded-2xl p-4 space-y-3">
+      <div className="surface-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-white">Repayment History</h3>
-          <span className="text-[11px] font-bold text-zinc-500">
+          <h3 className="text-sm font-bold text-[#151922]">Repayment History</h3>
+          <span className="text-xs font-medium text-[#697386]">
             {settlements.length} {settlements.length === 1 ? 'payment' : 'payments'}
           </span>
         </div>
 
         {settlements.length === 0 ? (
-          <p className="text-center py-6 text-xs text-zinc-500">
+          <p className="text-center py-6 text-xs text-[#697386]">
             No repayments recorded with {person.name} yet.
           </p>
         ) : (
@@ -303,13 +303,13 @@ export function PersonLedgerView({
               return (
                 <div
                   key={st.id}
-                  className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex items-center justify-between gap-2"
+                  className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white">
+                    <p className="text-xs font-bold text-[#151922]">
                       {iPaid ? `You paid ${person.name}` : `${person.name} paid You`}
                     </p>
-                    <p className="text-[11px] text-zinc-500">
+                    <p className="text-[11px] text-[#697386]">
                       {new Date(st.date).toLocaleDateString('en-IN', {
                         day: 'numeric',
                         month: 'short',
@@ -320,7 +320,7 @@ export function PersonLedgerView({
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-extrabold font-mono text-brand-400">
+                    <span className="text-sm font-bold font-mono text-[#15966B] tabular-nums">
                       ₹{formatCurrencyExact(st.amount)}
                     </span>
                     {confirmDeleteSettlementId === st.id ? (
@@ -331,14 +331,14 @@ export function PersonLedgerView({
                             removeSettlement(st.id);
                             setConfirmDeleteSettlementId(null);
                           }}
-                          className="text-[10px] font-bold bg-red-500 text-white px-2 py-1 rounded-md"
+                          className="text-[11px] font-semibold bg-[#DE5252] text-white px-2 py-1 rounded-md"
                         >
                           Confirm
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteSettlementId(null)}
-                          className="text-[10px] font-bold bg-white/[0.08] text-zinc-300 px-2 py-1 rounded-md"
+                          className="text-[11px] font-semibold bg-white border border-[#E7EAF0] text-[#697386] px-2 py-1 rounded-md"
                         >
                           Cancel
                         </button>
@@ -348,7 +348,7 @@ export function PersonLedgerView({
                         type="button"
                         onClick={() => setConfirmDeleteSettlementId(st.id)}
                         aria-label={`Delete repayment of ₹${st.amount}`}
-                        className="p-1.5 text-zinc-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                        className="p-1.5 text-[#697386] hover:text-[#DE5252] rounded-lg hover:bg-[#FDECEC] transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

@@ -51,7 +51,11 @@ export function ReceiptUploader() {
   const recordReceiptAsTransaction = useAppStore((s) => s.recordReceiptAsTransaction);
 
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
-  const [recordFeedback, setRecordFeedback] = useState<{ idx: number; message: string; ok: boolean } | null>(null);
+  const [recordFeedback, setRecordFeedback] = useState<{
+    idx: number;
+    message: string;
+    ok: boolean;
+  } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState('');
   const [scanError, setScanError] = useState<string | null>(null);
@@ -140,7 +144,6 @@ export function ReceiptUploader() {
     [addParsedReceipt, parseAndStoreText]
   );
 
-  // Support Ctrl+V / Cmd+V screenshot paste anywhere while ReceiptUploader is mounted
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
       const pastedItems = e.clipboardData?.items;
@@ -271,37 +274,46 @@ export function ReceiptUploader() {
         name: name.substring(0, 30),
         price: Math.round(price),
         category: 'Groceries',
-        icon: '🛒',
+        icon: 'shopping-bag',
       });
     }
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <ScanLine className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
-          <h3 className="text-sm font-extrabold tracking-tight">Receipt Vision Scanner</h3>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+            <ScanLine className="w-4 h-4" strokeWidth={2.25} />
+          </div>
+          <div>
+            <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+              Receipt Vision Scanner
+            </h3>
+            <p className="text-xs text-[#697386]">
+              Upload screenshot or paste text to extract items and hidden fees
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={handleTrySample}
-            className="text-[10px] font-bold text-brand-400/80 hover:text-brand-400 bg-brand-500/10 hover:bg-brand-500/15 px-2 py-1 rounded-md border border-brand-500/20 transition-colors flex items-center gap-1"
+            className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] hover:bg-[#DFE8FF] px-2.5 py-1.5 rounded-lg border border-[#D4E0FF] transition-colors flex items-center gap-1"
           >
-            <Sparkles className="w-3 h-3" strokeWidth={2.5} />
+            <Sparkles className="w-3.5 h-3.5" strokeWidth={2.25} />
             Sample
           </button>
           <button
             type="button"
             onClick={() => setShowPasteBox(!showPasteBox)}
-            className={`text-[10px] font-bold px-2 py-1 rounded-md border transition-colors flex items-center gap-1 ${
+            className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
               showPasteBox
-                ? 'bg-white/10 text-white border-white/20'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-white border-white/[0.06]'
+                ? 'bg-[#365FE8] text-white border-[#365FE8]'
+                : 'bg-[#FFFFFF] text-[#697386] hover:text-[#151922] border-[#E7EAF0] hover:bg-[#F7F8FA]'
             }`}
           >
-            <ClipboardPaste className="w-3 h-3" strokeWidth={2.5} />
+            <ClipboardPaste className="w-3.5 h-3.5" strokeWidth={2.25} />
             Paste Text
           </button>
         </div>
@@ -317,10 +329,10 @@ export function ReceiptUploader() {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`w-full cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-300 ${
+        className={`w-full cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all ${
           dragOver
-            ? 'border-brand-500/50 bg-brand-500/5 scale-[1.01]'
-            : 'border-white/[0.08] hover:border-brand-500/30 bg-white/[0.02]'
+            ? 'border-[#365FE8] bg-[#EDF2FF]'
+            : 'border-[#D5DBE6] hover:border-[#365FE8] bg-[#F7F8FA] hover:bg-[#F1F5FF]'
         }`}
       >
         <input
@@ -332,16 +344,16 @@ export function ReceiptUploader() {
           className="hidden"
         />
         {isScanning ? (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-2.5">
             <div className="relative">
-              <Loader2 className="w-10 h-10 text-brand-400 animate-spin" strokeWidth={2} />
+              <Loader2 className="w-10 h-10 text-[#365FE8] animate-spin" strokeWidth={2} />
               <ScanLine
-                className="w-5 h-5 text-brand-300 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                className="w-4 h-4 text-[#365FE8] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                 strokeWidth={2.5}
               />
             </div>
-            <p className="text-sm font-bold text-brand-400">Scanning receipt...</p>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-sm font-bold text-[#365FE8]">Scanning receipt...</p>
+            <p className="text-xs text-[#697386]">
               {scanStatus || 'Extracting items, taxes & fees'}
             </p>
           </div>
@@ -351,17 +363,17 @@ export function ReceiptUploader() {
               <img
                 src={previewUrl}
                 alt="Uploaded receipt preview"
-                className="w-16 h-16 object-cover rounded-xl border border-white/10"
+                className="w-16 h-16 object-cover rounded-xl border border-[#E7EAF0]"
               />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
-                <Upload className="w-6 h-6 text-brand-400" strokeWidth={2} />
+              <div className="w-12 h-12 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center">
+                <Upload className="w-5 h-5 text-[#365FE8]" strokeWidth={2.25} />
               </div>
             )}
-            <p className="text-sm font-bold text-zinc-200">
+            <p className="text-sm font-bold text-[#151922]">
               Upload or paste (Ctrl+V) receipt screenshot
             </p>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-xs text-[#697386]">
               AI Vision extraction · PNG, JPG, WebP, or TXT
             </p>
           </div>
@@ -370,19 +382,19 @@ export function ReceiptUploader() {
 
       {/* Paste / Edit Receipt Text */}
       {showPasteBox && (
-        <form onSubmit={handleParsePasted} className="space-y-2 animate-scale-in">
+        <form onSubmit={handleParsePasted} className="space-y-2.5">
           <textarea
             aria-label="Paste receipt text"
             rows={5}
             value={receiptText}
             onChange={(e) => setReceiptText(e.target.value)}
             placeholder={`Paste receipt text here, e.g.\nBlinkit\nAmul Milk 500ml   ₹27\nHandling Charge   ₹15\nGST               ₹5`}
-            className="w-full bg-ink-900 border border-white/[0.08] rounded-xl p-3 text-xs text-white font-mono outline-none focus:border-brand-500/40 transition-colors placeholder:text-zinc-600"
+            className="input-field w-full p-3 text-xs font-mono"
           />
           <button
             type="submit"
             disabled={!receiptText.trim()}
-            className="w-full bg-brand-500 hover:bg-brand-400 disabled:bg-white/[0.04] disabled:text-zinc-600 text-ink-950 py-2.5 rounded-xl text-xs font-extrabold transition-all"
+            className="btn-primary w-full py-2.5 text-xs"
           >
             Parse Receipt Text
           </button>
@@ -393,22 +405,22 @@ export function ReceiptUploader() {
       {scanError && (
         <div
           role="alert"
-          className="rounded-xl p-3 bg-orange-500/10 border border-orange-500/20 space-y-2 animate-fade-in"
+          className="rounded-xl p-3.5 bg-[#FEF6E7] border border-[#F3D8A8] space-y-2.5"
         >
           <div className="flex items-start gap-2">
             <AlertCircle
-              className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5"
-              strokeWidth={2.5}
+              className="w-4 h-4 text-[#9E6614] shrink-0 mt-0.5"
+              strokeWidth={2.25}
             />
-            <p className="text-[11px] text-orange-200 leading-relaxed">{scanError}</p>
+            <p className="text-xs text-[#7D4F0C] leading-relaxed">{scanError}</p>
           </div>
           {lastImageFile && !isScanning && (
             <button
               type="button"
               onClick={handleOfflineOcr}
-              className="w-full bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 border border-white/[0.08]"
+              className="btn-secondary w-full py-2 text-xs flex items-center justify-center gap-1.5"
             >
-              <Cpu className="w-3.5 h-3.5" strokeWidth={2.5} />
+              <Cpu className="w-3.5 h-3.5" strokeWidth={2.25} />
               Try Offline Browser OCR Instead
             </button>
           )}
@@ -417,31 +429,33 @@ export function ReceiptUploader() {
 
       {/* Parsed Receipts */}
       {parsedReceipts.length > 0 && (
-        <div className="space-y-2.5">
+        <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-[#697386] uppercase tracking-wider">
               {parsedReceipts.length} parsed receipt{parsedReceipts.length > 1 ? 's' : ''}
             </p>
             <button
               type="button"
               onClick={clearParsedReceipts}
-              className="text-[11px] font-bold text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1"
+              className="text-xs font-semibold text-[#697386] hover:text-[#DE5252] transition-colors flex items-center gap-1"
             >
-              <Trash2 className="w-3 h-3" strokeWidth={2.5} />
+              <Trash2 className="w-3.5 h-3.5" strokeWidth={2.25} />
               Clear
             </button>
           </div>
 
           {parsedReceipts.map((receipt, idx) => (
-            <div key={idx} className="glass rounded-xl p-3.5 animate-fade-in-up">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
-                    <Receipt className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
+            <div key={idx} className="surface-subtle p-4 space-y-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] text-[#365FE8] flex items-center justify-center shrink-0">
+                    <Receipt className="w-4 h-4" strokeWidth={2.25} />
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">{receipt.merchant}</p>
-                    <p className="text-[10px] text-zinc-500 font-medium">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-[#151922] truncate">
+                      {receipt.merchant}
+                    </p>
+                    <p className="text-[11px] text-[#697386] font-medium">
                       {new Date(receipt.date).toLocaleDateString('en-IN', {
                         month: 'short',
                         day: 'numeric',
@@ -449,22 +463,22 @@ export function ReceiptUploader() {
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
+                <div className="text-right shrink-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
                     Total
                   </p>
-                  <p className="text-sm font-extrabold font-mono tabular-nums text-white">
+                  <p className="text-base font-bold font-mono tabular-nums text-[#151922]">
                     ₹{formatCurrency(receipt.total)}
                   </p>
                 </div>
               </div>
 
               {/* Parsed Items */}
-              <div className="space-y-1.5 mb-3">
+              <div className="bg-[#FFFFFF] rounded-xl border border-[#E7EAF0] p-3 space-y-1.5">
                 {receipt.items.map((item, iIdx) => (
                   <div key={iIdx} className="flex items-center justify-between text-xs gap-2">
-                    <span className="text-zinc-300 truncate font-medium">{item.name}</span>
-                    <span className="text-zinc-400 font-mono flex-shrink-0">
+                    <span className="text-[#151922] truncate font-medium">{item.name}</span>
+                    <span className="text-[#697386] font-mono tabular-nums shrink-0">
                       ₹{formatCurrency(item.price)}
                     </span>
                   </div>
@@ -472,22 +486,24 @@ export function ReceiptUploader() {
               </div>
 
               {/* Summary Bar */}
-              <div className="grid grid-cols-3 gap-1.5 mb-3 pt-2 border-t border-white/[0.06]">
-                <div className="text-center">
-                  <p className="text-[8px] font-bold uppercase text-zinc-600">Subtotal</p>
-                  <p className="text-xs font-bold text-zinc-300 font-mono">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                  <p className="text-[10px] font-semibold uppercase text-[#697386]">
+                    Subtotal
+                  </p>
+                  <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
                     ₹{formatCurrency(receipt.subtotal)}
                   </p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[8px] font-bold uppercase text-zinc-600">Tax</p>
-                  <p className="text-xs font-bold text-orange-400 font-mono">
+                <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Tax</p>
+                  <p className="text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5">
                     ₹{formatCurrency(receipt.taxTotal)}
                   </p>
                 </div>
-                <div className="text-center">
-                  <p className="text-[8px] font-bold uppercase text-zinc-600">Fees</p>
-                  <p className="text-xs font-bold text-red-400 font-mono">
+                <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Fees</p>
+                  <p className="text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5">
                     ₹{formatCurrency(receipt.deliveryFee)}
                   </p>
                 </div>
@@ -522,29 +538,29 @@ export function ReceiptUploader() {
                             : res.error || 'Already recorded',
                         });
                       }}
-                      className={`w-full py-2.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 border ${
+                      className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border ${
                         alreadyRecorded
-                          ? 'bg-brand-500/15 text-brand-400 border-brand-500/30 cursor-default'
-                          : 'bg-brand-500 hover:bg-brand-400 text-ink-950 border-brand-400'
+                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3] cursor-default'
+                          : 'bg-[#365FE8] hover:bg-[#294FCC] text-white border-[#365FE8]'
                       }`}
                     >
                       {alreadyRecorded ? (
                         <>
                           <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                          Recorded to Ledger & Price History
+                          Recorded to Ledger &amp; Price History
                         </>
                       ) : (
                         <>
-                          <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.5} />
-                          Record Expense & Track Prices
+                          <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.25} />
+                          Record Expense &amp; Track Prices
                         </>
                       )}
                     </button>
 
                     {recordFeedback?.idx === idx && (
                       <p
-                        className={`text-[11px] font-semibold px-2 ${
-                          recordFeedback.ok ? 'text-brand-400' : 'text-amber-400'
+                        className={`text-xs font-semibold px-1 ${
+                          recordFeedback.ok ? 'text-[#15966B]' : 'text-[#9E6614]'
                         }`}
                       >
                         {recordFeedback.message}
@@ -556,20 +572,22 @@ export function ReceiptUploader() {
                         type="button"
                         disabled={receipt.items.length === 0}
                         onClick={() =>
-                          receipt.items.forEach((item) => handleImportItem(item.name, item.price))
+                          receipt.items.forEach((item) =>
+                            handleImportItem(item.name, item.price)
+                          )
                         }
-                        className="flex-1 bg-white/[0.04] hover:bg-brand-500/15 disabled:opacity-40 text-zinc-300 hover:text-brand-400 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-white/[0.06] hover:border-brand-500/30"
+                        className="btn-secondary flex-1 py-2 px-3 text-xs flex items-center justify-center gap-1.5"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.25} />
                         Import to cart
                       </button>
                       <button
                         type="button"
                         onClick={() => handleSaveAudit(idx)}
-                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
                           savedIdx === idx
-                            ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
-                            : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
+                            ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                            : 'bg-[#FFFFFF] hover:bg-[#F7F8FA] text-[#151922] border-[#E7EAF0]'
                         }`}
                       >
                         {savedIdx === idx ? (
@@ -578,7 +596,7 @@ export function ReceiptUploader() {
                           </>
                         ) : (
                           <>
-                            <Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Save
+                            <Save className="w-3.5 h-3.5" strokeWidth={2.25} /> Save
                           </>
                         )}
                       </button>

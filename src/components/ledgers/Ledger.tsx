@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   BookOpen,
   Users,
-  TrendingDown,
   Inbox,
   Plus,
   Trash2,
@@ -43,10 +42,6 @@ export function Ledger({
   );
 
   const totalOwedToMe = ledgerState.dashboard.totalOwedToMe;
-  const totalSpent = transactions.reduce(
-    (sum, tx) => sum + getEffectiveTransactionAmount(tx),
-    0
-  );
 
   const sortedTx = [...transactions].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -55,81 +50,56 @@ export function Ledger({
   return (
     <div className="space-y-4">
       {/* Section Header */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-zinc-400" strokeWidth={2.5} />
-          <h2 className="text-lg font-extrabold tracking-tight">Recent Ledger</h2>
+          <BookOpen className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+          <h2 className="text-base font-bold tracking-tight text-[#151922]">Transaction Ledger</h2>
           {transactions.length > 0 && (
-            <span className="text-[11px] font-bold text-zinc-500 bg-white/[0.04] px-2 py-0.5 rounded-lg border border-white/[0.06]">
+            <span className="text-xs font-mono font-semibold text-[#697386] bg-white px-2 py-0.5 rounded-lg border border-[#E7EAF0]">
               {transactions.length}
             </span>
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setAddModalOpen(true)}
-          className="text-xs font-extrabold bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 border border-brand-500/25 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-          Add Expense
-        </button>
-      </div>
-
-      {/* Stats Row */}
-      {(transactions.length > 0 || sharedExpenses.length > 0) && (
-        <div className="grid grid-cols-2 gap-2.5 animate-fade-in-up">
-          <div className="glass rounded-xl p-3">
-            <div className="flex items-center gap-1.5 mb-1">
-              <TrendingDown className="w-3.5 h-3.5 text-red-400" strokeWidth={2.5} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                My Spend
-              </span>
-            </div>
-            <p className="text-lg font-extrabold font-mono tabular-nums text-white">
-              ₹{formatCurrencyExact(totalSpent)}
-            </p>
-          </div>
+        <div className="flex items-center gap-2">
+          {onOpenSplitLedger && totalOwedToMe > 0 && (
+            <button
+              type="button"
+              onClick={onOpenSplitLedger}
+              className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <span>Owed to you: ₹{formatCurrencyExact(totalOwedToMe)}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#365FE8]" />
+            </button>
+          )}
           <button
             type="button"
-            onClick={onOpenSplitLedger}
-            className="glass hover:border-brand-500/30 rounded-xl p-3 text-left transition-all group"
+            onClick={() => setAddModalOpen(true)}
+            className="btn-primary text-xs px-3.5 py-2 flex items-center gap-1.5 whitespace-nowrap"
           >
-            <div className="flex items-center justify-between gap-1 mb-1">
-              <span className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-brand-400" strokeWidth={2.5} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                  Owed to Me
-                </span>
-              </span>
-              {onOpenSplitLedger && (
-                <ArrowRight className="w-3 h-3 text-zinc-500 group-hover:text-brand-400 transition-colors" />
-              )}
-            </div>
-            <p className="text-lg font-extrabold font-mono tabular-nums text-brand-400">
-              ₹{formatCurrencyExact(totalOwedToMe)}
-            </p>
+            <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+            Add Expense
           </button>
         </div>
-      )}
+      </div>
 
       {/* Transactions List */}
-      <div className="glass rounded-2xl p-4">
-        <div className="space-y-2.5 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto scrollbar-thin pr-1">
+      <div className="surface-card p-4">
+        <div className="space-y-2.5 max-h-[58vh] lg:max-h-[64vh] overflow-y-auto scrollbar-thin pr-1">
           {sortedTx.length === 0 ? (
-            <div className="text-center py-10 animate-fade-in">
-              <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-3">
-                <Inbox className="w-6 h-6 text-zinc-600" strokeWidth={2} />
+            <div className="text-center py-10">
+              <div className="w-12 h-12 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] flex items-center justify-center mx-auto mb-3">
+                <Inbox className="w-6 h-6 text-[#929BAB]" strokeWidth={2} />
               </div>
-              <p className="text-zinc-500 text-sm font-medium">
+              <p className="text-[#151922] text-sm font-semibold">
                 No transactions yet
               </p>
-              <p className="text-zinc-600 text-xs mt-1">
-                Check out from your cart or tap Add Expense above
+              <p className="text-[#697386] text-xs mt-1">
+                Check out from your cart or click Add Expense above
               </p>
             </div>
           ) : (
-            sortedTx.map((tx, index) => {
+            sortedTx.map((tx) => {
               const catStyle = getCategoryStyle(tx.category);
               const linkedShared = tx.linkedSharedExpenseId
                 ? sharedExpenses.find((e) => e.id === tx.linkedSharedExpenseId)
@@ -143,13 +113,12 @@ export function Ledger({
               return (
                 <div
                   key={tx.id}
-                  style={{ animationDelay: `${index * 30}ms` }}
-                  className={`rounded-xl p-3 border transition-all animate-fade-in-up ${
+                  className={`rounded-xl p-3.5 border transition-colors ${
                     isInactive
-                      ? 'bg-white/[0.015] border-white/[0.03] opacity-75'
+                      ? 'bg-[#F7F8FA] border-[#E7EAF0] opacity-65'
                       : brokeHighlighted
-                      ? 'bg-amber-500/[0.05] border-amber-500/25 hover:border-amber-400/40'
-                      : 'bg-white/[0.03] border-white/[0.04] hover:border-white/[0.08]'
+                      ? 'bg-[#FEF6E7] border-[#F3D8A8]'
+                      : 'bg-[#F7F8FA] border-[#E7EAF0] hover:bg-white'
                   }`}
                 >
                   <div className="flex justify-between items-start gap-2 mb-2.5">
@@ -160,29 +129,29 @@ export function Ledger({
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p
-                            className={`text-sm font-bold truncate ${
-                              isInactive ? 'line-through text-zinc-400' : 'text-white'
+                            className={`text-sm font-semibold truncate ${
+                              isInactive ? 'line-through text-[#697386]' : 'text-[#151922]'
                             }`}
                           >
                             {tx.name}
                           </p>
                           {tx.status === 'cancelled' && (
-                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/25">
+                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FDECEC] text-[#DE5252] border border-[#F6B8B8]">
                               Cancelled
                             </span>
                           )}
                           {tx.status === 'refunded' && (
-                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
                               Refunded
                             </span>
                           )}
                           {brokeHighlighted && (
-                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/35">
+                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-white text-[#9E6614] border border-[#F3D8A8]">
                               Watched
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
+                        <p className="text-xs text-[#697386] mt-0.5">
                           {new Date(tx.timestamp).toLocaleDateString('en-IN', {
                             month: 'short',
                             day: 'numeric',
@@ -195,8 +164,8 @@ export function Ledger({
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <p
-                        className={`text-sm font-extrabold font-mono tabular-nums mr-1 ${
-                          isInactive ? 'text-zinc-500 line-through' : 'text-red-400'
+                        className={`text-sm font-bold font-mono tabular-nums mr-1 ${
+                          isInactive ? 'text-[#929BAB] line-through' : 'text-[#151922]'
                         }`}
                       >
                         -₹{formatCurrencyExact(isInactive ? tx.amount : effectiveAmt)}
@@ -208,18 +177,18 @@ export function Ledger({
                             onClick={() => refundTransaction(tx.id)}
                             aria-label={`Mark transaction ${tx.name} refunded`}
                             title="Mark refunded (excludes from budget & price trends)"
-                            className="text-zinc-600 hover:text-amber-400 transition-colors p-1 rounded-md hover:bg-amber-500/10"
+                            className="text-[#697386] hover:text-[#9E6614] transition-colors p-1 rounded-md hover:bg-[#FEF6E7]"
                           >
-                            <RotateCcw className="w-3.5 h-3.5" strokeWidth={2.3} />
+                            <RotateCcw className="w-3.5 h-3.5" strokeWidth={2.2} />
                           </button>
                           <button
                             type="button"
                             onClick={() => cancelTransaction(tx.id)}
                             aria-label={`Cancel transaction ${tx.name}`}
                             title="Cancel transaction"
-                            className="text-zinc-600 hover:text-orange-400 transition-colors p-1 rounded-md hover:bg-orange-500/10"
+                            className="text-[#697386] hover:text-[#9E6614] transition-colors p-1 rounded-md hover:bg-[#FEF6E7]"
                           >
-                            <Ban className="w-3.5 h-3.5" strokeWidth={2.3} />
+                            <Ban className="w-3.5 h-3.5" strokeWidth={2.2} />
                           </button>
                         </>
                       )}
@@ -228,18 +197,18 @@ export function Ledger({
                         onClick={() => removeTransaction(tx.id)}
                         aria-label={`Delete transaction ${tx.name}`}
                         title="Delete transaction"
-                        className="text-zinc-600 hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-500/10"
+                        className="text-[#697386] hover:text-[#DE5252] transition-colors p-1 rounded-md hover:bg-[#FDECEC]"
                       >
-                        <Trash2 className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        <Trash2 className="w-3.5 h-3.5" strokeWidth={2.2} />
                       </button>
                     </div>
                   </div>
 
                   {/* Bottom Row: Category, Classification & Split */}
-                  <div className="flex flex-wrap justify-between items-center gap-2 mt-2 pt-2.5 border-t border-white/[0.04]">
+                  <div className="flex flex-wrap justify-between items-center gap-2 mt-2 pt-2.5 border-t border-[#E7EAF0]">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border} flex items-center gap-1.5`}
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border} flex items-center gap-1.5`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${catStyle.dot}`}
@@ -260,12 +229,12 @@ export function Ledger({
                           title={`${classifiedInfo.reason} (${
                             classifiedInfo.classificationSource === 'user' ? 'User confirmed' : 'Auto-predicted'
                           })`}
-                          className={`text-[10px] font-bold px-2 py-1 rounded-md border bg-ink-950/90 outline-none cursor-pointer ${
+                          className={`text-[11px] font-semibold px-2 py-1 rounded-md border bg-white outline-none cursor-pointer ${
                             classifiedInfo.classification === 'essential'
-                              ? 'text-brand-300 border-brand-500/30'
+                              ? 'text-[#15966B] border-[#B7E4D3]'
                               : classifiedInfo.classification === 'impulsive'
-                              ? 'text-rose-300 border-rose-500/35'
-                              : 'text-amber-300 border-amber-500/30'
+                              ? 'text-[#DE5252] border-[#F6B8B8]'
+                              : 'text-[#9E6614] border-[#F3D8A8]'
                           }`}
                         >
                           <option value="essential">
@@ -285,23 +254,23 @@ export function Ledger({
                       <button
                         type="button"
                         onClick={onOpenSplitLedger}
-                        className="text-[11px] font-bold text-brand-400 bg-brand-500/10 hover:bg-brand-500/15 border border-brand-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors"
+                        className="text-xs font-semibold text-[#365FE8] bg-[#EDF2FF] hover:bg-[#DFE8FF] border border-[#D4E0FF] px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors whitespace-nowrap"
                       >
-                        <Split className="w-3 h-3" strokeWidth={2.5} />
+                        <Split className="w-3 h-3" strokeWidth={2.2} />
                         Split ({linkedShared.participants.length} ppl)
                       </button>
                     ) : !isInactive ? (
                       <button
                         type="button"
                         onClick={() => setConvertTx(tx)}
-                        className="text-[11px] font-bold text-zinc-400 hover:text-brand-400 transition-colors flex items-center gap-1"
+                        className="text-xs font-semibold text-[#697386] hover:text-[#365FE8] transition-colors flex items-center gap-1 whitespace-nowrap"
                       >
-                        <Users className="w-3 h-3" strokeWidth={2.5} />
+                        <Users className="w-3 h-3" strokeWidth={2.2} />
                         Split bill
                       </button>
                     ) : (
-                      <span className="text-[10px] font-semibold text-zinc-500">
-                        Excluded from budget & trends
+                      <span className="text-[11px] font-medium text-[#929BAB]">
+                        Excluded from budget &amp; trends
                       </span>
                     )}
                   </div>

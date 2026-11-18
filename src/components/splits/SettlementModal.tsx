@@ -57,7 +57,6 @@ export function SettlementModal({
     const firstPerson = defaultPersonId || people[0]?.id || '';
     setSelectedPersonId(firstPerson);
 
-    // Choose smart default direction based on outstanding balances if not explicitly forced
     let nextDir = defaultDirection;
     if (firstPerson && !defaultAmount && !defaultExpenseId) {
       const ps = ledger.personSummaries[firstPerson];
@@ -96,7 +95,6 @@ export function SettlementModal({
   const selectedPerson = people.find((p) => p.id === selectedPersonId);
   const personSummary = selectedPersonId ? ledger.personSummaries[selectedPersonId] : undefined;
 
-  // Unsettled expenses in this direction
   const candidateExpenses = (personSummary?.transactions ?? []).filter((tx) => {
     if (tx.remainingOwed <= 0) return false;
     return direction === 'i_pay' ? tx.direction === 'i_owe' : tx.direction === 'owed_to_me';
@@ -175,22 +173,22 @@ export function SettlementModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#151922]/40 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="settlement-modal-title"
     >
-      <div className="w-full sm:max-w-md max-h-[90vh] overflow-y-auto scrollbar-thin glass-strong border border-white/10 rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl animate-slide-up">
+      <div className="w-full sm:max-w-md max-h-[90vh] overflow-y-auto scrollbar-thin bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl p-5 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/15 border border-brand-500/25 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 text-[#15966B]" strokeWidth={2.2} />
             </div>
             <div>
-              <h3 id="settlement-modal-title" className="text-base font-extrabold text-white">
+              <h3 id="settlement-modal-title" className="text-base font-bold text-[#151922]">
                 Record Repayment
               </h3>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-xs text-[#697386]">
                 Full or partial settlement (preserves history)
               </p>
             </div>
@@ -199,47 +197,47 @@ export function SettlementModal({
             type="button"
             onClick={onClose}
             aria-label="Close settlement modal"
-            className="w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center text-zinc-400 hover:text-white"
+            className="w-8 h-8 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
           >
-            <X className="w-4 h-4" strokeWidth={2.5} />
+            <X className="w-4 h-4" strokeWidth={2.2} />
           </button>
         </div>
 
         {people.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-sm text-zinc-400 font-medium">
+            <p className="text-sm text-[#697386] font-medium">
               Add a person and a shared expense first to record repayments.
             </p>
           </div>
         ) : confirming ? (
-          <div className="space-y-4 animate-scale-in">
-            <div className="bg-ink-900 border border-brand-500/30 rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-extrabold uppercase tracking-wider text-brand-400">
+          <div className="space-y-4">
+            <div className="bg-[#E8F7F1] border border-[#B7E4D3] rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#15966B]">
                 Confirm Repayment
               </p>
-              <div className="flex items-center justify-center gap-3 py-2 text-sm font-extrabold text-white">
-                <span className="px-3 py-1.5 rounded-lg bg-white/[0.06]">{payerLabel}</span>
-                <ArrowRight className="w-4 h-4 text-brand-400" />
-                <span className="px-3 py-1.5 rounded-lg bg-white/[0.06]">{receiverLabel}</span>
+              <div className="flex items-center justify-center gap-3 py-2 text-sm font-bold text-[#151922]">
+                <span className="px-3 py-1.5 rounded-lg bg-white border border-[#E7EAF0]">{payerLabel}</span>
+                <ArrowRight className="w-4 h-4 text-[#15966B]" />
+                <span className="px-3 py-1.5 rounded-lg bg-white border border-[#E7EAF0]">{receiverLabel}</span>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-extrabold font-mono text-brand-400 tabular-nums">
+                <p className="text-2xl font-bold font-mono text-[#15966B] tabular-nums">
                   ₹{formatCurrencyExact(amountNum)}
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-xs text-[#697386] mt-1">
                   Outstanding balance will update from{' '}
-                  <span className="font-mono font-bold text-white">
+                  <span className="font-mono font-bold text-[#151922]">
                     ₹{formatCurrencyExact(maxOutstanding)}
                   </span>{' '}
                   to{' '}
-                  <span className="font-mono font-bold text-brand-400">
+                  <span className="font-mono font-bold text-[#15966B]">
                     ₹{formatCurrencyExact(remainingAfter)}
                   </span>
                   .
                 </p>
               </div>
               {note.trim() && (
-                <p className="text-[11px] text-zinc-400 text-center">Note: {note.trim()}</p>
+                <p className="text-xs text-[#697386] text-center">Note: {note.trim()}</p>
               )}
             </div>
 
@@ -247,16 +245,16 @@ export function SettlementModal({
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="flex-1 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 py-3 rounded-xl text-sm font-bold"
+                className="btn-secondary flex-1 py-3 text-sm"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleConfirmSave}
-                className="flex-[2] bg-brand-500 hover:bg-brand-400 text-ink-950 py-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-2"
+                className="btn-primary flex-[2] py-3 text-sm flex items-center justify-center gap-2"
               >
-                <Check className="w-4 h-4" strokeWidth={3} />
+                <Check className="w-4 h-4" strokeWidth={2.5} />
                 Confirm Payment
               </button>
             </div>
@@ -267,7 +265,7 @@ export function SettlementModal({
             <div>
               <label
                 htmlFor="settlement-person-select"
-                className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5"
+                className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
               >
                 Person
               </label>
@@ -275,7 +273,7 @@ export function SettlementModal({
                 id="settlement-person-select"
                 value={selectedPersonId}
                 onChange={(e) => handlePersonOrDirectionChange(e.target.value, direction)}
-                className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-brand-500/50"
+                className="input-field w-full px-3.5 py-2.5 text-sm"
               >
                 {people.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -287,7 +285,7 @@ export function SettlementModal({
 
             {/* Who Paid Whom */}
             <div>
-              <span className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5">
                 Who Paid Whom
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -295,10 +293,10 @@ export function SettlementModal({
                   type="button"
                   onClick={() => handlePersonOrDirectionChange(selectedPersonId, 'i_pay')}
                   aria-pressed={direction === 'i_pay'}
-                  className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-colors ${
                     direction === 'i_pay'
-                      ? 'bg-red-500/15 text-red-300 border-red-500/35'
-                      : 'bg-ink-900 text-zinc-400 border-white/[0.06]'
+                      ? 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
+                      : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
                   }`}
                 >
                   You → {selectedPerson?.name ?? 'Person'}
@@ -307,18 +305,18 @@ export function SettlementModal({
                   type="button"
                   onClick={() => handlePersonOrDirectionChange(selectedPersonId, 'they_pay')}
                   aria-pressed={direction === 'they_pay'}
-                  className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all ${
+                  className={`py-2.5 px-3 rounded-xl text-xs font-semibold border transition-colors ${
                     direction === 'they_pay'
-                      ? 'bg-brand-500/15 text-brand-300 border-brand-500/35'
-                      : 'bg-ink-900 text-zinc-400 border-white/[0.06]'
+                      ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                      : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
                   }`}
                 >
                   {selectedPerson?.name ?? 'Person'} → You
                 </button>
               </div>
-              <p className="text-[11px] text-zinc-400 mt-1.5">
+              <p className="text-xs text-[#697386] mt-1.5">
                 Outstanding in this direction:{' '}
-                <span className="font-mono font-bold text-white">
+                <span className="font-mono font-bold text-[#151922]">
                   ₹{formatCurrencyExact(maxOutstanding)}
                 </span>
               </p>
@@ -329,7 +327,7 @@ export function SettlementModal({
               <div>
                 <label
                   htmlFor="settlement-expense-select"
-                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
                 >
                   Apply To Expense
                 </label>
@@ -346,7 +344,7 @@ export function SettlementModal({
                       setAmountInput(maxOutstanding > 0 ? String(maxOutstanding) : '');
                     }
                   }}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-brand-500/50"
+                  className="input-field w-full px-3.5 py-2.5 text-sm"
                 >
                   <option value="">General balance (oldest unsettled first)</option>
                   {candidateExpenses.map((tx) => (
@@ -363,7 +361,7 @@ export function SettlementModal({
               <div className="flex items-center justify-between mb-1.5">
                 <label
                   htmlFor="settlement-amount-input"
-                  className="text-[11px] font-bold uppercase tracking-wider text-zinc-400"
+                  className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]"
                 >
                   Repayment Amount
                 </label>
@@ -374,14 +372,14 @@ export function SettlementModal({
                       onClick={() =>
                         setAmountInput(String(roundCurrency(maxOutstanding / 2)))
                       }
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-zinc-300"
+                      className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386]"
                     >
                       50%
                     </button>
                     <button
                       type="button"
                       onClick={() => setAmountInput(String(maxOutstanding))}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded bg-brand-500/15 hover:bg-brand-500/25 text-brand-400"
+                      className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8]"
                     >
                       Full (₹{formatCurrencyExact(maxOutstanding)})
                     </button>
@@ -389,7 +387,7 @@ export function SettlementModal({
                 )}
               </div>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-zinc-500">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-[#697386]">
                   ₹
                 </span>
                 <input
@@ -404,7 +402,7 @@ export function SettlementModal({
                     setError(null);
                   }}
                   placeholder="0.00"
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl pl-8 pr-3.5 py-2.5 text-sm font-mono font-bold text-white outline-none focus:border-brand-500/50"
+                  className="input-field w-full pl-8 pr-3.5 py-2.5 text-sm font-mono font-bold"
                 />
               </div>
             </div>
@@ -414,7 +412,7 @@ export function SettlementModal({
               <div>
                 <label
                   htmlFor="settlement-date-input"
-                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
                 >
                   Date
                 </label>
@@ -424,13 +422,13 @@ export function SettlementModal({
                   required
                   value={dateInput}
                   onChange={(e) => setDateInput(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500/50"
+                  className="input-field w-full px-3 py-2 text-xs"
                 />
               </div>
               <div>
                 <label
                   htmlFor="settlement-note-input"
-                  className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5"
+                  className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
                 >
                   Note (optional)
                 </label>
@@ -440,7 +438,7 @@ export function SettlementModal({
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="UPI, Cash, etc."
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500/50 placeholder:text-zinc-600"
+                  className="input-field w-full px-3 py-2 text-xs"
                 />
               </div>
             </div>
@@ -448,7 +446,7 @@ export function SettlementModal({
             {error && (
               <div
                 role="alert"
-                className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2"
+                className="flex items-center gap-2 text-xs text-[#DE5252] bg-[#FDECEC] border border-[#F6B8B8] rounded-xl px-3 py-2"
               >
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
@@ -458,7 +456,7 @@ export function SettlementModal({
             <button
               type="submit"
               disabled={maxOutstanding <= 0}
-              className="w-full bg-brand-500 hover:bg-brand-400 disabled:bg-white/[0.05] disabled:text-zinc-600 text-ink-950 py-3 rounded-xl text-sm font-extrabold transition-all disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3 text-sm"
             >
               Review Repayment
             </button>

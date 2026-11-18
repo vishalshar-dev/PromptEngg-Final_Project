@@ -22,8 +22,8 @@ const SIZE_CLASSES: Record<NonNullable<ProductVisualProps['size']>, string> = {
 const ICON_SIZE_CLASSES: Record<NonNullable<ProductVisualProps['size']>, string> = {
   xs: 'w-4 h-4',
   sm: 'w-5 h-5',
-  md: 'w-8 h-8',
-  lg: 'w-12 h-12',
+  md: 'w-7 h-7',
+  lg: 'w-11 h-11',
 };
 
 export function inferIconKeyForCategory(category: string): string {
@@ -68,7 +68,7 @@ export function ProductVisual({
 
   return (
     <div
-      className={`relative overflow-hidden border ${style.border} bg-gradient-to-br ${style.gradient} flex items-center justify-center flex-shrink-0 ${SIZE_CLASSES[size]} ${className}`}
+      className={`relative overflow-hidden border border-[#E7EAF0] bg-gradient-to-br ${style.gradient} flex items-center justify-center flex-shrink-0 ${SIZE_CLASSES[size]} ${className}`}
     >
       {showImage ? (
         <>
@@ -77,13 +77,13 @@ export function ProductVisual({
             alt={name}
             referrerPolicy="no-referrer"
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/65 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#151922]/15 via-transparent to-transparent pointer-events-none" />
           <div
             className={`absolute bottom-1.5 right-1.5 ${
               size === 'xs' || size === 'sm' ? 'hidden' : 'flex'
-            } w-6 h-6 rounded-lg bg-ink-950/80 backdrop-blur-sm border border-white/10 items-center justify-center ${style.text}`}
+            } w-6 h-6 rounded-lg bg-white/95 border border-[#E7EAF0] shadow-xs items-center justify-center ${style.text}`}
           >
             <CategoryIcon iconKey={resolvedIconKey} className="w-3.5 h-3.5" strokeWidth={2.2} />
           </div>
@@ -91,17 +91,14 @@ export function ProductVisual({
       ) : (
         <div className="relative w-full h-full flex items-center justify-center">
           <div
-            className={`absolute inset-2 rounded-full opacity-20 blur-md ${style.dot}`}
-          />
-          <div
-            className={`relative flex items-center justify-center rounded-xl bg-ink-950/40 border border-white/[0.06] ${
+            className={`relative flex items-center justify-center rounded-xl bg-white border border-[#E7EAF0] shadow-xs ${
               size === 'xs'
                 ? 'w-7 h-7'
                 : size === 'sm'
                 ? 'w-9 h-9'
                 : size === 'md'
-                ? 'w-14 h-14'
-                : 'w-20 h-20'
+                ? 'w-12 h-12'
+                : 'w-16 h-16'
             } ${style.text}`}
           >
             <CategoryIcon

@@ -112,19 +112,21 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-xl max-h-[90vh] flex flex-col glass-strong border border-white/10 rounded-t-3xl sm:rounded-2xl shadow-2xl animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-xl max-h-[90vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7EAF0]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/15 border border-brand-500/30 flex items-center justify-center text-brand-400">
-              <SlidersHorizontal className="w-4 h-4" strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+              <SlidersHorizontal className="w-4 h-4" strokeWidth={2.2} />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Manage Categories & Subcategories</h3>
-              <p className="text-[11px] text-zinc-500">
+              <h3 className="text-base font-bold text-[#151922]">
+                Manage Categories &amp; Subcategories
+              </h3>
+              <p className="text-xs text-[#697386]">
                 Add categories, edit subcategories, customize icons, reorder, or safely reassign
               </p>
             </div>
@@ -133,7 +135,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
             type="button"
             onClick={onClose}
             aria-label="Close category manager"
-            className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-zinc-400 hover:text-white"
+            className="w-8 h-8 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#697386] hover:text-[#151922]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -144,9 +146,9 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
           {/* Create Category Form */}
           <form
             onSubmit={handleAdd}
-            className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 space-y-3"
+            className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-2xl p-4 space-y-3"
           >
-            <p className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">
+            <p className="text-xs font-bold text-[#151922]">
               Add New Category
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -156,7 +158,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                 aria-label="New category name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="bg-ink-900 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-brand-500/40 placeholder:text-zinc-600"
+                className="input-field"
               />
               <input
                 type="url"
@@ -164,7 +166,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                 aria-label="Category image URL"
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
-                className="bg-ink-900 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-brand-500/40 placeholder:text-zinc-600"
+                className="input-field"
               />
             </div>
 
@@ -175,12 +177,12 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                 aria-label="New category subcategories"
                 value={newSubcategoriesText}
                 onChange={(e) => setNewSubcategoriesText(e.target.value)}
-                className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-brand-500/40 placeholder:text-zinc-600"
+                className="input-field text-xs"
               />
             </div>
 
             <div className="space-y-2">
-              <p className="text-[11px] font-bold text-zinc-500">Select Icon</p>
+              <p className="text-xs font-medium text-[#697386]">Select Icon</p>
               <div className="flex flex-wrap gap-1.5">
                 {AVAILABLE_ICON_KEYS.slice(0, 14).map((key) => (
                   <button
@@ -188,10 +190,10 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                     type="button"
                     aria-label={`Icon ${key}`}
                     onClick={() => setNewIconKey(key)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors border ${
                       newIconKey === key
-                        ? 'bg-brand-500/20 text-brand-400 border border-brand-500/40'
-                        : 'bg-white/[0.04] text-zinc-400 border border-white/[0.06] hover:text-white'
+                        ? 'bg-[#EDF2FF] text-[#365FE8] border-[#365FE8]'
+                        : 'bg-white text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
                     }`}
                   >
                     <CategoryIcon iconKey={key} className="w-4 h-4" />
@@ -202,7 +204,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
 
             <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] font-bold text-zinc-500 mr-1">Accent:</span>
+                <span className="text-xs font-medium text-[#697386] mr-1">Accent:</span>
                 {ACCENT_OPTIONS.slice(0, 8).map((acc) => {
                   const st = getCategoryStyle('', acc);
                   return (
@@ -212,7 +214,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                       aria-label={`Accent ${acc}`}
                       onClick={() => setNewAccent(acc)}
                       className={`w-5 h-5 rounded-full ${st.dot} transition-transform ${
-                        newAccent === acc ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'
+                        newAccent === acc ? 'ring-2 ring-offset-2 ring-[#365FE8] scale-110' : 'opacity-70 hover:opacity-100'
                       }`}
                     />
                   );
@@ -221,17 +223,17 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
               <button
                 type="submit"
                 disabled={!newName.trim()}
-                className="bg-brand-500 hover:bg-brand-400 disabled:bg-white/[0.05] disabled:text-zinc-600 text-ink-950 px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all"
+                className="btn-primary py-2 px-4 text-xs disabled:bg-[#E7EAF0] disabled:text-[#929BAB]"
               >
-                <Plus className="w-3.5 h-3.5" strokeWidth={3} />
+                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
                 Add Category
               </button>
             </div>
           </form>
 
           {/* Existing Categories List */}
-          <div className="space-y-2">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-zinc-400">
+          <div className="space-y-2.5">
+            <p className="text-xs font-semibold text-[#697386]">
               Configured Categories ({categoryConfigs.length})
             </p>
             {categoryConfigs.map((cat, idx) => {
@@ -243,7 +245,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
               return (
                 <div
                   key={cat.id}
-                  className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 space-y-2.5"
+                  className="bg-white border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5 shadow-xs"
                 >
                   {isEditing ? (
                     <div className="space-y-2.5">
@@ -253,14 +255,14 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
                           aria-label={`Rename ${cat.name}`}
-                          className="bg-ink-900 border border-brand-500/40 rounded-lg px-3 py-2 text-sm text-white outline-none"
+                          className="input-field py-2"
                         />
                         <input
                           type="url"
                           placeholder="Image URL (optional)"
                           value={editImageUrl}
                           onChange={(e) => setEditImageUrl(e.target.value)}
-                          className="bg-ink-900 border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white outline-none"
+                          className="input-field py-2"
                         />
                       </div>
                       <input
@@ -269,7 +271,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                         aria-label={`Subcategories for ${cat.name}`}
                         value={editSubcategoriesText}
                         onChange={(e) => setEditSubcategoriesText(e.target.value)}
-                        className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-white outline-none"
+                        className="input-field py-2 text-xs"
                       />
                       <div className="flex flex-wrap gap-1.5">
                         {AVAILABLE_ICON_KEYS.slice(0, 14).map((key) => (
@@ -277,10 +279,10 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             key={key}
                             type="button"
                             onClick={() => setEditIconKey(key)}
-                            className={`w-7 h-7 rounded-md flex items-center justify-center ${
+                            className={`w-7 h-7 rounded-md flex items-center justify-center border ${
                               editIconKey === key
-                                ? 'bg-brand-500/20 text-brand-400 border border-brand-500/40'
-                                : 'bg-white/[0.04] text-zinc-400'
+                                ? 'bg-[#EDF2FF] text-[#365FE8] border-[#365FE8]'
+                                : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
                             }`}
                           >
                             <CategoryIcon iconKey={key} className="w-3.5 h-3.5" />
@@ -297,7 +299,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                                 type="button"
                                 onClick={() => setEditAccent(acc)}
                                 className={`w-4 h-4 rounded-full ${st.dot} ${
-                                  editAccent === acc ? 'ring-2 ring-white' : 'opacity-60'
+                                  editAccent === acc ? 'ring-2 ring-offset-1 ring-[#365FE8]' : 'opacity-65'
                                 }`}
                               />
                             );
@@ -307,16 +309,16 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                           <button
                             type="button"
                             onClick={() => setEditingId(null)}
-                            className="px-3 py-1.5 rounded-lg bg-white/[0.06] text-xs font-bold text-zinc-400 hover:text-white"
+                            className="btn-secondary py-1.5 px-3 text-xs"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
                             onClick={() => saveEdit(cat)}
-                            className="px-3 py-1.5 rounded-lg bg-brand-500 text-xs font-extrabold text-ink-950 flex items-center gap-1"
+                            className="btn-primary py-1.5 px-3 text-xs"
                           >
-                            <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                            <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                             Save
                           </button>
                         </div>
@@ -333,14 +335,14 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-bold text-white truncate">{cat.name}</p>
+                              <p className="text-sm font-bold text-[#151922] truncate">{cat.name}</p>
                               {cat.isCustom && (
-                                <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-400">
-                                  Custom
+                                <span className="text-xs font-medium text-[#365FE8]">
+                                  · Custom
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-zinc-500 font-mono truncate">
+                            <p className="text-xs text-[#697386] font-mono truncate tabular-nums">
                               {count} {count === 1 ? 'product' : 'products'}
                               {cat.subcategories && cat.subcategories.length > 0
                                 ? ` · ${cat.subcategories.length} subcategories`
@@ -355,7 +357,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             disabled={idx === 0}
                             onClick={() => reorderCategories(idx, idx - 1)}
                             aria-label={`Move ${cat.name} up`}
-                            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 flex items-center justify-center text-zinc-400 hover:text-white"
+                            className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] disabled:opacity-30 border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
                           </button>
@@ -364,7 +366,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             disabled={idx === categoryConfigs.length - 1}
                             onClick={() => reorderCategories(idx, idx + 1)}
                             aria-label={`Move ${cat.name} down`}
-                            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 flex items-center justify-center text-zinc-400 hover:text-white"
+                            className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] disabled:opacity-30 border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
                           </button>
@@ -372,7 +374,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             type="button"
                             onClick={() => startEdit(cat)}
                             aria-label={`Edit ${cat.name}`}
-                            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-brand-400"
+                            className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#EDF2FF] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#365FE8]"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -381,7 +383,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                               type="button"
                               onClick={() => startDelete(cat)}
                               aria-label={`Delete ${cat.name}`}
-                              className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/15 flex items-center justify-center text-zinc-500 hover:text-red-400"
+                              className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#FDECEC] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#DE5252]"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -390,10 +392,10 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                       </div>
 
                       {isDeleting && (
-                        <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-3 space-y-2.5 animate-fade-in">
+                        <div className="bg-[#FDECEC] border border-[#F6B8B8] rounded-lg p-3 space-y-2.5 animate-fade-in">
                           <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-[11px] text-zinc-200 leading-relaxed">
+                            <AlertTriangle className="w-4 h-4 text-[#DE5252] flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-[#151922] leading-relaxed">
                               Delete <strong>{cat.name}</strong>? Historical transactions stay intact.
                               {count > 0 && ` Reassign its ${count} product${count === 1 ? '' : 's'} to:`}
                             </p>
@@ -403,7 +405,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                               aria-label={`Reassign products from ${cat.name}`}
                               value={reassignTarget}
                               onChange={(e) => setReassignTarget(e.target.value)}
-                              className="w-full bg-ink-900 border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+                              className="input-field py-1.5 text-xs"
                             >
                               {categoryConfigs
                                 .filter((c) => c.id !== cat.id)
@@ -418,14 +420,14 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             <button
                               type="button"
                               onClick={() => setDeletingId(null)}
-                              className="px-2.5 py-1 rounded-lg bg-white/[0.06] text-xs font-bold text-zinc-300"
+                              className="btn-secondary py-1 px-3 text-xs"
                             >
                               Cancel
                             </button>
                             <button
                               type="button"
                               onClick={() => confirmDelete(cat)}
-                              className="px-3 py-1 rounded-lg bg-red-500 text-xs font-extrabold text-white"
+                              className="px-3 py-1 rounded-lg bg-[#DE5252] text-xs font-semibold text-white"
                             >
                               Confirm Delete
                             </button>

@@ -57,13 +57,11 @@ export function PriceTrackerDashboard({
     initialSelectedProductId
   );
 
-  // Search, Filter, Sort state
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [trendFilter, setTrendFilter] = useState<ProductTrendFilter>('all');
   const [sortBy, setSortBy] = useState<ProductTrendSort>('latest_purchase');
 
-  // Manual Price Entry modal state
   const [entryOpen, setEntryOpen] = useState(false);
   const [entryName, setEntryName] = useState('');
   const [entryBrand, setEntryBrand] = useState('');
@@ -108,7 +106,6 @@ export function PriceTrackerDashboard({
     [summaries, selectedProductId]
   );
 
-  // Overview KPIs
   const totalTracked = summaries.length;
   const increasingCount = summaries.filter((s) => s.trendDirection === 'increasing').length;
   const decreasingCount = summaries.filter((s) => s.trendDirection === 'decreasing').length;
@@ -125,7 +122,6 @@ export function PriceTrackerDashboard({
 
   const activeTriggeredAlerts = triggeredPriceAlerts.filter((t) => !t.dismissed);
 
-  // Live canonical match preview inside Manual Entry Modal
   const liveMatchPreview = useMemo(() => {
     if (!entryName.trim()) return null;
     const resolved = resolveCanonicalProduct(entryName, items, priceObservations, {
@@ -219,45 +215,25 @@ export function PriceTrackerDashboard({
 
   return (
     <div className="space-y-4">
-      {/* Header Card */}
-      <div className="glass-strong rounded-2xl p-4 sm:p-5 border border-white/[0.08] space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-300 flex-shrink-0">
-              <LineChart className="w-5 h-5" strokeWidth={2.3} />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-white">
-                Price Trend Tracker
-              </h2>
-              <p className="text-[11px] text-zinc-400 font-medium">
-                Personal purchase price analytics synced with Mart, Audit & Ledger
-              </p>
-            </div>
-          </div>
-
+      {/* Compact Controls & Section Tabs */}
+      <div className="surface-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div
+          role="tablist"
+          aria-label="Price Intelligence sections"
+          className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] p-1 rounded-xl gap-1 w-full sm:w-auto"
+        >
           <button
             type="button"
-            onClick={() => openManualModalForProduct(selectedSummary?.productId)}
-            className="px-3.5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-ink-950 text-xs font-extrabold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors self-start sm:self-auto"
-          >
-            <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-            Log Price / Purchase
-          </button>
-        </div>
-
-        {/* Section Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 bg-ink-900/70 p-1 rounded-xl border border-white/[0.05]">
-          <button
-            type="button"
+            role="tab"
+            aria-selected={section === 'overview' && !selectedProductId}
             onClick={() => {
               setSection('overview');
               setSelectedProductId(null);
             }}
-            className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'overview' && !selectedProductId
-                ? 'bg-white/[0.1] text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#365FE8] text-white shadow-xs'
+                : 'text-[#697386] hover:text-[#151922]'
             }`}
           >
             <LineChart className="w-3.5 h-3.5" />
@@ -266,14 +242,16 @@ export function PriceTrackerDashboard({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={section === 'categories'}
             onClick={() => {
               setSection('categories');
               setSelectedProductId(null);
             }}
-            className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'categories'
-                ? 'bg-white/[0.1] text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#365FE8] text-white shadow-xs'
+                : 'text-[#697386] hover:text-[#151922]'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -282,14 +260,16 @@ export function PriceTrackerDashboard({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={section === 'alerts'}
             onClick={() => {
               setSection('alerts');
               setSelectedProductId(null);
             }}
-            className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'alerts'
-                ? 'bg-white/[0.1] text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#365FE8] text-white shadow-xs'
+                : 'text-[#697386] hover:text-[#151922]'
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
@@ -297,9 +277,11 @@ export function PriceTrackerDashboard({
             {(priceAlerts.length > 0 || activeTriggeredAlerts.length > 0) && (
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  activeTriggeredAlerts.length > 0
-                    ? 'bg-amber-500/20 text-amber-300'
-                    : 'bg-white/[0.08] text-zinc-300'
+                  section === 'alerts'
+                    ? 'bg-white/20 text-white'
+                    : activeTriggeredAlerts.length > 0
+                      ? 'bg-[#FEF6E7] text-[#9E6614]'
+                      : 'bg-white text-[#697386]'
                 }`}
               >
                 {activeTriggeredAlerts.length > 0
@@ -309,13 +291,22 @@ export function PriceTrackerDashboard({
             )}
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => openManualModalForProduct(selectedSummary?.productId)}
+          className="btn-primary px-3.5 py-2 text-xs flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+          Log Price / Purchase
+        </button>
       </div>
 
       {/* Feedback Banner */}
       {entryFlash && (
         <div
           role="status"
-          className="glass rounded-xl px-4 py-2.5 border border-brand-500/30 bg-brand-500/10 flex items-center gap-2 text-xs font-bold text-brand-300 animate-fade-in"
+          className="rounded-xl px-4 py-2.5 border border-[#B7E4D3] bg-[#E8F7F1] flex items-center gap-2 text-xs font-semibold text-[#15966B]"
         >
           <Check className="w-4 h-4 flex-shrink-0" strokeWidth={2.5} />
           <span>{entryFlash}</span>
@@ -324,15 +315,15 @@ export function PriceTrackerDashboard({
 
       {/* Triggered Alert Toast Banner on Overview */}
       {section === 'overview' && activeTriggeredAlerts.length > 0 && (
-        <div className="glass rounded-2xl p-3.5 border border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="rounded-2xl p-3.5 border border-[#F3D8A8] bg-[#FEF6E7] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-start gap-2.5">
-            <BellRing className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <BellRing className="w-4 h-4 text-[#C7851F] mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs font-extrabold text-amber-300">
+              <p className="text-xs font-bold text-[#9E6614]">
                 {activeTriggeredAlerts[0].message}
               </p>
               {activeTriggeredAlerts.length > 1 && (
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[11px] text-[#697386]">
                   +{activeTriggeredAlerts.length - 1} more alert notification(s)
                 </p>
               )}
@@ -342,7 +333,7 @@ export function PriceTrackerDashboard({
             <button
               type="button"
               onClick={() => setSection('alerts')}
-              className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-200 text-[11px] font-bold hover:bg-amber-500/30"
+              className="px-2.5 py-1 rounded-lg bg-white border border-[#F3D8A8] text-[#9E6614] text-xs font-semibold hover:bg-[#FFF9EE] whitespace-nowrap"
             >
               Manage Alerts
             </button>
@@ -350,7 +341,7 @@ export function PriceTrackerDashboard({
               type="button"
               onClick={() => dismissTriggeredAlert(activeTriggeredAlerts[0].id)}
               aria-label="Dismiss triggered alert"
-              className="p-1 text-zinc-400 hover:text-white"
+              className="p-1 text-[#697386] hover:text-[#151922]"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -360,15 +351,15 @@ export function PriceTrackerDashboard({
 
       {/* PRODUCT DETAILS VIEW */}
       {selectedSummary && section === 'overview' && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="glass rounded-2xl p-4 sm:p-5 border border-white/[0.08] space-y-4">
+        <div className="space-y-4">
+          <div className="surface-card p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   type="button"
                   onClick={() => setSelectedProductId(null)}
                   aria-label="Back to price dashboard"
-                  className="w-9 h-9 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-zinc-300 hover:text-white flex-shrink-0"
+                  className="w-9 h-9 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] flex-shrink-0"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
@@ -387,21 +378,21 @@ export function PriceTrackerDashboard({
                         size="sm"
                       />
                       <div className="min-w-0">
-                        <h3 className="text-base sm:text-lg font-extrabold text-white truncate">
+                        <h3 className="text-base sm:text-lg font-bold text-[#151922] truncate">
                           {selectedSummary.productName}
                         </h3>
-                        <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                          <span className={`font-bold ${catStyle.text}`}>
+                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                          <span className={`font-semibold ${catStyle.text}`}>
                             {selectedSummary.category}
                           </span>
-                          <span className="text-zinc-600">·</span>
-                          <span className="font-mono text-zinc-400">
+                          <span className="text-[#929BAB]">·</span>
+                          <span className="font-mono text-[#697386]">
                             Normalized per {selectedSummary.unitOfMeasurement}
                           </span>
                           {selectedSummary.brands.length > 0 && (
                             <>
-                              <span className="text-zinc-600">·</span>
-                              <span className="text-zinc-300">
+                              <span className="text-[#929BAB]">·</span>
+                              <span className="text-[#151922] font-medium">
                                 {selectedSummary.brands.join(', ')}
                               </span>
                             </>
@@ -417,7 +408,7 @@ export function PriceTrackerDashboard({
                 <button
                   type="button"
                   onClick={() => openManualModalForProduct(selectedSummary.productId)}
-                  className="px-3 py-2 rounded-xl bg-brand-500/15 hover:bg-brand-500/25 border border-brand-500/30 text-brand-300 text-xs font-extrabold flex items-center gap-1.5"
+                  className="btn-primary px-3 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Purchase
@@ -425,7 +416,7 @@ export function PriceTrackerDashboard({
                 <button
                   type="button"
                   onClick={() => setSection('alerts')}
-                  className="px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-200 text-xs font-bold flex items-center gap-1.5"
+                  className="btn-secondary px-3 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
                 >
                   <Bell className="w-3.5 h-3.5" />
                   Set Alert
@@ -435,38 +426,38 @@ export function PriceTrackerDashboard({
 
             {/* Key Product Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-              <div className="bg-ink-900/70 rounded-xl p-3 border border-white/[0.05]">
-                <p className="text-[9px] font-bold uppercase text-zinc-500">Latest</p>
-                <p className="text-base font-extrabold font-mono text-white mt-0.5">
+              <div className="surface-subtle p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Latest</p>
+                <p className="text-base font-bold font-mono text-[#151922] mt-0.5 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.latestPrice)}
-                  <span className="text-[10px] text-zinc-500">
+                  <span className="text-[11px] text-[#697386]">
                     /{selectedSummary.unitOfMeasurement}
                   </span>
                 </p>
               </div>
-              <div className="bg-ink-900/70 rounded-xl p-3 border border-white/[0.05]">
-                <p className="text-[9px] font-bold uppercase text-zinc-500">Average</p>
-                <p className="text-base font-extrabold font-mono text-zinc-200 mt-0.5">
+              <div className="surface-subtle p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Average</p>
+                <p className="text-base font-bold font-mono text-[#151922] mt-0.5 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.averagePrice)}
                 </p>
               </div>
-              <div className="bg-ink-900/70 rounded-xl p-3 border border-white/[0.05]">
-                <p className="text-[9px] font-bold uppercase text-zinc-500">Highest</p>
-                <p className="text-base font-extrabold font-mono text-orange-400 mt-0.5">
+              <div className="surface-subtle p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Highest</p>
+                <p className="text-base font-bold font-mono text-[#9E6614] mt-0.5 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.highestPrice)}
                 </p>
               </div>
-              <div className="bg-ink-900/70 rounded-xl p-3 border border-white/[0.05]">
-                <p className="text-[9px] font-bold uppercase text-zinc-500">Lowest</p>
-                <p className="text-base font-extrabold font-mono text-brand-400 mt-0.5">
+              <div className="surface-subtle p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Lowest</p>
+                <p className="text-base font-bold font-mono text-[#15966B] mt-0.5 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.lowestPrice)}
                 </p>
               </div>
-              <div className="bg-ink-900/70 rounded-xl p-3 border border-white/[0.05] col-span-2 sm:col-span-1">
-                <p className="text-[9px] font-bold uppercase text-zinc-500">Purchases</p>
-                <p className="text-base font-extrabold font-mono text-sky-300 mt-0.5">
+              <div className="surface-subtle p-3 col-span-2 sm:col-span-1">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Purchases</p>
+                <p className="text-base font-bold font-mono text-[#365FE8] mt-0.5 tabular-nums">
                   {selectedSummary.purchaseCount}
-                  <span className="text-[10px] text-zinc-500 ml-1">
+                  <span className="text-[11px] text-[#697386] ml-1">
                     (₹{formatCurrencyExact(selectedSummary.totalSpend)})
                   </span>
                 </p>
@@ -493,53 +484,53 @@ export function PriceTrackerDashboard({
       {section === 'overview' && !selectedSummary && (
         <div className="space-y-4">
           {/* Summary KPI Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-            <div className="glass rounded-xl p-3.5 border border-white/[0.06]">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="surface-card p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                 Tracked Products
               </p>
-              <p className="text-xl font-extrabold font-mono text-white mt-1 tabular-nums">
+              <p className="text-xl font-bold font-mono text-[#151922] mt-1 tabular-nums">
                 {totalTracked}
               </p>
-              <p className="text-[11px] text-zinc-500 mt-0.5">
+              <p className="text-xs text-[#697386] mt-0.5">
                 ₹{formatCurrencyExact(totalTrackedSpend)} tracked spend
               </p>
             </div>
 
-            <div className="glass rounded-xl p-3.5 border border-white/[0.06]">
+            <div className="surface-card p-4">
               <div className="flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-red-400" />
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                <TrendingUp className="w-3.5 h-3.5 text-[#DE5252]" />
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                   Price Increases
                 </p>
               </div>
-              <p className="text-xl font-extrabold font-mono text-red-400 mt-1 tabular-nums">
+              <p className="text-xl font-bold font-mono text-[#DE5252] mt-1 tabular-nums">
                 {increasingCount}
               </p>
-              <p className="text-[11px] text-zinc-500 mt-0.5">Products trending higher</p>
+              <p className="text-xs text-[#697386] mt-0.5">Products trending higher</p>
             </div>
 
-            <div className="glass rounded-xl p-3.5 border border-white/[0.06]">
+            <div className="surface-card p-4">
               <div className="flex items-center gap-1.5">
-                <TrendingDown className="w-3.5 h-3.5 text-brand-400" />
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                <TrendingDown className="w-3.5 h-3.5 text-[#15966B]" />
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                   Price Drops
                 </p>
               </div>
-              <p className="text-xl font-extrabold font-mono text-brand-400 mt-1 tabular-nums">
+              <p className="text-xl font-bold font-mono text-[#15966B] mt-1 tabular-nums">
                 {decreasingCount}
               </p>
-              <p className="text-[11px] text-zinc-500 mt-0.5">Products cheaper than start</p>
+              <p className="text-xs text-[#697386] mt-0.5">Products cheaper than start</p>
             </div>
 
-            <div className="glass rounded-xl p-3.5 border border-white/[0.06]">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+            <div className="surface-card p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                 Latest Purchase
               </p>
-              <p className="text-sm font-extrabold text-white mt-1 truncate">
+              <p className="text-sm font-bold text-[#151922] mt-1.5 truncate">
                 {latestPurchaseSummary ? latestPurchaseSummary.productName : '—'}
               </p>
-              <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
+              <p className="text-xs font-mono text-[#697386] mt-0.5">
                 {latestPurchaseSummary
                   ? `₹${formatCurrencyExact(latestPurchaseSummary.latestPrice)}/${
                       latestPurchaseSummary.unitOfMeasurement
@@ -549,24 +540,23 @@ export function PriceTrackerDashboard({
             </div>
           </div>
 
-          {/* Your Price Insights (strictly gated on real multi-purchase data) */}
           <PriceInsightCard
             insights={insights}
             onSelectProduct={(pid) => setSelectedProductId(pid)}
           />
 
           {/* Search, Filter & Sort Toolbar */}
-          <div className="glass rounded-2xl p-3.5 border border-white/[0.06] space-y-2.5">
+          <div className="surface-card p-4 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
               <div className="md:col-span-5 relative">
-                <Search className="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#929BAB] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   aria-label="Search tracked products or brands"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search product or brand (e.g. Milk, Amul)..."
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-xs text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full pl-9 pr-3 py-2 text-xs"
                 />
               </div>
 
@@ -575,7 +565,7 @@ export function PriceTrackerDashboard({
                   aria-label="Filter by category"
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs font-medium"
                 >
                   <option value="All">All Categories</option>
                   {categoryConfigs.map((c) => (
@@ -591,7 +581,7 @@ export function PriceTrackerDashboard({
                   aria-label="Sort products"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as ProductTrendSort)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs font-medium"
                 >
                   <option value="latest_purchase">Sort: Latest Purchase</option>
                   <option value="highest_increase">Sort: Highest Increase</option>
@@ -616,10 +606,10 @@ export function PriceTrackerDashboard({
                   key={f.id}
                   type="button"
                   onClick={() => setTrendFilter(f.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap ${
                     trendFilter === f.id
-                      ? 'bg-brand-500/15 text-brand-300 border-brand-500/30'
-                      : 'bg-white/[0.03] text-zinc-400 border-white/[0.06] hover:text-white'
+                      ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
+                      : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
                   }`}
                 >
                   {f.label}
@@ -628,32 +618,32 @@ export function PriceTrackerDashboard({
             </div>
           </div>
 
-          {/* Tracked Product Grid or Real Empty State */}
+          {/* Tracked Product Grid or Empty State */}
           {summaries.length === 0 ? (
-            <div className="glass rounded-2xl p-8 sm:p-10 text-center border border-dashed border-white/[0.1] space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mx-auto text-sky-400">
+            <div className="surface-card p-8 sm:p-10 text-center border-dashed border-[#D5DBE6] space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center mx-auto text-[#365FE8]">
                 <Package className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-white">
+                <h3 className="text-base font-bold text-[#151922]">
                   No purchase price records yet
                 </h3>
-                <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto leading-relaxed">
-                  Check out products in Quick Mart, record a scanned receipt in Audit, or log a manual purchase above. Only real purchases appear here — never simulated prices.
+                <p className="text-xs text-[#697386] mt-1 max-w-md mx-auto leading-relaxed">
+                  Check out products in Shopping, record a scanned receipt in Receipt Scanner, or log a manual purchase above. Only real purchases appear here.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => openManualModalForProduct()}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-ink-950 text-xs font-extrabold transition-colors"
+                className="btn-primary inline-flex items-center gap-1.5 px-4 py-2.5 text-xs"
               >
-                <Plus className="w-3.5 h-3.5" strokeWidth={3} />
+                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
                 Log First Purchase
               </button>
             </div>
           ) : filteredSummaries.length === 0 ? (
-            <div className="glass rounded-2xl p-8 text-center space-y-2">
-              <p className="text-sm font-bold text-zinc-300">
+            <div className="surface-card p-8 text-center space-y-2">
+              <p className="text-sm font-semibold text-[#151922]">
                 No tracked products match your current search/filters
               </p>
               <button
@@ -663,13 +653,13 @@ export function PriceTrackerDashboard({
                   setCategoryFilter('All');
                   setTrendFilter('all');
                 }}
-                className="text-xs font-bold text-brand-400 hover:text-brand-300"
+                className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC]"
               >
                 Reset filters
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {filteredSummaries.map((summary) => {
                 const catItem = items.find((i) => i.id === summary.productId);
                 const catCfg = categoryConfigs.find((c) => c.name === summary.category);
@@ -716,27 +706,27 @@ export function PriceTrackerDashboard({
       {entryOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div
-            className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm animate-fade-in"
+            className="fixed inset-0 z-40 bg-[#151922]/40 backdrop-blur-sm"
             onClick={() => setEntryOpen(false)}
           />
           <form
             onSubmit={handleManualSubmit}
-            className="relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto glass-strong border border-white/10 rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl space-y-3.5 animate-slide-up"
+            className="relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl p-5 shadow-xl space-y-3.5"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-extrabold text-white">Log Purchase / Price Entry</h3>
+              <h3 className="text-base font-bold text-[#151922]">Log Purchase / Price Entry</h3>
               <button
                 type="button"
                 onClick={() => setEntryOpen(false)}
                 aria-label="Close modal"
-                className="p-1.5 rounded-lg bg-white/[0.06] text-zinc-400 hover:text-white"
+                className="p-1.5 rounded-lg bg-[#F1F3F6] text-[#697386] hover:text-[#151922]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                 Product Name
               </label>
               <input
@@ -746,7 +736,7 @@ export function PriceTrackerDashboard({
                 placeholder="e.g. Amul Taaza Milk 500ml or Basmati Rice"
                 value={entryName}
                 onChange={(e) => setEntryName(e.target.value)}
-                className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500/40"
+                className="input-field w-full px-3 py-2 text-xs"
               />
               <datalist id="price-tracker-product-suggestions">
                 {items.map((i) => (
@@ -754,7 +744,7 @@ export function PriceTrackerDashboard({
                 ))}
               </datalist>
               {liveMatchPreview && (
-                <p className="text-[11px] text-sky-300 mt-1">
+                <p className="text-[11px] text-[#365FE8] mt-1 font-medium">
                   {liveMatchPreview.resolved.matchedExisting
                     ? `Links to "${liveMatchPreview.resolved.productName}"`
                     : `Tracks as "${liveMatchPreview.resolved.productName}"`}{' '}
@@ -775,7 +765,7 @@ export function PriceTrackerDashboard({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   Brand (Optional)
                 </label>
                 <input
@@ -783,18 +773,18 @@ export function PriceTrackerDashboard({
                   placeholder="e.g. Amul, Fortune"
                   value={entryBrand}
                   onChange={(e) => setEntryBrand(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   Category
                 </label>
                 <select
                   value={entryCategory}
                   onChange={(e) => setEntryCategory(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs"
                 >
                   {categoryConfigs.map((c) => (
                     <option key={c.id} value={c.name}>
@@ -807,7 +797,7 @@ export function PriceTrackerDashboard({
 
             <div className="grid grid-cols-3 gap-2.5">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   Qty Bought
                 </label>
                 <input
@@ -817,12 +807,12 @@ export function PriceTrackerDashboard({
                   required
                   value={entryQty}
                   onChange={(e) => setEntryQty(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   Package Size
                 </label>
                 <input
@@ -831,12 +821,12 @@ export function PriceTrackerDashboard({
                   placeholder="e.g. 500 ml, 1 kg"
                   value={entryPackageSize}
                   onChange={(e) => setEntryPackageSize(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   Total Paid (₹)
                 </label>
                 <input
@@ -847,14 +837,14 @@ export function PriceTrackerDashboard({
                   placeholder="e.g. 60"
                   value={entryTotalPrice}
                   onChange={(e) => setEntryTotalPrice(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   <Calendar className="w-3 h-3 inline mr-1" />
                   Purchase Date
                 </label>
@@ -862,18 +852,18 @@ export function PriceTrackerDashboard({
                   type="date"
                   value={entryDate}
                   onChange={(e) => setEntryDate(e.target.value)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs font-mono text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">
+                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
                   Entry Type
                 </label>
                 <select
                   value={entryKind}
                   onChange={(e) => setEntryKind(e.target.value as PriceEntryKind)}
-                  className="w-full bg-ink-900 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-brand-500/40"
+                  className="input-field w-full px-3 py-2 text-xs"
                 >
                   <option value="actual_purchase">Actual Purchase</option>
                   <option value="manual_estimate">Manual Estimate Only</option>
@@ -882,32 +872,32 @@ export function PriceTrackerDashboard({
             </div>
 
             {entryKind === 'actual_purchase' && (
-              <label className="flex items-center gap-2 text-xs text-zinc-300 bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-2 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-[#151922] bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl px-3 py-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={logExpense}
                   onChange={(e) => setLogExpense(e.target.checked)}
-                  className="rounded accent-brand-500"
+                  className="rounded accent-[#365FE8]"
                 />
-                <span>Also record as expense transaction in Ledger & Budget</span>
+                <span>Also record as expense transaction in Expenses &amp; Budget</span>
               </label>
             )}
 
             {entryError && (
-              <p className="text-xs font-semibold text-red-400">{entryError}</p>
+              <p className="text-xs font-semibold text-[#DE5252]">{entryError}</p>
             )}
 
             <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setEntryOpen(false)}
-                className="px-4 py-2.5 rounded-xl bg-white/[0.06] text-xs font-bold text-zinc-300"
+                className="btn-secondary px-4 py-2 text-xs"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-ink-950 text-xs font-extrabold"
+                className="btn-primary px-4 py-2 text-xs"
               >
                 Save Price Record
               </button>

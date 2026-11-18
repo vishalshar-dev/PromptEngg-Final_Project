@@ -76,7 +76,7 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
     <>
       {expanded && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
+          className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] z-40 animate-fade-in"
           onClick={() => {
             setExpanded(false);
             setConfirmClear(false);
@@ -84,22 +84,20 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
         />
       )}
 
-      {/* Compact Sticky Cart Bar */}
+      {/* Compact Sticky Cart Bar (positioned above 60px mobile bottom nav) */}
       <div
-        className={`fixed bottom-0 md:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-xl ${
+        className={`fixed bottom-[68px] lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 ${
           expanded ? 'z-50' : 'z-40'
-        } md:px-4`}
+        }`}
       >
         <div
-          className={`glass-strong border-t md:border md:rounded-2xl shadow-2xl transition-all duration-300 ${
-            expanded ? 'rounded-t-3xl' : ''
-          } ${
+          className={`bg-white border rounded-2xl shadow-modal transition-all duration-200 ${
             isOverSession
-              ? 'border-red-500/30 glow-red'
+              ? 'border-[#DE5252]'
               : isWarningSession
-              ? 'border-orange-500/20'
-              : 'border-white/[0.08]'
-          } ${hasItems && !isOverSession ? 'glow-brand' : ''}`}
+              ? 'border-[#E5A23B]'
+              : 'border-[#E7EAF0]'
+          }`}
         >
           <div className="px-4 py-3">
             <div className="flex items-center justify-between gap-2.5">
@@ -112,25 +110,25 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                 className="flex items-center gap-3 min-w-0 flex-1"
               >
                 <div
-                  className={`relative w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  className={`relative w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                     hasItems
-                      ? 'bg-brand-500/15 border border-brand-500/30'
-                      : 'bg-white/[0.04] border border-white/[0.06]'
+                      ? 'bg-[#EDF2FF] border-[#365FE8]/25'
+                      : 'bg-[#F7F8FA] border-[#E7EAF0]'
                   }`}
                 >
                   <ShoppingBag
-                    className={`w-4 h-4 ${hasItems ? 'text-brand-400' : 'text-zinc-600'}`}
-                    strokeWidth={2.5}
+                    className={`w-4 h-4 ${hasItems ? 'text-[#365FE8]' : 'text-[#929BAB]'}`}
+                    strokeWidth={2.2}
                   />
                   {hasItems && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-brand-500 text-ink-950 text-[10px] font-extrabold flex items-center justify-center shadow">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-[#365FE8] text-white text-[10px] font-bold flex items-center justify-center shadow-xs tabular-nums">
                       {lines.length}
                     </span>
                   )}
                 </div>
 
                 <div className="text-left min-w-0">
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider truncate">
+                  <p className="text-xs text-[#697386] font-medium truncate">
                     {doneBanner
                       ? 'Recorded to Budget'
                       : hasItems
@@ -138,12 +136,12 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                       : 'Empty Cart'}
                   </p>
                   <p
-                    className={`text-base font-extrabold font-mono tabular-nums leading-tight ${
+                    className={`text-base font-bold font-mono tabular-nums leading-tight ${
                       doneBanner
-                        ? 'text-brand-400'
+                        ? 'text-[#15966B]'
                         : hasItems
-                        ? 'text-white'
-                        : 'text-zinc-600'
+                        ? 'text-[#151922]'
+                        : 'text-[#929BAB]'
                     }`}
                   >
                     {doneBanner ? 'Purchase Saved' : `₹${formatCurrencyExact(totalPrice)}`}
@@ -152,10 +150,10 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
                 {hasItems && (
                   <ChevronUp
-                    className={`w-4 h-4 text-zinc-400 transition-transform ${
+                    className={`w-4 h-4 text-[#697386] transition-transform ${
                       expanded ? 'rotate-180' : ''
                     }`}
-                    strokeWidth={2.5}
+                    strokeWidth={2.2}
                   />
                 )}
               </button>
@@ -167,9 +165,9 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                     type="button"
                     onClick={() => openCheckout(true)}
                     aria-label="Split and checkout cart"
-                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-extrabold bg-white/[0.06] hover:bg-brand-500/15 text-zinc-200 hover:text-brand-400 border border-white/[0.08] whitespace-nowrap transition-all"
+                    className="btn-secondary px-3 py-2 text-xs"
                   >
-                    <Users className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    <Users className="w-3.5 h-3.5 text-[#365FE8]" strokeWidth={2.2} />
                     Split
                   </button>
                 )}
@@ -177,14 +175,14 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                   type="button"
                   onClick={() => openCheckout(false)}
                   disabled={!hasItems}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
                     hasItems
-                      ? 'bg-brand-500 hover:bg-brand-400 text-ink-950 glow-brand'
-                      : 'bg-white/[0.04] text-zinc-600 cursor-not-allowed'
+                      ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
+                      : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'
                   }`}
                 >
                   <span>Checkout</span>
-                  <ArrowRight className="w-3.5 h-3.5" strokeWidth={3} />
+                  <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
                 </button>
               </div>
             </div>
@@ -192,22 +190,22 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
           {/* Expanded Cart Panel */}
           {expanded && hasItems && (
-            <div className="px-4 pb-4 max-h-[56vh] overflow-y-auto scrollbar-thin animate-slide-up">
-              <div className="h-px bg-white/[0.06] mb-3" />
+            <div className="px-4 pb-4 max-h-[52vh] overflow-y-auto scrollbar-thin animate-slide-up">
+              <div className="h-px bg-[#E7EAF0] mb-3" />
 
               <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                <p className="text-xs font-semibold text-[#697386] tabular-nums">
                   Shopping Cart ({lines.length} {lines.length === 1 ? 'line' : 'lines'} ·{' '}
                   {formatQuantity(totalCount)} qty)
                 </p>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => {
                       setSaveBasketOpen((v) => !v);
                       setConfirmClear(false);
                     }}
-                    className="text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1 whitespace-nowrap"
+                    className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1 whitespace-nowrap"
                   >
                     <BookmarkPlus className="w-3.5 h-3.5" />
                     Save Basket
@@ -215,21 +213,21 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
                   {confirmClear ? (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-red-300 font-bold">Clear all?</span>
+                      <span className="text-xs text-[#DE5252] font-semibold">Clear all?</span>
                       <button
                         type="button"
                         onClick={() => {
                           clearCart();
                           setConfirmClear(false);
                         }}
-                        className="px-2 py-0.5 rounded-md bg-red-500 text-white text-[11px] font-extrabold"
+                        className="px-2 py-0.5 rounded-md bg-[#DE5252] text-white text-xs font-semibold"
                       >
                         Yes, Clear
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmClear(false)}
-                        className="px-2 py-0.5 rounded-md bg-white/[0.08] text-zinc-300 text-[11px] font-bold"
+                        className="px-2 py-0.5 rounded-md bg-[#F1F3F6] text-[#4B5565] text-xs font-semibold"
                       >
                         Keep
                       </button>
@@ -241,9 +239,9 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                         setConfirmClear(true);
                         setSaveBasketOpen(false);
                       }}
-                      className="text-[11px] font-bold text-zinc-500 hover:text-red-400 flex items-center gap-1 whitespace-nowrap"
+                      className="text-xs font-semibold text-[#697386] hover:text-[#DE5252] flex items-center gap-1 whitespace-nowrap"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                       Clear Cart
                     </button>
                   )}
@@ -262,7 +260,7 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                       setTimeout(() => setBasketSavedBanner(null), 2500);
                     }
                   }}
-                  className="mb-3 rounded-xl bg-ink-900/80 border border-brand-500/30 p-2.5 flex items-center gap-2"
+                  className="mb-3 rounded-xl bg-[#F7F8FA] border border-[#365FE8]/25 p-2.5 flex items-center gap-2"
                 >
                   <input
                     type="text"
@@ -270,15 +268,15 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                     value={basketNameInput}
                     onChange={(e) => setBasketNameInput(e.target.value)}
                     placeholder="Name this basket (e.g. Weekend Essentials)"
-                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-ink-950/70 border border-white/[0.08] text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-brand-500/50"
+                    className="input-field py-1.5 text-xs flex-1 min-w-0"
                   />
                   <button
                     type="submit"
                     disabled={!basketNameInput.trim()}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
                       basketNameInput.trim()
-                        ? 'bg-brand-500 hover:bg-brand-400 text-ink-950'
-                        : 'bg-white/[0.06] text-zinc-500 cursor-not-allowed'
+                        ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
+                        : 'bg-[#E7EAF0] text-[#929BAB] cursor-not-allowed'
                     }`}
                   >
                     Save
@@ -289,9 +287,9 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
               {basketSavedBanner && (
                 <div
                   role="status"
-                  className="mb-3 rounded-xl bg-brand-500/15 border border-brand-500/30 px-3 py-2 flex items-center gap-2 text-xs font-bold text-brand-300"
+                  className="mb-3 rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] px-3 py-2 flex items-center gap-2 text-xs font-semibold text-[#15966B]"
                 >
-                  <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                  <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                   <span>Saved basket “{basketSavedBanner}”</span>
                 </div>
               )}
@@ -312,28 +310,20 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
               {sessionBudget !== null && (
                 <div
-                  className={`mt-3 rounded-xl p-2.5 flex items-center gap-2 ${
+                  className={`mt-3 rounded-xl p-2.5 flex items-center gap-2 border ${
                     isOverSession
-                      ? 'bg-red-500/10 border border-red-500/20'
+                      ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
                       : isWarningSession
-                      ? 'bg-orange-500/10 border border-orange-500/20'
-                      : 'bg-brand-500/10 border border-brand-500/20'
+                      ? 'bg-[#FEF6E7] border-[#F3D8A8] text-[#9E6614]'
+                      : 'bg-[#E8F7F1] border-[#B7E4D3] text-[#15966B]'
                   }`}
                 >
                   {isOverSession ? (
-                    <AlertOctagon className="w-4 h-4 text-red-400 flex-shrink-0" />
+                    <AlertOctagon className="w-4 h-4 flex-shrink-0" />
                   ) : (
-                    <Check className="w-4 h-4 text-brand-400 flex-shrink-0" />
+                    <Check className="w-4 h-4 flex-shrink-0" />
                   )}
-                  <p
-                    className={`text-[11px] font-bold ${
-                      isOverSession
-                        ? 'text-red-400'
-                        : isWarningSession
-                        ? 'text-orange-400'
-                        : 'text-brand-400'
-                    }`}
-                  >
+                  <p className="text-xs font-semibold">
                     {isOverSession
                       ? `Over session limit by ₹${formatCurrencyExact(totalPrice - sessionBudget)}`
                       : isWarningSession
@@ -343,18 +333,18 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                 </div>
               )}
 
-              <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between gap-2">
+              <div className="mt-3 pt-2.5 border-t border-[#E7EAF0] flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => setExpanded(false)}
-                  className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5"
+                  className="text-xs font-semibold text-[#697386] hover:text-[#151922] flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Continue Shopping
                 </button>
-                <span className="text-xs font-mono text-zinc-400">
+                <span className="text-xs font-mono text-[#697386] tabular-nums">
                   Total:{' '}
-                  <strong className="text-brand-400 font-extrabold">
+                  <strong className="text-[#151922] font-bold">
                     ₹{formatCurrencyExact(totalPrice)}
                   </strong>
                 </span>

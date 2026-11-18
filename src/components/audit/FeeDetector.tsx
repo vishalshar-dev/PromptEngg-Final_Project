@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, ShieldAlert, Check, ScanSearch, Save } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
-import { detectFees, FEE_TYPE_LABELS, FEE_SEVERITY_STYLES } from '../../utils/auditEngine';
+import {
+  detectFees,
+  FEE_TYPE_LABELS,
+  FEE_SEVERITY_STYLES,
+} from '../../utils/auditEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
 
 export function FeeDetector() {
@@ -12,13 +16,19 @@ export function FeeDetector() {
   const [savedFlash, setSavedFlash] = useState(false);
 
   const cartItems = items.filter((i) => i.quantity > 0);
-
   const detectedFlags = useMemo(() => detectFees(cartItems), [cartItems]);
 
   const hasRun = feeFlags.length > 0 || detectedFlags.length > 0;
-  const totalEstimatedCost = detectedFlags.reduce((sum, f) => sum + f.estimatedCost, 0);
-  const criticalCount = detectedFlags.filter((f) => f.severity === 'critical').length;
-  const warningCount = detectedFlags.filter((f) => f.severity === 'warning').length;
+  const totalEstimatedCost = detectedFlags.reduce(
+    (sum, f) => sum + f.estimatedCost,
+    0
+  );
+  const criticalCount = detectedFlags.filter(
+    (f) => f.severity === 'critical'
+  ).length;
+  const warningCount = detectedFlags.filter(
+    (f) => f.severity === 'warning'
+  ).length;
 
   const runScan = () => {
     setFeeFlags(detectedFlags);
@@ -43,14 +53,23 @@ export function FeeDetector() {
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 text-orange-400" strokeWidth={2.5} />
-          <h3 className="text-sm font-extrabold tracking-tight">Fee & Dark Pattern Scanner</h3>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] border border-[#F3D8A8] text-[#C7851F] flex items-center justify-center">
+            <ShieldAlert className="w-4 h-4" strokeWidth={2.25} />
+          </div>
+          <div>
+            <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+              Fee &amp; Dark Pattern Scanner
+            </h3>
+            <p className="text-xs text-[#697386]">
+              Inspect your active cart for hidden surcharges
+            </p>
+          </div>
         </div>
         {detectedFlags.length > 0 && (
-          <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
             {detectedFlags.length} flag{detectedFlags.length > 1 ? 's' : ''}
           </span>
         )}
@@ -58,69 +77,95 @@ export function FeeDetector() {
 
       {/* Scan Button */}
       <button
+        type="button"
         onClick={runScan}
         disabled={cartItems.length === 0}
-        className={`w-full py-3 rounded-2xl text-sm font-extrabold transition-all duration-300 flex items-center justify-center gap-2 active:scale-[0.98] ${
+        className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 border ${
           cartItems.length === 0
-            ? 'bg-white/[0.03] text-zinc-600 cursor-not-allowed'
+            ? 'bg-[#F1F3F6] text-[#929BAB] border-[#E7EAF0] cursor-not-allowed'
             : detectedFlags.length > 0
-            ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/15'
-            : 'bg-white/[0.06] text-zinc-200 hover:bg-white/[0.1] border border-white/[0.06]'
+            ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8] hover:bg-[#FDF0D5]'
+            : 'btn-secondary'
         }`}
       >
-        <ScanSearch className="w-4 h-4" strokeWidth={2.5} />
+        <ScanSearch className="w-4 h-4" strokeWidth={2.25} />
         {cartItems.length === 0 ? 'Add items to scan' : 'Scan cart for hidden fees'}
       </button>
 
       {/* Summary Stats */}
       {detectedFlags.length > 0 && (
-        <div className="grid grid-cols-3 gap-2.5 animate-fade-in-up">
-          <div className="glass rounded-xl p-2.5 text-center">
-            <p className="text-lg font-extrabold font-mono text-red-400">{criticalCount}</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Critical</p>
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className="surface-subtle p-3 text-center">
+            <p className="text-lg font-bold font-mono tabular-nums text-[#DE5252]">
+              {criticalCount}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+              Critical
+            </p>
           </div>
-          <div className="glass rounded-xl p-2.5 text-center">
-            <p className="text-lg font-extrabold font-mono text-orange-400">{warningCount}</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Warning</p>
+          <div className="surface-subtle p-3 text-center">
+            <p className="text-lg font-bold font-mono tabular-nums text-[#9E6614]">
+              {warningCount}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+              Warning
+            </p>
           </div>
-          <div className="glass rounded-xl p-2.5 text-center">
-            <p className="text-lg font-extrabold font-mono text-white">₹{formatCurrency(totalEstimatedCost)}</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Est. Cost</p>
+          <div className="surface-subtle p-3 text-center">
+            <p className="text-lg font-bold font-mono tabular-nums text-[#151922]">
+              ₹{formatCurrency(totalEstimatedCost)}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+              Est. Cost
+            </p>
           </div>
         </div>
       )}
 
       {/* Flag List */}
       {detectedFlags.length > 0 ? (
-        <div className="space-y-2">
-          {detectedFlags.map((flag, index) => {
+        <div className="space-y-2.5">
+          {detectedFlags.map((flag) => {
             const sevStyle = FEE_SEVERITY_STYLES[flag.severity];
             return (
               <div
                 key={flag.id}
-                style={{ animationDelay: `${index * 50}ms` }}
-                className={`rounded-xl p-3 border ${sevStyle.bg} ${sevStyle.border} animate-fade-in-up`}
+                className={`rounded-xl p-3.5 border ${sevStyle.bg} ${sevStyle.border}`}
               >
                 <div className="flex items-start gap-2.5">
-                  <div className={`w-7 h-7 rounded-lg ${sevStyle.bg} ${sevStyle.border} border flex items-center justify-center flex-shrink-0`}>
+                  <div
+                    className={`w-7 h-7 rounded-lg bg-[#FFFFFF] ${sevStyle.border} border flex items-center justify-center shrink-0`}
+                  >
                     {flag.severity === 'critical' ? (
-                      <AlertTriangle className={`w-3.5 h-3.5 ${sevStyle.text}`} strokeWidth={2.5} />
+                      <AlertTriangle
+                        className={`w-3.5 h-3.5 ${sevStyle.text}`}
+                        strokeWidth={2.25}
+                      />
                     ) : (
-                      <ShieldAlert className={`w-3.5 h-3.5 ${sevStyle.text}`} strokeWidth={2.5} />
+                      <ShieldAlert
+                        className={`w-3.5 h-3.5 ${sevStyle.text}`}
+                        strokeWidth={2.25}
+                      />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded ${sevStyle.bg} ${sevStyle.text} border ${sevStyle.border}`}>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFFFFF] ${sevStyle.text} border ${sevStyle.border}`}
+                      >
                         {FEE_TYPE_LABELS[flag.type]}
                       </span>
-                      <span className={`text-[9px] font-bold uppercase ${sevStyle.text}`}>
+                      <span className={`text-[10px] font-bold uppercase ${sevStyle.text}`}>
                         {flag.severity}
                       </span>
                     </div>
-                    <p className="text-xs font-bold text-white mb-1">{flag.itemName}</p>
-                    <p className="text-[11px] text-zinc-400 leading-relaxed">{flag.message}</p>
-                    <p className={`text-[11px] font-bold font-mono mt-1.5 ${sevStyle.text}`}>
+                    <p className="text-xs font-bold text-[#151922] mb-0.5">
+                      {flag.itemName}
+                    </p>
+                    <p className="text-xs text-[#4F5869] leading-relaxed">
+                      {flag.message}
+                    </p>
+                    <p className={`text-xs font-bold font-mono tabular-nums mt-1.5 ${sevStyle.text}`}>
                       Est. cost: ₹{formatCurrency(flag.estimatedCost)}
                     </p>
                   </div>
@@ -130,29 +175,36 @@ export function FeeDetector() {
           })}
         </div>
       ) : hasRun ? (
-        <div className="glass rounded-xl p-5 text-center animate-fade-in">
-          <div className="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-2">
-            <Check className="w-5 h-5 text-brand-400" strokeWidth={2.5} />
+        <div className="surface-subtle p-5 text-center">
+          <div className="w-10 h-10 rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] flex items-center justify-center mx-auto mb-2">
+            <Check className="w-5 h-5 text-[#15966B]" strokeWidth={2.5} />
           </div>
-          <p className="text-sm font-bold text-brand-400">Cart is clean</p>
-          <p className="text-[11px] text-zinc-500 mt-1">No hidden fees or dark patterns detected</p>
+          <p className="text-sm font-bold text-[#15966B]">Cart is clean</p>
+          <p className="text-xs text-[#697386] mt-1">
+            No hidden fees or dark patterns detected
+          </p>
         </div>
       ) : null}
 
       {/* Save Audit Button */}
       {detectedFlags.length > 0 && (
         <button
+          type="button"
           onClick={handleSaveAudit}
-          className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border ${
+          className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
             savedFlash
-              ? 'bg-brand-500/20 text-brand-400 border-brand-500/30'
-              : 'bg-white/[0.04] hover:bg-brand-500/15 text-zinc-300 hover:text-brand-400 border-white/[0.06] hover:border-brand-500/30'
+              ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+              : 'btn-secondary'
           }`}
         >
           {savedFlash ? (
-            <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved to History</>
+            <>
+              <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved to History
+            </>
           ) : (
-            <><Save className="w-3.5 h-3.5" strokeWidth={2.5} /> Save Audit to History</>
+            <>
+              <Save className="w-3.5 h-3.5" strokeWidth={2.25} /> Save Audit to History
+            </>
           )}
         </button>
       )}

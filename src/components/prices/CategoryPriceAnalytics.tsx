@@ -19,11 +19,11 @@ export function CategoryPriceAnalytics({
 }: CategoryPriceAnalyticsProps) {
   if (rows.length === 0) {
     return (
-      <div className="glass rounded-2xl p-8 text-center">
-        <Layers className="w-7 h-7 text-zinc-600 mx-auto mb-2" />
-        <p className="text-sm font-bold text-zinc-300">No category price data yet</p>
-        <p className="text-xs text-zinc-500 mt-1">
-          Tracked purchases from Quick Mart, Audit, or Manual Entry will populate category price analytics.
+      <div className="surface-card p-8 text-center">
+        <Layers className="w-7 h-7 text-[#929BAB] mx-auto mb-2" />
+        <p className="text-sm font-semibold text-[#151922]">No category price data yet</p>
+        <p className="text-xs text-[#697386] mt-1">
+          Tracked purchases from Shopping, Receipt Scanner, or Manual Entry will populate category price analytics.
         </p>
       </div>
     );
@@ -31,17 +31,17 @@ export function CategoryPriceAnalytics({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-brand-400" strokeWidth={2.5} />
-          <h3 className="text-sm font-extrabold text-white">Category-Wise Price Trends</h3>
+          <Layers className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+          <h3 className="text-sm font-bold text-[#151922]">Category-Wise Price Trends</h3>
         </div>
-        <span className="text-[11px] text-zinc-500">
-          Average % change calculated per product (never mixing unrelated prices)
+        <span className="text-xs text-[#697386]">
+          Average % change calculated per product
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {rows.map((row) => {
           const cfg = categoryConfigs.find((c) => c.name === row.category);
           const style = getCategoryStyle(row.category, cfg?.accent);
@@ -52,7 +52,7 @@ export function CategoryPriceAnalytics({
           return (
             <div
               key={row.category}
-              className="glass rounded-2xl p-4 border border-white/[0.06] space-y-3"
+              className="surface-card p-4 space-y-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <button
@@ -66,10 +66,10 @@ export function CategoryPriceAnalytics({
                     <CategoryIcon iconKey={cfg?.iconKey} className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-extrabold text-white truncate group-hover:text-brand-300">
+                    <p className="text-sm font-bold text-[#151922] truncate group-hover:text-[#365FE8]">
                       {row.category}
                     </p>
-                    <p className="text-[11px] text-zinc-500">
+                    <p className="text-xs text-[#697386]">
                       {row.trackedProducts} product{row.trackedProducts === 1 ? '' : 's'} ·{' '}
                       {row.totalPurchases} buy{row.totalPurchases === 1 ? '' : 's'}
                     </p>
@@ -79,12 +79,12 @@ export function CategoryPriceAnalytics({
                 <div className="text-right flex-shrink-0">
                   {avgPct !== null ? (
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-mono font-extrabold ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-mono font-semibold ${
                         isUp
-                          ? 'bg-red-500/15 text-red-400 border-red-500/25'
+                          ? 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
                           : isDown
-                          ? 'bg-brand-500/15 text-brand-400 border-brand-500/25'
-                          : 'bg-white/[0.06] text-zinc-300 border-white/[0.1]'
+                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                          : 'bg-[#F1F3F6] text-[#697386] border-[#E7EAF0]'
                       }`}
                     >
                       {isUp ? (
@@ -96,49 +96,49 @@ export function CategoryPriceAnalytics({
                       {avgPct.toFixed(1)}%
                     </span>
                   ) : (
-                    <span className="text-[11px] font-semibold text-zinc-500">
+                    <span className="text-xs font-medium text-[#697386]">
                       Single-buy baseline
                     </span>
                   )}
-                  <p className="text-[11px] font-mono text-zinc-400 mt-1">
+                  <p className="text-xs font-mono text-[#697386] mt-1">
                     ₹{formatCurrencyExact(row.totalSpend)} spend
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-ink-900/70 rounded-xl p-2 border border-white/[0.04]">
-                  <p className="text-[9px] font-bold uppercase text-zinc-500">Increasing</p>
-                  <p className="text-sm font-extrabold font-mono text-red-400 mt-0.5">
+                <div className="surface-subtle p-2">
+                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Increasing</p>
+                  <p className="text-sm font-bold font-mono text-[#DE5252] mt-0.5">
                     {row.increasingCount}
                   </p>
                 </div>
-                <div className="bg-ink-900/70 rounded-xl p-2 border border-white/[0.04]">
-                  <p className="text-[9px] font-bold uppercase text-zinc-500">Decreasing</p>
-                  <p className="text-sm font-extrabold font-mono text-brand-400 mt-0.5">
+                <div className="surface-subtle p-2">
+                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Decreasing</p>
+                  <p className="text-sm font-bold font-mono text-[#15966B] mt-0.5">
                     {row.decreasingCount}
                   </p>
                 </div>
-                <div className="bg-ink-900/70 rounded-xl p-2 border border-white/[0.04]">
-                  <p className="text-[9px] font-bold uppercase text-zinc-500">Stable / 1× Buy</p>
-                  <p className="text-sm font-extrabold font-mono text-zinc-300 mt-0.5">
+                <div className="surface-subtle p-2">
+                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Stable / 1× Buy</p>
+                  <p className="text-sm font-bold font-mono text-[#151922] mt-0.5">
                     {row.stableOrSingleCount}
                   </p>
                 </div>
               </div>
 
               {row.topMover && row.topMover.overallChangePct !== null && (
-                <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
-                  <span className="text-zinc-500">Top mover:</span>
+                <div className="flex items-center justify-between pt-2 border-t border-[#E7EAF0] text-xs">
+                  <span className="text-[#697386]">Top mover:</span>
                   <button
                     type="button"
                     onClick={() => onSelectProduct?.(row.topMover!.productId)}
-                    className="font-bold text-zinc-200 hover:text-brand-400 transition-colors"
+                    className="font-semibold text-[#151922] hover:text-[#365FE8] transition-colors"
                   >
                     {row.topMover.productName}{' '}
                     <span
                       className={`font-mono ${
-                        row.topMover.overallChangePct > 0 ? 'text-red-400' : 'text-brand-400'
+                        row.topMover.overallChangePct > 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
                       }`}
                     >
                       ({row.topMover.overallChangePct > 0 ? '+' : ''}

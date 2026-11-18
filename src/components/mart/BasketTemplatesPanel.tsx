@@ -15,6 +15,7 @@ import {
 import { useAppStore } from '../../store/useStore';
 import { formatCurrencyExact, formatQuantity } from '../../utils/categoryStyles';
 import { calculateCartTotals, evaluateBasketTemplate } from '../../utils/martEngine';
+import { EmptyState } from '../ui/EmptyState';
 
 interface BasketTemplatesPanelProps {
   onLoadedToCart?: () => void;
@@ -89,29 +90,29 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
       {/* Save Current Cart Card */}
       <form
         onSubmit={handleSaveCurrentCart}
-        className="glass rounded-2xl p-4 border border-white/[0.08] space-y-3"
+        className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
-              <BookmarkPlus className="w-4 h-4 text-brand-400" />
+            <h3 className="text-sm font-bold text-[#151922] flex items-center gap-2">
+              <BookmarkPlus className="w-4 h-4 text-[#365FE8]" />
               Save Current Cart as Basket
             </h3>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
+            <p className="text-xs text-[#697386] mt-0.5">
               {cartSummary.lineCount > 0
                 ? `${cartSummary.lineCount} ${cartSummary.lineCount === 1 ? 'line' : 'lines'} · ${formatQuantity(cartSummary.totalUnits)} qty · ₹${formatCurrencyExact(cartSummary.totalAmount)} ready to save`
                 : 'Add items to your cart first to save them as a reusable shopping basket.'}
             </p>
           </div>
           {saveSuccessFlash && (
-            <span className="text-[11px] font-bold text-brand-400 flex items-center gap-1 whitespace-nowrap">
-              <Check className="w-3.5 h-3.5" strokeWidth={3} />
+            <span className="text-xs font-semibold text-[#15966B] flex items-center gap-1 whitespace-nowrap">
+              <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
               Saved “{saveSuccessFlash}”
             </span>
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
           <div className="flex-1 min-w-0">
             <label htmlFor="new-basket-name" className="sr-only">
               Basket name
@@ -125,7 +126,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                 if (saveError) setSaveError(null);
               }}
               placeholder="Basket name (e.g. Hostel Refill)"
-              className="w-full px-3 py-2 rounded-xl bg-ink-900/80 border border-white/[0.08] focus:border-brand-500/50 focus:outline-none text-xs text-white placeholder:text-zinc-500"
+              className="input-field py-2 text-xs"
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -138,16 +139,16 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               placeholder="Optional note (e.g. Sunday run)"
-              className="w-full px-3 py-2 rounded-xl bg-ink-900/80 border border-white/[0.08] focus:border-brand-500/50 focus:outline-none text-xs text-white placeholder:text-zinc-500"
+              className="input-field py-2 text-xs"
             />
           </div>
           <button
             type="submit"
             disabled={cartSummary.lineCount === 0}
-            className={`sm:w-auto w-full shrink-0 py-2 px-4 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all ${
+            className={`sm:w-auto w-full shrink-0 py-2 px-4 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
               cartSummary.lineCount > 0
-                ? 'bg-brand-500 hover:bg-brand-400 text-ink-950'
-                : 'bg-white/[0.05] text-zinc-500 cursor-not-allowed'
+                ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
+                : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'
             }`}
           >
             Save Basket
@@ -155,7 +156,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
         </div>
 
         {saveError && (
-          <p role="alert" className="text-[11px] font-semibold text-amber-300">
+          <p role="alert" className="text-xs font-medium text-[#C7851F]">
             {saveError}
           </p>
         )}
@@ -163,15 +164,11 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
 
       {/* Saved Baskets List */}
       {evaluatedBaskets.length === 0 ? (
-        <div className="glass rounded-2xl p-8 text-center space-y-2 border border-white/[0.06]">
-          <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-500">
-            <ShoppingBag className="w-6 h-6" />
-          </div>
-          <p className="text-sm font-bold text-zinc-200">No saved baskets yet</p>
-          <p className="text-xs text-zinc-500 max-w-xs mx-auto">
-            Build a cart or open any order in History to save a reusable basket template with live price tracking.
-          </p>
-        </div>
+        <EmptyState
+          icon={ShoppingBag}
+          title="No saved baskets yet"
+          description="Build a cart or open any order in History to save a reusable shopping basket with live price tracking."
+        />
       ) : (
         <div className="space-y-3">
           {evaluatedBaskets.map((evaluated) => {
@@ -189,18 +186,17 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
             return (
               <div
                 key={basket.id}
-                className="glass rounded-2xl p-4 border border-white/[0.08] space-y-3"
+                className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3.5"
               >
-                {/* Header */}
                 {isEditing ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <input
                         type="text"
                         aria-label={`Edit name for ${basket.name}`}
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-ink-900 border border-white/[0.12] text-xs font-bold text-white focus:outline-none focus:border-brand-500/50"
+                        className="input-field py-2 text-xs font-semibold"
                       />
                       <input
                         type="text"
@@ -208,7 +204,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
                         placeholder="Optional note"
-                        className="px-3 py-1.5 rounded-xl bg-ink-900 border border-white/[0.12] text-xs text-zinc-200 focus:outline-none focus:border-brand-500/50"
+                        className="input-field py-2 text-xs"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -218,14 +214,14 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                           renameBasketTemplate(basket.id, editName, editDesc);
                           setEditingBasketId(null);
                         }}
-                        className="px-3 py-1 rounded-lg bg-brand-500 text-ink-950 text-[11px] font-extrabold"
+                        className="btn-primary py-1.5 px-3 text-xs"
                       >
                         Save Changes
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditingBasketId(null)}
-                        className="px-3 py-1 rounded-lg bg-white/[0.06] text-zinc-300 text-[11px] font-bold"
+                        className="btn-secondary py-1.5 px-3 text-xs"
                       >
                         Cancel
                       </button>
@@ -235,19 +231,19 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-sm font-extrabold text-white truncate">
+                        <h4 className="text-sm font-bold text-[#151922] truncate">
                           {basket.name}
                         </h4>
                         {basket.isPreset && (
-                          <span className="text-[10px] font-semibold text-zinc-400">
+                          <span className="text-xs font-medium text-[#697386]">
                             · Starter preset
                           </span>
                         )}
                       </div>
                       {basket.description && (
-                        <p className="text-[11px] text-zinc-400 mt-0.5">{basket.description}</p>
+                        <p className="text-xs text-[#697386] mt-0.5">{basket.description}</p>
                       )}
-                      <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 font-mono tabular-nums mt-1 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs text-[#697386] font-mono tabular-nums mt-1 flex-wrap">
                         <span>
                           {lineCount} {lineCount === 1 ? 'item' : 'items'}
                         </span>
@@ -259,26 +255,26 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <p className="text-base font-extrabold font-mono text-white tabular-nums">
+                      <p className="text-base font-bold font-mono text-[#151922] tabular-nums">
                         ₹{formatCurrencyExact(currentTotal)}
                       </p>
                       {hasPriceShift ? (
                         <p
-                          className={`text-[11px] font-mono font-bold flex items-center justify-end gap-1 tabular-nums ${
-                            priceDiff > 0 ? 'text-amber-300' : 'text-brand-400'
+                          className={`text-xs font-mono font-semibold flex items-center justify-end gap-1 tabular-nums ${
+                            priceDiff > 0 ? 'text-[#C7851F]' : 'text-[#15966B]'
                           }`}
                         >
                           {priceDiff > 0 ? (
-                            <TrendingUp className="w-3 h-3" />
+                            <TrendingUp className="w-3.5 h-3.5" />
                           ) : (
-                            <TrendingDown className="w-3 h-3" />
+                            <TrendingDown className="w-3.5 h-3.5" />
                           )}
                           {priceDiff > 0
                             ? `+₹${formatCurrencyExact(priceDiff)} vs saved`
                             : `-₹${formatCurrencyExact(Math.abs(priceDiff))} cheaper`}
                         </p>
                       ) : (
-                        <p className="text-[10px] font-mono text-zinc-500 tabular-nums">
+                        <p className="text-[11px] font-mono text-[#929BAB] tabular-nums">
                           Saved ₹{formatCurrencyExact(savedTotal)}
                         </p>
                       )}
@@ -288,28 +284,28 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
 
                 {/* Action Row */}
                 <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => handleLoadBasket(basket.id, 'merge')}
                       aria-label={`Add ${basket.name} to cart`}
                       disabled={lineCount === 0}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                         loadedFlashId === `${basket.id}:merge`
-                          ? 'bg-brand-500 text-ink-950'
+                          ? 'bg-[#15966B] text-white'
                           : lineCount > 0
-                          ? 'bg-brand-500/15 hover:bg-brand-500 text-brand-300 hover:text-ink-950 border border-brand-500/35'
-                          : 'bg-white/[0.04] text-zinc-600 cursor-not-allowed'
+                          ? 'bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white border border-[#365FE8]/25'
+                          : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'
                       }`}
                     >
                       {loadedFlashId === `${basket.id}:merge` ? (
                         <>
-                          <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                          <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                           Added
                         </>
                       ) : (
                         <>
-                          <ShoppingCart className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          <ShoppingCart className="w-3.5 h-3.5" strokeWidth={2.2} />
                           Add to Cart
                         </>
                       )}
@@ -320,7 +316,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                       onClick={() => handleLoadBasket(basket.id, 'replace')}
                       aria-label={`Replace cart with ${basket.name}`}
                       disabled={lineCount === 0}
-                      className="px-2.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-200 text-[11px] font-bold whitespace-nowrap transition-colors"
+                      className="btn-secondary py-1.5 px-3 text-xs"
                     >
                       {loadedFlashId === `${basket.id}:replace` ? 'Cart Replaced' : 'Replace Cart'}
                     </button>
@@ -332,7 +328,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                       }
                       aria-expanded={isExpanded}
                       aria-label={`${isExpanded ? 'Hide' : 'Show'} items in ${basket.name}`}
-                      className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 text-[11px] font-bold flex items-center gap-1 whitespace-nowrap"
+                      className="btn-secondary py-1.5 px-3 text-xs"
                     >
                       <span>{isExpanded ? 'Hide Items' : 'View Items'}</span>
                       {isExpanded ? (
@@ -349,7 +345,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         type="button"
                         onClick={() => refreshBasketBaselinePrices(basket.id)}
                         title="Update saved baseline prices to match current catalog prices"
-                        className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 text-amber-300 text-[10px] font-bold flex items-center gap-1 whitespace-nowrap"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#FEF6E7] hover:bg-[#FDEBC7] border border-[#F3D8A8] text-[#9E6614] text-xs font-semibold flex items-center gap-1 whitespace-nowrap"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Sync Price
@@ -362,7 +358,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         onClick={() => updateBasketFromCart(basket.id)}
                         aria-label={`Overwrite ${basket.name} with current cart`}
                         title="Overwrite basket items with current cart"
-                        className="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 text-[10px] font-bold whitespace-nowrap"
+                        className="px-2.5 py-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#EDF2FF] border border-[#E7EAF0] text-[#4B5565] hover:text-[#365FE8] text-xs font-semibold whitespace-nowrap"
                       >
                         Update from Cart
                       </button>
@@ -377,7 +373,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                           setEditDesc(basket.description ?? '');
                         }}
                         aria-label={`Rename ${basket.name}`}
-                        className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] text-zinc-400 hover:text-white"
+                        className="p-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-[#697386] hover:text-[#151922]"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
@@ -392,14 +388,14 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                             setConfirmDeleteId(null);
                           }}
                           aria-label={`Confirm delete ${basket.name}`}
-                          className="px-2 py-1 rounded-lg bg-red-500 text-white text-[10px] font-extrabold whitespace-nowrap"
+                          className="px-2.5 py-1 rounded-lg bg-[#DE5252] text-white text-xs font-semibold whitespace-nowrap"
                         >
                           Delete
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 rounded-lg bg-white/[0.08] text-zinc-300 text-[10px] font-bold"
+                          className="px-2.5 py-1 rounded-lg bg-[#F1F3F6] text-[#4B5565] text-xs font-semibold"
                         >
                           Keep
                         </button>
@@ -409,7 +405,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         type="button"
                         onClick={() => setConfirmDeleteId(basket.id)}
                         aria-label={`Delete ${basket.name}`}
-                        className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-red-500/20 text-zinc-400 hover:text-red-400"
+                        className="p-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#FDECEC] border border-[#E7EAF0] text-[#697386] hover:text-[#DE5252]"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -419,25 +415,25 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
 
                 {/* Expanded Line Breakdown */}
                 {isExpanded && (
-                  <div className="bg-ink-900/60 rounded-xl p-2.5 space-y-1.5 border border-white/[0.05]">
+                  <div className="bg-[#F7F8FA] rounded-xl p-3 space-y-2 border border-[#E7EAF0]">
                     {lines.length === 0 ? (
-                      <p className="text-[11px] text-zinc-500 text-center py-2">
+                      <p className="text-xs text-[#697386] text-center py-2">
                         All items were removed from this basket.
                       </p>
                     ) : (
                       lines.map((line, idx) => (
                         <div
                           key={`${basket.id}-${line.templateItem.itemId}-${line.templateItem.variantId ?? idx}`}
-                          className="flex items-center justify-between gap-2 text-xs py-0.5"
+                          className="flex items-center justify-between gap-2 text-xs py-1"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-zinc-200 font-semibold truncate">
+                            <p className="text-[#151922] font-semibold truncate">
                               {line.templateItem.name}
                               {line.templateItem.variantLabel
                                 ? ` · ${line.templateItem.variantLabel}`
                                 : ''}
                             </p>
-                            <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500 tabular-nums">
+                            <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#697386] tabular-nums">
                               <span>
                                 {formatQuantity(line.templateItem.quantity)} × ₹
                                 {formatCurrencyExact(line.currentPrice)}
@@ -445,20 +441,20 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                               {Math.abs(line.unitPriceDiff) >= 0.5 && (
                                 <span
                                   className={
-                                    line.unitPriceDiff > 0 ? 'text-amber-300' : 'text-brand-400'
+                                    line.unitPriceDiff > 0 ? 'text-[#C7851F]' : 'text-[#15966B]'
                                   }
                                 >
                                   · was ₹{formatCurrencyExact(line.savedPrice)}
                                 </span>
                               )}
                               {line.isMissingFromCatalog && (
-                                <span className="text-zinc-400">· custom/restorable</span>
+                                <span className="text-[#929BAB]">· custom/restorable</span>
                               )}
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="font-mono font-bold text-zinc-200 tabular-nums">
+                            <span className="font-mono font-bold text-[#151922] tabular-nums">
                               ₹{formatCurrencyExact(line.currentSubtotal)}
                             </span>
                             <button
@@ -471,9 +467,9 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                                 )
                               }
                               aria-label={`Remove ${line.templateItem.name} from ${basket.name}`}
-                              className="text-zinc-500 hover:text-red-400 p-1"
+                              className="text-[#929BAB] hover:text-[#DE5252] p-1"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>

@@ -1,5 +1,6 @@
 import { PackageSearch, Plus } from 'lucide-react';
 import type { CartItem, CategoryConfig } from '../../types/models';
+import { EmptyState } from '../ui/EmptyState';
 import { ProductCard } from './ProductCard';
 
 export interface ProductGridProps {
@@ -38,43 +39,39 @@ export function ProductGrid({
 
   if (items.length === 0) {
     return (
-      <div className="glass rounded-2xl p-8 text-center space-y-3">
-        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-500">
-          <PackageSearch className="w-6 h-6" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-zinc-200">No matching products found</p>
-          <p className="text-xs text-zinc-500 mt-1">
-            Try clearing search filters or add a new custom product for this category.
-          </p>
-        </div>
-        <div className="flex items-center justify-center gap-2 pt-1">
-          {onResetFilters && (
-            <button
-              type="button"
-              onClick={onResetFilters}
-              className="px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-zinc-300"
-            >
-              Reset Filters
-            </button>
-          )}
-          {onAddCustomProduct && (
-            <button
-              type="button"
-              onClick={onAddCustomProduct}
-              className="px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 text-xs font-extrabold text-ink-950 flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" strokeWidth={3} />
-              Create Custom Product
-            </button>
-          )}
-        </div>
-      </div>
+      <EmptyState
+        icon={PackageSearch}
+        title="No matching products found"
+        description="Try clearing search filters or add a new custom product for this category."
+        action={
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {onResetFilters && (
+              <button
+                type="button"
+                onClick={onResetFilters}
+                className="btn-secondary px-4 py-2 text-xs"
+              >
+                Reset Filters
+              </button>
+            )}
+            {onAddCustomProduct && (
+              <button
+                type="button"
+                onClick={onAddCustomProduct}
+                className="btn-primary px-4 py-2 text-xs"
+              >
+                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                Create Custom Product
+              </button>
+            )}
+          </div>
+        }
+      />
     );
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
       {items.map((item) => {
         const cfg = catMap.get(item.category);
         const isWatched =
@@ -99,4 +96,3 @@ export function ProductGrid({
     </div>
   );
 }
-

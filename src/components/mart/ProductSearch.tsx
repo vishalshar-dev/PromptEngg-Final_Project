@@ -130,8 +130,8 @@ export function ProductSearch({
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search
-            className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            strokeWidth={2.2}
+            className="w-4 h-4 text-[#929BAB] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            strokeWidth={2}
           />
           <input
             type="search"
@@ -146,14 +146,14 @@ export function ProductSearch({
             }}
             aria-label="Search products"
             placeholder="Search milk, rice, brand (Amul, Fortune), unit, category..."
-            className="w-full bg-ink-900/90 border border-white/[0.08] focus:border-brand-500/40 rounded-xl pl-10 pr-9 py-2.5 text-sm text-white outline-none placeholder:text-zinc-500 transition-colors"
+            className="w-full bg-white border border-[#E7EAF0] focus:border-[#365FE8] rounded-xl pl-10 pr-9 py-2.5 text-sm text-[#151922] outline-none placeholder:text-[#929BAB] transition-colors shadow-xs"
           />
           {filters.query && (
             <button
               type="button"
               onClick={() => onChange({ ...filters, query: '' })}
               aria-label="Clear search query"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-white/[0.06] hover:bg-white/[0.12] flex items-center justify-center text-zinc-400 hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -161,36 +161,36 @@ export function ProductSearch({
 
           {/* Live Suggestions Dropdown */}
           {showSuggestions && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 z-30 glass-strong border border-white/10 rounded-xl p-2 shadow-2xl space-y-1.5">
+            <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-white border border-[#E7EAF0] rounded-xl p-2 shadow-modal space-y-1">
               {filters.query?.trim() ? (
                 suggestions.map((s, idx) => (
                   <button
                     key={`${s.type}-${s.label}-${idx}`}
                     type="button"
                     onClick={() => handleSuggestionClick(s)}
-                    className="w-full px-2.5 py-2 rounded-lg hover:bg-white/[0.08] flex items-center justify-between gap-2 text-left transition-colors"
+                    className="w-full px-2.5 py-2 rounded-lg hover:bg-[#F7F8FA] flex items-center justify-between gap-2 text-left transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       {s.type === 'brand' ? (
-                        <Store className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                        <Store className="w-3.5 h-3.5 text-[#C7851F] flex-shrink-0" />
                       ) : s.type === 'category' ? (
-                        <Tag className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                        <Tag className="w-3.5 h-3.5 text-[#365FE8] flex-shrink-0" />
                       ) : (
-                        <Search className="w-3.5 h-3.5 text-brand-400 flex-shrink-0" />
+                        <Search className="w-3.5 h-3.5 text-[#15966B] flex-shrink-0" />
                       )}
-                      <span className="text-xs font-bold text-zinc-100 truncate">{s.label}</span>
+                      <span className="text-xs font-semibold text-[#151922] truncate">{s.label}</span>
                     </div>
                     {s.sublabel && (
-                      <span className="text-[10px] font-medium text-zinc-400 whitespace-nowrap">
+                      <span className="text-[11px] font-medium text-[#697386] whitespace-nowrap">
                         {s.sublabel}
                       </span>
                     )}
                   </button>
                 ))
               ) : (
-                <div className="p-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-1.5 mb-1.5">
-                    Popular Searches
+                <div className="p-1.5">
+                  <p className="text-[11px] font-semibold text-[#697386] px-1.5 mb-2">
+                    Popular searches
                   </p>
                   <div className="flex flex-wrap gap-1.5 px-1">
                     {POPULAR_SEARCH_TERMS.map((term) => (
@@ -201,7 +201,7 @@ export function ProductSearch({
                           onChange({ ...filters, query: term });
                           setIsFocused(false);
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-brand-500/20 border border-white/[0.08] hover:border-brand-500/35 text-[11px] font-semibold text-zinc-300 hover:text-brand-300 transition-colors"
+                        className="px-2.5 py-1 rounded-lg bg-[#F7F8FA] hover:bg-[#EDF2FF] border border-[#E7EAF0] hover:border-[#365FE8]/35 text-xs font-medium text-[#4B5565] hover:text-[#365FE8] transition-colors whitespace-nowrap"
                       >
                         {term}
                       </button>
@@ -215,14 +215,14 @@ export function ProductSearch({
 
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:flex-none">
-            <ArrowUpDown className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ArrowUpDown className="w-3.5 h-3.5 text-[#929BAB] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <select
               aria-label="Sort products"
               value={filters.sortBy ?? 'default'}
               onChange={(e) =>
                 onChange({ ...filters, sortBy: e.target.value as ProductSortOption })
               }
-              className="w-full sm:w-auto bg-ink-900/90 border border-white/[0.08] rounded-xl pl-8 pr-3 py-2.5 text-xs font-bold text-zinc-200 outline-none focus:border-brand-500/40"
+              className="w-full sm:w-auto bg-white border border-[#E7EAF0] rounded-xl pl-8 pr-3 py-2.5 text-xs font-semibold text-[#151922] outline-none focus:border-[#365FE8] shadow-xs"
             >
               <option value="default">Sort: Featured</option>
               <option value="price_asc">Price: Low to High</option>
@@ -238,50 +238,50 @@ export function ProductSearch({
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
             aria-expanded={showAdvanced}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs ${
               showAdvanced ||
               filters.minPrice != null ||
               filters.maxPrice != null ||
               (filters.brand && filters.brand !== 'All') ||
               (filters.subcategory && filters.subcategory !== 'All') ||
               (filters.productType && filters.productType !== 'All')
-                ? 'bg-brand-500/15 border-brand-500/35 text-brand-400'
-                : 'bg-white/[0.04] border-white/[0.08] text-zinc-300 hover:bg-white/[0.08]'
+                ? 'bg-[#EDF2FF] border-[#365FE8]/35 text-[#365FE8]'
+                : 'bg-white border-[#E7EAF0] text-[#4B5565] hover:bg-[#F7F8FA]'
             }`}
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={2.4} />
+            <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={2.2} />
             Filters
           </button>
         </div>
       </div>
 
-      {/* Quick Filter Pills */}
+      {/* Quick Filter Controls */}
       <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
         <button
           type="button"
           onClick={() =>
             onChange({ ...filters, onlyFavourites: !filters.onlyFavourites })
           }
-          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border whitespace-nowrap transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
             filters.onlyFavourites
-              ? 'bg-rose-500/15 border-rose-500/35 text-rose-300'
-              : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+              ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+              : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
           }`}
         >
-          <Heart className="w-3 h-3" strokeWidth={2.4} />
+          <Heart className="w-3 h-3" strokeWidth={2.2} />
           Favorites
         </button>
 
         <button
           type="button"
           onClick={() => onChange({ ...filters, onlyFrequent: !filters.onlyFrequent })}
-          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border whitespace-nowrap transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
             filters.onlyFrequent
-              ? 'bg-brand-500/15 border-brand-500/35 text-brand-300'
-              : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+              ? 'bg-[#EDF2FF] border-[#365FE8]/35 text-[#365FE8]'
+              : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
           }`}
         >
-          <Sparkles className="w-3 h-3" strokeWidth={2.4} />
+          <Sparkles className="w-3 h-3" strokeWidth={2.2} />
           Frequent
         </button>
 
@@ -290,26 +290,26 @@ export function ProductSearch({
           onClick={() =>
             onChange({ ...filters, onlyRecurring: !filters.onlyRecurring })
           }
-          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border whitespace-nowrap transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
             filters.onlyRecurring
-              ? 'bg-sky-500/15 border-sky-500/35 text-sky-300'
-              : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+              ? 'bg-[#EDF2FF] border-[#365FE8]/35 text-[#365FE8]'
+              : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
           }`}
         >
-          <Repeat className="w-3 h-3" strokeWidth={2.4} />
+          <Repeat className="w-3 h-3" strokeWidth={2.2} />
           Recurring
         </button>
 
         <button
           type="button"
           onClick={() => onChange({ ...filters, onlyRecent: !filters.onlyRecent })}
-          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border whitespace-nowrap transition-all flex items-center gap-1.5 ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors flex items-center gap-1.5 ${
             filters.onlyRecent
-              ? 'bg-amber-500/15 border-amber-500/35 text-amber-300'
-              : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-zinc-200'
+              ? 'bg-[#FEF6E7] border-[#F3D8A8] text-[#9E6614]'
+              : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
           }`}
         >
-          <Clock className="w-3 h-3" strokeWidth={2.4} />
+          <Clock className="w-3 h-3" strokeWidth={2.2} />
           Recent
         </button>
 
@@ -317,7 +317,7 @@ export function ProductSearch({
           <button
             type="button"
             onClick={onReset}
-            className="ml-auto px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-zinc-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] whitespace-nowrap"
+            className="ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold text-[#4B5565] hover:text-[#151922] bg-[#F1F3F6] hover:bg-[#E7EAF0] whitespace-nowrap shrink-0"
           >
             Reset
           </button>
@@ -326,9 +326,9 @@ export function ProductSearch({
 
       {/* Expandable Multi-Facet Filters Row */}
       {showAdvanced && (
-        <div className="glass rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 animate-fade-in">
+        <div className="bg-white border border-[#E7EAF0] rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 shadow-card animate-fade-in">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+            <label className="text-[11px] font-semibold text-[#697386] block mb-1">
               Category
             </label>
             <select
@@ -337,7 +337,7 @@ export function ProductSearch({
               onChange={(e) =>
                 onChange({ ...filters, category: e.target.value, subcategory: 'All' })
               }
-              className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs text-white outline-none"
+              className="input-field py-2 text-xs"
             >
               <option value="All">All Categories</option>
               {categories.map((cat) => (
@@ -350,14 +350,14 @@ export function ProductSearch({
 
           {availableSubcategories.length > 0 && (
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+              <label className="text-[11px] font-semibold text-[#697386] block mb-1">
                 Subcategory
               </label>
               <select
                 aria-label="Filter by subcategory"
                 value={filters.subcategory ?? 'All'}
                 onChange={(e) => onChange({ ...filters, subcategory: e.target.value })}
-                className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs text-white outline-none"
+                className="input-field py-2 text-xs"
               >
                 <option value="All">All Subcategories</option>
                 {availableSubcategories.map((sub) => (
@@ -371,14 +371,14 @@ export function ProductSearch({
 
           {availableBrands.length > 0 && (
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+              <label className="text-[11px] font-semibold text-[#697386] block mb-1">
                 Brand
               </label>
               <select
                 aria-label="Filter by brand"
                 value={filters.brand ?? 'All'}
                 onChange={(e) => onChange({ ...filters, brand: e.target.value })}
-                className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs text-white outline-none"
+                className="input-field py-2 text-xs"
               >
                 <option value="All">All Brands</option>
                 {availableBrands.map((brand) => (
@@ -392,14 +392,14 @@ export function ProductSearch({
 
           {availableProductTypes.length > 0 && (
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+              <label className="text-[11px] font-semibold text-[#697386] block mb-1">
                 Product Type
               </label>
               <select
                 aria-label="Filter by product type"
                 value={filters.productType ?? 'All'}
                 onChange={(e) => onChange({ ...filters, productType: e.target.value })}
-                className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs text-white outline-none"
+                className="input-field py-2 text-xs"
               >
                 <option value="All">All Types</option>
                 {availableProductTypes.map((pt) => (
@@ -412,7 +412,7 @@ export function ProductSearch({
           )}
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+            <label className="text-[11px] font-semibold text-[#697386] block mb-1">
               Min Price (₹)
             </label>
             <input
@@ -427,12 +427,12 @@ export function ProductSearch({
                   minPrice: e.target.value === '' ? null : Math.max(0, Number(e.target.value)),
                 })
               }
-              className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs text-white font-mono outline-none"
+              className="input-field py-2 text-xs font-mono"
             />
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">
+            <label className="text-[11px] font-semibold text-[#697386] block mb-1">
               Max Price (₹)
             </label>
             <input
@@ -447,7 +447,7 @@ export function ProductSearch({
                   maxPrice: e.target.value === '' ? null : Math.max(0, Number(e.target.value)),
                 })
               }
-              className="w-full bg-ink-900 border border-white/[0.08] rounded-lg px-2.5 py-2 text-xs text-white font-mono outline-none"
+              className="input-field py-2 text-xs font-mono"
             />
           </div>
         </div>

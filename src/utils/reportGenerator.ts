@@ -108,9 +108,9 @@ export function downloadTextReport(text: string): void {
 }
 
 export function downloadHtmlReport(text: string): void {
-  const html = `<html><head><title>CartAudit Report</title><style>
-  body{background:#09090b;color:#e4e4e7;font-family:monospace;padding:40px;max-width:600px;margin:0 auto}
-  pre{white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.6}
+  const html = `<!doctype html><html><head><meta charset="utf-8" /><title>CartAudit Report</title><style>
+  body{background:#F7F8FA;color:#151922;font-family:"JetBrains Mono",ui-monospace,monospace;padding:40px;max-width:680px;margin:0 auto}
+  pre{background:#FFFFFF;border:1px solid #E7EAF0;border-radius:16px;padding:28px;white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.65;box-shadow:0 2px 12px rgba(21,25,34,0.04)}
   </style></head><body><pre>${text.replace(/</g,'&lt;')}</pre></body></html>`;
   const blob = new Blob([html], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
