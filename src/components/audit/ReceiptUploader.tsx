@@ -13,17 +13,25 @@ import {
   Sparkles,
   Cpu,
   TrendingUp,
+  Plus,
+  X,
 } from 'lucide-react';
-import { useAppStore } from '../../store/useStore';
+import { useAppStore, type ParsedReceiptItem } from '../../store/useStore';
 import {
+  enrichReceiptWithCatalog,
   normalizeScannedReceipt,
   parseReceiptText,
   SAMPLE_RECEIPT_TEXT,
 } from '../../utils/auditEngine';
-import { buildReceiptFingerprint } from '../../utils/priceTrackerEngine';
+import {
+  buildReceiptFingerprint,
+  extractProductInfo,
+  inferCategoryFromName,
+  resolveCanonicalProduct,
+} from '../../utils/priceTrackerEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
 
-function fileToBase64(file: File): Promise<string> {
+function fileToBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -40,22 +48,96 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+async function prepareReceiptImage(
+  file: File
+): Promise<{ blob: Blob; mimeType: string }> {
+  // Fast path: already lightweight standard image
+  if (file.size <= 300 * 1024 && /image\/(jpeg|jpg|webp|png)/.test(file.type)) {
+    return { blob: file, mimeType: file.type === 'image/jpg' ? 'image/jpeg' : file.type };
+  }
+
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxDim = 1600;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.max(1, Math.round(width * ratio));
+          height = Math.max(1, Math.round(height * ratio));
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          resolve({ blob: file, mimeType: file.type || 'image/png' });
+          return;
+        }
+
+        // Fill white background in case PNG has transparent pixels
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (compressed) => {
+            URL.revokeObjectURL(objectUrl);
+            if (compressed && compressed.size > 0) {
+              resolve({ blob: compressed, mimeType: 'image/jpeg' });
+            } else {
+              resolve({ blob: file, mimeType: file.type || 'image/png' });
+            }
+          },
+          'image/jpeg',
+          0.88
+        );
+      } catch {
+        URL.revokeObjectURL(objectUrl);
+        resolve({ blob: file, mimeType: file.type || 'image/png' });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve({ blob: file, mimeType: file.type || 'image/png' });
+    };
+    img.src = objectUrl;
+  });
+}
+
 export function ReceiptUploader() {
   const parsedReceipts = useAppStore((s) => s.parsedReceipts);
   const addParsedReceipt = useAppStore((s) => s.addParsedReceipt);
+  const updateParsedReceipt = useAppStore((s) => s.updateParsedReceipt);
   const clearParsedReceipts = useAppStore((s) => s.clearParsedReceipts);
   const addToCart = useAppStore((s) => s.addToCart);
   const items = useAppStore((s) => s.items);
   const transactions = useAppStore((s) => s.transactions);
+  const priceObservations = useAppStore((s) => s.priceObservations);
+  const categories = useAppStore((s) => s.categories);
+  const addCategoryConfig = useAppStore((s) => s.addCategoryConfig);
   const addSavedAudit = useAppStore((s) => s.addSavedAudit);
   const recordReceiptAsTransaction = useAppStore((s) => s.recordReceiptAsTransaction);
 
   const [savedIdx, setSavedIdx] = useState<number | null>(null);
+  const [importedIdx, setImportedIdx] = useState<number | null>(null);
   const [recordFeedback, setRecordFeedback] = useState<{
     idx: number;
     message: string;
     ok: boolean;
   } | null>(null);
+  const [saveNewToCatalog, setSaveNewToCatalog] = useState<Record<number, boolean>>({});
+  const [creatingCatForKey, setCreatingCatForKey] = useState<string | null>(null);
+  const [newCategoryDraft, setNewCategoryDraft] = useState('');
+  const [addingItemForReceipt, setAddingItemForReceipt] = useState<number | null>(null);
+  const [draftItemName, setDraftItemName] = useState('');
+  const [draftItemPrice, setDraftItemPrice] = useState('');
+  const [draftItemCategory, setDraftItemCategory] = useState('Other Expenses');
+  const [scanNotice, setScanNotice] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState('');
   const [scanError, setScanError] = useState<string | null>(null);
@@ -78,15 +160,70 @@ export function ReceiptUploader() {
         return false;
       }
       setScanError(null);
-      addParsedReceipt(parsed);
+      const state = useAppStore.getState();
+      const enriched = enrichReceiptWithCatalog(
+        parsed,
+        state.items,
+        state.priceObservations,
+        state.categories
+      );
+      addParsedReceipt(enriched);
       return true;
     },
     [addParsedReceipt]
   );
 
+  const runOfflineOcrOnFile = useCallback(
+    async (file: File, fallbackReason?: string): Promise<boolean> => {
+      setScanStatus(
+        fallbackReason
+          ? `${fallbackReason} Reading offline with browser OCR...`
+          : 'Loading offline browser OCR...'
+      );
+      try {
+        const { createWorker } = await import('tesseract.js');
+        const worker = await createWorker('eng', 1, {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              setScanStatus(`Reading receipt offline (${Math.round(m.progress * 100)}%)...`);
+            }
+          },
+        });
+        const {
+          data: { text },
+        } = await worker.recognize(file);
+        await worker.terminate();
+
+        if (!text || !text.trim()) {
+          setScanError(
+            'Could not read text from this image. Try a clearer receipt screenshot or paste the receipt text below.'
+          );
+          setShowPasteBox(true);
+          return false;
+        }
+
+        const ok = parseAndStoreText(text);
+        if (ok && fallbackReason) {
+          setScanNotice('AI Vision is temporarily busy — parsed offline with browser OCR.');
+        }
+        return ok;
+      } catch {
+        setScanError(
+          fallbackReason
+            ? `${fallbackReason} Offline OCR also failed — please paste receipt text below.`
+            : 'Offline browser OCR failed to load. You can paste receipt text below.'
+        );
+        setShowPasteBox(true);
+        return false;
+      }
+    },
+    [parseAndStoreText]
+  );
+
   const handleFile = useCallback(
     async (file: File) => {
       setScanError(null);
+      setScanNotice(null);
 
       if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
         const text = await file.text();
@@ -99,49 +236,81 @@ export function ReceiptUploader() {
         return;
       }
 
-      setLastImageFile(file);
       setPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return URL.createObjectURL(file);
       });
 
       setIsScanning(true);
-      setScanStatus('Analyzing receipt with Gemini Vision...');
+      setScanStatus('Optimizing image & scanning with Gemini Vision...');
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 35000);
+      let scanFile: File = file;
       try {
-        const imageBase64 = await fileToBase64(file);
+        const prepared = await prepareReceiptImage(file);
+        scanFile =
+          prepared.blob instanceof File
+            ? prepared.blob
+            : new File([prepared.blob], 'receipt.jpg', { type: prepared.mimeType });
+        setLastImageFile(scanFile);
+
+        const imageBase64 = await fileToBase64(prepared.blob);
         const res = await fetch('/api/scan-receipt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             imageBase64,
-            mimeType: file.type || 'image/png',
+            mimeType: prepared.mimeType,
           }),
         });
 
         const data = (await res.json()) as { error?: string } & Record<string, unknown>;
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to scan receipt.');
+          throw new Error(data.error || 'AI Vision is temporarily unavailable.');
         }
 
         const normalized = normalizeScannedReceipt(data);
         if (normalized.items.length === 0 && normalized.total === 0) {
-          setScanError(
-            'No receipt items could be extracted from this image. Try a clearer screenshot or paste the receipt text.'
+          await runOfflineOcrOnFile(
+            scanFile,
+            'AI Vision found no legible line items.'
           );
           return;
         }
 
-        addParsedReceipt(normalized);
+        const state = useAppStore.getState();
+        const enriched = enrichReceiptWithCatalog(
+          normalized,
+          state.items,
+          state.priceObservations,
+          state.categories
+        );
+        addParsedReceipt(enriched);
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to scan receipt image.';
-        setScanError(message);
+        setLastImageFile(scanFile);
+        const isAbort = err instanceof DOMException && err.name === 'AbortError';
+        const rawMsg = isAbort
+          ? 'AI Vision timed out.'
+          : err instanceof Error
+            ? err.message
+            : 'AI Vision is unavailable.';
+        const shouldAutoFallback =
+          isAbort ||
+          /high demand|unavailable|503|504|429|timeout|not set|failed to fetch/i.test(rawMsg);
+
+        if (shouldAutoFallback) {
+          await runOfflineOcrOnFile(scanFile, 'AI Vision unavailable.');
+        } else {
+          setScanError(rawMsg);
+        }
       } finally {
+        window.clearTimeout(timeoutId);
         setIsScanning(false);
         setScanStatus('');
       }
     },
-    [addParsedReceipt, parseAndStoreText]
+    [addParsedReceipt, parseAndStoreText, runOfflineOcrOnFile]
   );
 
   useEffect(() => {
@@ -166,35 +335,10 @@ export function ReceiptUploader() {
   const handleOfflineOcr = async () => {
     if (!lastImageFile) return;
     setScanError(null);
+    setScanNotice(null);
     setIsScanning(true);
-    setScanStatus('Loading offline browser OCR...');
     try {
-      const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker('eng', 1, {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            setScanStatus(`Reading receipt (${Math.round(m.progress * 100)}%)...`);
-          }
-        },
-      });
-      const {
-        data: { text },
-      } = await worker.recognize(lastImageFile);
-      await worker.terminate();
-
-      if (!text || !text.trim()) {
-        setScanError(
-          'Offline OCR could not read text from this image. Paste the receipt text manually below.'
-        );
-        setShowPasteBox(true);
-      } else {
-        parseAndStoreText(text);
-      }
-    } catch {
-      setScanError(
-        'Offline browser OCR failed to load. You can still paste receipt text below.'
-      );
-      setShowPasteBox(true);
+      await runOfflineOcrOnFile(lastImageFile);
     } finally {
       setIsScanning(false);
       setScanStatus('');
@@ -264,19 +408,122 @@ export function ReceiptUploader() {
     setTimeout(() => setSavedIdx(null), 2000);
   };
 
-  const handleImportItem = (name: string, price: number) => {
-    const existing = items.find((i) => i.name.toLowerCase() === name.toLowerCase());
+  const handleItemCategoryChange = (
+    receiptIndex: number,
+    itemIndex: number,
+    newCategory: string
+  ) => {
+    const receipt = parsedReceipts[receiptIndex];
+    if (!receipt) return;
+    const base = receipt.items.some((i) => !i.category || i.isNewCatalogItem === undefined)
+      ? enrichReceiptWithCatalog(receipt, items, priceObservations, categories)
+      : receipt;
+    const nextItems = base.items.map((it, i) =>
+      i === itemIndex ? { ...it, category: newCategory } : it
+    );
+    updateParsedReceipt(receiptIndex, { ...base, items: nextItems });
+  };
+
+  const handleConfirmNewCategory = (receiptIndex: number, itemIndex: number) => {
+    const trimmed = newCategoryDraft.trim();
+    if (!trimmed) return;
+    const created = addCategoryConfig({ name: trimmed });
+    const resolvedName = created?.name ?? trimmed;
+    handleItemCategoryChange(receiptIndex, itemIndex, resolvedName);
+    setCreatingCatForKey(null);
+    setNewCategoryDraft('');
+  };
+
+  const handleRemoveParsedItem = (receiptIndex: number, itemIndex: number) => {
+    const receipt = parsedReceipts[receiptIndex];
+    if (!receipt) return;
+    const nextItems = receipt.items.filter((_, i) => i !== itemIndex);
+    const nextSubtotal = Math.round(nextItems.reduce((s, it) => s + it.price, 0) * 100) / 100;
+    const nextTotal =
+      Math.round((nextSubtotal + receipt.taxTotal + receipt.deliveryFee) * 100) / 100;
+    updateParsedReceipt(receiptIndex, {
+      ...receipt,
+      items: nextItems,
+      subtotal: nextSubtotal,
+      total: nextTotal,
+    });
+  };
+
+  const handleAddMissingItem = (receiptIndex: number) => {
+    const receipt = parsedReceipts[receiptIndex];
+    const cleanName = draftItemName.trim();
+    const parsedPrice = Number(draftItemPrice);
+    if (!receipt || !cleanName || !Number.isFinite(parsedPrice) || parsedPrice <= 0) return;
+
+    const info = extractProductInfo(cleanName);
+    const newItem: ParsedReceiptItem = {
+      name: cleanName,
+      price: Math.round(parsedPrice * 100) / 100,
+      category: draftItemCategory || inferCategoryFromName(cleanName, 'Other Expenses'),
+      unit: info.packageSize !== '1 unit' ? info.packageSize : undefined,
+      brand: info.brand,
+    };
+
+    const nextItems = [...receipt.items, newItem];
+    const nextSubtotal = Math.round(nextItems.reduce((s, it) => s + it.price, 0) * 100) / 100;
+    const nextTotal =
+      Math.round((nextSubtotal + receipt.taxTotal + receipt.deliveryFee) * 100) / 100;
+
+    const enriched = enrichReceiptWithCatalog(
+      { ...receipt, items: nextItems, subtotal: nextSubtotal, total: nextTotal },
+      items,
+      priceObservations,
+      categories
+    );
+    updateParsedReceipt(receiptIndex, enriched);
+    setAddingItemForReceipt(null);
+    setDraftItemName('');
+    setDraftItemPrice('');
+  };
+
+  const handleImportItem = (item: ParsedReceiptItem) => {
+    const resolved = resolveCanonicalProduct(item.name, items, priceObservations, {
+      explicitProductId: item.matchedProductId,
+      explicitCategory: item.category,
+      explicitBrand: item.brand,
+      explicitPackageSize: item.unit,
+    });
+    const existing =
+      (item.matchedProductId
+        ? items.find((i) => i.id === item.matchedProductId)
+        : undefined) ??
+      (resolved.matchedExisting ? items.find((i) => i.id === resolved.productId) : undefined);
+
     if (existing) {
-      addToCart(existing);
-    } else {
-      addToCart({
-        id: crypto.randomUUID(),
-        name: name.substring(0, 30),
-        price: Math.round(price),
-        category: 'Groceries',
-        icon: 'shopping-bag',
-      });
+      addToCart(existing, 1, existing.selectedVariantId ?? existing.variants?.[0]?.id);
+      return;
     }
+
+    const info = extractProductInfo(item.name, item.brand, item.unit);
+    const chosenCat =
+      item.category?.trim() || inferCategoryFromName(item.name, 'Other Expenses');
+    addCategoryConfig({ name: chosenCat });
+    addToCart({
+      id: crypto.randomUUID(),
+      name: (info.cleanName || item.name.trim()).slice(0, 60),
+      price: Math.round(item.price * 100) / 100,
+      category: chosenCat,
+      unit: item.unit || (info.packageSize !== '1 unit' ? info.packageSize : '1 unit'),
+      brand: item.brand || info.brand,
+      icon: 'shopping-bag',
+      isCustom: true,
+    });
+  };
+
+  const handleImportReceiptToCart = (receiptIndex: number) => {
+    const receipt = parsedReceipts[receiptIndex];
+    if (!receipt || receipt.items.length === 0) return;
+    const base = receipt.items.some((i) => !i.category || i.isNewCatalogItem === undefined)
+      ? enrichReceiptWithCatalog(receipt, items, priceObservations, categories)
+      : receipt;
+    base.items.forEach((item) => handleImportItem(item));
+    setImportedIdx(receiptIndex);
+    setTimeout(() => setImportedIdx(null), 2000);
   };
 
   return (
@@ -320,6 +567,14 @@ export function ReceiptUploader() {
       </div>
 
       {/* Upload Zone */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        aria-label="Upload receipt image or text file"
+        accept="image/*,.txt,text/plain"
+        onChange={handleSelect}
+        className="hidden"
+      />
       <button
         type="button"
         onDragOver={(e) => {
@@ -335,14 +590,6 @@ export function ReceiptUploader() {
             : 'border-[#D5DBE6] hover:border-[#365FE8] bg-[#F7F8FA] hover:bg-[#F1F5FF]'
         }`}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          aria-label="Upload receipt image or text file"
-          accept="image/*,.txt,text/plain"
-          onChange={handleSelect}
-          className="hidden"
-        />
         {isScanning ? (
           <div className="flex flex-col items-center gap-2.5">
             <div className="relative">
@@ -401,6 +648,13 @@ export function ReceiptUploader() {
         </form>
       )}
 
+      {/* Notice Banner (e.g. offline OCR fallback info) */}
+      {scanNotice && !scanError && (
+        <div className="rounded-xl px-3.5 py-2.5 bg-[#EDF2FF] border border-[#D4E0FF] text-xs font-medium text-[#294FCC]">
+          {scanNotice}
+        </div>
+      )}
+
       {/* Error Banner */}
       {scanError && (
         <div
@@ -444,168 +698,425 @@ export function ReceiptUploader() {
             </button>
           </div>
 
-          {parsedReceipts.map((receipt, idx) => (
-            <div key={idx} className="surface-subtle p-4 space-y-3.5">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] text-[#365FE8] flex items-center justify-center shrink-0">
-                    <Receipt className="w-4 h-4" strokeWidth={2.25} />
+          {parsedReceipts.map((rawReceipt, idx) => {
+            const receipt = rawReceipt.items.some(
+              (i) => !i.category || i.isNewCatalogItem === undefined
+            )
+              ? enrichReceiptWithCatalog(rawReceipt, items, priceObservations, categories)
+              : rawReceipt;
+
+            const itemMatchStatus = receipt.items.map((item) => {
+              if (item.matchedProductId && items.some((c) => c.id === item.matchedProductId)) {
+                return true;
+              }
+              const live = resolveCanonicalProduct(item.name, items, [], {
+                explicitCategory: item.category,
+                explicitBrand: item.brand,
+                explicitPackageSize: item.unit,
+              });
+              return live.matchedExisting && items.some((c) => c.id === live.productId);
+            });
+            const newItemsCount = itemMatchStatus.filter((matched) => !matched).length;
+            const fp = buildReceiptFingerprint(receipt);
+            const alreadyRecorded = transactions.some(
+              (tx) => tx.receiptFingerprint === fp && tx.status !== 'cancelled'
+            );
+            const shouldSaveNew = saveNewToCatalog[idx] ?? true;
+
+            return (
+              <div key={idx} className="surface-subtle p-4 space-y-3.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] text-[#365FE8] flex items-center justify-center shrink-0">
+                      <Receipt className="w-4 h-4" strokeWidth={2.25} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-[#151922] truncate">
+                        {receipt.merchant}
+                      </p>
+                      <p className="text-[11px] text-[#697386] font-medium">
+                        {new Date(receipt.date).toLocaleDateString('en-IN', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                        {' · '}
+                        {receipt.items.length} item{receipt.items.length !== 1 ? 's' : ''}
+                        {newItemsCount > 0 ? ` (${newItemsCount} new)` : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#151922] truncate">
-                      {receipt.merchant}
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+                      Total
                     </p>
-                    <p className="text-[11px] text-[#697386] font-medium">
-                      {new Date(receipt.date).toLocaleDateString('en-IN', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                    <p className="text-base font-bold font-mono tabular-nums text-[#151922]">
+                      ₹{formatCurrency(receipt.total)}
                     </p>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
-                    Total
-                  </p>
-                  <p className="text-base font-bold font-mono tabular-nums text-[#151922]">
-                    ₹{formatCurrency(receipt.total)}
-                  </p>
-                </div>
-              </div>
 
-              {/* Parsed Items */}
-              <div className="bg-[#FFFFFF] rounded-xl border border-[#E7EAF0] p-3 space-y-1.5">
-                {receipt.items.map((item, iIdx) => (
-                  <div key={iIdx} className="flex items-center justify-between text-xs gap-2">
-                    <span className="text-[#151922] truncate font-medium">{item.name}</span>
-                    <span className="text-[#697386] font-mono tabular-nums shrink-0">
-                      ₹{formatCurrency(item.price)}
-                    </span>
+                {/* Parsed Items with Detected Category, Unit & Catalog Match */}
+                <div className="bg-[#FFFFFF] rounded-xl border border-[#E7EAF0] p-3 space-y-2.5">
+                  {receipt.items.map((item, iIdx) => {
+                    const rowKey = `${idx}-${iIdx}`;
+                    const inCatalog = itemMatchStatus[iIdx];
+                    const itemCategory = item.category || 'Other Expenses';
+                    const categoryChoices = categories.some(
+                      (c) => c.toLowerCase() === itemCategory.toLowerCase()
+                    )
+                      ? categories
+                      : [...categories, itemCategory];
+
+                    return (
+                      <div
+                        key={iIdx}
+                        className="pb-2 last:pb-0 border-b last:border-b-0 border-[#F1F3F7] space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between text-xs gap-2">
+                          <span className="text-[#151922] truncate font-medium">
+                            {item.name}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-[#151922] font-semibold font-mono tabular-nums">
+                              ₹{formatCurrency(item.price)}
+                            </span>
+                            {!alreadyRecorded && receipt.items.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveParsedItem(idx, iIdx)}
+                                aria-label={`Remove ${item.name}`}
+                                title="Remove misread item"
+                                className="p-0.5 rounded text-[#929BAB] hover:text-[#DE5252] hover:bg-[#FDECEC] transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${
+                                inCatalog
+                                  ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                                  : 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
+                              }`}
+                            >
+                              {inCatalog ? 'In Catalog' : 'New Item'}
+                            </span>
+                            {item.unit && (
+                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-[#F7F8FA] text-[#697386] border border-[#E7EAF0]">
+                                {item.unit}
+                              </span>
+                            )}
+                            {item.brand && (
+                              <span className="text-[10px] font-medium text-[#697386]">
+                                {item.brand}
+                              </span>
+                            )}
+                          </div>
+
+                          <select
+                            aria-label={`Category for ${item.name}`}
+                            value={itemCategory}
+                            disabled={alreadyRecorded}
+                            onChange={(e) => {
+                              if (e.target.value === '__new__') {
+                                setCreatingCatForKey(rowKey);
+                                setNewCategoryDraft('');
+                              } else {
+                                handleItemCategoryChange(idx, iIdx, e.target.value);
+                              }
+                            }}
+                            className="text-[11px] font-medium text-[#151922] bg-[#F7F8FA] hover:bg-[#EFF2F7] border border-[#E7EAF0] rounded-lg px-2 py-1 max-w-[175px] truncate focus:outline-none focus:border-[#365FE8] disabled:opacity-70"
+                          >
+                            {categoryChoices.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
+                            <option value="__new__">+ New category...</option>
+                          </select>
+                        </div>
+
+                        {creatingCatForKey === rowKey && (
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <input
+                              type="text"
+                              value={newCategoryDraft}
+                              onChange={(e) => setNewCategoryDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleConfirmNewCategory(idx, iIdx);
+                                } else if (e.key === 'Escape') {
+                                  setCreatingCatForKey(null);
+                                  setNewCategoryDraft('');
+                                }
+                              }}
+                              placeholder="New category name"
+                              aria-label="New category name"
+                              autoFocus
+                              className="input-field flex-1 px-2.5 py-1 text-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmNewCategory(idx, iIdx)}
+                              disabled={!newCategoryDraft.trim()}
+                              className="px-2.5 py-1 rounded-lg bg-[#365FE8] text-white text-xs font-semibold hover:bg-[#294FCC] disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <Plus className="w-3 h-3" strokeWidth={2.5} />
+                              Add
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCreatingCatForKey(null);
+                                setNewCategoryDraft('');
+                              }}
+                              aria-label="Cancel new category"
+                              className="p-1 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-[#F7F8FA]"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {!alreadyRecorded &&
+                    (addingItemForReceipt === idx ? (
+                      <div className="pt-2 border-t border-[#F1F3F7] space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Item name (e.g. Dolo 650mg)"
+                            aria-label="Missing item name"
+                            value={draftItemName}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setDraftItemName(val);
+                              if (val.trim().length > 2) {
+                                setDraftItemCategory(
+                                  inferCategoryFromName(val, 'Other Expenses')
+                                );
+                              }
+                            }}
+                            className="input-field sm:col-span-2 px-2.5 py-1.5 text-xs"
+                          />
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            placeholder="Price ₹"
+                            aria-label="Missing item price"
+                            value={draftItemPrice}
+                            onChange={(e) => setDraftItemPrice(e.target.value)}
+                            className="input-field px-2.5 py-1.5 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            aria-label="Missing item category"
+                            value={draftItemCategory}
+                            onChange={(e) => setDraftItemCategory(e.target.value)}
+                            className="input-field flex-1 px-2.5 py-1.5 text-xs"
+                          >
+                            {categories.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => handleAddMissingItem(idx)}
+                            disabled={!draftItemName.trim() || Number(draftItemPrice) <= 0}
+                            className="px-3 py-1.5 rounded-lg bg-[#365FE8] text-white text-xs font-semibold hover:bg-[#294FCC] disabled:opacity-50"
+                          >
+                            Add Item
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddingItemForReceipt(null);
+                              setDraftItemName('');
+                              setDraftItemPrice('');
+                            }}
+                            className="px-2 py-1.5 rounded-lg text-xs text-[#697386] hover:bg-[#F7F8FA]"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddingItemForReceipt(idx);
+                          setDraftItemName('');
+                          setDraftItemPrice('');
+                          setDraftItemCategory('Other Expenses');
+                        }}
+                        className="w-full pt-1.5 text-[11px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center justify-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" strokeWidth={2.5} />
+                        Add missing item to receipt
+                      </button>
+                    ))}
+                </div>
+
+                {/* Summary Bar */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                    <p className="text-[10px] font-semibold uppercase text-[#697386]">
+                      Subtotal
+                    </p>
+                    <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+                      ₹{formatCurrency(receipt.subtotal)}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                    <p className="text-[10px] font-semibold uppercase text-[#697386]">Tax</p>
+                    <p className="text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5">
+                      ₹{formatCurrency(receipt.taxTotal)}
+                    </p>
+                  </div>
+                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                    <p className="text-[10px] font-semibold uppercase text-[#697386]">Fees</p>
+                    <p className="text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5">
+                      ₹{formatCurrency(receipt.deliveryFee)}
+                    </p>
+                  </div>
+                </div>
 
-              {/* Summary Bar */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
-                  <p className="text-[10px] font-semibold uppercase text-[#697386]">
-                    Subtotal
-                  </p>
-                  <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
-                    ₹{formatCurrency(receipt.subtotal)}
-                  </p>
-                </div>
-                <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
-                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Tax</p>
-                  <p className="text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5">
-                    ₹{formatCurrency(receipt.taxTotal)}
-                  </p>
-                </div>
-                <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
-                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Fees</p>
-                  <p className="text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5">
-                    ₹{formatCurrency(receipt.deliveryFee)}
-                  </p>
-                </div>
-              </div>
+                {/* Save new items to catalog option + Action Buttons */}
+                <div className="space-y-2">
+                  {!alreadyRecorded && newItemsCount > 0 && (
+                    <label className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#151922] font-medium cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={shouldSaveNew}
+                        onChange={(e) =>
+                          setSaveNewToCatalog((prev) => ({
+                            ...prev,
+                            [idx]: e.target.checked,
+                          }))
+                        }
+                        className="w-3.5 h-3.5 rounded border-[#D5DBE6] text-[#365FE8] focus:ring-[#365FE8]"
+                      />
+                      <span>
+                        Add {newItemsCount} new item{newItemsCount > 1 ? 's' : ''} to Quick Mart
+                        catalog
+                      </span>
+                    </label>
+                  )}
 
-              {/* Action Buttons */}
-              {(() => {
-                const fp = buildReceiptFingerprint(receipt);
-                const alreadyRecorded = transactions.some(
-                  (tx) => tx.receiptFingerprint === fp && tx.status !== 'cancelled'
-                );
-                return (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      disabled={alreadyRecorded || receipt.items.length === 0}
-                      onClick={() => {
-                        const res = recordReceiptAsTransaction(receipt);
-                        setRecordFeedback({
-                          idx,
-                          ok: res.ok,
-                          message: res.ok
-                            ? `Recorded ₹${formatCurrency(receipt.total)} transaction & ${
-                                res.observationsCount ?? 0
-                              } price points${
-                                res.triggeredAlertsCount
-                                  ? ` (${res.triggeredAlertsCount} alert${
-                                      res.triggeredAlertsCount > 1 ? 's' : ''
-                                    } triggered!)`
-                                  : ''
-                              }`
-                            : res.error || 'Already recorded',
-                        });
-                      }}
-                      className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border ${
-                        alreadyRecorded
-                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3] cursor-default'
-                          : 'bg-[#365FE8] hover:bg-[#294FCC] text-white border-[#365FE8]'
+                  <button
+                    type="button"
+                    disabled={alreadyRecorded || receipt.items.length === 0}
+                    onClick={() => {
+                      const res = recordReceiptAsTransaction(receipt, {
+                        saveNewItemsToCatalog: shouldSaveNew,
+                      });
+                      const customSuffix =
+                        res.createdCustomItemsCount && res.createdCustomItemsCount > 0
+                          ? ` & ${res.createdCustomItemsCount} custom item${
+                              res.createdCustomItemsCount > 1 ? 's' : ''
+                            } saved`
+                          : '';
+                      const alertSuffix = res.triggeredAlertsCount
+                        ? ` (${res.triggeredAlertsCount} alert${
+                            res.triggeredAlertsCount > 1 ? 's' : ''
+                          } triggered!)`
+                        : '';
+                      setRecordFeedback({
+                        idx,
+                        ok: res.ok,
+                        message: res.ok
+                          ? `Recorded ₹${formatCurrency(receipt.total)} transaction, ${
+                              res.observationsCount ?? 0
+                            } price points${customSuffix}${alertSuffix}`
+                          : res.error || 'Already recorded',
+                      });
+                    }}
+                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border ${
+                      alreadyRecorded
+                        ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3] cursor-default'
+                        : 'bg-[#365FE8] hover:bg-[#294FCC] text-white border-[#365FE8]'
+                    }`}
+                  >
+                    {alreadyRecorded ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        Recorded to Ledger &amp; Price History
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.25} />
+                        Record Expense &amp; Track Prices
+                      </>
+                    )}
+                  </button>
+
+                  {recordFeedback?.idx === idx && (
+                    <p
+                      className={`text-xs font-semibold px-1 ${
+                        recordFeedback.ok ? 'text-[#15966B]' : 'text-[#9E6614]'
                       }`}
                     >
-                      {alreadyRecorded ? (
+                      {recordFeedback.message}
+                    </p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={receipt.items.length === 0}
+                      onClick={() => handleImportReceiptToCart(idx)}
+                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
+                        importedIdx === idx
+                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                          : 'btn-secondary'
+                      }`}
+                    >
+                      {importedIdx === idx ? (
                         <>
                           <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                          Recorded to Ledger &amp; Price History
+                          Imported ({receipt.items.length})
                         </>
                       ) : (
                         <>
-                          <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.25} />
-                          Record Expense &amp; Track Prices
+                          <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.25} />
+                          Import to cart
                         </>
                       )}
                     </button>
-
-                    {recordFeedback?.idx === idx && (
-                      <p
-                        className={`text-xs font-semibold px-1 ${
-                          recordFeedback.ok ? 'text-[#15966B]' : 'text-[#9E6614]'
-                        }`}
-                      >
-                        {recordFeedback.message}
-                      </p>
-                    )}
-
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={receipt.items.length === 0}
-                        onClick={() =>
-                          receipt.items.forEach((item) =>
-                            handleImportItem(item.name, item.price)
-                          )
-                        }
-                        className="btn-secondary flex-1 py-2 px-3 text-xs flex items-center justify-center gap-1.5"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" strokeWidth={2.25} />
-                        Import to cart
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSaveAudit(idx)}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
-                          savedIdx === idx
-                            ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                            : 'bg-[#FFFFFF] hover:bg-[#F7F8FA] text-[#151922] border-[#E7EAF0]'
-                        }`}
-                      >
-                        {savedIdx === idx ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-3.5 h-3.5" strokeWidth={2.25} /> Save
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveAudit(idx)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
+                        savedIdx === idx
+                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                          : 'bg-[#FFFFFF] hover:bg-[#F7F8FA] text-[#151922] border-[#E7EAF0]'
+                      }`}
+                    >
+                      {savedIdx === idx ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> Saved
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5" strokeWidth={2.25} /> Save
+                        </>
+                      )}
+                    </button>
                   </div>
-                );
-              })()}
-            </div>
-          ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

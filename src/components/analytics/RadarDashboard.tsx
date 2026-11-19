@@ -152,65 +152,12 @@ export function RadarDashboard({
   };
 
   return (
-    <div className="space-y-5">
-      {/* Compact Radar Controls & Analytics Tabs */}
-      <div className="surface-card p-4 space-y-3.5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Timeframe Filter Bar */}
-          <div
-            className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-1 w-full lg:w-fit"
-            role="group"
-            aria-label="Radar Room timeframe selector"
-          >
-            {TIMEFRAME_OPTIONS.map((opt) => {
-              const active = timeframe === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setTimeframe(opt.id)}
-                  aria-pressed={active}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors ${
-                    active
-                      ? 'bg-[#365FE8] text-white shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {timeframe === 'custom' && (
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              <label className="flex items-center gap-2 text-[#697386] font-medium">
-                <span>From</span>
-                <input
-                  type="date"
-                  aria-label="Radar custom start date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="input-field px-2.5 py-1.5 text-xs"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-[#697386] font-medium">
-                <span>To</span>
-                <input
-                  type="date"
-                  aria-label="Radar custom end date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="input-field px-2.5 py-1.5 text-xs"
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
-        {/* Radar Room Navigation Tabs */}
+    <div className="space-y-4">
+      {/* Unified Flat Radar Controls & Section Tabs */}
+      <div className="flex flex-col gap-2.5">
+        {/* Row 1: Radar Room Navigation Tabs */}
         <div
-          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-3 border-t border-[#E7EAF0]"
+          className="flex flex-wrap items-center gap-1.5"
           role="tablist"
           aria-label="Radar Room analytics sections"
         >
@@ -237,16 +184,16 @@ export function RadarDashboard({
                 role="tab"
                 aria-selected={active}
                 onClick={() => setSection(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap shrink-0 transition-colors border ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors border ${
                   active
                     ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
-                    : 'text-[#697386] hover:text-[#151922] hover:bg-[#F7F8FA] border-transparent'
+                    : 'bg-white text-[#697386] hover:text-[#151922] border-[#E7EAF0]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" strokeWidth={2.2} />
                 <span>{tab.label}</span>
                 {'badge' in tab && tab.badge !== undefined && (
-                  <span className="ml-0.5 font-mono tabular-nums text-[11px] px-1.5 py-0.2 rounded-md bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
+                  <span className="ml-0.5 font-mono tabular-nums text-[11px] px-1.5 rounded bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
                     {tab.badge}
                   </span>
                 )}
@@ -254,6 +201,59 @@ export function RadarDashboard({
             );
           })}
         </div>
+
+        {/* Row 2: Timeframe Filter Bar */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div
+            className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-1 max-w-full"
+            role="group"
+            aria-label="Radar Room timeframe selector"
+          >
+            {TIMEFRAME_OPTIONS.map((opt) => {
+              const active = timeframe === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setTimeframe(opt.id)}
+                  aria-pressed={active}
+                  className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold whitespace-nowrap shrink-0 transition-colors ${
+                    active
+                      ? 'bg-white text-[#151922] shadow-xs'
+                      : 'text-[#697386] hover:text-[#151922]'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {timeframe === 'custom' && (
+          <div className="flex flex-wrap items-center gap-3 text-xs bg-white border border-[#E7EAF0] rounded-xl px-3.5 py-2.5 w-fit">
+            <label className="flex items-center gap-2 text-[#697386] font-medium">
+              <span>From</span>
+              <input
+                type="date"
+                aria-label="Radar custom start date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="input-field px-2.5 py-1 text-xs"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-[#697386] font-medium">
+              <span>To</span>
+              <input
+                type="date"
+                aria-label="Radar custom end date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="input-field px-2.5 py-1 text-xs"
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Section Body */}

@@ -1,6 +1,7 @@
 import type { CartItem, Transaction, ParsedReceipt, FeeFlag } from '../store/useStore';
 import { FEE_TYPE_LABELS } from './auditEngine';
 import { formatCurrency } from './categoryStyles';
+import { calculateCartTotals, getEffectiveTransactionAmount } from './martEngine';
 
 export function generateReportText(opts: {
   items: CartItem[];
@@ -12,8 +13,11 @@ export function generateReportText(opts: {
 }): string {
   const { items, transactions, totalBudget, sessionBudget, parsedReceipts, feeFlags } = opts;
   const cartItems = items.filter((i) => i.quantity > 0);
-  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const cartTotal = calculateCartTotals(items).totalAmount;
+  const totalSpent = transactions.reduce(
+    (sum, tx) => sum + getEffectiveTransactionAmount(tx),
+    0
+  );
   const totalFees = feeFlags.reduce((sum, f) => sum + f.estimatedCost, 0);
 
   const lines: string[] = [];

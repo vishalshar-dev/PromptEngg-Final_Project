@@ -210,6 +210,11 @@ export interface FeeFlag {
 export interface ParsedReceiptItem {
   name: string;
   price: number;
+  category?: string;
+  unit?: string;
+  brand?: string;
+  matchedProductId?: string;
+  isNewCatalogItem?: boolean;
   tax?: number;
   deliveryFee?: number;
 }

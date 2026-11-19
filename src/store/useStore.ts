@@ -75,7 +75,9 @@ import {
   buildProductPriceSummaries,
   buildReceiptFingerprint,
   evaluatePriceAlerts,
+  extractProductInfo,
   inferCategoryFromName,
+  resolveCanonicalProduct,
 } from '../utils/priceTrackerEngine';
 
 export type {
@@ -274,12 +276,16 @@ export interface AppState {
   setTransactions: (txs: Transaction[]) => void;
   setItems: (items: CartItem[]) => void;
 
-  recordReceiptAsTransaction: (receipt: ParsedReceipt) => {
+  recordReceiptAsTransaction: (
+    receipt: ParsedReceipt,
+    options?: { saveNewItemsToCatalog?: boolean }
+  ) => {
     ok: boolean;
     error?: string;
     transactionId?: string;
     observationsCount?: number;
     triggeredAlertsCount?: number;
+    createdCustomItemsCount?: number;
   };
   recordManualPricePurchase: (input: ManualPricePurchaseInput) => {
     observation: PriceObservation;
@@ -310,6 +316,7 @@ export interface AppState {
   setCategoryCap: (category: string, amount: number | null) => void;
   setFeeFlags: (flags: FeeFlag[]) => void;
   addParsedReceipt: (receipt: ParsedReceipt) => void;
+  updateParsedReceipt: (index: number, receipt: ParsedReceipt) => void;
   clearParsedReceipts: () => void;
 
   addSavedAudit: (audit: Omit<SavedAudit, 'id' | 'timestamp'>) => void;
@@ -1814,7 +1821,7 @@ export const useAppStore = create<AppState>()(
       setTransactions: (txs) => set({ transactions: txs }),
       setItems: (items) => set({ items }),
 
-      recordReceiptAsTransaction: (receipt) => {
+      recordReceiptAsTransaction: (receipt, options) => {
         const current = get();
         const fingerprint = buildReceiptFingerprint(receipt);
         const alreadyRecorded = current.transactions.some(
@@ -1830,12 +1837,110 @@ export const useAppStore = create<AppState>()(
         const txId = crypto.randomUUID();
         const nowIso = new Date().toISOString();
         const purchaseDate = receipt.date || nowIso;
+        const saveNewItemsToCatalog = options?.saveNewItemsToCatalog === true;
+
+        let nextItems = [...current.items];
+        let nextConfigs = [...current.categoryConfigs];
+        const nextCaps = { ...current.categoryCaps };
+        const nextHistory = { ...current.priceHistory };
+        let createdCustomItemsCount = 0;
 
         const createdObservations: PriceObservation[] = [];
         for (const item of receipt.items) {
           if (!item.name.trim() || item.price <= 0) continue;
+
+          const extracted = extractProductInfo(item.name, item.brand, item.unit);
+          const rawCat =
+            item.category?.trim() || inferCategoryFromName(item.name, 'Other Expenses');
+          const matchedCfg = nextConfigs.find(
+            (c) => c.name.toLowerCase() === rawCat.toLowerCase()
+          );
+          const itemCategory = matchedCfg?.name ?? rawCat;
+          const resolvedUnit =
+            item.unit?.trim() ||
+            (extracted.packageSize !== '1 unit' ? extracted.packageSize : undefined);
+          const resolvedBrand = item.brand?.trim() || extracted.brand;
+
+          const resolved = resolveCanonicalProduct(
+            item.name,
+            nextItems,
+            [...createdObservations, ...current.priceObservations],
+            {
+              explicitProductId: item.matchedProductId,
+              explicitCategory: itemCategory,
+              explicitBrand: resolvedBrand,
+              explicitPackageSize: resolvedUnit,
+            }
+          );
+
+          let targetCatalogItem =
+            (item.matchedProductId
+              ? nextItems.find((c) => c.id === item.matchedProductId)
+              : undefined) ??
+            (resolved.matchedExisting
+              ? nextItems.find((c) => c.id === resolved.productId)
+              : undefined);
+
+          if (!targetCatalogItem && saveNewItemsToCatalog) {
+            if (!matchedCfg) {
+              nextConfigs = [
+                ...nextConfigs,
+                {
+                  id: `cat-custom-${crypto.randomUUID().slice(0, 8)}`,
+                  name: itemCategory,
+                  iconKey: 'package',
+                  accent: 'teal',
+                  isCustom: true,
+                  order: nextConfigs.length,
+                },
+              ];
+              if (!(itemCategory in nextCaps)) {
+                nextCaps[itemCategory] = null;
+              }
+            }
+
+            const newItemId = `custom-${crypto.randomUUID().slice(0, 8)}`;
+            const cleanDisplayName = (extracted.cleanName || item.name.trim()).slice(0, 60);
+            const catalogUnit = resolvedUnit || '1 unit';
+            const unitPrice = roundCurrency(
+              resolved.quantity > 1 ? item.price / resolved.quantity : item.price
+            );
+
+            targetCatalogItem = {
+              id: newItemId,
+              name: cleanDisplayName,
+              price: unitPrice,
+              category: itemCategory,
+              unit: catalogUnit,
+              brand: resolvedBrand,
+              icon: 'shopping-bag',
+              quantity: 0,
+              isCustom: true,
+              createdAt: nowIso,
+              lastPurchasedAt: purchaseDate,
+              purchaseCount: 1,
+            };
+
+            nextItems = [targetCatalogItem, ...nextItems];
+            nextHistory[newItemId] = [
+              {
+                date: purchaseDate,
+                price: unitPrice,
+                unit: catalogUnit,
+                source: 'user_purchase',
+                productName: cleanDisplayName,
+                brand: resolvedBrand,
+              },
+            ];
+            createdCustomItemsCount += 1;
+          }
+
           const obs = buildPriceObservation({
             rawName: item.name,
+            explicitProductId: targetCatalogItem?.id,
+            category: itemCategory,
+            brand: resolvedBrand,
+            packageSize: resolvedUnit,
             totalPrice: item.price,
             purchaseDate,
             purchaseSource: 'audit',
@@ -1847,7 +1952,7 @@ export const useAppStore = create<AppState>()(
               receiptTotal: roundCurrency(receipt.total),
               fingerprint,
             },
-            catalogItems: current.items,
+            catalogItems: nextItems,
             existingObservations: [...createdObservations, ...current.priceObservations],
           });
           createdObservations.push(obs);
@@ -1858,7 +1963,7 @@ export const useAppStore = create<AppState>()(
         for (const obs of createdObservations) {
           catTotals.set(obs.category, (catTotals.get(obs.category) ?? 0) + obs.totalPrice);
         }
-        let dominantCategory = 'Groceries';
+        let dominantCategory = 'Other Expenses';
         let bestAmt = -1;
         for (const [cat, amt] of catTotals.entries()) {
           if (amt > bestAmt) {
@@ -1888,6 +1993,11 @@ export const useAppStore = create<AppState>()(
 
         set({
           transactions: [newTx, ...current.transactions],
+          items: nextItems,
+          categoryConfigs: nextConfigs,
+          categories: nextConfigs.map((c) => c.name),
+          categoryCaps: nextCaps,
+          priceHistory: nextHistory,
           priceObservations: obsResult.priceObservations,
           priceAlerts: obsResult.priceAlerts,
           triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
@@ -1898,6 +2008,7 @@ export const useAppStore = create<AppState>()(
           transactionId: txId,
           observationsCount: createdObservations.length,
           triggeredAlertsCount: obsResult.triggeredCount,
+          createdCustomItemsCount,
         };
       },
 
@@ -2324,6 +2435,10 @@ export const useAppStore = create<AppState>()(
       setFeeFlags: (flags) => set({ feeFlags: flags }),
       addParsedReceipt: (receipt) =>
         set((state) => ({ parsedReceipts: [receipt, ...state.parsedReceipts].slice(0, 10) })),
+      updateParsedReceipt: (index, receipt) =>
+        set((state) => ({
+          parsedReceipts: state.parsedReceipts.map((r, i) => (i === index ? receipt : r)),
+        })),
       clearParsedReceipts: () => set({ parsedReceipts: [] }),
 
       addSavedAudit: (audit) =>

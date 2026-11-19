@@ -191,45 +191,43 @@ export function SurvivalSandbox() {
       />
 
       {/* Sub-view Switcher */}
-      <div className="surface-card p-2">
-        <div
-          role="tablist"
-          aria-label="Financial Wellness sections"
-          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar"
-        >
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = section === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setSection(item.id)}
-                className={`flex-1 min-w-fit py-2 px-3.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
-                  active
-                    ? 'bg-[#365FE8] text-white'
-                    : 'text-[#697386] hover:text-[#151922] hover:bg-[#F7F8FA]'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2.25} />
-                <span>{item.label}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                      active
-                        ? 'bg-white/20 text-white'
-                        : 'bg-[#FEF6E7] text-[#9E6614]'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      <div
+        role="tablist"
+        aria-label="Financial Wellness sections"
+        className="flex items-center gap-1 bg-[#F1F3F6] border border-[#E7EAF0] p-1 rounded-xl overflow-x-auto no-scrollbar"
+      >
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = section === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setSection(item.id)}
+              className={`flex-1 min-w-fit py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+                active
+                  ? 'bg-white text-[#151922] shadow-xs'
+                  : 'text-[#697386] hover:text-[#151922]'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2.25} />
+              <span>{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    active
+                      ? 'bg-[#EDF2FF] text-[#365FE8]'
+                      : 'bg-[#FEF6E7] text-[#9E6614]'
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Active Sub-View */}

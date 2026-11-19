@@ -53,12 +53,14 @@ export function PriceTrendTracker({
           )}
         </div>
 
-        <div className="surface-subtle border-dashed p-5 text-center space-y-1.5">
-          <Clock className="w-5 h-5 text-[#929BAB] mx-auto" />
-          <p className="text-xs font-bold text-[#151922]">
+        <div className="py-4 text-center space-y-1.5">
+          <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] flex items-center justify-center mx-auto mb-1">
+            <Clock className="w-4 h-4 text-[#697386]" />
+          </div>
+          <p className="text-xs font-semibold text-[#151922]">
             No recorded purchase prices yet
           </p>
-          <p className="text-xs text-[#697386] leading-relaxed">
+          <p className="text-xs text-[#697386] leading-relaxed max-w-sm mx-auto">
             Click &ldquo;Record Expense &amp; Track Prices&rdquo; on any scanned receipt, or check out in Shopping to track unit-normalized price history.
           </p>
         </div>

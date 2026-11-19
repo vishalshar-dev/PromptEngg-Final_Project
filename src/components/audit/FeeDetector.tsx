@@ -1,24 +1,57 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ShieldAlert, Check, ScanSearch, Save } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import {
-  detectFees,
+  detectCartSurcharges,
+  detectReceiptFees,
+  detectTransactionFees,
   FEE_TYPE_LABELS,
   FEE_SEVERITY_STYLES,
 } from '../../utils/auditEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
+import { calculateCartTotals } from '../../utils/martEngine';
 
 export function FeeDetector() {
   const items = useAppStore((s) => s.items);
-  const feeFlags = useAppStore((s) => s.feeFlags);
+  const parsedReceipts = useAppStore((s) => s.parsedReceipts);
+  const transactions = useAppStore((s) => s.transactions);
   const setFeeFlags = useAppStore((s) => s.setFeeFlags);
   const addSavedAudit = useAppStore((s) => s.addSavedAudit);
+
   const [savedFlash, setSavedFlash] = useState(false);
+  const [hasScanned, setHasScanned] = useState(false);
 
-  const cartItems = items.filter((i) => i.quantity > 0);
-  const detectedFlags = useMemo(() => detectFees(cartItems), [cartItems]);
+  const cartItems = useMemo(() => items.filter((i) => i.quantity > 0), [items]);
+  const activeTransactions = useMemo(
+    () => transactions.filter((t) => t.status !== 'cancelled' && t.status !== 'refunded'),
+    [transactions]
+  );
 
-  const hasRun = feeFlags.length > 0 || detectedFlags.length > 0;
+  const detectedFlags = useMemo(() => {
+    const cartFlags = detectCartSurcharges(cartItems);
+    const receiptFlags = detectReceiptFees(parsedReceipts);
+    const txFlags = detectTransactionFees(activeTransactions);
+    return [...cartFlags, ...receiptFlags, ...txFlags];
+  }, [cartItems, parsedReceipts, activeTransactions]);
+
+  // Reset manual scan confirmation when cart, receipts, and transactions are all empty
+  useEffect(() => {
+    if (
+      cartItems.length === 0 &&
+      parsedReceipts.length === 0 &&
+      activeTransactions.length === 0
+    ) {
+      setHasScanned(false);
+      setFeeFlags([]);
+    }
+  }, [cartItems.length, parsedReceipts.length, activeTransactions.length, setFeeFlags]);
+
+  const canScan =
+    cartItems.length > 0 ||
+    parsedReceipts.length > 0 ||
+    activeTransactions.length > 0;
+  const showResults = hasScanned || detectedFlags.length > 0;
+
   const totalEstimatedCost = detectedFlags.reduce(
     (sum, f) => sum + f.estimatedCost,
     0
@@ -32,15 +65,31 @@ export function FeeDetector() {
 
   const runScan = () => {
     setFeeFlags(detectedFlags);
+    setHasScanned(true);
   };
 
   const handleSaveAudit = () => {
-    const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const cartTotal = calculateCartTotals(items).totalAmount;
+    const receiptTotal = parsedReceipts.reduce((sum, r) => sum + r.total, 0);
+    const recentTxTotal = activeTransactions
+      .slice(0, 10)
+      .reduce((sum, t) => sum + t.amount, 0);
+    const auditTotal =
+      cartTotal > 0 ? cartTotal : receiptTotal > 0 ? receiptTotal : recentTxTotal;
+    const sourceLabel =
+      cartItems.length > 0 && parsedReceipts.length > 0
+        ? 'Cart & Receipt Audit'
+        : cartItems.length > 0
+          ? 'Cart Audit'
+          : parsedReceipts.length > 0
+            ? `${parsedReceipts[0]?.merchant || 'Receipt'} Fee Audit`
+            : 'Expenses Audit';
+
     addSavedAudit({
-      source: 'Cart Audit',
-      subtotal: cartTotal - totalEstimatedCost,
+      source: sourceLabel,
+      subtotal: Math.max(0, auditTotal - totalEstimatedCost),
       extraFees: totalEstimatedCost,
-      total: cartTotal,
+      total: auditTotal,
       flags: detectedFlags.map((f) => ({
         type: FEE_TYPE_LABELS[f.type],
         severity: f.severity,
@@ -51,6 +100,15 @@ export function FeeDetector() {
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 2000);
   };
+
+  const scanButtonLabel =
+    cartItems.length > 0 && parsedReceipts.length > 0
+      ? 'Scan cart, receipts & expenses for hidden fees'
+      : cartItems.length > 0
+        ? 'Scan cart & expenses for hidden fees'
+        : parsedReceipts.length > 0
+          ? 'Scan parsed receipt & expenses for hidden fees'
+          : 'Scan logged expenses for hidden fees & subscriptions';
 
   return (
     <div className="space-y-4">
@@ -64,7 +122,7 @@ export function FeeDetector() {
               Fee &amp; Dark Pattern Scanner
             </h3>
             <p className="text-xs text-[#697386]">
-              Inspect your active cart for hidden surcharges
+              Inspect your cart, scanned receipts, and logged expenses for hidden surcharges
             </p>
           </div>
         </div>
@@ -75,22 +133,30 @@ export function FeeDetector() {
         )}
       </div>
 
-      {/* Scan Button */}
-      <button
-        type="button"
-        onClick={runScan}
-        disabled={cartItems.length === 0}
-        className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 border ${
-          cartItems.length === 0
-            ? 'bg-[#F1F3F6] text-[#929BAB] border-[#E7EAF0] cursor-not-allowed'
-            : detectedFlags.length > 0
-            ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8] hover:bg-[#FDF0D5]'
-            : 'btn-secondary'
-        }`}
-      >
-        <ScanSearch className="w-4 h-4" strokeWidth={2.25} />
-        {cartItems.length === 0 ? 'Add items to scan' : 'Scan cart for hidden fees'}
-      </button>
+      {/* Scan Control or Empty State */}
+      {!canScan ? (
+        <div className="py-4 text-center space-y-1">
+          <p className="text-xs font-semibold text-[#151922]">
+            Nothing queued to audit yet
+          </p>
+          <p className="text-xs text-[#697386]">
+            Add items in Shopping, log an expense, or scan a receipt above to inspect for small-cart fees, subscriptions, and handling surcharges.
+          </p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={runScan}
+          className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 border ${
+            detectedFlags.length > 0
+              ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8] hover:bg-[#FDF0D5]'
+              : 'btn-secondary'
+          }`}
+        >
+          <ScanSearch className="w-4 h-4" strokeWidth={2.25} />
+          {scanButtonLabel}
+        </button>
+      )}
 
       {/* Summary Stats */}
       {detectedFlags.length > 0 && (
@@ -122,7 +188,7 @@ export function FeeDetector() {
         </div>
       )}
 
-      {/* Flag List */}
+      {/* Flag List or Clean Result */}
       {detectedFlags.length > 0 ? (
         <div className="space-y-2.5">
           {detectedFlags.map((flag) => {
@@ -174,20 +240,20 @@ export function FeeDetector() {
             );
           })}
         </div>
-      ) : hasRun ? (
+      ) : canScan && showResults ? (
         <div className="surface-subtle p-5 text-center">
           <div className="w-10 h-10 rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] flex items-center justify-center mx-auto mb-2">
             <Check className="w-5 h-5 text-[#15966B]" strokeWidth={2.5} />
           </div>
-          <p className="text-sm font-bold text-[#15966B]">Cart is clean</p>
+          <p className="text-sm font-bold text-[#15966B]">Audit clean</p>
           <p className="text-xs text-[#697386] mt-1">
-            No hidden fees or dark patterns detected
+            No hidden fees, high GST markups, or dark patterns detected
           </p>
         </div>
       ) : null}
 
       {/* Save Audit Button */}
-      {detectedFlags.length > 0 && (
+      {canScan && showResults && (
         <button
           type="button"
           onClick={handleSaveAudit}

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { CATEGORY_IMAGES } from '../../data/martCatalog';
 import { getCategoryStyle } from '../../utils/categoryStyles';
 import { CategoryIcon } from './CategoryIcon';
+import { getProductArtwork } from './ProductArtwork';
 
 interface ProductVisualProps {
   name: string;
@@ -9,8 +11,11 @@ interface ProductVisualProps {
   iconKey?: string;
   accent?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  preferCategoryPhoto?: boolean;
   className?: string;
 }
+
+const SHARED_CATEGORY_IMAGE_SET = new Set(Object.values(CATEGORY_IMAGES));
 
 const SIZE_CLASSES: Record<NonNullable<ProductVisualProps['size']>, string> = {
   xs: 'w-10 h-10 rounded-lg',
@@ -19,11 +24,11 @@ const SIZE_CLASSES: Record<NonNullable<ProductVisualProps['size']>, string> = {
   lg: 'w-full h-44 rounded-2xl',
 };
 
-const ICON_SIZE_CLASSES: Record<NonNullable<ProductVisualProps['size']>, string> = {
-  xs: 'w-4 h-4',
-  sm: 'w-5 h-5',
-  md: 'w-7 h-7',
-  lg: 'w-11 h-11',
+const ARTWORK_SCALE_CLASSES: Record<NonNullable<ProductVisualProps['size']>, string> = {
+  xs: 'scale-[0.6]',
+  sm: 'scale-[0.74]',
+  md: 'scale-100 group-hover:scale-105 transition-transform duration-200',
+  lg: 'scale-[1.35]',
 };
 
 export function inferIconKeyForCategory(category: string): string {
@@ -54,6 +59,7 @@ export function ProductVisual({
   iconKey,
   accent,
   size = 'md',
+  preferCategoryPhoto = false,
   className = '',
 }: ProductVisualProps) {
   const [imgError, setImgError] = useState(false);
@@ -64,13 +70,19 @@ export function ProductVisual({
 
   const style = getCategoryStyle(category, accent);
   const resolvedIconKey = iconKey ?? inferIconKeyForCategory(category);
-  const showImage = Boolean(imageUrl && !imgError);
+  const isSharedCategoryPhoto = Boolean(imageUrl && SHARED_CATEGORY_IMAGE_SET.has(imageUrl));
+  const showPhoto = Boolean(
+    imageUrl && !imgError && (preferCategoryPhoto || !isSharedCategoryPhoto)
+  );
+  const artwork = getProductArtwork(name, category, resolvedIconKey);
 
   return (
     <div
-      className={`relative overflow-hidden border border-[#E7EAF0] bg-gradient-to-br ${style.gradient} flex items-center justify-center flex-shrink-0 ${SIZE_CLASSES[size]} ${className}`}
+      className={`relative overflow-hidden border border-[#E7EAF0] bg-gradient-to-br ${
+        showPhoto ? style.gradient : artwork.bgClass
+      } flex items-center justify-center flex-shrink-0 ${SIZE_CLASSES[size]} ${className}`}
     >
-      {showImage ? (
+      {showPhoto ? (
         <>
           <img
             src={imageUrl}
@@ -89,24 +101,10 @@ export function ProductVisual({
           </div>
         </>
       ) : (
-        <div className="relative w-full h-full flex items-center justify-center">
-          <div
-            className={`relative flex items-center justify-center rounded-xl bg-white border border-[#E7EAF0] shadow-xs ${
-              size === 'xs'
-                ? 'w-7 h-7'
-                : size === 'sm'
-                ? 'w-9 h-9'
-                : size === 'md'
-                ? 'w-12 h-12'
-                : 'w-16 h-16'
-            } ${style.text}`}
-          >
-            <CategoryIcon
-              iconKey={resolvedIconKey}
-              className={ICON_SIZE_CLASSES[size]}
-              strokeWidth={1.9}
-            />
-          </div>
+        <div
+          className={`relative w-full h-full flex items-center justify-center ${ARTWORK_SCALE_CLASSES[size]}`}
+        >
+          {artwork.renderSvg()}
         </div>
       )}
     </div>

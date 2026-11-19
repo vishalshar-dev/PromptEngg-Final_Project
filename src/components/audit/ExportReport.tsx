@@ -13,6 +13,7 @@ import {
   downloadHtmlReport,
 } from '../../utils/reportGenerator';
 import { formatCurrency } from '../../utils/categoryStyles';
+import { calculateCartTotals } from '../../utils/martEngine';
 
 export function ExportReport() {
   const items = useAppStore((s) => s.items);
@@ -25,8 +26,7 @@ export function ExportReport() {
   const [exporting, setExporting] = useState<'text' | 'html' | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const cartItems = items.filter((i) => i.quantity > 0);
-  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartTotal = calculateCartTotals(items).totalAmount;
   const totalFees = feeFlags.reduce((sum, f) => sum + f.estimatedCost, 0);
 
   const reportText = generateReportText({

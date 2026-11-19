@@ -39,7 +39,6 @@ import {
 } from '../../utils/martEngine';
 import { computeBrokeModeStatus } from '../../utils/warRoomEngine';
 import { PageHeader } from '../ui/PageHeader';
-import { MetricCard } from '../ui/MetricCard';
 import { SectionHeader } from '../ui/SectionHeader';
 import { CategoryCard } from './CategoryCard';
 import { CategoryManagerModal } from './CategoryManagerModal';
@@ -331,7 +330,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-4 sm:space-y-6 ${cartSummary.lineCount > 0 ? 'pb-20 lg:pb-16' : ''}`}>
       {/* Header & Top Actions */}
       <PageHeader
         title="Shopping"
@@ -345,7 +344,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 setProductFormOpen(true);
               }}
               aria-label="Add custom product"
-              className="btn-primary px-3.5 py-2 text-xs whitespace-nowrap"
+              className="btn-primary px-3 sm:px-3.5 py-2 text-xs whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />
               <span>Custom Item</span>
@@ -362,48 +361,69 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               <span>Categories</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => onOpenCart?.()}
-              aria-label={`Open shopping cart with ${cartSummary.totalUnits} items`}
-              className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
-            >
-              <ShoppingCart className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.2} />
-              <span className="hidden sm:inline">Cart</span>
-              {cartSummary.lineCount > 0 && (
+            {cartSummary.lineCount > 0 && (
+              <button
+                type="button"
+                onClick={() => onOpenCart?.()}
+                aria-label={`Open shopping cart with ${cartSummary.totalUnits} items`}
+                className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.2} />
+                <span className="hidden sm:inline">Cart</span>
                 <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#365FE8] text-white text-[10px] font-bold inline-flex items-center justify-center tabular-nums">
                   {cartSummary.lineCount}
                 </span>
-              )}
-            </button>
+              </button>
+            )}
           </div>
         }
       />
 
-      {/* Shopping Summary Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <MetricCard
-          label="Cart Value"
-          value={`₹${formatCurrencyExact(cartSummary.totalAmount)}`}
-          sublabel={`${cartSummary.lineCount} ${cartSummary.lineCount === 1 ? 'line' : 'lines'} active`}
-          tone="brand"
-        />
-        <MetricCard
-          label="Cart Quantity"
-          value={formatQuantity(cartSummary.totalUnits)}
-          sublabel="Total units selected"
-        />
-        <MetricCard
-          label="Month Spend"
-          value={`₹${formatCurrencyExact(monthlySpend)}`}
-          sublabel="Logged this month"
-        />
-        <MetricCard
-          label="Budget Left"
-          value={`₹${formatCurrencyExact(remainingMonthlyBudget)}`}
-          sublabel={remainingMonthlyBudget >= 0 ? 'Remaining allowance' : 'Over monthly budget'}
-          tone={remainingMonthlyBudget >= 0 ? 'success' : 'danger'}
-        />
+      {/* Compact Shopping Summary Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5">
+        <div className="surface-card px-3 py-2.5 sm:p-4">
+          <p className="text-[11px] font-medium text-[#697386]">Cart Value</p>
+          <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#365FE8] mt-0.5">
+            ₹{formatCurrencyExact(cartSummary.totalAmount)}
+          </p>
+          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            {cartSummary.lineCount} {cartSummary.lineCount === 1 ? 'line' : 'lines'} active
+          </p>
+        </div>
+
+        <div className="surface-card px-3 py-2.5 sm:p-4">
+          <p className="text-[11px] font-medium text-[#697386]">Cart Quantity</p>
+          <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            {formatQuantity(cartSummary.totalUnits)}
+          </p>
+          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            Total units selected
+          </p>
+        </div>
+
+        <div className="surface-card px-3 py-2.5 sm:p-4">
+          <p className="text-[11px] font-medium text-[#697386]">Month Spend</p>
+          <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            ₹{formatCurrencyExact(monthlySpend)}
+          </p>
+          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            Logged this month
+          </p>
+        </div>
+
+        <div className="surface-card px-3 py-2.5 sm:p-4">
+          <p className="text-[11px] font-medium text-[#697386]">Budget Left</p>
+          <p
+            className={`text-base sm:text-xl font-bold font-mono tabular-nums mt-0.5 ${
+              remainingMonthlyBudget >= 0 ? 'text-[#15966B]' : 'text-[#DE5252]'
+            }`}
+          >
+            ₹{formatCurrencyExact(remainingMonthlyBudget)}
+          </p>
+          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            {remainingMonthlyBudget >= 0 ? 'Remaining allowance' : 'Over monthly budget'}
+          </p>
+        </div>
       </div>
 
       {/* Active Broke Mode Accountability Notice */}
@@ -423,15 +443,15 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         </div>
       )}
 
-      {/* Sub-Section Segmented Bar */}
-      <div className="flex sm:grid sm:grid-cols-5 items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0] overflow-x-auto no-scrollbar">
+      {/* Sub-Section Segmented Bar (all 5 fit cleanly on mobile with zero horizontal clipping) */}
+      <div className="grid grid-cols-5 sm:inline-flex items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0] w-full sm:w-fit">
         <button
           type="button"
           onClick={() => {
             setSection('home');
             setSelectedCategory(null);
           }}
-          className={`shrink-0 sm:shrink py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
             section === 'home' && !selectedCategory
               ? 'bg-white text-[#151922] shadow-xs'
               : 'text-[#697386] hover:text-[#151922]'
@@ -448,7 +468,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             setSelectedCategory(null);
             setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
           }}
-          className={`shrink-0 sm:shrink py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
             section === 'catalog' || Boolean(selectedCategory)
               ? 'bg-white text-[#151922] shadow-xs'
               : 'text-[#697386] hover:text-[#151922]'
@@ -464,19 +484,21 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             setSection('baskets');
             setSelectedCategory(null);
           }}
-          className={`shrink-0 sm:shrink py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
             section === 'baskets'
               ? 'bg-white text-[#151922] shadow-xs'
               : 'text-[#697386] hover:text-[#151922]'
           }`}
         >
           <Bookmark className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Baskets</span>
-          {basketTemplates.length > 0 && (
-            <span className="font-mono text-[11px] text-[#365FE8] tabular-nums">
-              ({basketTemplates.length})
-            </span>
-          )}
+          <span>
+            Baskets
+            {basketTemplates.length > 0 && (
+              <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
+                ({basketTemplates.length})
+              </span>
+            )}
+          </span>
         </button>
 
         <button
@@ -485,19 +507,21 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             setSection('recurring');
             setSelectedCategory(null);
           }}
-          className={`shrink-0 sm:shrink py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
             section === 'recurring'
               ? 'bg-white text-[#151922] shadow-xs'
               : 'text-[#697386] hover:text-[#151922]'
           }`}
         >
           <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Recurring</span>
-          {dueRecurring.length > 0 && (
-            <span className="font-mono text-[11px] text-[#365FE8] tabular-nums">
-              ({dueRecurring.length})
-            </span>
-          )}
+          <span>
+            Recurring
+            {dueRecurring.length > 0 && (
+              <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
+                ({dueRecurring.length})
+              </span>
+            )}
+          </span>
         </button>
 
         <button
@@ -506,19 +530,21 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
             setSection('history');
             setSelectedCategory(null);
           }}
-          className={`shrink-0 sm:shrink py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
             section === 'history'
               ? 'bg-white text-[#151922] shadow-xs'
               : 'text-[#697386] hover:text-[#151922]'
           }`}
         >
           <History className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>History</span>
-          {purchaseHistory.length > 0 && (
-            <span className="font-mono text-[11px] text-[#697386] tabular-nums">
-              ({purchaseHistory.length})
-            </span>
-          )}
+          <span>
+            History
+            {purchaseHistory.length > 0 && (
+              <span className="hidden sm:inline font-mono text-[11px] text-[#697386] ml-1 tabular-nums">
+                ({purchaseHistory.length})
+              </span>
+            )}
+          </span>
         </button>
       </div>
 
@@ -550,7 +576,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       {/* VIEW 1: Dedicated Category + Subcategory Browsing */}
       {section === 'home' && selectedCategory && (
         <div className="space-y-4 animate-fade-in">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide scroll-fade-x pr-8 pb-0.5">
             <button
               type="button"
               onClick={handleBackToHome}
@@ -688,25 +714,38 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       {/* VIEW 2: Shopping Home Page */}
       {section === 'home' && !selectedCategory && (
         <div className="space-y-6">
-          {/* Quick Category Strip */}
+          {/* Quick Category Strip with smooth fade edge */}
           {!isSearchingOrFiltering && (
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
-              {categoryConfigs.map((cat) => {
-                const style = getCategoryStyle(cat.name, cat.accent);
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => handleSelectCategory(cat.name)}
-                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F7F8FA] border border-[#E7EAF0] text-xs font-semibold text-[#151922] whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors shadow-xs"
-                  >
-                    <span className={style.text}>
-                      <CategoryIcon iconKey={cat.iconKey} className="w-3.5 h-3.5" />
-                    </span>
-                    <span>{cat.name}</span>
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto scrollbar-hide scroll-fade-x pr-6 pb-0.5">
+                {categoryConfigs.map((cat) => {
+                  const style = getCategoryStyle(cat.name, cat.accent);
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => handleSelectCategory(cat.name)}
+                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F7F8FA] border border-[#E7EAF0] text-xs font-semibold text-[#151922] whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors shadow-xs"
+                    >
+                      <span className={style.text}>
+                        <CategoryIcon iconKey={cat.iconKey} className="w-3.5 h-3.5" />
+                      </span>
+                      <span>{cat.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('mart-all-categories');
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#365FE8] hover:bg-[#EDF2FF] whitespace-nowrap shrink-0 transition-colors"
+              >
+                All ({categoryConfigs.length})
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
 
@@ -783,7 +822,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
           ) : (
             <>
               {/* Personalized Real Purchase History Sections */}
-              {(frequentInsights.length > 0 || recentInsights.length > 0) ? (
+              {(frequentInsights.length > 0 || recentInsights.length > 0) && (
                 <div className="space-y-5">
                   {recentInsights.length > 0 && (
                     <section className="space-y-3">
@@ -817,22 +856,6 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                       </div>
                     </section>
                   )}
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl p-4 border border-[#E7EAF0] shadow-card flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#697386] flex-shrink-0">
-                      <RotateCcw className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#151922]">
-                        Buy Again &amp; Frequently Purchased
-                      </p>
-                      <p className="text-xs text-[#697386]">
-                        Complete your first checkout to unlock one-tap reorder with live price checks.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -1020,7 +1043,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               )}
 
               {/* Browse All Categories */}
-              <section className="space-y-3">
+              <section id="mart-all-categories" className="space-y-3">
                 <SectionHeader
                   title="Browse All Categories"
                   subtitle={`${categoryConfigs.length} categories · ${items.length} products`}

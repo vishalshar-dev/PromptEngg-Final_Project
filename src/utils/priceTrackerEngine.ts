@@ -232,20 +232,37 @@ function slugifyProductId(name: string): string {
 
 export function inferCategoryFromName(name: string, fallback: string = 'Groceries'): string {
   const lower = name.toLowerCase();
-  if (/milk|curd|yogurt|paneer|butter|cheese|bread|bakery|bun/.test(lower)) return 'Dairy & Bakery';
-  if (/tomato|onion|potato|apple|banana|fruit|veg|spinach|coriander/.test(lower))
+  if (/milk|curd|yogurt|paneer|butter|cheese|bread|bakery|bun|cake|pastry|croissant|ghee/.test(lower))
+    return 'Dairy & Bakery';
+  if (/tomato|onion|potato|apple|banana|fruit|veg|spinach|coriander|mango|orange|lemon|garlic|ginger|carrot|cucumber|broccoli/.test(lower))
     return 'Fruits & Vegetables';
-  if (/rice|wheat|atta|flour|sugar|salt|oil|dal|pulse|lentil|spice/.test(lower)) return 'Groceries';
-  if (/chip|lays|lay's|cola|soda|juice|chocolate|biscuit|cookie|coffee|tea|snack/.test(lower))
+  if (/rice|wheat|atta|flour|sugar|salt|oil|dal|pulse|lentil|spice|masala|oats|pasta|noodle|maggi|poha|suji/.test(lower))
+    return 'Groceries';
+  if (/chip|lays|lay's|cola|soda|juice|chocolate|biscuit|cookie|coffee|tea|snack|kurkure|namkeen|popcorn|ice cream/.test(lower))
     return 'Snacks & Beverages';
-  if (/egg|chicken|mutton|fish|meat|poultry/.test(lower)) return 'Meat & Eggs';
-  if (/soap|shampoo|toothpaste|body wash|face|cream|deodorant/.test(lower)) return 'Personal Care';
-  if (/detergent|dishwash|cleaner|bleach|vim|surf|ariel|tide/.test(lower))
+  if (/egg|chicken|mutton|fish|meat|poultry|prawn|seafood/.test(lower)) return 'Meat & Eggs';
+  if (/soap|shampoo|toothpaste|toothbrush|body wash|face|moisturizer|lotion|sunscreen|deodorant|perfume|razor|sanitizer/.test(lower))
+    return 'Personal Care';
+  if (/detergent|dishwash|cleaner|bleach|vim|surf|ariel|tide|harpic|lizol|phenyl|conditioner/.test(lower))
     return 'Cleaning Supplies';
-  if (/petrol|diesel|fuel|metro|cab|uber|ola/.test(lower)) return 'Fuel & Transportation';
-  if (/wifi|broadband|recharge|mobile|internet|airtel|jio/.test(lower))
+  if (/bulb|led|tissue|napkin|foil|wrap|garbage bag|candle|battery|batteries|mop|broom|umbrella/.test(lower))
+    return 'Household Essentials';
+  if (/usb|cable|charger|adapter|headphone|earphone|earbud|mouse|keyboard|power bank|ssd|pendrive|speaker|smartwatch/.test(lower))
+    return 'Electronics';
+  if (/shirt|t-shirt|tshirt|jeans|trouser|pant|dress|kurta|shoe|sneaker|socks|jacket|cap|belt|wallet|hoodie/.test(lower))
+    return 'Clothing & Accessories';
+  if (/paracetamol|dolo|tablet|capsule|syrup|medicine|pharma|bandage|antiseptic|vitamin|inhaler|mask|thermometer|ointment|relief/.test(lower))
+    return 'Medicines & Healthcare';
+  if (/pen|pencil|notebook|diary|paper|stapler|marker|highlighter|tape|glue|folder|eraser|stationery/.test(lower))
+    return 'Stationery';
+  if (/wifi|broadband|recharge|mobile|internet|airtel|jio|bsnl|fiber/.test(lower))
     return 'Mobile & Internet Bills';
-  if (/electricity|power|gas|cylinder|utility/.test(lower)) return 'Electricity & Utilities';
+  if (/electricity|power|gas|cylinder|utility|water bill/.test(lower))
+    return 'Electricity & Utilities';
+  if (/petrol|diesel|fuel|cng|metro|cab|uber|ola|rapido|parking|toll|flight|train/.test(lower))
+    return 'Fuel & Transportation';
+  if (/movie|cinema|pvr|inox|netflix|spotify|prime|hotstar|concert|game|bowling|arcade/.test(lower))
+    return 'Entertainment';
   return fallback;
 }
 
@@ -572,9 +589,14 @@ export function buildProductPriceSummaries(
     if (activeObs.length === 0) continue;
 
     const catalogItem = catalogById.get(productId);
-    const preferredUnit = catalogItem?.unit
+    const catalogUnit = catalogItem?.unit
       ? normalizeObservationUnit(1, catalogItem.unit, 0).unitOfMeasurement
-      : activeObs[activeObs.length - 1].unitOfMeasurement;
+      : null;
+    const latestObsUnit = activeObs[activeObs.length - 1].unitOfMeasurement;
+    const preferredUnit =
+      catalogUnit && (catalogUnit !== 'unit' || latestObsUnit === 'unit')
+        ? catalogUnit
+        : latestObsUnit;
 
     const compatible: PriceObservation[] = [];
     let excludedIncompatibleCount = 0;
@@ -596,6 +618,16 @@ export function buildProductPriceSummaries(
       } else {
         excludedIncompatibleCount += 1;
       }
+    }
+
+    if (compatible.length === 0) {
+      // Fallback to observations matching the latest recorded unit so product is never silently dropped
+      for (const obs of activeObs) {
+        if (obs.unitOfMeasurement === latestObsUnit) {
+          compatible.push(obs);
+        }
+      }
+      excludedIncompatibleCount = activeObs.length - compatible.length;
     }
 
     if (compatible.length === 0) continue;

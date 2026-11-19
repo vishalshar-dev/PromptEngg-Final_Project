@@ -39,6 +39,7 @@ export function CategoryCard({
             iconKey={category.iconKey}
             accent={category.accent}
             size="md"
+            preferCategoryPhoto
             className="!h-20"
           />
         ) : (

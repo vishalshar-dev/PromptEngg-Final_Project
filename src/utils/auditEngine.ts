@@ -1,4 +1,16 @@
-import type { ParsedReceipt, ParsedReceiptItem, FeeFlag, CartItem } from '../types/models';
+import type {
+  CartItem,
+  ParsedReceipt,
+  ParsedReceiptItem,
+  FeeFlag,
+  PriceObservation,
+  Transaction,
+} from '../types/models';
+import {
+  extractProductInfo,
+  inferCategoryFromName,
+  resolveCanonicalProduct,
+} from './priceTrackerEngine';
 
 const KNOWN_MERCHANTS = [
   'Swiggy Instamart',
@@ -111,6 +123,17 @@ const SUMMARY_KEYWORDS = [
   'rounded',
 ];
 
+const STANDALONE_PRICE_RE =
+  /^(?:[-−]\s*)?(?:₹|rs\.?|inr|¥)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:\/-)?$/i;
+const UNIT_OR_QTY_ONLY_RE =
+  /^(?:qty\s*[:.]?\s*\d+|\d+\s*[x×]\s*\d*|\d+(?:\.\d+)?\s*(?:ml|l|ltr|litre|litres|g|gm|gms|kg|kgs|pc|pcs|piece|pieces|pack|packs|unit|units|tab|tabs|tablet|tablets|cap|caps|capsule|capsules|strip|strips|bottle|bottles|can|cans|box|boxes))$/i;
+
+function isMetadataLabel(label: string): boolean {
+  return /^(order|invoice|bill\s*no|receipt|phone|mobile|pin|gstin|fssai|upi|txn|transaction\s*id|date|time|delivered|status|payment)/i.test(
+    label
+  );
+}
+
 export function parseReceiptText(text: string, fallbackMerchant?: string): ParsedReceipt {
   const lines = text
     .split(/\r?\n/)
@@ -126,37 +149,33 @@ export function parseReceiptText(text: string, fallbackMerchant?: string): Parse
   let explicitSubtotal: number | null = null;
   let explicitTotal: number | null = null;
 
-  for (const line of lines) {
-    // Match a trailing price such as "₹145.00", "Rs. 45", "45.50", "-₹20"
-    const match = line.match(
-      /^(.+?)\s+(?:[-−]\s*)?(?:₹|rs\.?|inr)?\s*([\d,]+(?:\.\d{1,2})?)\s*$/i
-    );
-    if (!match) continue;
+  let pendingLines: string[] = [];
 
-    let label = match[1].replace(/[:\-–—]+$/, '').trim();
-    const amount = cleanAmount(match[2]);
-    if (!label || amount <= 0 || amount > 1000000) continue;
+  const classifyAndPush = (rawLabel: string, amount: number) => {
+    // Clean trailing separators and any strikethrough MRP price earlier in the line (e.g. "Milk ₹30 ₹27" -> label="Milk")
+    let label = rawLabel
+      .replace(/(?:₹|rs\.?|inr|¥)\s*[\d,]+(?:\.\d{1,2})?\s*$/i, '')
+      .replace(/[:\-–—]+$/, '')
+      .trim();
 
-    // Skip metadata lines with numbers like "Order #12345" or "Phone 9876543210"
-    if (/^(order|invoice|bill\s*no|receipt|phone|mobile|pin|gstin|fssai|upi|txn)/i.test(label)) {
-      continue;
-    }
+    if (!label || amount <= 0 || amount > 1000000) return;
+    if (isMetadataLabel(label)) return;
 
     const lower = label.toLowerCase();
 
     if (TAX_KEYWORDS.some((kw) => lower.includes(kw))) {
       taxTotal = Math.round((taxTotal + amount) * 100) / 100;
-      continue;
+      return;
     }
 
     if (FEE_KEYWORDS.some((kw) => lower.includes(kw))) {
       deliveryFee = Math.round((deliveryFee + amount) * 100) / 100;
-      continue;
+      return;
     }
 
     if (/^(subtotal|sub[\s-]?total|item\s*total|items\s*total)$/i.test(lower)) {
       explicitSubtotal = amount;
-      continue;
+      return;
     }
 
     if (
@@ -165,21 +184,81 @@ export function parseReceiptText(text: string, fallbackMerchant?: string): Parse
       )
     ) {
       explicitTotal = amount;
-      continue;
+      return;
     }
 
     if (SUMMARY_KEYWORDS.some((kw) => lower.includes(kw))) {
-      continue;
+      return;
     }
 
     // Clean quantity prefix like "2 x Milk" or "2x Milk"
     label = label.replace(/^\d+\s*[xX×]\s+/, '').trim();
-    if (label.length < 2) continue;
+    if (label.length < 2) return;
 
+    // Optional explicit bracketed category tag e.g. "USB Cable [Electronics]"
+    let explicitCat: string | undefined;
+    const catTagMatch = label.match(/\s*\[([^\]]{2,40})\]\s*$/);
+    if (catTagMatch) {
+      explicitCat = catTagMatch[1].trim();
+      label = label.slice(0, catTagMatch.index).trim();
+    }
+    if (label.length < 2) return;
+
+    const info = extractProductInfo(label);
     items.push({
       name: label,
       price: amount,
+      category: explicitCat || inferCategoryFromName(label, 'Other Expenses'),
+      unit: info.packageSize !== '1 unit' ? info.packageSize : undefined,
+      brand: info.brand,
     });
+  };
+
+  for (const line of lines) {
+    // Case 1: Standalone currency price line (common in Blinkit/Zepto/Instamart multi-line OCR)
+    const standalone = line.match(STANDALONE_PRICE_RE);
+    if (standalone && pendingLines.length > 0) {
+      const amount = cleanAmount(standalone[1]);
+      const combinedLabel = pendingLines
+        .filter((pl) => !/^qty\s*[:.]?\s*\d+$/i.test(pl))
+        .join(' ')
+        .trim();
+      pendingLines = [];
+      if (combinedLabel) {
+        classifyAndPush(combinedLabel, amount);
+      }
+      continue;
+    }
+
+    // Case 2: Single-line "Item Name   ₹145.00" (or "Item Name ₹160 ₹145.00" or "Item Name 145.00")
+    const match = line.match(
+      /^(.+?)\s+(?:[-−]\s*)?(?:₹|rs\.?|inr|¥)?\s*([\d,]+(?:\.\d{1,2})?)\s*(?:\/-)?$/i
+    );
+    if (match && !UNIT_OR_QTY_ONLY_RE.test(line)) {
+      const candidateLabel = match[1].replace(/[:\-–—]+$/, '').trim();
+      const amount = cleanAmount(match[2]);
+      // Avoid mis-parsing lines like "Order #12345" or "19/11/2026"
+      if (
+        candidateLabel &&
+        amount > 0 &&
+        !isMetadataLabel(candidateLabel) &&
+        !/\d[\/\-]\d/.test(line)
+      ) {
+        pendingLines = [];
+        classifyAndPush(candidateLabel, amount);
+        continue;
+      }
+    }
+
+    // Buffer non-price lines (potential item name / pack size before a standalone ₹ price)
+    if (!isMetadataLabel(line) && line.length >= 2) {
+      pendingLines.push(line);
+      if (pendingLines.length > 2) {
+        pendingLines = pendingLines.slice(-2);
+      }
+    } else {
+      pendingLines = [];
+    }
   }
 
   const computedSubtotal =
@@ -211,14 +290,29 @@ export function detectFees(items: CartItem[]): FeeFlag[] {
   const flags: FeeFlag[] = [];
 
   items.forEach((item) => {
+    const qty = Math.max(1, item.quantity || 1);
+    const lineTotal = Math.round(item.price * qty * 100) / 100;
     const nameLower = item.name.toLowerCase();
+    const catLower = (item.category || '').toLowerCase();
+
+    const isBillCategory =
+      catLower === 'bills' ||
+      catLower.includes('bill') ||
+      catLower.includes('utilit');
+    const isSnackCategory =
+      catLower === 'junk' ||
+      catLower.includes('snack') ||
+      catLower.includes('beverage');
+    const isEntertainment = catLower.includes('entertainment');
 
     if (
       nameLower.includes('subscription') ||
       nameLower.includes('netflix') ||
       nameLower.includes('spotify') ||
       nameLower.includes('prime') ||
-      nameLower.includes('hotstar')
+      nameLower.includes('hotstar') ||
+      nameLower.includes('membership') ||
+      (item.recurrence && (isBillCategory || isEntertainment))
     ) {
       flags.push({
         id: crypto.randomUUID(),
@@ -227,26 +321,30 @@ export function detectFees(items: CartItem[]): FeeFlag[] {
         type: 'subscription_trap',
         severity: 'warning',
         message: 'Subscription item — recurring charge detected. Check if auto-renewal is on.',
-        estimatedCost: item.price * 12,
+        estimatedCost: Math.round(lineTotal * 12 * 100) / 100,
       });
     }
 
-    if (item.price > 400 && item.category === 'Bills') {
+    if (lineTotal > 400 && isBillCategory) {
       flags.push({
         id: crypto.randomUUID(),
         itemId: item.id,
         itemName: item.name,
         type: 'hidden_charge',
         severity: 'warning',
-        message: 'High-value bill — verify for hidden surcharges or convenience fees.',
-        estimatedCost: Math.round(item.price * 0.05),
+        message: 'High-value bill — verify for hidden payment gateway or convenience fees.',
+        estimatedCost: Math.round(lineTotal * 0.05),
       });
     }
 
     if (
       nameLower.includes('delivery') ||
       nameLower.includes('handling') ||
-      nameLower.includes('convenience')
+      nameLower.includes('convenience') ||
+      nameLower.includes('platform fee') ||
+      nameLower.includes('packaging') ||
+      nameLower.includes('surge') ||
+      nameLower.includes('small cart')
     ) {
       flags.push({
         id: crypto.randomUUID(),
@@ -255,23 +353,28 @@ export function detectFees(items: CartItem[]): FeeFlag[] {
         type: 'handling_fee',
         severity: 'critical',
         message: 'Unnotified handling charge — this fee was not shown in the product listing.',
-        estimatedCost: item.price,
+        estimatedCost: lineTotal,
       });
     }
 
-    if (item.price > 100 && item.category === 'Junk') {
+    if ((item.price > 100 || lineTotal > 150) && isSnackCategory) {
       flags.push({
         id: crypto.randomUUID(),
         itemId: item.id,
         itemName: item.name,
         type: 'deceptive_pricing',
         severity: 'warning',
-        message: 'Premium pricing on junk food — "discount" may be inflated from MSRP.',
-        estimatedCost: Math.round(item.price * 0.15),
+        message: 'Premium pricing on impulse snacks — "discount" may be inflated from MRP.',
+        estimatedCost: Math.round(lineTotal * 0.15),
       });
     }
 
-    if (nameLower.includes('tax') || nameLower.includes('gst')) {
+    if (
+      nameLower.includes('tax') ||
+      nameLower.includes('gst') ||
+      nameLower.includes('cgst') ||
+      nameLower.includes('sgst')
+    ) {
       flags.push({
         id: crypto.randomUUID(),
         itemId: item.id,
@@ -279,10 +382,173 @@ export function detectFees(items: CartItem[]): FeeFlag[] {
         type: 'inflated_tax',
         severity: 'critical',
         message: 'Tax line item — verify GST rate matches the 5%/12%/18% slab.',
-        estimatedCost: item.price,
+        estimatedCost: lineTotal,
       });
     }
   });
+
+  return flags;
+}
+
+export function detectCartSurcharges(items: CartItem[]): FeeFlag[] {
+  const activeItems = items.filter((i) => i.quantity > 0);
+  const flags = detectFees(activeItems);
+
+  const nonBillItems = activeItems.filter((i) => {
+    const c = (i.category || '').toLowerCase();
+    return c !== 'bills' && !c.includes('bill') && !c.includes('utilit');
+  });
+  const deliveryCartTotal = nonBillItems.reduce(
+    (sum, i) => sum + i.price * i.quantity,
+    0
+  );
+
+  if (
+    nonBillItems.length > 0 &&
+    deliveryCartTotal > 0 &&
+    deliveryCartTotal < 199 &&
+    !flags.some((f) => f.type === 'handling_fee')
+  ) {
+    flags.push({
+      id: crypto.randomUUID(),
+      itemId: 'cart-small-order-risk',
+      itemName: 'Active Cart (Under ₹199)',
+      type: 'handling_fee',
+      severity: 'warning',
+      message:
+        'Cart value is below ₹199 — quick-commerce apps commonly add a ₹20–₹35 small-cart or delivery fee at checkout.',
+      estimatedCost: 25,
+    });
+  }
+
+  return flags;
+}
+
+export function detectReceiptFees(receipts: ParsedReceipt[]): FeeFlag[] {
+  const flags: FeeFlag[] = [];
+
+  receipts.forEach((receipt, idx) => {
+    const subtotal =
+      receipt.subtotal > 0
+        ? receipt.subtotal
+        : receipt.items.reduce((s, i) => s + i.price, 0);
+
+    if (receipt.deliveryFee > 0) {
+      const feeRatio = subtotal > 0 ? receipt.deliveryFee / subtotal : 0;
+      const pctText =
+        subtotal > 0 ? ` (${(feeRatio * 100).toFixed(1)}% of item subtotal)` : '';
+      flags.push({
+        id: `receipt-fee-${idx}-${receipt.merchant}`,
+        itemId: `receipt-${idx}`,
+        itemName: `${receipt.merchant} Receipt — Delivery & Handling`,
+        type: 'handling_fee',
+        severity: feeRatio >= 0.12 || receipt.deliveryFee >= 30 ? 'critical' : 'warning',
+        message: `Extra delivery, handling, or platform charges of ₹${receipt.deliveryFee.toFixed(
+          2
+        ).replace(/\.00$/, '')}${pctText} detected on scanned receipt.`,
+        estimatedCost: receipt.deliveryFee,
+      });
+    }
+
+    if (receipt.taxTotal > 0 && subtotal > 0) {
+      const taxRatio = receipt.taxTotal / subtotal;
+      if (taxRatio > 0.185) {
+        const excess = Math.round((receipt.taxTotal - subtotal * 0.18) * 100) / 100;
+        flags.push({
+          id: `receipt-tax-${idx}-${receipt.merchant}`,
+          itemId: `receipt-${idx}`,
+          itemName: `${receipt.merchant} Receipt — High Tax Rate`,
+          type: 'inflated_tax',
+          severity: 'critical',
+          message: `Tax is ${(taxRatio * 100).toFixed(
+            1
+          )}% of subtotal — above the standard 18% GST slab.`,
+          estimatedCost: excess > 0 ? excess : receipt.taxTotal,
+        });
+      }
+    }
+  });
+
+  return flags;
+}
+
+export function detectTransactionFees(transactions: Transaction[]): FeeFlag[] {
+  const flags: FeeFlag[] = [];
+  const activeTxs = transactions.filter(
+    (tx) => tx.status !== 'cancelled' && tx.status !== 'refunded' && tx.amount > 0
+  );
+
+  for (const tx of activeTxs.slice(0, 40)) {
+    const nameLower = tx.name.toLowerCase();
+    const catLower = (tx.category || '').toLowerCase();
+
+    if (
+      nameLower.includes('subscription') ||
+      nameLower.includes('netflix') ||
+      nameLower.includes('spotify') ||
+      nameLower.includes('prime') ||
+      nameLower.includes('hotstar') ||
+      nameLower.includes('membership')
+    ) {
+      flags.push({
+        id: `tx-sub-${tx.id}`,
+        itemId: tx.id,
+        itemName: tx.name,
+        type: 'subscription_trap',
+        severity: 'warning',
+        message: 'Logged subscription expense — review auto-renewal before next billing cycle.',
+        estimatedCost: Math.round(tx.amount * 12 * 100) / 100,
+      });
+      continue;
+    }
+
+    if (
+      nameLower.includes('handling') ||
+      nameLower.includes('delivery') ||
+      nameLower.includes('platform fee') ||
+      nameLower.includes('surge') ||
+      nameLower.includes('convenience')
+    ) {
+      flags.push({
+        id: `tx-fee-${tx.id}`,
+        itemId: tx.id,
+        itemName: tx.name,
+        type: 'handling_fee',
+        severity: 'critical',
+        message: 'Recorded expense looks like a delivery, surge, or platform surcharge.',
+        estimatedCost: tx.amount,
+      });
+      continue;
+    }
+
+    if (
+      tx.amount > 500 &&
+      (catLower.includes('bill') || catLower.includes('utilit'))
+    ) {
+      flags.push({
+        id: `tx-bill-${tx.id}`,
+        itemId: tx.id,
+        itemName: tx.name,
+        type: 'hidden_charge',
+        severity: 'warning',
+        message: 'High-value utility/telecom bill — verify for convenience or payment gateway fees.',
+        estimatedCost: Math.round(tx.amount * 0.03),
+      });
+    } else if (
+      tx.amount > 250 &&
+      (catLower.includes('snack') || catLower.includes('junk'))
+    ) {
+      flags.push({
+        id: `tx-snack-${tx.id}`,
+        itemId: tx.id,
+        itemName: tx.name,
+        type: 'deceptive_pricing',
+        severity: 'warning',
+        message: 'High single-order snack spend — compare unit prices in Quick Mart.',
+        estimatedCost: Math.round(tx.amount * 0.15),
+      });
+    }
+  }
 
   return flags;
 }
@@ -316,17 +582,40 @@ function round2(n: unknown): number {
   return Number.isFinite(num) && num >= 0 ? Math.round(num * 100) / 100 : 0;
 }
 
+function resolveKnownCategoryName(
+  candidate: string | undefined,
+  availableCategories: string[]
+): string | undefined {
+  const trimmed = candidate?.trim();
+  if (!trimmed) return undefined;
+  const exact = availableCategories.find(
+    (c) => c.toLowerCase() === trimmed.toLowerCase()
+  );
+  return exact ?? trimmed;
+}
+
 export function normalizeScannedReceipt(raw: unknown): ParsedReceipt {
   const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
 
   const rawItems = Array.isArray(data.items) ? data.items : [];
   const items: ParsedReceiptItem[] = rawItems
-    .map((item) => {
+    .map((item): ParsedReceiptItem | null => {
       const entry = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
       const name = typeof entry.name === 'string' ? entry.name.trim() : '';
       const price = round2(entry.price);
       if (!name || price <= 0) return null;
-      return { name, price };
+      const rawCat = typeof entry.category === 'string' ? entry.category.trim() : '';
+      const rawUnit = typeof entry.unit === 'string' ? entry.unit.trim() : '';
+      const rawBrand = typeof entry.brand === 'string' ? entry.brand.trim() : '';
+      const info = extractProductInfo(name, rawBrand || undefined, rawUnit || undefined);
+
+      return {
+        name,
+        price,
+        category: rawCat || inferCategoryFromName(name, 'Other Expenses'),
+        unit: rawUnit || (info.packageSize !== '1 unit' ? info.packageSize : undefined),
+        brand: rawBrand || info.brand,
+      };
     })
     .filter((x): x is ParsedReceiptItem => x !== null);
 
@@ -356,6 +645,53 @@ export function normalizeScannedReceipt(raw: unknown): ParsedReceipt {
     taxTotal,
     deliveryFee,
     total,
+  };
+}
+
+export function enrichReceiptWithCatalog(
+  receipt: ParsedReceipt,
+  catalogItems: CartItem[],
+  existingObservations: PriceObservation[] = [],
+  availableCategories: string[] = []
+): ParsedReceipt {
+  const enrichedItems: ParsedReceiptItem[] = receipt.items.map((item) => {
+    const info = extractProductInfo(item.name, item.brand, item.unit);
+    const resolved = resolveCanonicalProduct(
+      item.name,
+      catalogItems,
+      existingObservations,
+      {
+        explicitCategory: item.category,
+        explicitBrand: item.brand,
+        explicitPackageSize: item.unit,
+      }
+    );
+
+    const matchedCatalog = resolved.matchedExisting
+      ? catalogItems.find((c) => c.id === resolved.productId)
+      : undefined;
+
+    const rawPreferredCat = matchedCatalog
+      ? item.category || matchedCatalog.category
+      : item.category || inferCategoryFromName(item.name, 'Other Expenses');
+
+    const normalizedCategory =
+      resolveKnownCategoryName(rawPreferredCat, availableCategories) ||
+      inferCategoryFromName(item.name, 'Other Expenses');
+
+    return {
+      ...item,
+      category: normalizedCategory,
+      unit: item.unit || (info.packageSize !== '1 unit' ? info.packageSize : matchedCatalog?.unit),
+      brand: item.brand || info.brand || matchedCatalog?.brand,
+      matchedProductId: matchedCatalog?.id,
+      isNewCatalogItem: !matchedCatalog,
+    };
+  });
+
+  return {
+    ...receipt,
+    items: enrichedItems,
   };
 }
 

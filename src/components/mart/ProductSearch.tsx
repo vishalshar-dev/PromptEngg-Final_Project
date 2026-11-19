@@ -125,7 +125,7 @@ export function ProductSearch({
   };
 
   return (
-    <div ref={containerRef} className="space-y-2.5">
+    <div ref={containerRef} className="space-y-2">
       {/* Main Search + Filter Toggle + Sort */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
@@ -145,8 +145,8 @@ export function ProductSearch({
               if (e.key === 'Escape') setIsFocused(false);
             }}
             aria-label="Search products"
-            placeholder="Search milk, rice, brand (Amul, Fortune), unit, category..."
-            className="w-full bg-white border border-[#E7EAF0] focus:border-[#365FE8] rounded-xl pl-10 pr-9 py-2.5 text-sm text-[#151922] outline-none placeholder:text-[#929BAB] transition-colors shadow-xs"
+            placeholder="Search milk, rice, brand (Amul, Fortune), category..."
+            className="w-full bg-white border border-[#E7EAF0] focus:border-[#365FE8] rounded-xl pl-10 pr-9 py-2 sm:py-2.5 text-sm text-[#151922] outline-none placeholder:text-[#929BAB] transition-colors shadow-xs"
           />
           {filters.query && (
             <button
@@ -222,7 +222,7 @@ export function ProductSearch({
               onChange={(e) =>
                 onChange({ ...filters, sortBy: e.target.value as ProductSortOption })
               }
-              className="w-full sm:w-auto bg-white border border-[#E7EAF0] rounded-xl pl-8 pr-3 py-2.5 text-xs font-semibold text-[#151922] outline-none focus:border-[#365FE8] shadow-xs"
+              className="w-full sm:w-auto bg-white border border-[#E7EAF0] rounded-xl pl-8 pr-3 py-2 sm:py-2.5 text-xs font-semibold text-[#151922] outline-none focus:border-[#365FE8] shadow-xs"
             >
               <option value="default">Sort: Featured</option>
               <option value="price_asc">Price: Low to High</option>
@@ -238,7 +238,7 @@ export function ProductSearch({
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
             aria-expanded={showAdvanced}
-            className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs ${
+            className={`px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-xs ${
               showAdvanced ||
               filters.minPrice != null ||
               filters.maxPrice != null ||
@@ -255,8 +255,8 @@ export function ProductSearch({
         </div>
       </div>
 
-      {/* Quick Filter Controls */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+      {/* Quick Filter Controls (wraps cleanly on narrow screens — zero horizontal clipping) */}
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() =>

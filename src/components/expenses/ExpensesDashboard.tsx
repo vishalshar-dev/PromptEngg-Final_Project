@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Receipt, Users, Wallet, TrendingDown } from 'lucide-react';
-import { PageHeader } from '../ui/PageHeader';
 import { MetricCard } from '../ui/MetricCard';
 import { Ledger } from '../ledgers/Ledger';
 import { SplitLedgerDashboard } from '../splits/SplitLedgerDashboard';
@@ -48,47 +47,53 @@ export function ExpensesDashboard({
     ledgerState.dashboard.totalOwedToMe - ledgerState.dashboard.totalIOwe;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Expenses"
-        description="Manage personal transactions, classify spending, and settle shared group bills."
-        actions={
-          <div
-            role="tablist"
-            aria-label="Expenses views"
-            className="inline-flex items-center p-1 rounded-xl bg-white border border-[#E7EAF0] shadow-xs"
+    <div className="space-y-5">
+      {/* Header + Integrated Underline Tab Strip */}
+      <div className="border-b border-[#E7EAF0]">
+        <div className="pb-4">
+          <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
+            Expenses
+          </h1>
+          <p className="text-[13.5px] text-[#697386] mt-1 max-w-2xl leading-relaxed">
+            Manage personal transactions, classify spending, and settle shared group bills.
+          </p>
+        </div>
+
+        <div
+          role="tablist"
+          aria-label="Expenses views"
+          className="flex items-center gap-6 -mb-px overflow-x-auto no-scrollbar"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'transactions'}
+            onClick={() => setActiveTab('transactions')}
+            className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'transactions'
+                ? 'border-[#365FE8] text-[#365FE8]'
+                : 'border-transparent text-[#697386] hover:text-[#151922]'
+            }`}
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'transactions'}
-              onClick={() => setActiveTab('transactions')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-colors whitespace-nowrap ${
-                activeTab === 'transactions'
-                  ? 'bg-[#365FE8] text-white'
-                  : 'text-[#697386] hover:text-[#151922]'
-              }`}
-            >
-              <Receipt className="w-4 h-4" />
-              Transactions ({transactions.length})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'splits'}
-              onClick={() => setActiveTab('splits')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-colors whitespace-nowrap ${
-                activeTab === 'splits'
-                  ? 'bg-[#365FE8] text-white'
-                  : 'text-[#697386] hover:text-[#151922]'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              Shared Splits ({sharedExpenses.length})
-            </button>
-          </div>
-        }
-      />
+            <Receipt className="w-4 h-4" />
+            Transactions ({transactions.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'splits'}
+            onClick={() => setActiveTab('splits')}
+            className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'splits'
+                ? 'border-[#365FE8] text-[#365FE8]'
+                : 'border-transparent text-[#697386] hover:text-[#151922]'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Shared Splits ({sharedExpenses.length})
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard

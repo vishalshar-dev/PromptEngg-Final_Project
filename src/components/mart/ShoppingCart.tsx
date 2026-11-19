@@ -74,7 +74,7 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
   return (
     <>
-      {expanded && (
+      {expanded && hasItems && (
         <div
           className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] z-40 animate-fade-in"
           onClick={() => {
@@ -84,12 +84,13 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
         />
       )}
 
-      {/* Compact Sticky Cart Bar (positioned above 60px mobile bottom nav) */}
-      <div
-        className={`fixed bottom-[68px] lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 ${
-          expanded ? 'z-50' : 'z-40'
-        }`}
-      >
+      {/* Compact Sticky Cart Bar (only visible when cart has items or right after checkout) */}
+      {(hasItems || doneBanner) && (
+        <div
+          className={`fixed bottom-[68px] lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 animate-slide-up ${
+            expanded ? 'z-50' : 'z-40'
+          }`}
+        >
         <div
           className={`bg-white border rounded-2xl shadow-modal transition-all duration-200 ${
             isOverSession
@@ -352,7 +353,8 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
 
       <CheckoutSummary
         isOpen={checkoutOpen}

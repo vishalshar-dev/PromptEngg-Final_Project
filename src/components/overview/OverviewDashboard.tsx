@@ -296,7 +296,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       : topCategoriesChartData.length > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Section A: Greeting & Date */}
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
         <div>
@@ -788,7 +788,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
         />
 
         {smartInsights.length === 0 ? (
-          <div className="rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center shrink-0">
                 <Sparkles className="w-[18px] h-[18px]" />

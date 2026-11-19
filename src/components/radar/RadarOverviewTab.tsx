@@ -87,18 +87,15 @@ export function RadarOverviewTab({
     .slice(0, 6);
 
   return (
-    <div className="space-y-5">
-      {/* Window Summary Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#E7EAF0] text-xs text-[#697386]">
-        <span className="flex items-center gap-2">
+    <div className="space-y-4">
+      {/* Subtle Inline Window Caption */}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#697386] px-0.5">
+        <span className="flex items-center gap-1.5">
           <Calendar className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />
           <span>
-            Active Window: <strong className="text-[#151922]">{overview.window.label}</strong> · Comparing against{' '}
+            Showing <strong className="text-[#151922]">{overview.window.label}</strong> · vs{' '}
             <strong className="text-[#151922]">{overview.window.comparisonLabel}</strong>
           </span>
-        </span>
-        <span className="text-[11px] text-[#929BAB]">
-          Expenditure &amp; budget analytics
         </span>
       </div>
 
@@ -378,7 +375,7 @@ export function RadarOverviewTab({
             </div>
 
             {topCategories.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-[#D5DBE6] bg-[#F7F8FA] rounded-xl">
+              <div className="py-10 text-center">
                 <p className="text-sm font-semibold text-[#151922]">No spending in {overview.window.label}</p>
                 <p className="text-xs text-[#697386] mt-1">
                   Try selecting another timeframe above or log a purchase in Shopping.

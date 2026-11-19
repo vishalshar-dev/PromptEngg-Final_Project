@@ -73,11 +73,11 @@ export function AuditHistory() {
       )}
 
       {savedAudits.length === 0 ? (
-        <div className="surface-subtle p-6 text-center">
-          <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] flex items-center justify-center mx-auto mb-2">
-            <History className="w-5 h-5 text-[#929BAB]" strokeWidth={2} />
+        <div className="py-5 text-center">
+          <div className="w-10 h-10 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] flex items-center justify-center mx-auto mb-2.5">
+            <History className="w-4 h-4 text-[#697386]" strokeWidth={2} />
           </div>
-          <p className="text-sm font-bold text-[#151922]">No saved audits yet</p>
+          <p className="text-sm font-semibold text-[#151922]">No saved audits yet</p>
           <p className="text-xs text-[#697386] mt-1">
             Scan a receipt or run a cart audit, then save it here
           </p>

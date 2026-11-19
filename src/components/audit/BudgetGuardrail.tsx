@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Gauge, AlertOctagon, Check, X, Pencil } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency } from '../../utils/categoryStyles';
+import { calculateCartTotals } from '../../utils/martEngine';
 
 export function BudgetGuardrail() {
   const sessionBudget = useAppStore((s) => s.sessionBudget);
@@ -13,8 +14,7 @@ export function BudgetGuardrail() {
     sessionBudget !== null ? String(sessionBudget) : ''
   );
 
-  const cartItems = items.filter((i) => i.quantity > 0);
-  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartTotal = calculateCartTotals(items).totalAmount;
 
   const isActive = sessionBudget !== null;
   const isOver = isActive && cartTotal > sessionBudget!;

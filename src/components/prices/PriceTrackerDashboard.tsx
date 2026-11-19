@@ -216,7 +216,7 @@ export function PriceTrackerDashboard({
   return (
     <div className="space-y-4">
       {/* Compact Controls & Section Tabs */}
-      <div className="surface-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div
           role="tablist"
           aria-label="Price Intelligence sections"
@@ -232,7 +232,7 @@ export function PriceTrackerDashboard({
             }}
             className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'overview' && !selectedProductId
-                ? 'bg-[#365FE8] text-white shadow-xs'
+                ? 'bg-white text-[#151922] shadow-xs'
                 : 'text-[#697386] hover:text-[#151922]'
             }`}
           >
@@ -250,7 +250,7 @@ export function PriceTrackerDashboard({
             }}
             className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'categories'
-                ? 'bg-[#365FE8] text-white shadow-xs'
+                ? 'bg-white text-[#151922] shadow-xs'
                 : 'text-[#697386] hover:text-[#151922]'
             }`}
           >
@@ -268,7 +268,7 @@ export function PriceTrackerDashboard({
             }}
             className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'alerts'
-                ? 'bg-[#365FE8] text-white shadow-xs'
+                ? 'bg-white text-[#151922] shadow-xs'
                 : 'text-[#697386] hover:text-[#151922]'
             }`}
           >
@@ -277,11 +277,9 @@ export function PriceTrackerDashboard({
             {(priceAlerts.length > 0 || activeTriggeredAlerts.length > 0) && (
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  section === 'alerts'
-                    ? 'bg-white/20 text-white'
-                    : activeTriggeredAlerts.length > 0
-                      ? 'bg-[#FEF6E7] text-[#9E6614]'
-                      : 'bg-white text-[#697386]'
+                  activeTriggeredAlerts.length > 0
+                    ? 'bg-[#FEF6E7] text-[#9E6614]'
+                    : 'bg-[#F1F3F6] text-[#697386]'
                 }`}
               >
                 {activeTriggeredAlerts.length > 0
@@ -620,7 +618,7 @@ export function PriceTrackerDashboard({
 
           {/* Tracked Product Grid or Empty State */}
           {summaries.length === 0 ? (
-            <div className="surface-card p-8 sm:p-10 text-center border-dashed border-[#D5DBE6] space-y-3">
+            <div className="surface-card p-8 sm:p-10 text-center space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center mx-auto text-[#365FE8]">
                 <Package className="w-6 h-6" />
               </div>
