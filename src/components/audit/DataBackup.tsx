@@ -31,6 +31,8 @@ export function DataBackup() {
   const warRoomTargets = useAppStore((s) => s.warRoomTargets);
   const dismissedWarRoomAlerts = useAppStore((s) => s.dismissedWarRoomAlerts);
   const disciplineCheckIns = useAppStore((s) => s.disciplineCheckIns);
+  const theme = useAppStore((s) => s.theme);
+  const featureSettings = useAppStore((s) => s.featureSettings);
   const importBackupData = useAppStore((s) => s.importBackupData);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -70,6 +72,8 @@ export function DataBackup() {
       warRoomTargets,
       dismissedWarRoomAlerts,
       disciplineCheckIns,
+      theme,
+      featureSettings,
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: 'application/json',

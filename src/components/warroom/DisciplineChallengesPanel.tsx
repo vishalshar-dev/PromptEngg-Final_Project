@@ -22,6 +22,7 @@ import type {
   FinancialChallengeTemplateId,
   FinancialTargetType,
 } from '../../types/models';
+import { useAppStore } from '../../store/useStore';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
 import {
   CHALLENGE_TEMPLATES,
@@ -78,6 +79,8 @@ export function DisciplineChallengesPanel({
   onLogSavingsTransfer,
   onDeleteTarget,
 }: DisciplineChallengesPanelProps) {
+  const theme = useAppStore((s) => s.theme);
+  const isDark = theme === 'dark';
   const [customTitle, setCustomTitle] = useState('');
   const [customDays, setCustomDays] = useState('7');
   const [customCategory, setCustomCategory] = useState('');
@@ -285,11 +288,11 @@ export function DisciplineChallengesPanel({
                 data={behaviour.disciplineTrend}
                 margin={{ top: 10, right: 12, left: -16, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#E7EAF0" />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#232A38' : '#E7EAF0'} />
                 <XAxis
                   dataKey="label"
                   tick={{
-                    fill: '#697386',
+                    fill: isDark ? '#9CA6BA' : '#697386',
                     fontSize: 11,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
@@ -297,20 +300,20 @@ export function DisciplineChallengesPanel({
                 <YAxis
                   domain={[0, 100]}
                   tick={{
-                    fill: '#697386',
+                    fill: isDark ? '#9CA6BA' : '#697386',
                     fontSize: 11,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
                 />
                 <Tooltip
-                  cursor={{ stroke: '#D5DBE6' }}
+                  cursor={{ stroke: isDark ? '#323B4F' : '#D5DBE6' }}
                   contentStyle={{
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E7EAF0',
+                    backgroundColor: isDark ? '#11141B' : '#FFFFFF',
+                    border: `1px solid ${isDark ? '#232A38' : '#E7EAF0'}`,
                     borderRadius: '12px',
                     fontSize: '12px',
-                    color: '#151922',
-                    boxShadow: '0 8px 24px rgba(21,25,34,0.08)',
+                    color: isDark ? '#F3F5F9' : '#151922',
+                    boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 8px 24px rgba(21,25,34,0.08)',
                   }}
                 />
                 <Line

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ShoppingCart,
   Plus,
@@ -78,6 +78,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const isBrokeMode = useAppStore((s) => s.isBrokeMode);
   const brokeModeConfig = useAppStore((s) => s.brokeModeConfig);
   const basketTemplates = useAppStore((s) => s.basketTemplates);
+  const featureSettings = useAppStore((s) => s.featureSettings);
 
   const addToCart = useAppStore((s) => s.addToCart);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
@@ -100,6 +101,21 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const [dueAddedFlash, setDueAddedFlash] = useState<number | null>(null);
   const [reorderedFlashKey, setReorderedFlashKey] = useState<string | null>(null);
   const [basketLoadedFlashId, setBasketLoadedFlashId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (
+      (section === 'baskets' && !featureSettings.showShopBaskets) ||
+      (section === 'recurring' && !featureSettings.showShopRecurring) ||
+      (section === 'history' && !featureSettings.showShopHistory)
+    ) {
+      setSection('home');
+    }
+  }, [
+    section,
+    featureSettings.showShopBaskets,
+    featureSettings.showShopRecurring,
+    featureSettings.showShopHistory,
+  ]);
 
   const cartSummary = useMemo(() => calculateCartTotals(items), [items]);
   const monthlySpend = useMemo(
@@ -380,51 +396,53 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       />
 
       {/* Compact Shopping Summary Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5">
-        <div className="surface-card px-3 py-2.5 sm:p-4">
-          <p className="text-[11px] font-medium text-[#697386]">Cart Value</p>
-          <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#365FE8] mt-0.5">
-            ₹{formatCurrencyExact(cartSummary.totalAmount)}
-          </p>
-          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
-            {cartSummary.lineCount} {cartSummary.lineCount === 1 ? 'line' : 'lines'} active
-          </p>
-        </div>
+      {featureSettings.showShopSummaryMetrics && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5">
+          <div className="surface-card px-3 py-2.5 sm:p-4">
+            <p className="text-[11px] font-medium text-[#697386]">Cart Value</p>
+            <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#365FE8] mt-0.5">
+              ₹{formatCurrencyExact(cartSummary.totalAmount)}
+            </p>
+            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+              {cartSummary.lineCount} {cartSummary.lineCount === 1 ? 'line' : 'lines'} active
+            </p>
+          </div>
 
-        <div className="surface-card px-3 py-2.5 sm:p-4">
-          <p className="text-[11px] font-medium text-[#697386]">Cart Quantity</p>
-          <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
-            {formatQuantity(cartSummary.totalUnits)}
-          </p>
-          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
-            Total units selected
-          </p>
-        </div>
+          <div className="surface-card px-3 py-2.5 sm:p-4">
+            <p className="text-[11px] font-medium text-[#697386]">Cart Quantity</p>
+            <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+              {formatQuantity(cartSummary.totalUnits)}
+            </p>
+            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+              Total units selected
+            </p>
+          </div>
 
-        <div className="surface-card px-3 py-2.5 sm:p-4">
-          <p className="text-[11px] font-medium text-[#697386]">Month Spend</p>
-          <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
-            ₹{formatCurrencyExact(monthlySpend)}
-          </p>
-          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
-            Logged this month
-          </p>
-        </div>
+          <div className="surface-card px-3 py-2.5 sm:p-4">
+            <p className="text-[11px] font-medium text-[#697386]">Month Spend</p>
+            <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+              ₹{formatCurrencyExact(monthlySpend)}
+            </p>
+            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+              Logged this month
+            </p>
+          </div>
 
-        <div className="surface-card px-3 py-2.5 sm:p-4">
-          <p className="text-[11px] font-medium text-[#697386]">Budget Left</p>
-          <p
-            className={`text-base sm:text-xl font-bold font-mono tabular-nums mt-0.5 ${
-              remainingMonthlyBudget >= 0 ? 'text-[#15966B]' : 'text-[#DE5252]'
-            }`}
-          >
-            ₹{formatCurrencyExact(remainingMonthlyBudget)}
-          </p>
-          <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
-            {remainingMonthlyBudget >= 0 ? 'Remaining allowance' : 'Over monthly budget'}
-          </p>
+          <div className="surface-card px-3 py-2.5 sm:p-4">
+            <p className="text-[11px] font-medium text-[#697386]">Budget Left</p>
+            <p
+              className={`text-base sm:text-xl font-bold font-mono tabular-nums mt-0.5 ${
+                remainingMonthlyBudget >= 0 ? 'text-[#15966B]' : 'text-[#DE5252]'
+              }`}
+            >
+              ₹{formatCurrencyExact(remainingMonthlyBudget)}
+            </p>
+            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+              {remainingMonthlyBudget >= 0 ? 'Remaining allowance' : 'Over monthly budget'}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Active Broke Mode Accountability Notice */}
       {isBrokeMode && (
@@ -443,110 +461,133 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
         </div>
       )}
 
-      {/* Sub-Section Segmented Bar (all 5 fit cleanly on mobile with zero horizontal clipping) */}
-      <div className="grid grid-cols-5 sm:inline-flex items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0] w-full sm:w-fit">
-        <button
-          type="button"
-          onClick={() => {
-            setSection('home');
-            setSelectedCategory(null);
-          }}
-          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-            section === 'home' && !selectedCategory
-              ? 'bg-white text-[#151922] shadow-xs'
-              : 'text-[#697386] hover:text-[#151922]'
-          }`}
-        >
-          <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Home</span>
-        </button>
+      {/* Sub-Section Segmented Bar (dynamically sized to enabled features) */}
+      {(() => {
+        const enabledShopTabs =
+          2 +
+          (featureSettings.showShopBaskets ? 1 : 0) +
+          (featureSettings.showShopRecurring ? 1 : 0) +
+          (featureSettings.showShopHistory ? 1 : 0);
+        const gridColsCls =
+          enabledShopTabs === 2
+            ? 'grid-cols-2'
+            : enabledShopTabs === 3
+              ? 'grid-cols-3'
+              : enabledShopTabs === 4
+                ? 'grid-cols-4'
+                : 'grid-cols-5';
+        return (
+          <div className={`grid ${gridColsCls} sm:inline-flex items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0] w-full sm:w-fit`}>
+            <button
+              type="button"
+              onClick={() => {
+                setSection('home');
+                setSelectedCategory(null);
+              }}
+              className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
+                section === 'home' && !selectedCategory
+                  ? 'bg-white text-[#151922] shadow-xs'
+                  : 'text-[#697386] hover:text-[#151922]'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Home</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSection('catalog');
-            setSelectedCategory(null);
-            setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
-          }}
-          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-            section === 'catalog' || Boolean(selectedCategory)
-              ? 'bg-white text-[#151922] shadow-xs'
-              : 'text-[#697386] hover:text-[#151922]'
-          }`}
-        >
-          <Package className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>Catalog</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSection('catalog');
+                setSelectedCategory(null);
+                setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
+              }}
+              className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
+                section === 'catalog' || Boolean(selectedCategory)
+                  ? 'bg-white text-[#151922] shadow-xs'
+                  : 'text-[#697386] hover:text-[#151922]'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Catalog</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSection('baskets');
-            setSelectedCategory(null);
-          }}
-          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-            section === 'baskets'
-              ? 'bg-white text-[#151922] shadow-xs'
-              : 'text-[#697386] hover:text-[#151922]'
-          }`}
-        >
-          <Bookmark className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>
-            Baskets
-            {basketTemplates.length > 0 && (
-              <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
-                ({basketTemplates.length})
-              </span>
+            {featureSettings.showShopBaskets && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSection('baskets');
+                  setSelectedCategory(null);
+                }}
+                className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
+                  section === 'baskets'
+                    ? 'bg-white text-[#151922] shadow-xs'
+                    : 'text-[#697386] hover:text-[#151922]'
+                }`}
+              >
+                <Bookmark className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>
+                  Baskets
+                  {basketTemplates.length > 0 && (
+                    <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
+                      ({basketTemplates.length})
+                    </span>
+                  )}
+                </span>
+              </button>
             )}
-          </span>
-        </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSection('recurring');
-            setSelectedCategory(null);
-          }}
-          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-            section === 'recurring'
-              ? 'bg-white text-[#151922] shadow-xs'
-              : 'text-[#697386] hover:text-[#151922]'
-          }`}
-        >
-          <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>
-            Recurring
-            {dueRecurring.length > 0 && (
-              <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
-                ({dueRecurring.length})
-              </span>
+            {featureSettings.showShopRecurring && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSection('recurring');
+                  setSelectedCategory(null);
+                }}
+                className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
+                  section === 'recurring'
+                    ? 'bg-white text-[#151922] shadow-xs'
+                    : 'text-[#697386] hover:text-[#151922]'
+                }`}
+              >
+                <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>
+                  Recurring
+                  {dueRecurring.length > 0 && (
+                    <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
+                      ({dueRecurring.length})
+                    </span>
+                  )}
+                </span>
+              </button>
             )}
-          </span>
-        </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setSection('history');
-            setSelectedCategory(null);
-          }}
-          className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-            section === 'history'
-              ? 'bg-white text-[#151922] shadow-xs'
-              : 'text-[#697386] hover:text-[#151922]'
-          }`}
-        >
-          <History className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>
-            History
-            {purchaseHistory.length > 0 && (
-              <span className="hidden sm:inline font-mono text-[11px] text-[#697386] ml-1 tabular-nums">
-                ({purchaseHistory.length})
-              </span>
+            {featureSettings.showShopHistory && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSection('history');
+                  setSelectedCategory(null);
+                }}
+                className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
+                  section === 'history'
+                    ? 'bg-white text-[#151922] shadow-xs'
+                    : 'text-[#697386] hover:text-[#151922]'
+                }`}
+              >
+                <History className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>
+                  History
+                  {purchaseHistory.length > 0 && (
+                    <span className="hidden sm:inline font-mono text-[11px] text-[#697386] ml-1 tabular-nums">
+                      ({purchaseHistory.length})
+                    </span>
+                  )}
+                </span>
+              </button>
             )}
-          </span>
-        </button>
-      </div>
+          </div>
+        );
+      })()}
 
       {/* Persistent Global Search Bar across Home & Catalog */}
       {(section === 'home' || section === 'catalog') && (
@@ -653,7 +694,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 onClick={() => setFilters((p) => ({ ...p, subcategory: 'All' }))}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors ${
                   !filters.subcategory || filters.subcategory === 'All'
-                    ? 'bg-[#151922] border-[#151922] text-white'
+                    ? 'bg-[#151922] border-[#151922] text-white dark:bg-[#365FE8] dark:border-[#365FE8]'
                     : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
                 }`}
               >
@@ -750,7 +791,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
           )}
 
           {/* Due Recurring Quick Action */}
-          {dueRecurring.length > 0 && !isSearchingOrFiltering && (
+          {featureSettings.showShopRecurring && dueRecurring.length > 0 && !isSearchingOrFiltering && (
             <div className="bg-white rounded-2xl p-4 border border-[#365FE8]/25 shadow-card flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center flex-shrink-0">
@@ -822,7 +863,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
           ) : (
             <>
               {/* Personalized Real Purchase History Sections */}
-              {(frequentInsights.length > 0 || recentInsights.length > 0) && (
+              {featureSettings.showShopHistory && (frequentInsights.length > 0 || recentInsights.length > 0) && (
                 <div className="space-y-5">
                   {recentInsights.length > 0 && (
                     <section className="space-y-3">
@@ -860,7 +901,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               )}
 
               {/* Saved Baskets Shelf */}
-              {evaluatedHomeBaskets.length > 0 && (
+              {featureSettings.showShopBaskets && evaluatedHomeBaskets.length > 0 && (
                 <section className="space-y-3">
                   <SectionHeader
                     title={`Saved Baskets (${basketTemplates.length})`}
@@ -1072,7 +1113,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               </section>
 
               {/* Recurring Bills & Subscriptions */}
-              {billItems.length > 0 && (
+              {featureSettings.showShopRecurring && billItems.length > 0 && (
                 <section className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
@@ -1160,15 +1201,15 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
       )}
 
       {/* VIEW 4: Saved Baskets */}
-      {section === 'baskets' && <BasketTemplatesPanel />}
+      {section === 'baskets' && featureSettings.showShopBaskets && <BasketTemplatesPanel />}
 
       {/* VIEW 5: Recurring Items */}
-      {section === 'recurring' && (
+      {section === 'recurring' && featureSettings.showShopRecurring && (
         <RecurringItemManager onOpenDetails={(item) => setDetailProduct(item)} />
       )}
 
       {/* VIEW 6: Purchase History */}
-      {section === 'history' && (
+      {section === 'history' && featureSettings.showShopHistory && (
         <PurchaseHistory onSavedBasket={() => setSection('baskets')} />
       )}
 

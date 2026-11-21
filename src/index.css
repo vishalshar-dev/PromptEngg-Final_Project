@@ -7,9 +7,12 @@
 :root {
   --bg-canvas: #F7F8FA;
   --bg-surface: #FFFFFF;
+  --bg-surface-translucent: rgba(255, 255, 255, 0.95);
   --bg-subtle: #F1F3F6;
+  --bg-hover: #F5F7FA;
   --text-primary: #151922;
   --text-secondary: #697386;
+  --text-tertiary: #4B5565;
   --text-muted: #929BAB;
   --accent-primary: #365FE8;
   --accent-primary-hover: #294FCC;
@@ -21,7 +24,34 @@
   --accent-danger: #DE5252;
   --accent-danger-soft: #FDECEC;
   --border-subtle: #E7EAF0;
+  --border-strong: #D5DBE5;
+  --shadow-card: 0 1px 2px rgba(21, 25, 34, 0.04), 0 4px 12px rgba(21, 25, 34, 0.03);
   color-scheme: light;
+}
+
+html.dark {
+  --bg-canvas: #090B0F;
+  --bg-surface: #11141B;
+  --bg-surface-translucent: rgba(17, 20, 27, 0.94);
+  --bg-subtle: #181D27;
+  --bg-hover: #1E2431;
+  --text-primary: #F3F5F9;
+  --text-secondary: #9CA6BA;
+  --text-tertiary: #C1C8D7;
+  --text-muted: #6E788E;
+  --accent-primary: #4D74F9;
+  --accent-primary-hover: #3B64EB;
+  --accent-primary-soft: rgba(77, 116, 249, 0.16);
+  --accent-success: #22C58B;
+  --accent-success-soft: rgba(34, 197, 139, 0.14);
+  --accent-warning: #F5B74F;
+  --accent-warning-soft: rgba(245, 183, 79, 0.14);
+  --accent-danger: #F06A6A;
+  --accent-danger-soft: rgba(240, 106, 106, 0.15);
+  --border-subtle: #232A38;
+  --border-strong: #323B4F;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
 }
 
 @layer base {
@@ -34,12 +64,13 @@
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.18s ease, color 0.18s ease;
   }
 
   input,
   select,
   textarea {
-    color-scheme: light;
+    color-scheme: inherit;
   }
 
   button:focus-visible,
@@ -47,41 +78,41 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 2px solid #365FE8;
+    outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
   }
 }
 
 @layer components {
   .surface-card {
-    background-color: #FFFFFF;
-    border: 1px solid #E7EAF0;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
     border-radius: 16px;
-    box-shadow: 0 1px 2px rgba(21, 25, 34, 0.04), 0 4px 12px rgba(21, 25, 34, 0.03);
+    box-shadow: var(--shadow-card);
   }
 
   .surface-subtle {
-    background-color: #F1F3F6;
-    border: 1px solid #E7EAF0;
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
     border-radius: 12px;
   }
 
   .input-field {
-    background-color: #FFFFFF;
-    border: 1px solid #E7EAF0;
-    color: #151922;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
     border-radius: 12px;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
   .input-field::placeholder {
-    color: #929BAB;
+    color: var(--text-muted);
   }
 
   .input-field:focus {
     outline: none;
-    border-color: #365FE8;
-    box-shadow: 0 0 0 3px rgba(54, 95, 232, 0.12);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(77, 116, 249, 0.18);
   }
 
   .btn-primary {
@@ -114,18 +145,139 @@
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    background-color: #FFFFFF;
-    border: 1px solid #E7EAF0;
-    color: #151922;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
     font-weight: 600;
     border-radius: 12px;
     transition: background-color 0.15s ease, border-color 0.15s ease;
   }
 
   .btn-secondary:hover:not(:disabled) {
-    background-color: #F1F3F6;
-    border-color: #D5DBE6;
+    background-color: var(--bg-subtle);
+    border-color: var(--border-strong);
   }
+}
+
+/* Harmonized Dark Mode Surface / Typography Mapping for Existing Semantic Tokens */
+html.dark .bg-white,
+html.dark .bg-\[\#FFFFFF\] {
+  background-color: var(--bg-surface);
+}
+
+html.dark .bg-white\/95,
+html.dark .bg-white\/90 {
+  background-color: var(--bg-surface-translucent);
+}
+
+html.dark .bg-\[\#F7F8FA\] {
+  background-color: var(--bg-canvas);
+}
+
+html.dark .bg-\[\#F1F3F6\],
+html.dark .bg-\[\#ECEFF4\],
+html.dark .hover\:bg-\[\#F1F3F6\]:hover,
+html.dark .hover\:bg-\[\#F7F8FA\]:hover {
+  background-color: var(--bg-subtle);
+}
+
+html.dark .bg-\[\#EDF2FF\],
+html.dark .hover\:bg-\[\#EDF2FF\]:hover {
+  background-color: rgba(77, 116, 249, 0.15);
+}
+
+html.dark .bg-\[\#EDF2FF\]\/35 {
+  background-color: rgba(77, 116, 249, 0.12);
+}
+
+html.dark .bg-\[\#E8F7F1\] {
+  background-color: rgba(34, 197, 139, 0.15);
+}
+
+html.dark .bg-\[\#FEF6E7\] {
+  background-color: rgba(245, 183, 79, 0.15);
+}
+
+html.dark .bg-\[\#FDECEC\] {
+  background-color: rgba(240, 106, 106, 0.15);
+}
+
+html.dark .border-\[\#E7EAF0\],
+html.dark .divide-\[\#E7EAF0\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border-subtle);
+}
+
+html.dark .border-\[\#D5DBE5\],
+html.dark .border-\[\#D5DBE6\],
+html.dark .hover\:border-\[\#D5DBE5\]:hover {
+  border-color: var(--border-strong);
+}
+
+html.dark .border-\[\#F3D8A8\],
+html.dark .border-\[\#FDE8C4\] {
+  border-color: rgba(245, 183, 79, 0.32);
+}
+
+html.dark .border-\[\#C8EDE0\],
+html.dark .border-\[\#B7E4D3\] {
+  border-color: rgba(34, 197, 139, 0.32);
+}
+
+html.dark .border-\[\#FAD4D4\],
+html.dark .border-\[\#F6B8B8\] {
+  border-color: rgba(240, 106, 106, 0.34);
+}
+
+html.dark .border-\[\#D4E0FF\] {
+  border-color: rgba(77, 116, 249, 0.35);
+}
+
+html.dark .text-\[\#151922\],
+html.dark .hover\:text-\[\#151922\]:hover {
+  color: var(--text-primary);
+}
+
+html.dark .text-\[\#4B5565\],
+html.dark .text-\[\#3D4556\],
+html.dark .text-\[\#4F5869\] {
+  color: var(--text-tertiary);
+}
+
+html.dark .text-\[\#697386\] {
+  color: var(--text-secondary);
+}
+
+html.dark .text-\[\#929BAB\] {
+  color: var(--text-muted);
+}
+
+html.dark .text-\[\#365FE8\],
+html.dark .text-\[\#294FCC\] {
+  color: #7B9BFF;
+}
+
+html.dark .text-\[\#0D5E43\],
+html.dark .text-\[\#15966B\] {
+  color: #3DD598;
+}
+
+html.dark .text-\[\#9E6614\],
+html.dark .text-\[\#C7851F\] {
+  color: #F6C15C;
+}
+
+html.dark .text-\[\#C23838\],
+html.dark .text-\[\#DE5252\] {
+  color: #F47A7A;
+}
+
+/* Recharts dark mode axes & grid legibility */
+html.dark .recharts-cartesian-grid line {
+  stroke: #232A38;
+}
+
+html.dark .recharts-cartesian-axis-tick-value {
+  fill: #9CA6BA;
 }
 
 @layer utilities {
@@ -146,7 +298,7 @@
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(21, 25, 34, 0.16) transparent;
+    scrollbar-color: rgba(128, 138, 160, 0.28) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -159,12 +311,12 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(21, 25, 34, 0.16);
+    background: rgba(128, 138, 160, 0.28);
     border-radius: 9999px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(21, 25, 34, 0.28);
+    background: rgba(128, 138, 160, 0.45);
   }
 
   .scroll-fade-x {

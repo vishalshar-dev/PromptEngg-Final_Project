@@ -1,3 +1,4 @@
+import { sanitizeFeatureSettings, sanitizeThemeMode } from './settingsEngine';
 import type {
   BackupData,
   CartItem,
@@ -134,6 +135,9 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
     basketTemplates: Array.isArray(data.basketTemplates) ? data.basketTemplates : undefined,
     basketTemplatesSeeded:
       typeof data.basketTemplatesSeeded === 'boolean' ? data.basketTemplatesSeeded : undefined,
+    theme: data.theme !== undefined ? sanitizeThemeMode(data.theme) : undefined,
+    featureSettings:
+      data.featureSettings !== undefined ? sanitizeFeatureSettings(data.featureSettings) : undefined,
   };
 }
 

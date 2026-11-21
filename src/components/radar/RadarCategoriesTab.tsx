@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ArrowUpRight, Info, Layers, X } from 'lucide-react';
+import { useAppStore } from '../../store/useStore';
 import { formatCompact, formatCurrencyExact } from '../../utils/categoryStyles';
 import type {
   RadarCategoryAnalyticsResult,
@@ -37,6 +38,15 @@ const LIGHT_TOOLTIP_STYLE = {
   boxShadow: '0 8px 24px rgba(21,25,34,0.08)',
 };
 
+const DARK_TOOLTIP_STYLE = {
+  backgroundColor: '#11141B',
+  borderColor: '#232A38',
+  borderRadius: '12px',
+  fontSize: '12px',
+  color: '#F3F5F9',
+  boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+};
+
 interface RadarCategoriesTabProps {
   categoriesResult: RadarCategoryAnalyticsResult;
   window: RadarDateWindow;
@@ -52,6 +62,11 @@ export function RadarCategoriesTab({
   onSelectCategory,
   onOpenTxInExplorer,
 }: RadarCategoriesTabProps) {
+  const theme = useAppStore((s) => s.theme);
+  const isDark = theme === 'dark';
+  const tooltipStyle = isDark ? DARK_TOOLTIP_STYLE : LIGHT_TOOLTIP_STYLE;
+  const gridStroke = isDark ? '#232A38' : '#E7EAF0';
+  const tickColor = isDark ? '#9CA6BA' : '#697386';
   const [barMode, setBarMode] = useState<'comparison' | 'ranking'>('comparison');
 
   const activeCategories = useMemo(
@@ -160,7 +175,7 @@ export function RadarCategoriesTab({
                           <Cell
                             key={entry.name}
                             fill={DONUT_COLORS[idx % DONUT_COLORS.length]}
-                            stroke="#FFFFFF"
+                            stroke={isDark ? '#11141B' : '#FFFFFF'}
                             strokeWidth={2}
                           />
                         ))}
@@ -170,7 +185,7 @@ export function RadarCategoriesTab({
                           `₹${formatCurrencyExact(Number(value ?? 0))}`,
                           String(name ?? ''),
                         ]}
-                        contentStyle={LIGHT_TOOLTIP_STYLE}
+                        contentStyle={tooltipStyle}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -248,10 +263,10 @@ export function RadarCategoriesTab({
                     data={comparisonBarData}
                     margin={{ top: 10, right: 12, left: -10, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E7EAF0" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fill: '#697386', fontSize: 11 }}
+                      tick={{ fill: tickColor, fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                       interval={0}
@@ -260,18 +275,18 @@ export function RadarCategoriesTab({
                     />
                     <YAxis
                       tickFormatter={(v: number) => (v === 0 ? '₹0' : `₹${formatCompact(v)}`)}
-                      tick={{ fill: '#697386', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
+                      tick={{ fill: tickColor, fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
                       axisLine={false}
                       tickLine={false}
                       width={52}
                     />
                     <Tooltip
-                      cursor={{ fill: 'rgba(54, 95, 232, 0.05)' }}
+                      cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
                       formatter={(v: unknown) => `₹${formatCurrencyExact(Number(v ?? 0))}`}
-                      contentStyle={LIGHT_TOOLTIP_STYLE}
+                      contentStyle={tooltipStyle}
                     />
-                    <Bar dataKey="Previous" fill="#CBD5E1" radius={[5, 5, 0, 0]} maxBarSize={24} isAnimationActive={false} />
-                    <Bar dataKey="Current" fill="#365FE8" radius={[5, 5, 0, 0]} maxBarSize={24} isAnimationActive={false} />
+                    <Bar dataKey="Previous" fill={isDark ? '#475569' : '#CBD5E1'} radius={[5, 5, 0, 0]} maxBarSize={24} isAnimationActive={false} />
+                    <Bar dataKey="Current" fill="#4D74F9" radius={[5, 5, 0, 0]} maxBarSize={24} isAnimationActive={false} />
                   </BarChart>
                 ) : (
                   <BarChart
@@ -279,11 +294,11 @@ export function RadarCategoriesTab({
                     layout="vertical"
                     margin={{ top: 8, right: 20, left: 10, bottom: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E7EAF0" horizontal={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />
                     <XAxis
                       type="number"
                       tickFormatter={(v: number) => (v === 0 ? '₹0' : `₹${formatCompact(v)}`)}
-                      tick={{ fill: '#697386', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
+                      tick={{ fill: tickColor, fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
                       axisLine={false}
                       tickLine={false}
                     />
@@ -291,16 +306,16 @@ export function RadarCategoriesTab({
                       type="category"
                       dataKey="name"
                       width={118}
-                      tick={{ fill: '#151922', fontSize: 11 }}
+                      tick={{ fill: isDark ? '#F3F5F9' : '#151922', fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <Tooltip
-                      cursor={{ fill: 'rgba(54, 95, 232, 0.05)' }}
+                      cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
                       formatter={(v: unknown) => [`₹${formatCurrencyExact(Number(v ?? 0))}`, 'Spent']}
-                      contentStyle={LIGHT_TOOLTIP_STYLE}
+                      contentStyle={tooltipStyle}
                     />
-                    <Bar dataKey="Spent" fill="#365FE8" radius={[0, 6, 6, 0]} maxBarSize={22} isAnimationActive={false} />
+                    <Bar dataKey="Spent" fill="#4D74F9" radius={[0, 6, 6, 0]} maxBarSize={22} isAnimationActive={false} />
                   </BarChart>
                 )}
               </ResponsiveContainer>

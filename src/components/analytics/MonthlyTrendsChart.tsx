@@ -98,6 +98,8 @@ function CustomTrendsTooltip({ active, payload }: CustomTooltipProps) {
 export function MonthlyTrendsChart() {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
+  const theme = useAppStore((s) => s.theme);
+  const isDark = theme === 'dark';
 
   const [range, setRange] = useState<RangeOption>(6);
   const [chartMode, setChartMode] = useState<ChartMode>('area');
@@ -304,13 +306,13 @@ export function MonthlyTrendsChart() {
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#E7EAF0"
+                    stroke={isDark ? '#232A38' : '#E7EAF0'}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -324,7 +326,7 @@ export function MonthlyTrendsChart() {
                       v === 0 ? '₹0' : `₹${formatCompact(v)}`
                     }
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -334,7 +336,7 @@ export function MonthlyTrendsChart() {
                   />
                   <Tooltip
                     cursor={{
-                      stroke: '#D5DBE6',
+                      stroke: isDark ? '#323B4F' : '#D5DBE6',
                       strokeDasharray: '3 3',
                     }}
                     content={<CustomTrendsTooltip />}
@@ -348,7 +350,7 @@ export function MonthlyTrendsChart() {
                       label={{
                         value: `Budget ₹${formatCompact(totalBudget)}`,
                         position: 'insideTopRight',
-                        fill: '#9E6614',
+                        fill: isDark ? '#F6C15C' : '#9E6614',
                         fontSize: 10,
                         fontFamily: 'JetBrains Mono, monospace',
                       }}
@@ -357,20 +359,20 @@ export function MonthlyTrendsChart() {
                   <Area
                     type="monotone"
                     dataKey="spent"
-                    stroke="#365FE8"
+                    stroke="#4D74F9"
                     strokeWidth={2.5}
                     fill="url(#monthlySpendGrad)"
                     isAnimationActive={false}
                     dot={{
                       r: 3.5,
-                      fill: '#FFFFFF',
-                      stroke: '#365FE8',
+                      fill: isDark ? '#11141B' : '#FFFFFF',
+                      stroke: '#4D74F9',
                       strokeWidth: 2,
                     }}
                     activeDot={{
                       r: 5.5,
-                      fill: '#365FE8',
-                      stroke: '#FFFFFF',
+                      fill: '#4D74F9',
+                      stroke: isDark ? '#11141B' : '#FFFFFF',
                       strokeWidth: 2,
                     }}
                   />
@@ -382,13 +384,13 @@ export function MonthlyTrendsChart() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#E7EAF0"
+                    stroke={isDark ? '#232A38' : '#E7EAF0'}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -402,7 +404,7 @@ export function MonthlyTrendsChart() {
                       v === 0 ? '₹0' : `₹${formatCompact(v)}`
                     }
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -411,7 +413,7 @@ export function MonthlyTrendsChart() {
                     width={54}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(54, 95, 232, 0.05)' }}
+                    cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
                     content={<CustomTrendsTooltip />}
                   />
                   {totalBudget > 0 && (
@@ -423,7 +425,7 @@ export function MonthlyTrendsChart() {
                       label={{
                         value: `Budget ₹${formatCompact(totalBudget)}`,
                         position: 'insideTopRight',
-                        fill: '#9E6614',
+                        fill: isDark ? '#F6C15C' : '#9E6614',
                         fontSize: 10,
                         fontFamily: 'JetBrains Mono, monospace',
                       }}
@@ -437,7 +439,9 @@ export function MonthlyTrendsChart() {
                           entry.isOverBudget
                             ? '#DE5252'
                             : entry.txCount > 0
-                            ? '#365FE8'
+                            ? '#4D74F9'
+                            : isDark
+                            ? '#232A38'
                             : '#E7EAF0'
                         }
                       />

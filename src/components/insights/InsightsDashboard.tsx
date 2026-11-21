@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Radar, LineChart } from 'lucide-react';
+import { useAppStore } from '../../store/useStore';
 import { RadarDashboard } from '../analytics/RadarDashboard';
 import { PriceTrackerDashboard } from '../prices/PriceTrackerDashboard';
 
@@ -14,11 +15,20 @@ export function InsightsDashboard({
   initialTab = 'radar',
   onOpenExpenses,
 }: InsightsDashboardProps) {
-  const [activeTab, setActiveTab] = useState<InsightsTab>(initialTab);
+  const showPriceTracker = useAppStore((s) => s.featureSettings.showPriceTracker);
+  const [activeTab, setActiveTab] = useState<InsightsTab>(
+    initialTab === 'prices' && !showPriceTracker ? 'radar' : initialTab
+  );
 
   useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
+    setActiveTab(initialTab === 'prices' && !showPriceTracker ? 'radar' : initialTab);
+  }, [initialTab, showPriceTracker]);
+
+  useEffect(() => {
+    if (!showPriceTracker && activeTab === 'prices') {
+      setActiveTab('radar');
+    }
+  }, [showPriceTracker, activeTab]);
 
   return (
     <div className="space-y-5">
@@ -55,24 +65,26 @@ export function InsightsDashboard({
             Smart Radar
           </button>
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'prices'}
-            onClick={() => setActiveTab('prices')}
-            className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'prices'
-                ? 'border-[#365FE8] text-[#365FE8]'
-                : 'border-transparent text-[#697386] hover:text-[#151922]'
-            }`}
-          >
-            <LineChart className="w-4 h-4" />
-            Price Intelligence
-          </button>
+          {showPriceTracker && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'prices'}
+              onClick={() => setActiveTab('prices')}
+              className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'prices'
+                  ? 'border-[#365FE8] text-[#365FE8]'
+                  : 'border-transparent text-[#697386] hover:text-[#151922]'
+              }`}
+            >
+              <LineChart className="w-4 h-4" />
+              Price Intelligence
+            </button>
+          )}
         </div>
       </div>
 
-      {activeTab === 'radar' ? (
+      {activeTab === 'radar' || !showPriceTracker ? (
         <RadarDashboard onOpenLedger={onOpenExpenses} />
       ) : (
         <PriceTrackerDashboard />

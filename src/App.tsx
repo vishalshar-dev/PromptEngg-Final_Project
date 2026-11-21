@@ -15,6 +15,7 @@ import {
   calculateCartTotals,
   getEffectiveTransactionAmount,
 } from './utils/martEngine';
+import { resolveSafeSection } from './utils/settingsEngine';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>('overview');
@@ -25,6 +26,26 @@ export default function App() {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const items = useAppStore((s) => s.items);
+  const theme = useAppStore((s) => s.theme);
+  const toggleTheme = useAppStore((s) => s.toggleTheme);
+  const featureSettings = useAppStore((s) => s.featureSettings);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    root.style.colorScheme = theme;
+  }, [theme]);
+
+  useEffect(() => {
+    const safe = resolveSafeSection(activeSection, featureSettings);
+    if (safe !== activeSection) {
+      setActiveSection(safe);
+    }
+  }, [activeSection, featureSettings]);
 
   const totalSpent = useMemo(
     () =>
@@ -44,10 +65,13 @@ export default function App() {
   }, [activeSection]);
 
   const handleNavigate = (section: AppSection, subTab?: string) => {
-    if (section === 'insights' && (subTab === 'radar' || subTab === 'prices')) {
-      setInsightsInitialTab(subTab);
+    const safeSection = resolveSafeSection(section, featureSettings);
+    if (safeSection === 'insights' && (subTab === 'radar' || subTab === 'prices')) {
+      setInsightsInitialTab(
+        subTab === 'prices' && !featureSettings.showPriceTracker ? 'radar' : subTab
+      );
     }
-    setActiveSection(section);
+    setActiveSection(safeSection);
   };
 
   return (
@@ -58,6 +82,9 @@ export default function App() {
       totalSpent={totalSpent}
       remainingBudget={remaining}
       cartItemCount={cartTotals.lineCount}
+      theme={theme}
+      onToggleTheme={toggleTheme}
+      featureSettings={featureSettings}
     >
       {activeSection === 'overview' && (
         <OverviewDashboard onNavigate={handleNavigate} />
@@ -67,7 +94,7 @@ export default function App() {
         <QuickMartGrid onOpenCart={() => setCartOpenSignal((n) => n + 1)} />
       )}
 
-      {activeSection === 'insights' && (
+      {activeSection === 'insights' && featureSettings.showInsights && (
         <InsightsDashboard
           initialTab={insightsInitialTab}
           onOpenExpenses={() => handleNavigate('expenses')}
@@ -76,13 +103,20 @@ export default function App() {
 
       {activeSection === 'expenses' && <ExpensesDashboard />}
 
-      {activeSection === 'scanner' && (
+      {activeSection === 'scanner' && featureSettings.showScanner && (
         <AuditPanel
-          onOpenPriceTracker={() => handleNavigate('insights', 'prices')}
+          onOpenPriceTracker={() =>
+            handleNavigate(
+              featureSettings.showInsights ? 'insights' : 'overview',
+              'prices'
+            )
+          }
         />
       )}
 
-      {activeSection === 'wellness' && <SurvivalSandbox />}
+      {activeSection === 'wellness' && featureSettings.showWellness && (
+        <SurvivalSandbox />
+      )}
 
       {(activeSection === 'shopping' || hasCartItems) && (
         <CartDrawer openSignal={cartOpenSignal} />

@@ -18,6 +18,7 @@ import {
   Filter,
 } from 'lucide-react';
 import type { SpendingClassification } from '../../types/models';
+import { useAppStore } from '../../store/useStore';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
 import type {
   BehaviourAnalyticsSummary,
@@ -41,6 +42,8 @@ export function JunkBehaviourPanel({
   classifiedTxs,
   onReclassify,
 }: JunkBehaviourPanelProps) {
+  const theme = useAppStore((s) => s.theme);
+  const isDark = theme === 'dark';
   const [timeRange, setTimeRange] = useState<BehaviourTimeRange>('weekly');
   const [txFilter, setTxFilter] = useState<TxFilter>('all');
 
@@ -235,34 +238,34 @@ export function JunkBehaviourPanel({
                   data={timeSeries}
                   margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E7EAF0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#232A38' : '#E7EAF0'} />
                   <XAxis
                     dataKey="label"
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
                   />
                   <YAxis
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(54, 95, 232, 0.05)' }}
+                    cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
                     contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #E7EAF0',
+                      backgroundColor: isDark ? '#11141B' : '#FFFFFF',
+                      border: `1px solid ${isDark ? '#232A38' : '#E7EAF0'}`,
                       borderRadius: '12px',
                       fontSize: '12px',
-                      color: '#151922',
-                      boxShadow: '0 8px 24px rgba(21,25,34,0.08)',
+                      color: isDark ? '#F3F5F9' : '#151922',
+                      boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 8px 24px rgba(21,25,34,0.08)',
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: '12px', color: '#4F5869' }} />
+                  <Legend wrapperStyle={{ fontSize: '12px', color: isDark ? '#C1C8D7' : '#4F5869' }} />
                   <Bar
                     dataKey="essential"
                     name="Essential"
@@ -305,11 +308,11 @@ export function JunkBehaviourPanel({
                   layout="vertical"
                   margin={{ top: 4, right: 16, left: 10, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E7EAF0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#232A38' : '#E7EAF0'} />
                   <XAxis
                     type="number"
                     tick={{
-                      fill: '#697386',
+                      fill: isDark ? '#9CA6BA' : '#697386',
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -318,17 +321,17 @@ export function JunkBehaviourPanel({
                     dataKey="category"
                     type="category"
                     width={90}
-                    tick={{ fill: '#151922', fontSize: 11 }}
+                    tick={{ fill: isDark ? '#F3F5F9' : '#151922', fontSize: 11 }}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(54, 95, 232, 0.05)' }}
+                    cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
                     contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #E7EAF0',
+                      backgroundColor: isDark ? '#11141B' : '#FFFFFF',
+                      border: `1px solid ${isDark ? '#232A38' : '#E7EAF0'}`,
                       borderRadius: '12px',
                       fontSize: '12px',
-                      color: '#151922',
-                      boxShadow: '0 8px 24px rgba(21,25,34,0.08)',
+                      color: isDark ? '#F3F5F9' : '#151922',
+                      boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 8px 24px rgba(21,25,34,0.08)',
                     }}
                   />
                   <Bar

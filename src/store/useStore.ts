@@ -30,11 +30,21 @@ import {
   type SharedExpense,
   type SpendingClassification,
   type SplitMethod,
+  type FeatureSettings,
+  type SettingsPreset,
+  type ThemeMode,
   type Transaction,
   type TransactionStatus,
   type TriggeredPriceAlert,
   type WarRoomPeriod,
 } from '../types/models';
+import {
+  DEFAULT_FEATURE_SETTINGS,
+  getPresetSettings,
+  mergeFeatureSettings,
+  sanitizeFeatureSettings,
+  sanitizeThemeMode,
+} from '../utils/settingsEngine';
 import {
   clampQuantity,
   mergeBackupItems,
@@ -191,6 +201,15 @@ export interface AppState {
   people: Person[];
   sharedExpenses: SharedExpense[];
   settlements: Settlement[];
+
+  theme: ThemeMode;
+  featureSettings: FeatureSettings;
+
+  setTheme: (theme: ThemeMode) => void;
+  toggleTheme: () => void;
+  applyFeaturePreset: (preset: Exclude<SettingsPreset, 'custom'>) => void;
+  updateFeatureSettings: (patch: Partial<FeatureSettings>) => void;
+  resetFeatureSettings: () => void;
 
   addCategory: (categoryName: string) => void;
   addCategoryConfig: (input: CategoryInput) => CategoryConfig | null;
@@ -443,6 +462,21 @@ export const useAppStore = create<AppState>()(
       people: [],
       sharedExpenses: [],
       settlements: [],
+
+      theme: 'light',
+      featureSettings: { ...DEFAULT_FEATURE_SETTINGS },
+
+      setTheme: (theme) => set({ theme: sanitizeThemeMode(theme) }),
+      toggleTheme: () =>
+        set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+      applyFeaturePreset: (preset) =>
+        set({ featureSettings: getPresetSettings(preset) }),
+      updateFeatureSettings: (patch) =>
+        set((state) => ({
+          featureSettings: mergeFeatureSettings(state.featureSettings, patch),
+        })),
+      resetFeatureSettings: () =>
+        set({ featureSettings: { ...DEFAULT_FEATURE_SETTINGS } }),
 
       addCategory: (categoryName) => {
         get().addCategoryConfig({ name: categoryName });
@@ -2516,12 +2550,18 @@ export const useAppStore = create<AppState>()(
             disciplineCheckIns: Array.isArray(data.disciplineCheckIns)
               ? data.disciplineCheckIns
               : [],
+            theme: data.theme ? sanitizeThemeMode(data.theme) : undefined,
+            featureSettings: data.featureSettings
+              ? sanitizeFeatureSettings(data.featureSettings)
+              : undefined,
           };
         }),
     }),
     {
       name: 'cartaudit-store',
       partialize: (state) => ({
+        theme: state.theme,
+        featureSettings: state.featureSettings,
         totalBudget: state.totalBudget,
         sessionBudget: state.sessionBudget,
         isBrokeMode: state.isBrokeMode,
@@ -2623,6 +2663,8 @@ export const useAppStore = create<AppState>()(
             disciplineCheckIns: Array.isArray(state.disciplineCheckIns)
               ? state.disciplineCheckIns
               : [],
+            theme: sanitizeThemeMode(state.theme),
+            featureSettings: sanitizeFeatureSettings(state.featureSettings),
           });
         }
       },

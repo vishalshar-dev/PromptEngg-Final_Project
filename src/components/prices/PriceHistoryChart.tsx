@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { Calendar, Eye, EyeOff, LineChart as LineChartIcon } from 'lucide-react';
 import type { PriceObservation, PriceTimeframe } from '../../types/models';
+import { useAppStore } from '../../store/useStore';
 import { filterObservationsByTimeframe } from '../../utils/priceTrackerEngine';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
 
@@ -91,6 +92,8 @@ export function PriceHistoryChart({
   unitOfMeasurement,
   averagePrice,
 }: PriceHistoryChartProps) {
+  const theme = useAppStore((s) => s.theme);
+  const isDark = theme === 'dark';
   const [timeframe, setTimeframe] = useState<PriceTimeframe>('all');
   const [showAverageLine, setShowAverageLine] = useState(true);
 
@@ -222,14 +225,14 @@ export function PriceHistoryChart({
             <LineChart data={chartData} margin={{ top: 14, right: 26, left: -4, bottom: 4 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#E7EAF0"
+                stroke={isDark ? '#232A38' : '#E7EAF0'}
                 vertical={false}
               />
               <XAxis
                 dataKey="dateLabel"
                 padding={{ left: 16, right: 20 }}
                 tick={{
-                  fill: '#697386',
+                  fill: isDark ? '#9CA6BA' : '#697386',
                   fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
@@ -241,7 +244,7 @@ export function PriceHistoryChart({
                 domain={yDomain}
                 tickFormatter={(v: number) => `₹${v}`}
                 tick={{
-                  fill: '#697386',
+                  fill: isDark ? '#9CA6BA' : '#697386',
                   fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
@@ -251,7 +254,7 @@ export function PriceHistoryChart({
               />
               <Tooltip
                 cursor={{
-                  stroke: '#D5DBE6',
+                  stroke: isDark ? '#323B4F' : '#D5DBE6',
                   strokeDasharray: '3 3',
                 }}
                 content={<PriceChartTooltip />}
@@ -265,7 +268,7 @@ export function PriceHistoryChart({
                   label={{
                     value: `Avg ₹${formatCurrencyExact(averagePrice)}`,
                     position: 'insideTopRight',
-                    fill: '#9E6614',
+                    fill: isDark ? '#F6C15C' : '#9E6614',
                     fontSize: 10,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
@@ -274,19 +277,19 @@ export function PriceHistoryChart({
               <Line
                 type="linear"
                 dataKey="unitPrice"
-                stroke="#365FE8"
+                stroke="#4D74F9"
                 strokeWidth={2.5}
                 isAnimationActive={false}
                 dot={{
                   r: 4.5,
-                  fill: '#FFFFFF',
-                  stroke: '#365FE8',
+                  fill: isDark ? '#11141B' : '#FFFFFF',
+                  stroke: '#4D74F9',
                   strokeWidth: 2.2,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: '#365FE8',
-                  stroke: '#FFFFFF',
+                  fill: '#4D74F9',
+                  stroke: isDark ? '#11141B' : '#FFFFFF',
                   strokeWidth: 2,
                 }}
               />

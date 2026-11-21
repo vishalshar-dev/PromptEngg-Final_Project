@@ -70,6 +70,9 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
   const categoryCaps = useAppStore((s) => s.categoryCaps);
   const items = useAppStore((s) => s.items);
   const priceObservations = useAppStore((s) => s.priceObservations);
+  const theme = useAppStore((s) => s.theme);
+  const featureSettings = useAppStore((s) => s.featureSettings);
+  const isDark = theme === 'dark';
 
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetDraft, setBudgetDraft] = useState(String(totalBudget));
@@ -451,7 +454,16 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       </section>
 
       {/* Section C: Quick Actions */}
-      <section aria-label="Quick actions" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <section
+        aria-label="Quick actions"
+        className={`grid grid-cols-2 ${
+          2 + (featureSettings.showScanner ? 1 : 0) + (featureSettings.showInsights ? 1 : 0) === 4
+            ? 'lg:grid-cols-4'
+            : 2 + (featureSettings.showScanner ? 1 : 0) + (featureSettings.showInsights ? 1 : 0) === 3
+              ? 'lg:grid-cols-3'
+              : 'lg:grid-cols-2'
+        } gap-3`}
+      >
         <button
           type="button"
           onClick={() => onNavigate('shopping')}
@@ -484,37 +496,41 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
           </p>
         </button>
 
-        <button
-          type="button"
-          onClick={() => onNavigate('scanner')}
-          className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] text-[#C7851F] flex items-center justify-center mb-3 group-hover:bg-[#E5A23B] group-hover:text-white transition-colors">
-            <ScanLine className="w-[18px] h-[18px]" strokeWidth={2} />
-          </div>
-          <p className="text-[14px] font-semibold text-[#151922]">
-            Scan Receipt
-          </p>
-          <p className="text-[12px] text-[#697386] mt-0.5">
-            Extract items &amp; detect fees
-          </p>
-        </button>
+        {featureSettings.showScanner && (
+          <button
+            type="button"
+            onClick={() => onNavigate('scanner')}
+            className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] text-[#C7851F] flex items-center justify-center mb-3 group-hover:bg-[#E5A23B] group-hover:text-white transition-colors">
+              <ScanLine className="w-[18px] h-[18px]" strokeWidth={2} />
+            </div>
+            <p className="text-[14px] font-semibold text-[#151922]">
+              Scan Receipt
+            </p>
+            <p className="text-[12px] text-[#697386] mt-0.5">
+              Extract items &amp; detect fees
+            </p>
+          </button>
+        )}
 
-        <button
-          type="button"
-          onClick={() => onNavigate('insights')}
-          className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] text-[#151922] flex items-center justify-center mb-3 group-hover:bg-[#151922] group-hover:text-white transition-colors">
-            <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
-          </div>
-          <p className="text-[14px] font-semibold text-[#151922]">
-            View Insights
-          </p>
-          <p className="text-[12px] text-[#697386] mt-0.5">
-            Explore trends &amp; price moves
-          </p>
-        </button>
+        {featureSettings.showInsights && (
+          <button
+            type="button"
+            onClick={() => onNavigate('insights')}
+            className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] text-[#151922] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
+              <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
+            </div>
+            <p className="text-[14px] font-semibold text-[#151922]">
+              View Insights
+            </p>
+            <p className="text-[12px] text-[#697386] mt-0.5">
+              Explore trends &amp; price moves
+            </p>
+          </button>
+        )}
       </section>
 
       {/* Sections D & E: Spending Overview + Recent Activity */}
@@ -586,30 +602,32 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
-                      stroke="#E7EAF0"
+                      stroke={isDark ? '#232A38' : '#E7EAF0'}
                     />
                     <XAxis
                       dataKey="label"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#697386', fontSize: 11 }}
+                      tick={{ fill: isDark ? '#9CA6BA' : '#697386', fontSize: 11 }}
                       interval="preserveStartEnd"
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#697386', fontSize: 11 }}
+                      tick={{ fill: isDark ? '#9CA6BA' : '#697386', fontSize: 11 }}
                       tickFormatter={(v) => `₹${v}`}
                     />
                     <Tooltip
-                      cursor={{ fill: '#F1F3F6' }}
+                      cursor={{ fill: isDark ? '#181D27' : '#F1F3F6' }}
                       contentStyle={{
-                        backgroundColor: '#FFFFFF',
-                        borderColor: '#E7EAF0',
+                        backgroundColor: isDark ? '#11141B' : '#FFFFFF',
+                        borderColor: isDark ? '#232A38' : '#E7EAF0',
                         borderRadius: '12px',
-                        boxShadow: '0 8px 24px rgba(21, 25, 34, 0.08)',
+                        boxShadow: isDark
+                          ? '0 8px 24px rgba(0, 0, 0, 0.45)'
+                          : '0 8px 24px rgba(21, 25, 34, 0.08)',
                         fontSize: '12px',
-                        color: '#151922',
+                        color: isDark ? '#F3F5F9' : '#151922',
                       }}
                       formatter={(val) => [
                         `₹${formatCurrencyExact(Number(val))}`,
@@ -620,7 +638,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                       {recentDailyChartData.map((entry, idx) => (
                         <Cell
                           key={entry.label + idx}
-                          fill={entry.spent > 0 ? '#365FE8' : '#E7EAF0'}
+                          fill={entry.spent > 0 ? '#365FE8' : isDark ? '#232A38' : '#E7EAF0'}
                         />
                       ))}
                     </Bar>
@@ -634,13 +652,13 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                     <CartesianGrid
                       strokeDasharray="3 3"
                       horizontal={false}
-                      stroke="#E7EAF0"
+                      stroke={isDark ? '#232A38' : '#E7EAF0'}
                     />
                     <XAxis
                       type="number"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#697386', fontSize: 11 }}
+                      tick={{ fill: isDark ? '#9CA6BA' : '#697386', fontSize: 11 }}
                       tickFormatter={(v) => `₹${v}`}
                     />
                     <YAxis
@@ -649,17 +667,19 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                       width={110}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#151922', fontSize: 11.5 }}
+                      tick={{ fill: isDark ? '#F3F5F9' : '#151922', fontSize: 11.5 }}
                     />
                     <Tooltip
-                      cursor={{ fill: '#F1F3F6' }}
+                      cursor={{ fill: isDark ? '#181D27' : '#F1F3F6' }}
                       contentStyle={{
-                        backgroundColor: '#FFFFFF',
-                        borderColor: '#E7EAF0',
+                        backgroundColor: isDark ? '#11141B' : '#FFFFFF',
+                        borderColor: isDark ? '#232A38' : '#E7EAF0',
                         borderRadius: '12px',
-                        boxShadow: '0 8px 24px rgba(21, 25, 34, 0.08)',
+                        boxShadow: isDark
+                          ? '0 8px 24px rgba(0, 0, 0, 0.45)'
+                          : '0 8px 24px rgba(21, 25, 34, 0.08)',
                         fontSize: '12px',
-                        color: '#151922',
+                        color: isDark ? '#F3F5F9' : '#151922',
                       }}
                       formatter={(val) => [
                         `₹${formatCurrencyExact(Number(val))}`,
@@ -771,111 +791,120 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       </div>
 
       {/* Section F: Smart Insights */}
-      <section aria-label="Smart insights" className="surface-card p-5 sm:p-6 space-y-4">
-        <SectionHeader
-          title="Smart Insights"
-          subtitle="Live signals derived directly from your spending and price history"
-          action={
-            <button
-              type="button"
-              onClick={() => onNavigate('insights')}
-              className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 transition-colors"
-            >
-              Open Insights
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          }
-        />
-
-        {smartInsights.length === 0 ? (
-          <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center shrink-0">
-                <Sparkles className="w-[18px] h-[18px]" />
-              </div>
-              <div>
-                <p className="text-[13.5px] font-semibold text-[#151922]">
-                  Insights unlock as you record activity
-                </p>
-                <p className="text-[12.5px] text-[#697386] mt-0.5">
-                  Log expenses or scan a receipt to see category trends, budget pace, and item price changes.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => onNavigate('scanner')}
-                className="btn-secondary px-3.5 py-2 text-[12.5px]"
-              >
-                Scan Receipt
-              </button>
-              <button
-                type="button"
-                onClick={() => setAddExpenseOpen(true)}
-                className="btn-primary px-3.5 py-2 text-[12.5px]"
-              >
-                Add Expense
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            {smartInsights.map((insight) => {
-              const Icon =
-                insight.tone === 'positive'
-                  ? TrendingDown
-                  : insight.tone === 'warning'
-                    ? AlertTriangle
-                    : Info;
-              const badgeStyles =
-                insight.tone === 'positive'
-                  ? 'bg-[#E8F7F1] text-[#0D5E43]'
-                  : insight.tone === 'warning'
-                    ? 'bg-[#FEF6E7] text-[#9E6614]'
-                    : 'bg-[#EDF2FF] text-[#365FE8]';
-
-              return (
+      {featureSettings.showSmartInsightsOnOverview && (
+        <section aria-label="Smart insights" className="surface-card p-5 sm:p-6 space-y-4">
+          <SectionHeader
+            title="Smart Insights"
+            subtitle="Live signals derived directly from your spending and price history"
+            action={
+              featureSettings.showInsights ? (
                 <button
-                  key={insight.id}
                   type="button"
-                  onClick={() =>
-                    onNavigate(insight.targetSection, insight.targetSubTab)
-                  }
-                  className="text-left rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] p-4 transition-colors flex flex-col justify-between gap-3"
+                  onClick={() => onNavigate('insights')}
+                  className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 transition-colors"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${badgeStyles}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                      </span>
-                      {insight.badge && (
-                        <span
-                          className={`text-[11px] font-semibold font-mono tabular-nums px-2 py-0.5 rounded-md ${badgeStyles}`}
-                        >
-                          {insight.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[13.5px] font-semibold text-[#151922] leading-snug">
-                      {insight.title}
-                    </p>
-                    <p className="text-[12.5px] text-[#697386] leading-relaxed line-clamp-2">
-                      {insight.description}
-                    </p>
-                  </div>
-                  <span className="text-[12px] font-semibold text-[#365FE8] flex items-center gap-1">
-                    Explore details
-                    <TrendingUp className="w-3.5 h-3.5" />
-                  </span>
+                  Open Insights
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              ) : undefined
+            }
+          />
+
+          {smartInsights.length === 0 ? (
+            <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-[18px] h-[18px]" />
+                </div>
+                <div>
+                  <p className="text-[13.5px] font-semibold text-[#151922]">
+                    Insights unlock as you record activity
+                  </p>
+                  <p className="text-[12.5px] text-[#697386] mt-0.5">
+                    Log expenses or scan a receipt to see category trends, budget pace, and item price changes.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {featureSettings.showScanner && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('scanner')}
+                    className="btn-secondary px-3.5 py-2 text-[12.5px]"
+                  >
+                    Scan Receipt
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setAddExpenseOpen(true)}
+                  className="btn-primary px-3.5 py-2 text-[12.5px]"
+                >
+                  Add Expense
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {smartInsights.map((insight) => {
+                const Icon =
+                  insight.tone === 'positive'
+                    ? TrendingDown
+                    : insight.tone === 'warning'
+                      ? AlertTriangle
+                      : Info;
+                const badgeStyles =
+                  insight.tone === 'positive'
+                    ? 'bg-[#E8F7F1] text-[#0D5E43]'
+                    : insight.tone === 'warning'
+                      ? 'bg-[#FEF6E7] text-[#9E6614]'
+                      : 'bg-[#EDF2FF] text-[#365FE8]';
+
+                return (
+                  <button
+                    key={insight.id}
+                    type="button"
+                    onClick={() =>
+                      onNavigate(
+                        featureSettings.showInsights ? insight.targetSection : 'expenses',
+                        insight.targetSubTab
+                      )
+                    }
+                    className="text-left rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] p-4 transition-colors flex flex-col justify-between gap-3"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center ${badgeStyles}`}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </span>
+                        {insight.badge && (
+                          <span
+                            className={`text-[11px] font-semibold font-mono tabular-nums px-2 py-0.5 rounded-md ${badgeStyles}`}
+                          >
+                            {insight.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[13.5px] font-semibold text-[#151922] leading-snug">
+                        {insight.title}
+                      </p>
+                      <p className="text-[12.5px] text-[#697386] leading-relaxed line-clamp-2">
+                        {insight.description}
+                      </p>
+                    </div>
+                    <span className="text-[12px] font-semibold text-[#365FE8] flex items-center gap-1">
+                      Explore details
+                      <TrendingUp className="w-3.5 h-3.5" />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       <SplitExpenseModal
         isOpen={addExpenseOpen}

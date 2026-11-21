@@ -9,7 +9,18 @@
     <meta property="og:title" content="CartAudit — Smart Budget Radar" />
     <meta property="og:description" content="Smart quick-commerce budget radar, multi-app cart comparator, hidden-fee detector, and multimodal receipt scanner." />
   </head>
-  <body class="bg-[#F7F8FA] text-[#151922] antialiased selection:bg-[#365FE8] selection:text-white">
+  <body class="bg-[#F7F8FA] dark:bg-[#090B0F] text-[#151922] dark:text-[#F3F5F9] antialiased selection:bg-[#365FE8] selection:text-white">
+    <script>
+      try {
+        var raw = localStorage.getItem('cartaudit-store');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && parsed.state && parsed.state.theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        }
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

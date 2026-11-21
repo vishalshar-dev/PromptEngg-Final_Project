@@ -1,4 +1,5 @@
 import { PageHeader } from '../ui/PageHeader';
+import { useAppStore } from '../../store/useStore';
 import { ReceiptUploader } from './ReceiptUploader';
 import { FeeDetector } from './FeeDetector';
 import { PriceTrendTracker } from './PriceTrendTracker';
@@ -13,6 +14,13 @@ export function AuditPanel({
 }: {
   onOpenPriceTracker?: () => void;
 }) {
+  const featureSettings = useAppStore((s) => s.featureSettings);
+
+  const showRightCol =
+    featureSettings.showAuditComparator ||
+    featureSettings.showPriceTracker ||
+    featureSettings.showAuditExportBackup;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -21,10 +29,10 @@ export function AuditPanel({
       />
 
       {/* Responsive 2-column grid on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className={`grid grid-cols-1 ${showRightCol ? 'lg:grid-cols-2' : ''} gap-6 items-start`}>
         <div className="space-y-6">
           {/* Session Budget Guardrail */}
-          <BudgetGuardrail />
+          {featureSettings.showAuditGuardrail && <BudgetGuardrail />}
 
           {/* Receipt OCR Scanner */}
           <div className="surface-card p-5">
@@ -32,37 +40,51 @@ export function AuditPanel({
           </div>
 
           {/* Fee Detector */}
-          <div className="surface-card p-5">
-            <FeeDetector />
-          </div>
+          {featureSettings.showAuditFeeScanner && (
+            <div className="surface-card p-5">
+              <FeeDetector />
+            </div>
+          )}
 
           {/* Saved Audit History */}
-          <div className="surface-card p-5">
-            <AuditHistory />
-          </div>
+          {featureSettings.showAuditHistory && (
+            <div className="surface-card p-5">
+              <AuditHistory />
+            </div>
+          )}
         </div>
 
-        <div className="space-y-6">
-          {/* Multi-App Cart Comparator */}
-          <div className="surface-card p-5">
-            <CartComparator />
-          </div>
+        {showRightCol && (
+          <div className="space-y-6">
+            {/* Multi-App Cart Comparator */}
+            {featureSettings.showAuditComparator && (
+              <div className="surface-card p-5">
+                <CartComparator />
+              </div>
+            )}
 
-          {/* Price Trends */}
-          <div className="surface-card p-5">
-            <PriceTrendTracker onOpenPriceTracker={onOpenPriceTracker} />
-          </div>
+            {/* Price Trends */}
+            {featureSettings.showPriceTracker && (
+              <div className="surface-card p-5">
+                <PriceTrendTracker onOpenPriceTracker={onOpenPriceTracker} />
+              </div>
+            )}
 
-          {/* Export Report */}
-          <div className="surface-card p-5">
-            <ExportReport />
-          </div>
+            {/* Export Report */}
+            {featureSettings.showAuditExportBackup && (
+              <>
+                <div className="surface-card p-5">
+                  <ExportReport />
+                </div>
 
-          {/* Data Backup & Restore */}
-          <div className="surface-card p-5">
-            <DataBackup />
+                {/* Data Backup & Restore */}
+                <div className="surface-card p-5">
+                  <DataBackup />
+                </div>
+              </>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

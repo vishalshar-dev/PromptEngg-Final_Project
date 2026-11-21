@@ -400,5 +400,32 @@ export interface BackupData {
   disciplineCheckIns?: string[];
   basketTemplates?: BasketTemplate[];
   basketTemplatesSeeded?: boolean;
+  theme?: ThemeMode;
+  featureSettings?: FeatureSettings;
 }
+
+export type ThemeMode = 'light' | 'dark';
+
+export type SettingsPreset = 'simple' | 'standard' | 'full' | 'custom';
+
+export interface FeatureSettings {
+  preset: SettingsPreset;
+  // Navigation Sections (Overview, Shopping, Expenses remain always enabled as core)
+  showInsights: boolean;
+  showScanner: boolean;
+  showWellness: boolean;
+  // Feature & Widget Granular Visibility
+  showSmartInsightsOnOverview: boolean;
+  showShopSummaryMetrics: boolean;
+  showShopBaskets: boolean;
+  showShopRecurring: boolean;
+  showShopHistory: boolean;
+  showPriceTracker: boolean;
+  showAuditComparator: boolean;
+  showAuditGuardrail: boolean;
+  showAuditFeeScanner: boolean;
+  showAuditHistory: boolean;
+  showAuditExportBackup: boolean;
+}
+
 
