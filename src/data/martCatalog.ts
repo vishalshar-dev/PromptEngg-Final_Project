@@ -10,7 +10,6 @@ import {
   computeBasketSavedTotal,
   getEffectivePriceAndUnit,
   getPriceHistoryKey,
-  toLocalDateKey,
 } from '../utils/martEngine';
 
 // Category & fallback cover photography
@@ -348,8 +347,6 @@ export const INITIAL_MART_CATEGORY_CAPS: CategoryCaps = Object.fromEntries(
   INITIAL_MART_CATEGORIES.map((name) => [name, null])
 );
 
-const todayKey = toLocalDateKey(new Date());
-
 export const INITIAL_MART_ITEMS: CartItem[] = [
   // ================= GROCERIES (Staples, Grains, Dals, Oils, Spices) =================
   {
@@ -368,7 +365,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     imageUrl: riceBasmatiImg,
     isFrequent: true,
     isPopular: true,
-    isFavourite: true,
     allowDecimalQuantity: true,
     quantityStep: 0.5,
     selectedVariantId: 'var-rice-1kg',
@@ -377,7 +373,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
       { id: 'var-rice-5kg', label: '5 kg Bag', unit: '5 kg', price: 540 },
       { id: 'var-rice-10kg', label: '10 kg Family', unit: '10 kg', price: 1020 },
     ],
-    recurrence: { frequency: 'monthly', nextDueDate: todayKey },
   },
   {
     id: 'item-wheat-flour',
@@ -718,7 +713,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     imageUrl: tomatoesImg,
     isFrequent: true,
     isPopular: true,
-    isFavourite: true,
     allowDecimalQuantity: true,
     quantityStep: 0.5,
   },
@@ -835,7 +829,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     unit: '1 dozen',
     productType: 'essential',
     imageUrl: bananasImg,
-    isFavourite: true,
     isPopular: true,
     selectedVariantId: 'var-ban-6',
     variants: [
@@ -974,14 +967,12 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     imageUrl: milkPouchImg,
     isFrequent: true,
     isPopular: true,
-    isFavourite: true,
     selectedVariantId: 'var-milk-1l',
     variants: [
       { id: 'var-milk-500ml', label: '500 ml', unit: '500 ml', price: 29 },
       { id: 'var-milk-1l', label: '1 L', unit: '1 L', price: 56 },
       { id: 'var-milk-2l', label: '2 L Family', unit: '2 L', price: 108 },
     ],
-    recurrence: { frequency: 'daily', nextDueDate: todayKey },
   },
   {
     id: 'item-curd',
@@ -1356,7 +1347,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     unit: '90 g',
     productType: 'essential',
     imageUrl: coffeeGreenteaImg,
-    isFavourite: true,
     selectedVariantId: 'var-coffee-90g',
     variants: [
       { id: 'var-coffee-90g', label: '90 g Jar', unit: '90 g', price: 185 },
@@ -1498,7 +1488,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
       { id: 'var-eggs-12', label: '12 pcs', unit: '12 pcs', price: 135 },
       { id: 'var-eggs-30', label: '30 pcs Tray', unit: '30 pcs', price: 310 },
     ],
-    recurrence: { frequency: 'weekly', nextDueDate: todayKey },
   },
   {
     id: 'item-chicken',
@@ -2135,7 +2124,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     productType: 'bill',
     imageUrl: telecomImg,
     isFrequent: true,
-    recurrence: { frequency: 'monthly', nextDueDate: todayKey },
   },
   {
     id: 'item-mobile-recharge',
@@ -2151,7 +2139,6 @@ export const INITIAL_MART_ITEMS: CartItem[] = [
     unit: '1 mo',
     productType: 'bill',
     imageUrl: telecomImg,
-    recurrence: { frequency: 'monthly', nextDueDate: todayKey },
   },
   {
     id: 'item-dth-pack',
@@ -2458,6 +2445,7 @@ export function migratePersistedMartItems(persistedItems: CartItem[] | undefined
         productType: saved.productType ?? seedMatch.productType,
         imageUrl: shouldUpgradeImage ? seedMatch.imageUrl : saved.imageUrl,
         recurrence: saved.recurrence !== undefined ? saved.recurrence : seedMatch.recurrence,
+        autoRecurrenceDismissed: saved.autoRecurrenceDismissed,
         isFavourite: saved.isFavourite ?? seedMatch.isFavourite,
         isFrequent: saved.isFrequent ?? seedMatch.isFrequent,
         isPopular: seedMatch.isPopular ?? saved.isPopular,

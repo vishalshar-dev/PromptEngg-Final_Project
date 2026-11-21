@@ -40,9 +40,11 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
           <div>
             <h3 className="text-sm font-bold text-[#151922]">Recurring Purchases</h3>
             <p className="text-xs text-[#697386] mt-0.5">
-              {dueItems.length > 0
-                ? `${dueItems.length} item${dueItems.length === 1 ? ' is' : 's are'} due now · Expenses are only recorded at checkout`
-                : 'All recurring items are up to date'}
+              {recurringItems.length === 0
+                ? 'Automatically captured from repeat checkouts · Or set any item manually'
+                : dueItems.length > 0
+                  ? `${dueItems.length} item${dueItems.length === 1 ? ' is' : 's are'} due now · Expenses are only recorded at checkout`
+                  : `${recurringItems.length} tracked · Auto-detected from repeat orders or set manually`}
             </p>
           </div>
         </div>
@@ -70,14 +72,15 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
       {recurringItems.length === 0 ? (
         <EmptyState
           icon={Repeat}
-          title="No recurring items configured"
-          description="Open any product to set a Daily, Weekly, Monthly, or Custom schedule."
+          title="No recurring items detected yet"
+          description="Buy an item across 2+ checkouts and CartAudit will automatically capture it as recurring—or open any product to set a manual schedule."
         />
       ) : (
         <div className="space-y-2.5">
           {recurringItems.map((item) => {
             const cfg = categoryConfigs.find((c) => c.name === item.category);
             const isDue = isRecurringItemDue(item);
+            const isAuto = item.recurrence?.source === 'auto';
             const freqLabel =
               item.recurrence?.frequency === 'custom'
                 ? `Every ${item.recurrence.intervalDays ?? 7}d`
@@ -115,6 +118,14 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
                       >
                         {freqLabel}
                       </span>
+                      {isAuto && (
+                        <span
+                          title="Automatically captured from your checkout history"
+                          className="text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-[#E8F7F1] border border-[#B7E4D3] text-[#15966B]"
+                        >
+                          Auto{item.recurrence?.detectedOrderCount ? ` · ${item.recurrence.detectedOrderCount} orders` : ''}
+                        </span>
+                      )}
                       {isDue && (
                         <span className="text-[11px] font-bold text-[#15966B]">
                           Due now
@@ -155,8 +166,8 @@ export function RecurringItemManager({ onOpenDetails }: RecurringItemManagerProp
                   <button
                     type="button"
                     onClick={() => setProductRecurrence(item.id, null)}
-                    aria-label={`Disable recurrence for ${item.name}`}
-                    title="Stop recurring"
+                    aria-label={`Mark ${item.name} as not recurring`}
+                    title="Not recurring (stop tracking)"
                     className="w-9 h-9 rounded-xl bg-[#F7F8FA] hover:bg-[#FDECEC] border border-[#E7EAF0] text-[#697386] hover:text-[#DE5252] flex items-center justify-center transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

@@ -202,6 +202,14 @@ export function CustomProductForm({
                 : undefined,
             nextDueDate:
               initialProduct?.recurrence?.nextDueDate ?? toLocalDateKey(new Date()),
+            source:
+              initialProduct?.recurrence?.source === 'auto' &&
+              initialProduct.recurrence.frequency === recurrenceFreq &&
+              (recurrenceFreq !== 'custom' ||
+                initialProduct.recurrence.intervalDays === (Number(intervalDays) || 7))
+                ? ('auto' as const)
+                : ('manual' as const),
+            detectedOrderCount: initialProduct?.recurrence?.detectedOrderCount,
           };
 
     const parsedStep = Math.max(0.1, Math.min(10, Number(quantityStep) || 0.5));
@@ -225,6 +233,10 @@ export function CustomProductForm({
         variants: cleanVariants.length > 0 ? cleanVariants : undefined,
         selectedVariantId: cleanVariants[0]?.id,
         recurrence,
+        autoRecurrenceDismissed:
+          recurrenceFreq === 'none'
+            ? Boolean(initialProduct.recurrence || initialProduct.autoRecurrenceDismissed)
+            : false,
       });
     } else {
       addCustomItem({

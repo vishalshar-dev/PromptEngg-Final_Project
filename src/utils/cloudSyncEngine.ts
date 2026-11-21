@@ -79,6 +79,7 @@ export interface DefaultCatalogOverride {
   variantQuantities?: Record<string, number>;
   isFavourite?: boolean;
   recurrence?: CartItem['recurrence'];
+  autoRecurrenceDismissed?: boolean;
 }
 
 export interface SyncSectionPayloads {
@@ -178,7 +179,8 @@ export function buildSectionPayloads(
       Boolean(item.isFavourite) !== Boolean(base.isFavourite) ||
       item.selectedVariantId !== base.selectedVariantId ||
       Boolean(item.variantQuantities && Object.keys(item.variantQuantities).length > 0) ||
-      JSON.stringify(item.recurrence ?? null) !== JSON.stringify(base.recurrence ?? null);
+      JSON.stringify(item.recurrence ?? null) !== JSON.stringify(base.recurrence ?? null) ||
+      Boolean(item.autoRecurrenceDismissed) !== Boolean(base.autoRecurrenceDismissed);
 
     if (hasDiff) {
       defaultOverrides.push({
@@ -189,6 +191,7 @@ export function buildSectionPayloads(
         variantQuantities: item.variantQuantities,
         isFavourite: item.isFavourite,
         recurrence: item.recurrence,
+        autoRecurrenceDismissed: item.autoRecurrenceDismissed,
       });
     }
   }
@@ -304,6 +307,10 @@ function hydrateItemsFromCatalogSection(
       variantQuantities: ov.variantQuantities ?? undefined,
       isFavourite: typeof ov.isFavourite === 'boolean' ? ov.isFavourite : base.isFavourite,
       recurrence: ov.recurrence !== undefined ? ov.recurrence : base.recurrence,
+      autoRecurrenceDismissed:
+        typeof ov.autoRecurrenceDismissed === 'boolean'
+          ? ov.autoRecurrenceDismissed
+          : base.autoRecurrenceDismissed,
     };
   });
 

@@ -127,3 +127,23 @@ test('inferCategoryFromName and War Room classify new everyday Indian staples ac
   });
   assert.equal(veggiesTx.classification, 'essential');
 });
+
+test('INITIAL_MART_ITEMS ships with zero hardcoded favourites and zero hardcoded recurring items for new users', () => {
+  const src = fs.readFileSync(CATALOG_PATH, 'utf8');
+  const itemsStart = src.indexOf('export const INITIAL_MART_ITEMS');
+  const itemsEnd = src.indexOf('const INITIAL_BY_ID');
+  assert.ok(itemsStart > 0 && itemsEnd > itemsStart);
+  const itemsBlock = src.slice(itemsStart, itemsEnd);
+
+  assert.equal(
+    /isFavourite\s*:\s*true/.test(itemsBlock),
+    false,
+    'Catalog must not pre-mark any item as favourite for new users'
+  );
+  assert.equal(
+    /\brecurrence\s*:/.test(itemsBlock),
+    false,
+    'Catalog must not hardcode any recurring schedules for new users'
+  );
+});
+

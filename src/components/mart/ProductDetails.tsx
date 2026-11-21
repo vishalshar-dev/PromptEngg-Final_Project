@@ -89,6 +89,7 @@ export function ProductDetails({
       frequency: freq,
       intervalDays: freq === 'custom' ? liveItem.recurrence?.intervalDays ?? 14 : undefined,
       nextDueDate: liveItem.recurrence?.nextDueDate ?? toLocalDateKey(new Date()),
+      source: 'manual',
     });
   };
 
@@ -292,12 +293,17 @@ export function ProductDetails({
 
           {/* Recurring Schedule */}
           <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <Repeat className="w-3.5 h-3.5 text-[#365FE8]" />
                 <span className="text-xs font-bold text-[#151922]">
                   Recurring Schedule
                 </span>
+                {liveItem.recurrence?.source === 'auto' && (
+                  <span className="text-[10.5px] font-semibold px-1.5 py-0.5 rounded-md bg-[#E8F7F1] border border-[#B7E4D3] text-[#15966B]">
+                    Auto-detected
+                  </span>
+                )}
               </div>
               {liveItem.recurrence?.nextDueDate && (
                 <span className="text-[11px] font-mono text-[#365FE8]">

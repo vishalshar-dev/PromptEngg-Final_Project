@@ -1150,6 +1150,12 @@ export function ReceiptUploader() {
                               res.createdCustomItemsCount > 1 ? 's' : ''
                             } saved`
                           : '';
+                      const recurringSuffix =
+                        res.autoRecurringAddedCount && res.autoRecurringAddedCount > 0
+                          ? ` · ${res.autoRecurringAddedCount} recurring item${
+                              res.autoRecurringAddedCount > 1 ? 's' : ''
+                            } captured`
+                          : '';
                       const alertSuffix = res.triggeredAlertsCount
                         ? ` (${res.triggeredAlertsCount} alert${
                             res.triggeredAlertsCount > 1 ? 's' : ''
@@ -1161,7 +1167,7 @@ export function ReceiptUploader() {
                         message: res.ok
                           ? `Recorded ₹${formatCurrency(receipt.total)} transaction, ${
                               res.observationsCount ?? 0
-                            } price points${customSuffix}${alertSuffix}`
+                            } price points${customSuffix}${recurringSuffix}${alertSuffix}`
                           : res.error || 'Already recorded',
                       });
                     }}

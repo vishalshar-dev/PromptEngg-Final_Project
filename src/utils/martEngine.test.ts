@@ -10,12 +10,14 @@ import type {
   Transaction,
 } from '../types/models';
 import {
+  applyAutoRecurrenceToItems,
   applyBasketTemplateToItems,
   areUnitsCompatible,
   buildBasketItemsFromCart,
   buildBasketItemsFromSession,
   buildCheckoutBreakdown,
   buildCheckoutSignature,
+  buildReceiptPurchaseSession,
   calculateCartTotals,
   calculateMonthlyShoppingSpend,
   computeBasketSavedTotal,
@@ -32,6 +34,7 @@ import {
   getNextDueDateString,
   getPriceHistoryPointsForItem,
   getSearchSuggestions,
+  inferRecurrenceFromHistory,
   isDuplicateCheckoutAttempt,
   isRecurringBillItem,
   isRecurringItemDue,
@@ -533,4 +536,191 @@ test('computeRunningLowItems finds recurring items due within 2 days or overdue 
   assert.equal(runningLow[1].item.id, 'soon');
   assert.equal(runningLow[1].statusLabel, 'Due in 2d');
 });
+
+test('inferRecurrenceFromHistory and applyAutoRecurrenceToItems auto-detect repeat purchases while respecting manual schedules and dismissals', () => {
+  const makeSession = (id: string, timestamp: string, itemIds: string[]): PurchaseSession => ({
+    id,
+    timestamp,
+    items: itemIds.map((itemId) => ({
+      itemId,
+      name: itemId,
+      category: itemId === 'wifi' ? 'Utilities & Bills' : 'Dairy & Bakery',
+      unit: '1 unit',
+      price: 50,
+      quantity: 1,
+      subtotal: 50,
+    })),
+    totalAmount: 50 * itemIds.length,
+    personalShare: 50 * itemIds.length,
+    categoryTotals: {},
+    isSplit: false,
+  });
+
+  const milk: CartItem = {
+    id: 'milk',
+    name: 'Taaza Toned Fresh Milk',
+    price: 56,
+    category: 'Dairy & Bakery',
+    icon: '🥛',
+    quantity: 0,
+  };
+  const bread: CartItem = {
+    id: 'bread',
+    name: 'Brown Bread',
+    price: 45,
+    category: 'Dairy & Bakery',
+    icon: '🍞',
+    quantity: 0,
+  };
+  const wifi: CartItem = {
+    id: 'wifi',
+    name: 'Fiber Broadband Bill',
+    price: 999,
+    category: 'Utilities & Bills',
+    productType: 'Broadband',
+    icon: '📡',
+    quantity: 0,
+  };
+  const coffeeManual: CartItem = {
+    id: 'coffee',
+    name: 'Classic Coffee',
+    price: 185,
+    category: 'Snacks & Beverages',
+    icon: '☕',
+    quantity: 0,
+    recurrence: { frequency: 'monthly', source: 'manual', nextDueDate: '2026-12-01' },
+  };
+  const dismissedEggs: CartItem = {
+    id: 'eggs',
+    name: 'Farm Eggs',
+    price: 84,
+    category: 'Meat & Eggs',
+    icon: '🥚',
+    quantity: 0,
+    autoRecurrenceDismissed: true,
+  };
+
+  // 0 orders -> null
+  assert.equal(inferRecurrenceFromHistory(milk, []), null);
+
+  // 1 order -> null (not recurring on single buy)
+  const oneOrder = [makeSession('s1', '2026-11-01T08:00:00.000Z', ['milk', 'bread'])];
+  assert.equal(inferRecurrenceFromHistory(milk, oneOrder), null);
+
+  // 2 orders on same day -> non-bill defaults to weekly, bill defaults to monthly
+  const sameDay = [
+    makeSession('s1', '2026-11-01T08:00:00.000Z', ['milk', 'wifi']),
+    makeSession('s2', '2026-11-01T18:00:00.000Z', ['milk', 'wifi']),
+  ];
+  const milkSameDay = inferRecurrenceFromHistory(milk, sameDay);
+  assert.equal(milkSameDay?.frequency, 'weekly');
+  assert.equal(milkSameDay?.source, 'auto');
+  assert.equal(milkSameDay?.detectedOrderCount, 2);
+
+  const wifiSameDay = inferRecurrenceFromHistory(wifi, sameDay);
+  assert.equal(wifiSameDay?.frequency, 'monthly');
+  assert.equal(wifiSameDay?.source, 'auto');
+
+  // Multi-day intervals: daily (1d), weekly (7d), monthly (30d), custom (14d)
+  const dailyHistory = [
+    makeSession('d1', '2026-11-01T08:00:00.000Z', ['milk']),
+    makeSession('d2', '2026-11-02T08:00:00.000Z', ['milk']),
+    makeSession('d3', '2026-11-03T08:00:00.000Z', ['milk']),
+  ];
+  assert.equal(inferRecurrenceFromHistory(milk, dailyHistory)?.frequency, 'daily');
+
+  const weeklyHistory = [
+    makeSession('w1', '2026-11-01T08:00:00.000Z', ['milk']),
+    makeSession('w2', '2026-11-08T08:00:00.000Z', ['milk']),
+  ];
+  assert.equal(inferRecurrenceFromHistory(milk, weeklyHistory)?.frequency, 'weekly');
+
+  const monthlyHistory = [
+    makeSession('m1', '2026-10-01T08:00:00.000Z', ['wifi']),
+    makeSession('m2', '2026-10-31T08:00:00.000Z', ['wifi']),
+  ];
+  assert.equal(inferRecurrenceFromHistory(wifi, monthlyHistory)?.frequency, 'monthly');
+
+  const customHistory = [
+    makeSession('c1', '2026-10-01T08:00:00.000Z', ['bread']),
+    makeSession('c2', '2026-10-15T08:00:00.000Z', ['bread']),
+  ];
+  const customInf = inferRecurrenceFromHistory(bread, customHistory);
+  assert.equal(customInf?.frequency, 'custom');
+  assert.equal(customInf?.intervalDays, 14);
+
+  // applyAutoRecurrenceToItems preserves manual, respects dismissed, and auto-detects repeat items
+  const combinedHistory = [
+    ...weeklyHistory,
+    makeSession('e1', '2026-11-01T09:00:00.000Z', ['eggs', 'coffee', 'bread']),
+    makeSession('e2', '2026-11-05T09:00:00.000Z', ['eggs', 'coffee']),
+  ];
+  const updated = applyAutoRecurrenceToItems(
+    [milk, bread, wifi, coffeeManual, dismissedEggs],
+    combinedHistory
+  );
+  assert.equal(updated.find((i) => i.id === 'milk')?.recurrence?.source, 'auto');
+  assert.equal(updated.find((i) => i.id === 'milk')?.recurrence?.frequency, 'weekly');
+  assert.equal(updated.find((i) => i.id === 'bread')?.recurrence ?? null, null);
+  assert.equal(updated.find((i) => i.id === 'coffee')?.recurrence?.source, 'manual');
+  assert.equal(updated.find((i) => i.id === 'coffee')?.recurrence?.nextDueDate, '2026-12-01');
+  assert.equal(updated.find((i) => i.id === 'eggs')?.recurrence ?? null, null);
+});
+
+test('buildReceiptPurchaseSession turns matched scanned receipt items into sessions for auto-recurring detection', () => {
+  const milk: CartItem = {
+    id: 'item-milk',
+    name: 'Taaza Toned Fresh Milk',
+    brand: 'Amul',
+    price: 56,
+    category: 'Dairy & Bakery',
+    icon: '🥛',
+    unit: '1 L',
+    quantity: 0,
+  };
+
+  assert.equal(
+    buildReceiptPurchaseSession({
+      id: 'ps-empty',
+      timestamp: '2026-11-01T10:00:00.000Z',
+      merchant: 'Blinkit',
+      transactionId: 'tx-0',
+      totalAmount: 100,
+      matchedItems: [],
+    }),
+    null
+  );
+
+  const s1 = buildReceiptPurchaseSession({
+    id: 'ps-r1',
+    timestamp: '2026-11-01T10:00:00.000Z',
+    merchant: 'Blinkit',
+    transactionId: 'tx-1',
+    totalAmount: 112,
+    matchedItems: [{ item: milk, quantity: 2, subtotal: 112, unitPrice: 56, category: 'Dairy & Bakery' }],
+  });
+  const s2 = buildReceiptPurchaseSession({
+    id: 'ps-r2',
+    timestamp: '2026-11-08T10:00:00.000Z',
+    merchant: 'Zepto',
+    transactionId: 'tx-2',
+    totalAmount: 58,
+    matchedItems: [{ item: milk, quantity: 1, subtotal: 58, unitPrice: 58, category: 'Dairy & Bakery' }],
+  });
+
+  assert.ok(s1 && s2);
+  assert.equal(s1.source, 'receipt');
+  assert.equal(s1.merchantLabel, 'Blinkit');
+  assert.equal(s1.linkedTransactionId, 'tx-1');
+
+  const afterOne = applyAutoRecurrenceToItems([milk], [s1]);
+  assert.equal(afterOne[0].recurrence ?? null, null);
+
+  const afterTwo = applyAutoRecurrenceToItems([milk], [s2, s1]);
+  assert.equal(afterTwo[0].recurrence?.source, 'auto');
+  assert.equal(afterTwo[0].recurrence?.frequency, 'weekly');
+  assert.equal(afterTwo[0].recurrence?.detectedOrderCount, 2);
+});
+
+
 

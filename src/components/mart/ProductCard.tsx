@@ -112,7 +112,13 @@ export function ProductCard({
               </span>
             ) : item.recurrence ? (
               <span
-                title={isDue ? 'Recurring item due now' : `Recurring (${item.recurrence.frequency})`}
+                title={
+                  isDue
+                    ? 'Recurring item due now'
+                    : item.recurrence.source === 'auto'
+                      ? `Auto-detected recurring (${item.recurrence.frequency})`
+                      : `Recurring (${item.recurrence.frequency})`
+                }
                 className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border shadow-xs flex items-center gap-1 ${
                   isDue
                     ? 'bg-[#365FE8] border-[#365FE8] text-white'

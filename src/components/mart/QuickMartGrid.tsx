@@ -1044,11 +1044,16 @@ export function QuickMartGrid({
               )}
 
               {/* Favorites Section */}
-              {favoriteItems.length > 0 && (
-                <section className="space-y-3">
-                  <SectionHeader
-                    title={`Your Favorites (${favoriteItems.length})`}
-                    action={
+              <section className="space-y-3" data-testid="shop-favorites-section">
+                <SectionHeader
+                  title={`Your Favorites (${favoriteItems.length})`}
+                  subtitle={
+                    favoriteItems.length === 0
+                      ? 'You choose what goes here'
+                      : undefined
+                  }
+                  action={
+                    favoriteItems.length > 0 ? (
                       <button
                         type="button"
                         onClick={() => setFilters((p) => ({ ...p, onlyFavourites: true }))}
@@ -1057,8 +1062,21 @@ export function QuickMartGrid({
                         <Heart className="w-3.5 h-3.5 text-[#DE5252]" fill="currentColor" />
                         View All
                       </button>
-                    }
-                  />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSection('catalog');
+                          setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
+                        }}
+                        className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
+                      >
+                        Browse Catalog <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    )
+                  }
+                />
+                {favoriteItems.length > 0 ? (
                   <ProductGrid
                     items={favoriteItems.slice(0, 8)}
                     categoryConfigs={categoryConfigs}
@@ -1072,8 +1090,19 @@ export function QuickMartGrid({
                     onUpdatePrice={updateItemPrice}
                     onOpenDetails={(item) => setDetailProduct(item)}
                   />
-                </section>
-              )}
+                ) : (
+                  <div className="bg-white rounded-2xl p-4 border border-dashed border-[#D5DBE5] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-[#FDECEC] border border-[#F6B8B8] text-[#DE5252] flex items-center justify-center shrink-0">
+                        <Heart className="w-4 h-4" strokeWidth={2.2} />
+                      </div>
+                      <p className="text-xs text-[#697386]">
+                        No favourites pinned yet. Tap the heart icon on any product below to add your own favourites.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </section>
 
               {/* Popular Everyday Essentials */}
               {popularEssentials.length > 0 && (
@@ -1174,7 +1203,7 @@ export function QuickMartGrid({
                 </div>
               </section>
 
-              {/* Recurring Bills & Subscriptions */}
+              {/* Quick Bills & Subscriptions */}
               {featureSettings.showShopRecurring && billItems.length > 0 && (
                 <section className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3.5">
                   <div className="flex items-center justify-between gap-2">
@@ -1184,10 +1213,10 @@ export function QuickMartGrid({
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-[#151922]">
-                          Recurring Bills &amp; Subscriptions
+                          Quick Bills &amp; Subscriptions
                         </h3>
                         <p className="text-xs text-[#697386]">
-                          Separate from pantry items · Logged only after checkout confirmation
+                          Auto-captured as recurring if paid repeatedly · Logged only after checkout
                         </p>
                       </div>
                     </div>
@@ -1213,7 +1242,7 @@ export function QuickMartGrid({
                           <p className="text-xs font-bold text-[#151922] truncate">{bill.name}</p>
                           <p className="text-[11px] font-mono text-[#697386] tabular-nums">
                             ₹{formatCurrencyExact(bill.price)} ·{' '}
-                            {bill.recurrence?.frequency ?? 'one-off'}
+                            {bill.recurrence?.frequency ?? 'on-demand'}
                           </p>
                         </button>
                         <button

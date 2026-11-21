@@ -300,7 +300,7 @@ async function startServer() {
             normalizedMime,
             imageBase64,
             true,
-            25000
+            10000
           );
         } catch (primaryErr) {
           const parsedPrimary = extractReadableError(primaryErr);
@@ -323,7 +323,7 @@ async function startServer() {
             normalizedMime,
             imageBase64,
             false,
-            25000
+            20000
           );
         }
       });
@@ -650,7 +650,7 @@ async function startServer() {
 
       const response = await runWithGeminiFallback('penny-chat', async (ai) => {
         try {
-          return await runPennyChatModel(ai, 'gemini-4-hydrogen', true, 25000);
+          return await runPennyChatModel(ai, 'gemini-4-hydrogen', true, 8000);
         } catch (primaryErr) {
           const parsedPrimary = extractReadableError(primaryErr);
           if (
@@ -662,7 +662,7 @@ async function startServer() {
           ) {
             throw primaryErr;
           }
-          return await runPennyChatModel(ai, 'gemini-3.1-flash-lite', false, 25000);
+          return await runPennyChatModel(ai, 'gemini-3.1-flash-lite', false, 15000);
         }
       });
 
@@ -766,7 +766,7 @@ async function startServer() {
 
       const response = await runWithGeminiFallback('penny-parse-expense', async (ai) => {
         try {
-          return await runParseModel(ai, 'gemini-4-hydrogen', true, 20000);
+          return await runParseModel(ai, 'gemini-4-hydrogen', true, 8000);
         } catch (primaryErr) {
           const parsedPrimary = extractReadableError(primaryErr);
           if (
@@ -778,7 +778,7 @@ async function startServer() {
           ) {
             throw primaryErr;
           }
-          return await runParseModel(ai, 'gemini-3.1-flash-lite', false, 20000);
+          return await runParseModel(ai, 'gemini-3.1-flash-lite', false, 15000);
         }
       });
 

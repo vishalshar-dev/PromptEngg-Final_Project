@@ -71,11 +71,13 @@ import {
   migratePersistedMartItems,
 } from '../data/martCatalog';
 import {
+  applyAutoRecurrenceToItems,
   applyBasketTemplateToItems,
   buildBasketItemsFromCart,
   buildBasketItemsFromSession,
   buildCheckoutBreakdown,
   buildCheckoutSignature,
+  buildReceiptPurchaseSession,
   computeBasketSavedTotal,
   evaluateBasketTemplate,
   getActiveVariant,
@@ -86,6 +88,7 @@ import {
   reorderCategoryList,
   roundQuantity,
   toLocalDateKey,
+  type ReceiptSessionItemInput,
 } from '../utils/martEngine';
 import { isDuplicateSettlement, roundCurrency } from '../utils/splitLedgerEngine';
 import { DEFAULT_BROKE_MODE_CONFIG } from '../utils/warRoomEngine';
@@ -345,6 +348,7 @@ export interface AppState {
     observationsCount?: number;
     triggeredAlertsCount?: number;
     createdCustomItemsCount?: number;
+    autoRecurringAddedCount?: number;
   };
   recordManualPricePurchase: (input: ManualPricePurchaseInput) => {
     observation: PriceObservation;
@@ -1065,7 +1069,24 @@ export const useAppStore = create<AppState>()(
 
       setProductRecurrence: (id, recurrence) =>
         set((state) => ({
-          items: state.items.map((i) => (i.id === id ? { ...i, recurrence } : i)),
+          items: state.items.map((i) => {
+            if (i.id !== id) return i;
+            if (!recurrence) {
+              return {
+                ...i,
+                recurrence: null,
+                autoRecurrenceDismissed: true,
+              };
+            }
+            return {
+              ...i,
+              recurrence: {
+                ...recurrence,
+                source: recurrence.source ?? 'manual',
+              },
+              autoRecurrenceDismissed: false,
+            };
+          }),
         })),
 
       addDueRecurringToCart: () => {
@@ -1372,11 +1393,17 @@ export const useAppStore = create<AppState>()(
             isSplit: false,
           };
 
+          const nextPurchaseHistory = [session, ...current.purchaseHistory].slice(0, 100);
+          const autoCapturedItems = applyAutoRecurrenceToItems(
+            updatedItems,
+            nextPurchaseHistory
+          );
+
           set({
             transactions: [...newTransactions, ...current.transactions],
-            items: updatedItems,
+            items: autoCapturedItems,
             priceHistory: nextPriceHistory,
-            purchaseHistory: [session, ...current.purchaseHistory].slice(0, 100),
+            purchaseHistory: nextPurchaseHistory,
             priceObservations: obsResult.priceObservations,
             priceAlerts: obsResult.priceAlerts,
             triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
@@ -1456,12 +1483,18 @@ export const useAppStore = create<AppState>()(
           splitSummaryText: `Split among ${splitConfig.participants.length} (${splitConfig.splitMethod})`,
         };
 
+        const nextPurchaseHistory = [session, ...current.purchaseHistory].slice(0, 100);
+        const autoCapturedItems = applyAutoRecurrenceToItems(
+          updatedItems,
+          nextPurchaseHistory
+        );
+
         set({
           sharedExpenses: [newSharedExpense, ...current.sharedExpenses],
           transactions: nextTransactions,
-          items: updatedItems,
+          items: autoCapturedItems,
           priceHistory: nextPriceHistory,
-          purchaseHistory: [session, ...current.purchaseHistory].slice(0, 100),
+          purchaseHistory: nextPurchaseHistory,
           priceObservations: obsResult.priceObservations,
           priceAlerts: obsResult.priceAlerts,
           triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
@@ -1737,22 +1770,42 @@ export const useAppStore = create<AppState>()(
                   : se
               )
             : state.sharedExpenses;
+          const nextPurchaseHistory = state.purchaseHistory.filter(
+            (s) => s.linkedTransactionId !== id
+          );
+          const nextItems =
+            nextPurchaseHistory.length !== state.purchaseHistory.length
+              ? applyAutoRecurrenceToItems(state.items, nextPurchaseHistory)
+              : state.items;
           return {
             transactions: state.transactions.filter((tx) => tx.id !== id),
             sharedExpenses: nextShared,
             priceObservations: state.priceObservations.filter((obs) => obs.transactionId !== id),
+            purchaseHistory: nextPurchaseHistory,
+            items: nextItems,
           };
         }),
 
       cancelTransaction: (id) =>
-        set((state) => ({
-          transactions: state.transactions.map((tx) =>
-            tx.id === id ? { ...tx, status: 'cancelled' } : tx
-          ),
-          priceObservations: state.priceObservations.map((obs) =>
-            obs.transactionId === id ? { ...obs, status: 'cancelled' } : obs
-          ),
-        })),
+        set((state) => {
+          const nextPurchaseHistory = state.purchaseHistory.filter(
+            (s) => s.linkedTransactionId !== id
+          );
+          const nextItems =
+            nextPurchaseHistory.length !== state.purchaseHistory.length
+              ? applyAutoRecurrenceToItems(state.items, nextPurchaseHistory)
+              : state.items;
+          return {
+            transactions: state.transactions.map((tx) =>
+              tx.id === id ? { ...tx, status: 'cancelled' } : tx
+            ),
+            priceObservations: state.priceObservations.map((obs) =>
+              obs.transactionId === id ? { ...obs, status: 'cancelled' } : obs
+            ),
+            purchaseHistory: nextPurchaseHistory,
+            items: nextItems,
+          };
+        }),
 
       refundTransaction: (id, refundAmount) =>
         set((state) => ({
@@ -2011,6 +2064,9 @@ export const useAppStore = create<AppState>()(
         let createdCustomItemsCount = 0;
 
         const createdObservations: PriceObservation[] = [];
+        const matchedSessionInputs: ReceiptSessionItemInput[] = [];
+        const matchedQtyById = new Map<string, number>();
+
         for (const item of receipt.items) {
           if (!item.name.trim() || item.price <= 0) continue;
 
@@ -2046,6 +2102,7 @@ export const useAppStore = create<AppState>()(
               ? nextItems.find((c) => c.id === resolved.productId)
               : undefined);
 
+          let createdThisPass = false;
           if (!targetCatalogItem && saveNewItemsToCatalog) {
             if (!matchedCfg) {
               nextConfigs = [
@@ -2083,7 +2140,7 @@ export const useAppStore = create<AppState>()(
               isCustom: true,
               createdAt: nowIso,
               lastPurchasedAt: purchaseDate,
-              purchaseCount: 1,
+              purchaseCount: 0,
             };
 
             nextItems = [targetCatalogItem, ...nextItems];
@@ -2098,6 +2155,29 @@ export const useAppStore = create<AppState>()(
               },
             ];
             createdCustomItemsCount += 1;
+            createdThisPass = true;
+          }
+
+          if (targetCatalogItem) {
+            const qty = resolved.quantity > 0 ? roundQuantity(resolved.quantity) : 1;
+            const unitPrice = roundCurrency(qty > 0 ? item.price / qty : item.price);
+            matchedSessionInputs.push({
+              item: targetCatalogItem,
+              quantity: qty,
+              subtotal: item.price,
+              unitPrice,
+              category: itemCategory,
+            });
+            matchedQtyById.set(
+              targetCatalogItem.id,
+              roundQuantity((matchedQtyById.get(targetCatalogItem.id) ?? 0) + qty)
+            );
+            if (createdThisPass) {
+              // Ensure initial purchaseCount reflects this receipt accurately
+              nextItems = nextItems.map((it) =>
+                it.id === targetCatalogItem!.id ? { ...it, purchaseCount: 0 } : it
+              );
+            }
           }
 
           const obs = buildPriceObservation({
@@ -2154,15 +2234,57 @@ export const useAppStore = create<AppState>()(
           receiptFingerprint: fingerprint,
         };
 
+        const receiptSession = buildReceiptPurchaseSession({
+          id: `ps-receipt-${txId.slice(0, 8)}`,
+          timestamp: purchaseDate,
+          merchant: receipt.merchant,
+          transactionId: txId,
+          totalAmount: totalAmt,
+          matchedItems: matchedSessionInputs,
+        });
+
+        const nextPurchaseHistory = receiptSession
+          ? [receiptSession, ...current.purchaseHistory]
+              .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+              .slice(0, 100)
+          : current.purchaseHistory;
+
+        const prevAutoIds = new Set(
+          current.items.filter((i) => i.recurrence?.source === 'auto').map((i) => i.id)
+        );
+
+        const updatedMatchedItems = nextItems.map((it) => {
+          const addedQty = matchedQtyById.get(it.id);
+          if (!addedQty) return it;
+          const prevTs = it.lastPurchasedAt ? new Date(it.lastPurchasedAt).getTime() : 0;
+          const nextTs = new Date(purchaseDate).getTime();
+          const latestPurchasedAt =
+            Number.isFinite(nextTs) && nextTs >= prevTs ? purchaseDate : it.lastPurchasedAt ?? purchaseDate;
+          return {
+            ...it,
+            purchaseCount: roundQuantity((it.purchaseCount ?? 0) + addedQty),
+            lastPurchasedAt: latestPurchasedAt,
+          };
+        });
+
+        const syncedItems = receiptSession
+          ? applyAutoRecurrenceToItems(updatedMatchedItems, nextPurchaseHistory)
+          : updatedMatchedItems;
+
+        const autoRecurringAddedCount = syncedItems.filter(
+          (i) => i.recurrence?.source === 'auto' && !prevAutoIds.has(i.id)
+        ).length;
+
         const obsResult = appendObservationsAndEvaluateAlerts(current, createdObservations, nowIso);
 
         set({
           transactions: [newTx, ...current.transactions],
-          items: nextItems,
+          items: syncedItems,
           categoryConfigs: nextConfigs,
           categories: nextConfigs.map((c) => c.name),
           categoryCaps: nextCaps,
           priceHistory: nextHistory,
+          purchaseHistory: nextPurchaseHistory,
           priceObservations: obsResult.priceObservations,
           priceAlerts: obsResult.priceAlerts,
           triggeredPriceAlerts: obsResult.triggeredPriceAlerts,
@@ -2174,6 +2296,7 @@ export const useAppStore = create<AppState>()(
           observationsCount: createdObservations.length,
           triggeredAlertsCount: obsResult.triggeredCount,
           createdCustomItemsCount,
+          autoRecurringAddedCount,
         };
       },
 
@@ -2631,8 +2754,10 @@ export const useAppStore = create<AppState>()(
 
       importBackupData: (data) =>
         set(() => {
-          const mergedItems = migratePersistedMartItems(
-            mergeBackupItems(data.customItems, INITIAL_MART_ITEMS)
+          const sessions = data.purchaseHistory ?? [];
+          const mergedItems = applyAutoRecurrenceToItems(
+            migratePersistedMartItems(mergeBackupItems(data.customItems, INITIAL_MART_ITEMS)),
+            sessions
           );
           const mergedConfigs = migrateCategoryConfigs(
             data.categoryConfigs,
@@ -2641,7 +2766,6 @@ export const useAppStore = create<AppState>()(
             data.transactions
           );
           const mergedHistory = ensureCatalogPriceHistory(mergedItems, data.priceHistory ?? {});
-          const sessions = data.purchaseHistory ?? [];
           const restoredObs =
             Array.isArray(data.priceObservations) && data.priceObservations.length > 0
               ? data.priceObservations
@@ -2717,13 +2841,15 @@ export const useAppStore = create<AppState>()(
       loadSampleMonth: () =>
         set((state) => {
           const sample = buildSampleMonthDataset(new Date(), state.items);
+          const resetItems = state.items.map((item) => ({
+            ...item,
+            quantity: 0,
+            variantQuantities: undefined,
+            autoRecurrenceDismissed: false,
+          }));
           return {
             ...sample,
-            items: state.items.map((item) => ({
-              ...item,
-              quantity: 0,
-              variantQuantities: undefined,
-            })),
+            items: applyAutoRecurrenceToItems(resetItems, sample.purchaseHistory),
             feeFlags: [],
             parsedReceipts: [],
             dismissedWarRoomAlerts: [],
@@ -2740,13 +2866,18 @@ export const useAppStore = create<AppState>()(
               ...item,
               quantity: 0,
               variantQuantities: undefined,
+              isFavourite: false,
+              recurrence: null,
+              autoRecurrenceDismissed: false,
+              lastPurchasedAt: undefined,
+              purchaseCount: 0,
             })),
           };
         }),
     }),
     {
       name: 'cartaudit-store',
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         theme: state.theme,
         featureSettings: state.featureSettings,
@@ -2787,7 +2918,7 @@ export const useAppStore = create<AppState>()(
         if (!persistedState || typeof persistedState !== 'object') {
           return persistedState;
         }
-        const persisted = persistedState as Partial<AppState>;
+        let persisted = persistedState as Partial<AppState>;
         if (version < 2) {
           const existingBaskets = Array.isArray(persisted.basketTemplates)
             ? persisted.basketTemplates
@@ -2797,10 +2928,54 @@ export const useAppStore = create<AppState>()(
             ...existingBaskets,
             ...INITIAL_BASKET_TEMPLATES.filter((tpl) => !existingIds.has(tpl.id)),
           ];
-          return {
+          persisted = {
             ...persisted,
             basketTemplates: mergedBaskets,
             basketTemplatesSeeded: true,
+          };
+        }
+        if (version < 3 && Array.isArray(persisted.items)) {
+          const legacySeedFavIds = new Set([
+            'item-rice',
+            'item-tomatoes',
+            'item-bananas',
+            'item-milk',
+            'item-coffee',
+          ]);
+          const legacySeedRecurrenceIds = new Set([
+            'item-rice',
+            'item-milk',
+            'item-eggs',
+            'item-wifi',
+            'item-mobile-recharge',
+          ]);
+          const sessions = Array.isArray(persisted.purchaseHistory)
+            ? persisted.purchaseHistory
+            : [];
+          const noPurchasesYet = sessions.length === 0;
+
+          const cleanedItems = persisted.items.map((item) => {
+            if (!item || typeof item !== 'object') return item;
+            let nextRecurrence = item.recurrence ?? null;
+            if (nextRecurrence && !nextRecurrence.source) {
+              nextRecurrence = legacySeedRecurrenceIds.has(item.id)
+                ? null
+                : { ...nextRecurrence, source: 'manual' };
+            }
+            const nextFav =
+              noPurchasesYet && legacySeedFavIds.has(item.id)
+                ? false
+                : item.isFavourite;
+            return {
+              ...item,
+              isFavourite: nextFav,
+              recurrence: nextRecurrence,
+            };
+          });
+
+          persisted = {
+            ...persisted,
+            items: applyAutoRecurrenceToItems(cleanedItems, sessions),
           };
         }
         return persisted;

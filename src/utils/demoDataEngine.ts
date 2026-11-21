@@ -470,6 +470,26 @@ export function buildSampleMonthDataset(
       categoryTotals: { Groceries: 995 },
       isSplit: false,
     },
+    {
+      id: 'sample-session-3',
+      timestamp: resolveCurrentMonthIso(referenceDate, 8, 9, 15),
+      items: [
+        {
+          itemId: 'item-milk',
+          name: 'Taaza Toned Fresh Milk',
+          brand: 'Amul',
+          category: 'Dairy & Bakery',
+          unit: '1 L',
+          price: 60,
+          quantity: 2,
+          subtotal: 120,
+        },
+      ],
+      totalAmount: 120,
+      personalShare: 120,
+      categoryTotals: { 'Dairy & Bakery': 120 },
+      isSplit: false,
+    },
   ];
 
   // Price Observations across real catalog items over past 75 days

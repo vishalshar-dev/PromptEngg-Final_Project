@@ -7,6 +7,8 @@ export interface RecurrenceConfig {
   intervalDays?: number;
   nextDueDate?: string; // YYYY-MM-DD
   lastAddedAt?: string; // ISO
+  source?: 'auto' | 'manual';
+  detectedOrderCount?: number;
 }
 
 export interface ProductVariant {
@@ -43,6 +45,7 @@ export interface CartItem {
   selectedVariantId?: string;
   variantQuantities?: Record<string, number>;
   recurrence?: RecurrenceConfig | null;
+  autoRecurrenceDismissed?: boolean;
 }
 
 export interface CartLineItem {
@@ -171,6 +174,9 @@ export interface PurchaseSession {
   isSplit: boolean;
   linkedSharedExpenseId?: string | null;
   splitSummaryText?: string;
+  source?: 'mart' | 'receipt';
+  merchantLabel?: string;
+  linkedTransactionId?: string;
 }
 
 export interface BasketTemplateItem {

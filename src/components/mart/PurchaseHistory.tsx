@@ -73,6 +73,11 @@ export function PurchaseHistory({ onRepeated, onSavedBasket }: PurchaseHistoryPr
                     <Calendar className="w-3.5 h-3.5 text-[#697386]" />
                     {formattedDate}
                   </span>
+                  {session.source === 'receipt' && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#15966B] bg-[#E8F7F1] border border-[#B7E4D3] px-2 py-0.5 rounded-md">
+                      {session.merchantLabel ? `${session.merchantLabel} Receipt` : 'Scanned Receipt'}
+                    </span>
+                  )}
                   {session.isSplit && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#365FE8]">
                       <Users className="w-3 h-3" />

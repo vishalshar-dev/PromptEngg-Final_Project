@@ -9,6 +9,7 @@ import type {
   PriceSource,
   ProductVariant,
   PurchaseSession,
+  PurchaseSessionItem,
   RecurrenceConfig,
   Transaction,
 } from '../types/models';
@@ -906,6 +907,130 @@ export function computeRunningLowItems(
   );
 }
 
+/**
+ * Automatically infers whether an item is recurring from completed checkout history.
+ * - Requires at least 2 separate purchase sessions (single buys are never recurring).
+ * - Respects explicit user dismissal (`autoRecurrenceDismissed: true`).
+ * - Estimates cadence from gaps across distinct purchase days when available,
+ *   or defaults to monthly (bills) / weekly (essentials) for same-day repeat orders.
+ */
+export function inferRecurrenceFromHistory(
+  item: CartItem,
+  purchaseHistory: PurchaseSession[]
+): RecurrenceConfig | null {
+  if (item.autoRecurrenceDismissed) return null;
+
+  const matchingTimestamps: number[] = [];
+  for (const session of purchaseHistory) {
+    if (!session || !Array.isArray(session.items)) continue;
+    const boughtInSession = session.items.some((sItem) => sItem.itemId === item.id);
+    if (!boughtInSession) continue;
+    const ts = new Date(session.timestamp).getTime();
+    if (Number.isFinite(ts)) {
+      matchingTimestamps.push(ts);
+    }
+  }
+
+  if (matchingTimestamps.length < 2) {
+    return null;
+  }
+
+  matchingTimestamps.sort((a, b) => a - b);
+  const orderCount = matchingTimestamps.length;
+  const latestDate = new Date(matchingTimestamps[matchingTimestamps.length - 1]);
+  const latestIso = latestDate.toISOString();
+
+  // Group into distinct local calendar days (midnight timestamps) to compute real day intervals
+  const distinctDayMs: number[] = [];
+  const seenDayKeys = new Set<string>();
+  for (const ts of matchingTimestamps) {
+    const d = new Date(ts);
+    const key = toLocalDateKey(d);
+    if (!seenDayKeys.has(key)) {
+      seenDayKeys.add(key);
+      distinctDayMs.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0).getTime());
+    }
+  }
+
+  let frequency: RecurrenceConfig['frequency'];
+  let intervalDays: number | undefined;
+
+  if (distinctDayMs.length >= 2) {
+    const dayMs = 1000 * 60 * 60 * 24;
+    const gaps: number[] = [];
+    for (let i = 1; i < distinctDayMs.length; i++) {
+      gaps.push(Math.max(1, Math.round((distinctDayMs[i] - distinctDayMs[i - 1]) / dayMs)));
+    }
+    const sortedGaps = [...gaps].sort((a, b) => a - b);
+    const mid = Math.floor(sortedGaps.length / 2);
+    const medianGap =
+      sortedGaps.length % 2 === 1
+        ? sortedGaps[mid]
+        : Math.round((sortedGaps[mid - 1] + sortedGaps[mid]) / 2);
+
+    if (medianGap <= 2) {
+      frequency = 'daily';
+    } else if (medianGap >= 5 && medianGap <= 9) {
+      frequency = 'weekly';
+    } else if (medianGap >= 25 && medianGap <= 35) {
+      frequency = 'monthly';
+    } else {
+      frequency = 'custom';
+      intervalDays = Math.max(2, medianGap);
+    }
+  } else {
+    // Multiple separate checkouts on the same calendar day: establish an initial non-spam cadence
+    // that refines automatically as purchases span future days.
+    frequency = isRecurringBillItem(item) ? 'monthly' : 'weekly';
+  }
+
+  const baseConfig: RecurrenceConfig = {
+    frequency,
+    ...(intervalDays !== undefined ? { intervalDays } : {}),
+    source: 'auto',
+    detectedOrderCount: orderCount,
+    lastAddedAt: latestIso,
+  };
+
+  return {
+    ...baseConfig,
+    nextDueDate: getNextDueDateString(baseConfig, latestDate),
+  };
+}
+
+export function applyAutoRecurrenceToItems(
+  items: CartItem[],
+  purchaseHistory: PurchaseSession[]
+): CartItem[] {
+  return items.map((item) => {
+    // Never overwrite an explicit manual schedule configured by the user
+    if (item.recurrence && item.recurrence.source !== 'auto') {
+      return item;
+    }
+
+    if (item.autoRecurrenceDismissed) {
+      return item.recurrence ? { ...item, recurrence: null } : item;
+    }
+
+    const inferred = inferRecurrenceFromHistory(item, purchaseHistory);
+    if (inferred) {
+      return {
+        ...item,
+        recurrence: inferred,
+      };
+    }
+
+    if (item.recurrence?.source === 'auto') {
+      return {
+        ...item,
+        recurrence: null,
+      };
+    }
+
+    return item;
+  });
+}
+
 export function getEffectiveTransactionAmount(tx: Transaction): number {
   if (!tx) return 0;
   if (tx.status === 'cancelled') return 0;
@@ -1263,4 +1388,78 @@ export function applyBasketTemplateToItems(
 
   return { nextItems: working, loadedLinesCount };
 }
+
+export interface ReceiptSessionItemInput {
+  item: CartItem;
+  quantity: number;
+  subtotal: number;
+  unitPrice: number;
+  category: string;
+}
+
+export function buildReceiptPurchaseSession(params: {
+  id: string;
+  timestamp: string;
+  merchant: string;
+  transactionId: string;
+  totalAmount: number;
+  matchedItems: ReceiptSessionItemInput[];
+}): PurchaseSession | null {
+  if (params.matchedItems.length === 0) return null;
+
+  const byItemId = new Map<string, PurchaseSessionItem>();
+  const categoryTotals: Record<string, number> = {};
+
+  for (const entry of params.matchedItems) {
+    const qty = roundQuantity(Math.max(0.01, entry.quantity));
+    const subtotal = roundCurrency(Math.max(0, entry.subtotal));
+    if (subtotal <= 0) continue;
+
+    categoryTotals[entry.category] = roundCurrency((categoryTotals[entry.category] ?? 0) + subtotal);
+
+    const existing = byItemId.get(entry.item.id);
+    if (existing) {
+      const nextQty = roundQuantity(existing.quantity + qty);
+      const nextSub = roundCurrency(existing.subtotal + subtotal);
+      byItemId.set(entry.item.id, {
+        ...existing,
+        quantity: nextQty,
+        subtotal: nextSub,
+        price: roundCurrency(nextQty > 0 ? nextSub / nextQty : existing.price),
+      });
+    } else {
+      byItemId.set(entry.item.id, {
+        itemId: entry.item.id,
+        name: entry.item.name,
+        brand: entry.item.brand,
+        category: entry.category,
+        subcategory: entry.item.subcategory,
+        unit: entry.item.unit,
+        price: roundCurrency(entry.unitPrice),
+        quantity: qty,
+        subtotal,
+      });
+    }
+  }
+
+  const sessionItems = Array.from(byItemId.values());
+  if (sessionItems.length === 0) return null;
+
+  const itemsSum = roundCurrency(sessionItems.reduce((sum, s) => sum + s.subtotal, 0));
+  const finalTotal = params.totalAmount > 0 ? roundCurrency(params.totalAmount) : itemsSum;
+
+  return {
+    id: params.id,
+    timestamp: params.timestamp,
+    items: sessionItems,
+    totalAmount: finalTotal,
+    personalShare: finalTotal,
+    categoryTotals,
+    isSplit: false,
+    source: 'receipt',
+    merchantLabel: params.merchant.trim() || 'Scanned Receipt',
+    linkedTransactionId: params.transactionId,
+  };
+}
+
 
