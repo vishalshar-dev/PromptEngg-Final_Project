@@ -232,32 +232,36 @@ function slugifyProductId(name: string): string {
 
 export function inferCategoryFromName(name: string, fallback: string = 'Groceries'): string {
   const lower = name.toLowerCase();
-  if (/milk|curd|yogurt|paneer|butter|cheese|bread|bakery|bun|cake|pastry|croissant|ghee/.test(lower))
+  if (/milk|curd|dahi|yogurt|paneer|butter|cheese|bread|bakery|bun|pav|rusk|khari|cake|pastry|croissant/.test(lower))
     return 'Dairy & Bakery';
-  if (/tomato|onion|potato|apple|banana|fruit|veg|spinach|coriander|mango|orange|lemon|garlic|ginger|carrot|cucumber|broccoli/.test(lower))
+  if (/tomato|onion|potato|apple|banana|fruit|veg|spinach|palak|methi|coriander|dhania|mango|orange|lemon|garlic|ginger|carrot|cucumber|brinjal|baingan|bhindi|okra|cauliflower|gobhi|pomegranate|anar|papaya|watermelon|coconut|broccoli/.test(lower))
     return 'Fruits & Vegetables';
-  if (/rice|wheat|atta|flour|sugar|salt|oil|dal|pulse|lentil|spice|masala|oats|pasta|noodle|maggi|poha|suji/.test(lower))
+  if (/idli|dosa|batter|poha|oats|muesli|cornflake|pasta|noodle|maggi|vermicelli|seviyan|jam|honey/.test(lower))
+    return 'Breakfast & Instant Food';
+  if (/rice|sona masoori|kolam|wheat|atta|flour|besan|suji|sooji|rava|sugar|jaggery|gur|salt|oil|ghee|dal|pulse|lentil|rajma|chana|masoor|moong|spice|masala|turmeric|haldi|jeera|pickle|achar|papad|ketchup/.test(lower))
     return 'Groceries';
-  if (/chip|lays|lay's|cola|soda|juice|chocolate|biscuit|cookie|coffee|tea|snack|kurkure|namkeen|popcorn|ice cream/.test(lower))
+  if (/chip|lays|lay's|cola|soda|juice|chocolate|biscuit|cookie|coffee|tea|chai|snack|kurkure|namkeen|bhujia|popcorn|ice cream/.test(lower))
     return 'Snacks & Beverages';
   if (/egg|chicken|mutton|fish|meat|poultry|prawn|seafood/.test(lower)) return 'Meat & Eggs';
-  if (/soap|shampoo|toothpaste|toothbrush|body wash|face|moisturizer|lotion|sunscreen|deodorant|perfume|razor|sanitizer/.test(lower))
+  if (/soap|shampoo|hair oil|toothpaste|toothbrush|body wash|handwash|face|moisturizer|lotion|sunscreen|deodorant|perfume|razor|sanitizer/.test(lower))
     return 'Personal Care';
-  if (/detergent|dishwash|cleaner|bleach|vim|surf|ariel|tide|harpic|lizol|phenyl|conditioner/.test(lower))
+  if (/detergent|dishwash|scrubber|sponge|cleaner|bleach|vim|surf|ariel|tide|harpic|lizol|phenyl|conditioner|mop|broom|dustpan/.test(lower))
     return 'Cleaning Supplies';
-  if (/bulb|led|tissue|napkin|foil|wrap|garbage bag|candle|battery|batteries|mop|broom|umbrella/.test(lower))
+  if (/bulb|led|tissue|napkin|foil|wrap|garbage bag|candle|battery|batteries|agarbatti|incense|camphor|pooja|mosquito|vaporizer|umbrella/.test(lower))
     return 'Household Essentials';
+  if (/container|frypan|tawa|cookware|flask|bottle|utensil/.test(lower))
+    return 'Kitchen & Home';
   if (/usb|cable|charger|adapter|headphone|earphone|earbud|mouse|keyboard|power bank|ssd|pendrive|speaker|smartwatch/.test(lower))
     return 'Electronics';
-  if (/shirt|t-shirt|tshirt|jeans|trouser|pant|dress|kurta|shoe|sneaker|socks|jacket|cap|belt|wallet|hoodie/.test(lower))
+  if (/shirt|t-shirt|tshirt|jeans|trouser|pant|dress|kurta|shoe|sneaker|socks|jacket|cap|belt|wallet|hoodie|tote/.test(lower))
     return 'Clothing & Accessories';
-  if (/paracetamol|dolo|tablet|capsule|syrup|medicine|pharma|bandage|antiseptic|vitamin|inhaler|mask|thermometer|ointment|relief/.test(lower))
+  if (/paracetamol|dolo|tablet|capsule|syrup|medicine|pharma|bandage|antiseptic|vitamin|inhaler|mask|thermometer|ointment|relief|ors|electral|balm/.test(lower))
     return 'Medicines & Healthcare';
   if (/pen|pencil|notebook|diary|paper|stapler|marker|highlighter|tape|glue|folder|eraser|stationery/.test(lower))
     return 'Stationery';
-  if (/wifi|broadband|recharge|mobile|internet|airtel|jio|bsnl|fiber/.test(lower))
+  if (/wifi|broadband|recharge|mobile|internet|airtel|jio|bsnl|fiber|dth/.test(lower))
     return 'Mobile & Internet Bills';
-  if (/electricity|power|gas|cylinder|utility|water bill/.test(lower))
+  if (/electricity|power|gas|lpg|cylinder|utility|water bill|water can/.test(lower))
     return 'Electricity & Utilities';
   if (/petrol|diesel|fuel|cng|metro|cab|uber|ola|rapido|parking|toll|flight|train/.test(lower))
     return 'Fuel & Transportation';

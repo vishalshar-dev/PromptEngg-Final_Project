@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   X,
   Sun,
@@ -153,6 +154,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const applyFeaturePreset = useAppStore((s) => s.applyFeaturePreset);
   const updateFeatureSettings = useAppStore((s) => s.updateFeatureSettings);
   const resetFeatureSettings = useAppStore((s) => s.resetFeatureSettings);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

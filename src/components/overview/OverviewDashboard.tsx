@@ -14,6 +14,8 @@ import {
   TrendingDown,
   AlertTriangle,
   Info,
+  ShieldCheck,
+  Scale,
 } from 'lucide-react';
 import {
   BarChart,
@@ -454,84 +456,132 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       </section>
 
       {/* Section C: Quick Actions */}
-      <section
-        aria-label="Quick actions"
-        className={`grid grid-cols-2 ${
-          2 + (featureSettings.showScanner ? 1 : 0) + (featureSettings.showInsights ? 1 : 0) === 4
-            ? 'lg:grid-cols-4'
-            : 2 + (featureSettings.showScanner ? 1 : 0) + (featureSettings.showInsights ? 1 : 0) === 3
-              ? 'lg:grid-cols-3'
-              : 'lg:grid-cols-2'
-        } gap-3`}
-      >
-        <button
-          type="button"
-          onClick={() => onNavigate('shopping')}
-          className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
-            <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={2} />
-          </div>
-          <p className="text-[14px] font-semibold text-[#151922]">
-            Start Shopping
-          </p>
-          <p className="text-[12px] text-[#697386] mt-0.5">
-            Build cart from quick catalog
-          </p>
-        </button>
+      {(() => {
+        const quickActionCount =
+          3 +
+          (featureSettings.showScanner ? 1 : 0) +
+          (featureSettings.showInsights ? 1 : 0) +
+          (featureSettings.showWellness ? 1 : 0);
 
-        <button
-          type="button"
-          onClick={() => setAddExpenseOpen(true)}
-          className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
-        >
-          <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] text-[#15966B] flex items-center justify-center mb-3 group-hover:bg-[#15966B] group-hover:text-white transition-colors">
-            <Plus className="w-[18px] h-[18px]" strokeWidth={2.2} />
-          </div>
-          <p className="text-[14px] font-semibold text-[#151922]">
-            Add Expense
-          </p>
-          <p className="text-[12px] text-[#697386] mt-0.5">
-            Log a personal or split cost
-          </p>
-        </button>
+        const gridColsClass =
+          quickActionCount === 6 || quickActionCount === 3
+            ? 'grid-cols-2 sm:grid-cols-3'
+            : quickActionCount === 5
+              ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+              : 'grid-cols-2 lg:grid-cols-4';
 
-        {featureSettings.showScanner && (
-          <button
-            type="button"
-            onClick={() => onNavigate('scanner')}
-            className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+        return (
+          <section
+            aria-label="Quick actions"
+            className={`grid ${gridColsClass} gap-3`}
           >
-            <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] text-[#C7851F] flex items-center justify-center mb-3 group-hover:bg-[#E5A23B] group-hover:text-white transition-colors">
-              <ScanLine className="w-[18px] h-[18px]" strokeWidth={2} />
-            </div>
-            <p className="text-[14px] font-semibold text-[#151922]">
-              Scan Receipt
-            </p>
-            <p className="text-[12px] text-[#697386] mt-0.5">
-              Extract items &amp; detect fees
-            </p>
-          </button>
-        )}
+            <button
+              type="button"
+              onClick={() => onNavigate('shopping')}
+              className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
+                <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={2} />
+              </div>
+              <p className="text-[14px] font-semibold text-[#151922]">
+                Start Shopping
+              </p>
+              <p className="text-[12px] text-[#697386] mt-0.5">
+                Build cart from quick catalog
+              </p>
+            </button>
 
-        {featureSettings.showInsights && (
-          <button
-            type="button"
-            onClick={() => onNavigate('insights')}
-            className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] text-[#151922] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
-              <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
-            </div>
-            <p className="text-[14px] font-semibold text-[#151922]">
-              View Insights
-            </p>
-            <p className="text-[12px] text-[#697386] mt-0.5">
-              Explore trends &amp; price moves
-            </p>
-          </button>
-        )}
-      </section>
+            <button
+              type="button"
+              onClick={() => setAddExpenseOpen(true)}
+              className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] text-[#15966B] flex items-center justify-center mb-3 group-hover:bg-[#15966B] group-hover:text-white transition-colors">
+                <Plus className="w-[18px] h-[18px]" strokeWidth={2.2} />
+              </div>
+              <p className="text-[14px] font-semibold text-[#151922]">
+                Add Expense
+              </p>
+              <p className="text-[12px] text-[#697386] mt-0.5">
+                Log a personal or split cost
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('expenses')}
+              data-testid="quick-action-ledger"
+              className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] text-[#151922] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
+                <Receipt className="w-[18px] h-[18px]" strokeWidth={2} />
+              </div>
+              <p className="text-[14px] font-semibold text-[#151922]">
+                Expenses
+              </p>
+              <p className="text-[12px] text-[#697386] mt-0.5">
+                Transactions &amp; split bills
+              </p>
+            </button>
+
+            {featureSettings.showScanner && (
+              <button
+                type="button"
+                onClick={() => onNavigate('scanner')}
+                className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] text-[#C7851F] flex items-center justify-center mb-3 group-hover:bg-[#E5A23B] group-hover:text-white transition-colors">
+                  <ScanLine className="w-[18px] h-[18px]" strokeWidth={2} />
+                </div>
+                <p className="text-[14px] font-semibold text-[#151922]">
+                  Scan Receipt
+                </p>
+                <p className="text-[12px] text-[#697386] mt-0.5">
+                  Extract items &amp; detect fees
+                </p>
+              </button>
+            )}
+
+            {featureSettings.showInsights && (
+              <button
+                type="button"
+                onClick={() => onNavigate('insights', 'radar')}
+                data-testid="quick-action-radar-room"
+                className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
+                  <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
+                </div>
+                <p className="text-[14px] font-semibold text-[#151922]">
+                  Insights
+                </p>
+                <p className="text-[12px] text-[#697386] mt-0.5">
+                  Explore trends &amp; price moves
+                </p>
+              </button>
+            )}
+
+            {featureSettings.showWellness && (
+              <button
+                type="button"
+                onClick={() => onNavigate('wellness')}
+                data-testid="quick-action-war-room"
+                className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#FDECEC] text-[#DE5252] flex items-center justify-center mb-3 group-hover:bg-[#DE5252] group-hover:text-white transition-colors">
+                  <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2} />
+                </div>
+                <p className="text-[14px] font-semibold text-[#151922]">
+                  Financial Wellness
+                </p>
+                <p className="text-[12px] text-[#697386] mt-0.5">
+                  Broke Mode, limits &amp; score
+                </p>
+              </button>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Sections D & E: Spending Overview + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

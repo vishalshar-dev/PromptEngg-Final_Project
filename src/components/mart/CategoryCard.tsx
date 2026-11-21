@@ -1,4 +1,5 @@
 import type { CategoryConfig } from '../../types/models';
+import { CATEGORY_IMAGES } from '../../data/martCatalog';
 import { getCategoryStyle } from '../../utils/categoryStyles';
 import { CategoryIcon } from './CategoryIcon';
 import { ProductVisual } from './ProductVisual';
@@ -18,6 +19,7 @@ export function CategoryCard({
 }: CategoryCardProps) {
   const style = getCategoryStyle(category.name, category.accent);
   const subCount = category.subcategories?.length ?? 0;
+  const resolvedImageUrl = category.imageUrl || CATEGORY_IMAGES[category.name];
 
   return (
     <button
@@ -31,11 +33,11 @@ export function CategoryCard({
       }`}
     >
       <div className="relative w-full h-20 rounded-xl overflow-hidden">
-        {category.imageUrl ? (
+        {resolvedImageUrl ? (
           <ProductVisual
             name={category.name}
             category={category.name}
-            imageUrl={category.imageUrl}
+            imageUrl={resolvedImageUrl}
             iconKey={category.iconKey}
             accent={category.accent}
             size="md"

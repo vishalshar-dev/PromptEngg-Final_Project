@@ -21,6 +21,14 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>('overview');
   const [insightsInitialTab, setInsightsInitialTab] =
     useState<InsightsTab>('radar');
+  const [shopInitialSection, setShopInitialSection] =
+    useState<'home' | 'baskets'>('home');
+  const [shopSectionSignal, setShopSectionSignal] = useState(0);
+  const [warRoomInitialTab, setWarRoomInitialTab] =
+    useState<'overview' | 'broke'>('overview');
+  const [warRoomTabSignal, setWarRoomTabSignal] = useState(0);
+  const [scannerFocusTarget, setScannerFocusTarget] = useState<'comparator' | undefined>(undefined);
+  const [scannerFocusSignal, setScannerFocusSignal] = useState(0);
   const [cartOpenSignal, setCartOpenSignal] = useState(0);
 
   const transactions = useAppStore((s) => s.transactions);
@@ -66,10 +74,28 @@ export default function App() {
 
   const handleNavigate = (section: AppSection, subTab?: string) => {
     const safeSection = resolveSafeSection(section, featureSettings);
+    if (safeSection === 'shopping') {
+      const target =
+        subTab === 'baskets' && featureSettings.showShopBaskets ? 'baskets' : 'home';
+      setShopInitialSection(target);
+      setShopSectionSignal((n) => n + 1);
+    }
     if (safeSection === 'insights' && (subTab === 'radar' || subTab === 'prices')) {
       setInsightsInitialTab(
         subTab === 'prices' && !featureSettings.showPriceTracker ? 'radar' : subTab
       );
+    }
+    if (safeSection === 'wellness') {
+      setWarRoomInitialTab(subTab === 'broke' ? 'broke' : 'overview');
+      setWarRoomTabSignal((n) => n + 1);
+    }
+    if (safeSection === 'scanner') {
+      if (subTab === 'comparator') {
+        setScannerFocusTarget('comparator');
+        setScannerFocusSignal((n) => n + 1);
+      } else {
+        setScannerFocusTarget(undefined);
+      }
     }
     setActiveSection(safeSection);
   };
@@ -77,7 +103,7 @@ export default function App() {
   return (
     <AppShell
       activeSection={activeSection}
-      onSelectSection={(sec) => handleNavigate(sec)}
+      onSelectSection={(sec, subTab) => handleNavigate(sec, subTab)}
       totalBudget={totalBudget}
       totalSpent={totalSpent}
       remainingBudget={remaining}
@@ -91,7 +117,11 @@ export default function App() {
       )}
 
       {activeSection === 'shopping' && (
-        <QuickMartGrid onOpenCart={() => setCartOpenSignal((n) => n + 1)} />
+        <QuickMartGrid
+          initialSection={shopInitialSection}
+          sectionSignal={shopSectionSignal}
+          onOpenCart={() => setCartOpenSignal((n) => n + 1)}
+        />
       )}
 
       {activeSection === 'insights' && featureSettings.showInsights && (
@@ -105,6 +135,8 @@ export default function App() {
 
       {activeSection === 'scanner' && featureSettings.showScanner && (
         <AuditPanel
+          focusTarget={scannerFocusTarget}
+          focusSignal={scannerFocusSignal}
           onOpenPriceTracker={() =>
             handleNavigate(
               featureSettings.showInsights ? 'insights' : 'overview',
@@ -115,7 +147,10 @@ export default function App() {
       )}
 
       {activeSection === 'wellness' && featureSettings.showWellness && (
-        <SurvivalSandbox />
+        <SurvivalSandbox
+          initialTab={warRoomInitialTab}
+          tabSignal={warRoomTabSignal}
+        />
       )}
 
       {(activeSection === 'shopping' || hasCartItems) && (

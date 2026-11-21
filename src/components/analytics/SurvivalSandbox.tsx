@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   BarChart3,
@@ -30,8 +30,18 @@ import {
   type WarRoomSection,
 } from '../warroom/WarRoomOverview';
 
-export function SurvivalSandbox() {
-  const [section, setSection] = useState<WarRoomSection>('overview');
+export function SurvivalSandbox({
+  initialTab = 'overview',
+  tabSignal,
+}: {
+  initialTab?: WarRoomSection;
+  tabSignal?: number;
+}) {
+  const [section, setSection] = useState<WarRoomSection>(initialTab);
+
+  useEffect(() => {
+    setSection(initialTab);
+  }, [initialTab, tabSignal]);
 
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);

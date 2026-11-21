@@ -111,6 +111,7 @@ const categoryAccentMap: Record<string, string> = {
   Groceries: 'emerald',
   'Fruits & Vegetables': 'lime',
   'Dairy & Bakery': 'sky',
+  'Breakfast & Instant Food': 'orange',
   'Snacks & Beverages': 'amber',
   'Meat & Eggs': 'rose',
   'Personal Care': 'pink',

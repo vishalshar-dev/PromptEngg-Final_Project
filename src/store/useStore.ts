@@ -2559,6 +2559,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'cartaudit-store',
+      version: 2,
       partialize: (state) => ({
         theme: state.theme,
         featureSettings: state.featureSettings,
@@ -2588,85 +2589,118 @@ export const useAppStore = create<AppState>()(
         sharedExpenses: state.sharedExpenses,
         settlements: state.settlements,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          const migratedItems = migratePersistedMartItems(state.items);
-          const migratedConfigs = migrateCategoryConfigs(
-            state.categoryConfigs,
-            state.categories,
-            migratedItems,
-            state.transactions
-          );
-          const patchedHistory = ensureCatalogPriceHistory(migratedItems, state.priceHistory);
-          const sessions = Array.isArray(state.purchaseHistory) ? state.purchaseHistory : [];
-          const existingObs = Array.isArray(state.priceObservations)
-            ? state.priceObservations
+      migrate: (persistedState, version) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return persistedState;
+        }
+        const persisted = persistedState as Partial<AppState>;
+        if (version < 2) {
+          const existingBaskets = Array.isArray(persisted.basketTemplates)
+            ? persisted.basketTemplates
             : [];
-          const migratedObs =
-            existingObs.length > 0
-              ? existingObs
-              : migratePurchaseSessionsToObservations(sessions, migratedItems);
-
-          const mergedBrokeConfig: BrokeModeConfig = {
-            ...DEFAULT_BROKE_MODE_CONFIG,
-            ...(state.brokeModeConfig ?? {}),
-            enabled: Boolean(state.isBrokeMode || state.brokeModeConfig?.enabled),
+          const existingIds = new Set(existingBaskets.map((b) => b.id));
+          const mergedBaskets = [
+            ...existingBaskets,
+            ...INITIAL_BASKET_TEMPLATES.filter((tpl) => !existingIds.has(tpl.id)),
+          ];
+          return {
+            ...persisted,
+            basketTemplates: mergedBaskets,
+            basketTemplatesSeeded: true,
           };
+        }
+        return persisted;
+      },
+      merge: (persistedState, currentState) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return currentState;
+        }
+        const state = persistedState as Partial<AppState>;
+        const persistedTransactions = Array.isArray(state.transactions)
+          ? state.transactions
+          : currentState.transactions;
+        const migratedItems = migratePersistedMartItems(state.items);
+        const migratedConfigs = migrateCategoryConfigs(
+          state.categoryConfigs,
+          state.categories,
+          migratedItems,
+          persistedTransactions
+        );
+        const patchedHistory = ensureCatalogPriceHistory(migratedItems, state.priceHistory);
+        const sessions = Array.isArray(state.purchaseHistory) ? state.purchaseHistory : [];
+        const existingObs = Array.isArray(state.priceObservations)
+          ? state.priceObservations
+          : [];
+        const migratedObs =
+          existingObs.length > 0
+            ? existingObs
+            : migratePurchaseSessionsToObservations(sessions, migratedItems);
 
-          const existingLimits = Array.isArray(state.categoryLimits) ? state.categoryLimits : [];
-          const seededLimits: CategorySpendingLimit[] = [...existingLimits];
-          for (const [cat, cap] of Object.entries(state.categoryCaps ?? {})) {
-            if (typeof cap === 'number' && cap > 0) {
-              const hasMonthly = seededLimits.some(
-                (l) => l.period === 'monthly' && l.category.toLowerCase() === cat.toLowerCase()
-              );
-              if (!hasMonthly) {
-                seededLimits.push({
-                  id: `catlim-seed-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-                  category: cat,
-                  period: 'monthly',
-                  limitAmount: roundCurrency(cap),
-                  warningThresholdPct: 80,
-                  enabled: true,
-                  createdAt: new Date().toISOString(),
-                });
-              }
+        const mergedBrokeConfig: BrokeModeConfig = {
+          ...DEFAULT_BROKE_MODE_CONFIG,
+          ...(state.brokeModeConfig ?? {}),
+          enabled: Boolean(state.isBrokeMode || state.brokeModeConfig?.enabled),
+        };
+
+        const existingLimits = Array.isArray(state.categoryLimits) ? state.categoryLimits : [];
+        const seededLimits: CategorySpendingLimit[] = [...existingLimits];
+        for (const [cat, cap] of Object.entries(state.categoryCaps ?? {})) {
+          if (typeof cap === 'number' && cap > 0) {
+            const hasMonthly = seededLimits.some(
+              (l) => l.period === 'monthly' && l.category.toLowerCase() === cat.toLowerCase()
+            );
+            if (!hasMonthly) {
+              seededLimits.push({
+                id: `catlim-seed-${cat.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+                category: cat,
+                period: 'monthly',
+                limitAmount: roundCurrency(cap),
+                warningThresholdPct: 80,
+                enabled: true,
+                createdAt: new Date().toISOString(),
+              });
             }
           }
-
-          useAppStore.setState({
-            items: migratedItems,
-            categoryConfigs: migratedConfigs,
-            categories: migratedConfigs.map((c) => c.name),
-            priceHistory: patchedHistory,
-            purchaseHistory: sessions,
-            basketTemplates:
-              state.basketTemplatesSeeded && Array.isArray(state.basketTemplates)
-                ? state.basketTemplates
-                : Array.isArray(state.basketTemplates) && state.basketTemplates.length > 0
-                ? state.basketTemplates
-                : INITIAL_BASKET_TEMPLATES,
-            basketTemplatesSeeded: true,
-            priceObservations: migratedObs,
-            priceAlerts: Array.isArray(state.priceAlerts) ? state.priceAlerts : [],
-            triggeredPriceAlerts: Array.isArray(state.triggeredPriceAlerts)
-              ? state.triggeredPriceAlerts
-              : [],
-            isBrokeMode: mergedBrokeConfig.enabled,
-            brokeModeConfig: mergedBrokeConfig,
-            categoryLimits: seededLimits,
-            warRoomChallenges: Array.isArray(state.warRoomChallenges) ? state.warRoomChallenges : [],
-            warRoomTargets: Array.isArray(state.warRoomTargets) ? state.warRoomTargets : [],
-            dismissedWarRoomAlerts: Array.isArray(state.dismissedWarRoomAlerts)
-              ? state.dismissedWarRoomAlerts
-              : [],
-            disciplineCheckIns: Array.isArray(state.disciplineCheckIns)
-              ? state.disciplineCheckIns
-              : [],
-            theme: sanitizeThemeMode(state.theme),
-            featureSettings: sanitizeFeatureSettings(state.featureSettings),
-          });
         }
+
+        const existingBaskets = Array.isArray(state.basketTemplates)
+          ? state.basketTemplates
+          : [];
+        const mergedBaskets =
+          existingBaskets.length > 0
+            ? existingBaskets
+            : INITIAL_BASKET_TEMPLATES;
+
+        return {
+          ...currentState,
+          ...state,
+          transactions: persistedTransactions,
+          items: migratedItems,
+          categoryConfigs: migratedConfigs,
+          categories: migratedConfigs.map((c) => c.name),
+          priceHistory: patchedHistory,
+          purchaseHistory: sessions,
+          basketTemplates: mergedBaskets,
+          basketTemplatesSeeded: true,
+          priceObservations: migratedObs,
+          priceAlerts: Array.isArray(state.priceAlerts) ? state.priceAlerts : [],
+          triggeredPriceAlerts: Array.isArray(state.triggeredPriceAlerts)
+            ? state.triggeredPriceAlerts
+            : [],
+          isBrokeMode: mergedBrokeConfig.enabled,
+          brokeModeConfig: mergedBrokeConfig,
+          categoryLimits: seededLimits,
+          warRoomChallenges: Array.isArray(state.warRoomChallenges) ? state.warRoomChallenges : [],
+          warRoomTargets: Array.isArray(state.warRoomTargets) ? state.warRoomTargets : [],
+          dismissedWarRoomAlerts: Array.isArray(state.dismissedWarRoomAlerts)
+            ? state.dismissedWarRoomAlerts
+            : [],
+          disciplineCheckIns: Array.isArray(state.disciplineCheckIns)
+            ? state.disciplineCheckIns
+            : [],
+          theme: sanitizeThemeMode(state.theme),
+          featureSettings: sanitizeFeatureSettings(state.featureSettings),
+        };
       },
     }
   )

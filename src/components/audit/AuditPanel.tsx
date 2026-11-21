@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { PageHeader } from '../ui/PageHeader';
 import { useAppStore } from '../../store/useStore';
 import { ReceiptUploader } from './ReceiptUploader';
@@ -11,10 +12,24 @@ import { CartComparator } from './CartComparator';
 
 export function AuditPanel({
   onOpenPriceTracker,
+  focusTarget,
+  focusSignal,
 }: {
   onOpenPriceTracker?: () => void;
+  focusTarget?: 'comparator';
+  focusSignal?: number;
 }) {
   const featureSettings = useAppStore((s) => s.featureSettings);
+  const comparatorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (focusTarget === 'comparator' && featureSettings.showAuditComparator) {
+      const timer = window.setTimeout(() => {
+        comparatorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+      return () => window.clearTimeout(timer);
+    }
+  }, [focusTarget, focusSignal, featureSettings.showAuditComparator]);
 
   const showRightCol =
     featureSettings.showAuditComparator ||
@@ -58,7 +73,7 @@ export function AuditPanel({
           <div className="space-y-6">
             {/* Multi-App Cart Comparator */}
             {featureSettings.showAuditComparator && (
-              <div className="surface-card p-5">
+              <div id="cart-comparator" ref={comparatorRef} className="surface-card p-5 scroll-mt-16">
                 <CartComparator />
               </div>
             )}

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -10,6 +10,8 @@ import {
   Settings,
   Sun,
   Moon,
+  Menu,
+  X,
 } from 'lucide-react';
 import type { FeatureSettings, ThemeMode } from '../../types/models';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
@@ -28,29 +30,21 @@ export type AppSection =
 interface NavItem {
   id: AppSection;
   label: string;
-  mobileLabel: string;
   icon: typeof LayoutDashboard;
 }
 
 export const APP_NAV_ITEMS: NavItem[] = [
-  { id: 'overview', label: 'Overview', mobileLabel: 'Overview', icon: LayoutDashboard },
-  { id: 'shopping', label: 'Shopping', mobileLabel: 'Shop', icon: ShoppingBag },
-  { id: 'insights', label: 'Insights', mobileLabel: 'Insights', icon: LineChart },
-  { id: 'expenses', label: 'Expenses', mobileLabel: 'Expenses', icon: Receipt },
-  { id: 'scanner', label: 'Receipt Scanner', mobileLabel: 'Scan', icon: ScanLine },
-  { id: 'wellness', label: 'Financial Wellness', mobileLabel: 'Wellness', icon: ShieldCheck },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'shopping', label: 'Shopping', icon: ShoppingBag },
+  { id: 'insights', label: 'Insights', icon: LineChart },
+  { id: 'expenses', label: 'Expenses', icon: Receipt },
+  { id: 'scanner', label: 'Receipt Scanner', icon: ScanLine },
+  { id: 'wellness', label: 'Financial Wellness', icon: ShieldCheck },
 ];
-
-const MOBILE_GRID_COLS: Record<number, string> = {
-  3: 'grid-cols-3',
-  4: 'grid-cols-4',
-  5: 'grid-cols-5',
-  6: 'grid-cols-6',
-};
 
 interface AppShellProps {
   activeSection: AppSection;
-  onSelectSection: (section: AppSection) => void;
+  onSelectSection: (section: AppSection, subTab?: string) => void;
   totalBudget: number;
   totalSpent: number;
   remainingBudget: number;
@@ -74,11 +68,20 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileDrawerOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileDrawerOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mobileDrawerOpen]);
 
   const visibleNavItems = APP_NAV_ITEMS.filter((item) =>
     isSectionEnabled(item.id, featureSettings)
   );
-  const mobileGridClass = MOBILE_GRID_COLS[visibleNavItems.length] ?? 'grid-cols-6';
 
   const safeBudget = Math.max(0, totalBudget);
   const utilisationPct =
@@ -103,28 +106,28 @@ export function AppShell({
       </a>
 
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:justify-between w-[252px] shrink-0 bg-white border-r border-[#E7EAF0] sticky top-0 h-screen px-4 py-6">
-        <div className="space-y-6">
-          {/* Brand */}
-          <button
-            type="button"
-            onClick={() => onSelectSection('overview')}
-            className="w-full flex items-center gap-3 px-2 py-1 text-left rounded-xl hover:bg-[#F7F8FA] transition-colors"
-          >
-            <div className="w-9 h-9 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0 shadow-sm">
-              <Wallet className="w-[18px] h-[18px] text-white" strokeWidth={2.2} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold tracking-tight text-[#151922] leading-tight">
-                CartAudit
-              </p>
-              <p className="text-[11px] font-medium text-[#697386] leading-tight mt-0.5">
-                Smart Budget Radar
-              </p>
-            </div>
-          </button>
+      <aside className="hidden lg:flex lg:flex-col w-[252px] shrink-0 bg-white border-r border-[#E7EAF0] sticky top-0 h-screen px-4 py-5 gap-4">
+        {/* Brand */}
+        <button
+          type="button"
+          onClick={() => onSelectSection('overview')}
+          className="w-full shrink-0 flex items-center gap-3 px-2 py-1 text-left rounded-xl hover:bg-[#F7F8FA] transition-colors"
+        >
+          <div className="w-9 h-9 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0 shadow-sm">
+            <Wallet className="w-[18px] h-[18px] text-white" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[15px] font-bold tracking-tight text-[#151922] leading-tight">
+              CartAudit
+            </p>
+            <p className="text-[11px] font-medium text-[#697386] leading-tight mt-0.5">
+              Smart Budget Radar
+            </p>
+          </div>
+        </button>
 
-          {/* Primary Nav */}
+        {/* Scrollable Primary Nav */}
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin pr-0.5">
           <nav aria-label="Primary navigation" className="space-y-1">
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
@@ -162,7 +165,7 @@ export function AppShell({
         </div>
 
         {/* Bottom Workspace Controls + Budget Status */}
-        <div className="space-y-3">
+        <div className="shrink-0 space-y-3">
           {/* Quick Theme & Settings Controls */}
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -243,23 +246,40 @@ export function AppShell({
 
       {/* Main Column */}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Compact Mobile Top Header (<= 52px) */}
-        <header className="lg:hidden sticky top-0 z-30 h-[52px] bg-white/95 backdrop-blur border-b border-[#E7EAF0] px-4 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => onSelectSection('overview')}
-            className="flex items-center gap-2.5 text-left min-w-0"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#365FE8] flex items-center justify-center shrink-0">
-              <Wallet className="w-4 h-4 text-white" strokeWidth={2.2} />
-            </div>
-            <span className="text-[15px] font-bold tracking-tight text-[#151922] truncate">
-              CartAudit
-            </span>
-          </button>
+        {/* Compact Sticky Mobile/Tablet Header (Single Clean Row + Hamburger Drawer) */}
+        <header className="lg:hidden sticky top-0 z-30 h-[52px] bg-white/95 backdrop-blur border-b border-[#E7EAF0] px-3 sm:px-5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={mobileDrawerOpen}
+              className="relative w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#151922] shrink-0"
+            >
+              <Menu className="w-4 h-4" strokeWidth={2.2} />
+              {cartItemCount > 0 && activeSection !== 'shopping' && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#365FE8] ring-2 ring-white"
+                />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSelectSection('overview')}
+              className="flex items-center gap-2 text-left min-w-0"
+            >
+              <div className="w-7 h-7 rounded-lg bg-[#365FE8] flex items-center justify-center shrink-0">
+                <Wallet className="w-3.5 h-3.5 text-white" strokeWidth={2.2} />
+              </div>
+              <span className="text-[15px] font-bold tracking-tight text-[#151922] truncate">
+                CartAudit
+              </span>
+            </button>
+          </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <div className="text-right leading-tight mr-1">
+            <div className="text-right leading-tight mr-0.5">
               <span className="block text-[10px] font-medium text-[#697386]">
                 Balance
               </span>
@@ -301,7 +321,7 @@ export function AppShell({
         {/* Page Content */}
         <main
           id="main-content"
-          className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 lg:pb-12"
+          className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-10 lg:pb-12"
         >
           <div key={activeSection} className="animate-fade-in-up">
             {children}
@@ -309,44 +329,86 @@ export function AppShell({
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation (<= 60px) */}
-      <nav
-        aria-label="Mobile navigation"
-        className={`lg:hidden fixed bottom-0 inset-x-0 z-30 h-[60px] bg-white/95 backdrop-blur border-t border-[#E7EAF0] grid ${mobileGridClass} items-center px-1`}
-      >
-        {visibleNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeSection === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelectSection(item.id)}
-              aria-label={item.label}
-              aria-current={active ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg transition-colors min-h-[48px] ${
-                active ? 'text-[#365FE8]' : 'text-[#697386] hover:text-[#151922]'
-              }`}
-            >
-              <span className="relative">
-                <Icon className="w-[18px] h-[18px]" strokeWidth={active ? 2.2 : 1.8} />
-                {item.id === 'shopping' && cartItemCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-1 rounded-full bg-[#365FE8] text-white text-[9px] font-bold font-mono tabular-nums flex items-center justify-center">
-                    {cartItemCount > 9 ? '9+' : cartItemCount}
-                  </span>
-                )}
-              </span>
-              <span
-                className={`text-[10px] leading-none truncate max-w-[58px] ${
-                  active ? 'font-semibold' : 'font-medium'
-                }`}
+      {/* Slide-out Mobile/Tablet Drawer */}
+      {mobileDrawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <aside className="relative z-10 w-[280px] max-w-[85vw] h-full bg-white border-r border-[#E7EAF0] px-4 py-4 flex flex-col gap-4 shadow-modal animate-fade-in">
+            {/* Drawer Header */}
+            <div className="shrink-0 flex items-center justify-between gap-2 px-1">
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectSection('overview');
+                  setMobileDrawerOpen(false);
+                }}
+                className="flex items-center gap-2.5 text-left"
               >
-                {item.mobileLabel}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
+                <div className="w-8 h-8 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0">
+                  <Wallet className="w-4 h-4 text-white" strokeWidth={2.2} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#151922] leading-tight">CartAudit</p>
+                  <p className="text-[11px] text-[#697386] leading-tight">Smart Budget Radar</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileDrawerOpen(false)}
+                aria-label="Close navigation menu"
+                className="w-8 h-8 rounded-lg bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Clean Scrollable Sections List */}
+            <nav
+              aria-label="Drawer navigation"
+              className="flex-1 min-h-0 overflow-y-auto scrollbar-thin space-y-1 pr-0.5"
+            >
+              {visibleNavItems.map((item) => {
+                const Icon = item.icon;
+                const active = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      onSelectSection(item.id);
+                      setMobileDrawerOpen(false);
+                    }}
+                    aria-current={active ? 'page' : undefined}
+                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] transition-colors ${
+                      active
+                        ? 'bg-[#EDF2FF] text-[#365FE8] font-semibold'
+                        : 'text-[#697386] font-medium hover:bg-[#F7F8FA] hover:text-[#151922]'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3 min-w-0">
+                      <Icon
+                        className={`w-[18px] h-[18px] shrink-0 ${
+                          active ? 'text-[#365FE8]' : 'text-[#697386]'
+                        }`}
+                        strokeWidth={active ? 2.2 : 1.9}
+                      />
+                      <span className="truncate">{item.label}</span>
+                    </span>
+                    {item.id === 'shopping' && cartItemCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-[#365FE8] text-white text-[11px] font-mono font-semibold tabular-nums shrink-0">
+                        {cartItemCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
 
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>

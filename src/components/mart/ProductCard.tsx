@@ -139,10 +139,10 @@ export function ProductCard({
                 : `Add ${item.name} to favourites`
             }
             aria-pressed={Boolean(item.isFavourite)}
-            className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-lg border shadow-xs flex items-center justify-center transition-colors ${
+            className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-lg border shadow-xs flex items-center justify-center transition-colors backdrop-blur-sm ${
               item.isFavourite
-                ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
-                : 'bg-white/95 border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                ? 'bg-[#FDECEC]/95 dark:bg-[#2A1318]/95 border-[#F6B8B8] dark:border-[#F06A6A]/55 text-[#DE5252]'
+                : 'bg-white/95 dark:bg-[#11141B]/90 border-[#E7EAF0] dark:border-[#323B4F] text-[#697386] hover:text-[#151922]'
             }`}
           >
             <Heart

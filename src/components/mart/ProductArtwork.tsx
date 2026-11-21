@@ -10,75 +10,75 @@ function resolveArtworkKey(name: string, category: string): string {
   const n = name.toLowerCase();
   const c = category.toLowerCase();
 
-  if (n.includes('basmati') || n.includes('rice')) return 'rice';
-  if (n.includes('atta') || n.includes('wheat flour') || n.includes('flour')) return 'flour';
-  if (n.includes('sugar')) return 'sugar';
-  if (n.includes('salt')) return 'salt';
-  if (n.includes('cooking oil') || n.includes('sunflower') || n.includes('oil')) return 'oil';
-  if (n.includes('dal') || n.includes('pulse') || n.includes('lentil')) return 'pulses';
+  if (n.includes('basmati') || n.includes('sona masoori') || n.includes('kolam') || n.includes('rice')) return 'rice';
+  if (n.includes('atta') || n.includes('wheat flour') || n.includes('besan') || n.includes('sooji') || n.includes('rava') || n.includes('maida') || n.includes('poha') || n.includes('oats') || n.includes('flour')) return 'flour';
+  if (n.includes('sugar') || n.includes('jaggery') || n.includes('gur')) return 'sugar';
+  if (n.includes('salt') || n.includes('namak')) return 'salt';
+  if (n.includes('cooking oil') || n.includes('sunflower') || n.includes('mustard oil') || n.includes('groundnut') || n.includes('oil')) return 'oil';
+  if (n.includes('dal') || n.includes('pulse') || n.includes('lentil') || n.includes('rajma') || n.includes('chana')) return 'pulses';
   if (n.includes('ghee')) return 'ghee';
-  if (n.includes('turmeric') || n.includes('masala') || n.includes('spice')) return 'spices';
+  if (n.includes('turmeric') || n.includes('haldi') || n.includes('masala') || n.includes('jeera') || n.includes('chilli powder') || n.includes('spice') || n.includes('pickle') || n.includes('achar') || n.includes('papad')) return 'spices';
 
   if (n.includes('tomato')) return 'tomato';
   if (n.includes('onion')) return 'onion';
   if (n.includes('potato')) return 'potato';
-  if (n.includes('palak') || n.includes('spinach') || n.includes('leafy')) return 'spinach';
+  if (n.includes('palak') || n.includes('spinach') || n.includes('methi') || n.includes('coriander') || n.includes('bhindi') || n.includes('cucumber') || n.includes('cabbage') || n.includes('peas') || n.includes('leafy')) return 'spinach';
   if (n.includes('banana')) return 'banana';
-  if (n.includes('apple')) return 'apple';
+  if (n.includes('apple') || n.includes('pomegranate') || n.includes('papaya') || n.includes('watermelon') || n.includes('mango') || n.includes('coconut')) return 'apple';
 
-  if (n.includes('milk')) return 'milk';
-  if (n.includes('curd') || n.includes('dahi') || n.includes('yogurt')) return 'curd';
+  if (n.includes('milk') || n.includes('lassi') || n.includes('chaas')) return 'milk';
+  if (n.includes('curd') || n.includes('dahi') || n.includes('yogurt') || n.includes('batter')) return 'curd';
   if (n.includes('paneer')) return 'paneer';
-  if (n.includes('bread') || n.includes('bun')) return 'bread';
-  if (n.includes('butter')) return 'butter';
+  if (n.includes('bread') || n.includes('bun') || n.includes('pav') || n.includes('rusk') || n.includes('khari')) return 'bread';
+  if (n.includes('butter') || n.includes('honey') || n.includes('jam')) return 'butter';
   if (n.includes('cheese')) return 'cheese';
 
-  if (n.includes('chips') || n.includes('namkeen')) return 'chips';
-  if (n.includes('biscuit') || n.includes('cookie')) return 'biscuit';
-  if (n.includes('cola') || n.includes('soda')) return 'soda';
-  if (n.includes('juice') || n.includes('orange')) return 'juice';
-  if (n.includes('chocolate') || n.includes('silk')) return 'chocolate';
-  if (n.includes('coffee')) return 'coffee';
+  if (n.includes('chips') || n.includes('namkeen') || n.includes('bhujia') || n.includes('makhana') || n.includes('noodle') || n.includes('maggi') || n.includes('pasta') || n.includes('vermicelli')) return 'chips';
+  if (n.includes('biscuit') || n.includes('cookie') || n.includes('cornflakes') || n.includes('muesli')) return 'biscuit';
+  if (n.includes('cola') || n.includes('soda') || n.includes('coconut water')) return 'soda';
+  if (n.includes('juice') || n.includes('orange') || n.includes('mango drink')) return 'juice';
+  if (n.includes('chocolate') || n.includes('silk') || n.includes('almond') || n.includes('cashew')) return 'chocolate';
+  if (n.includes('coffee') || n.includes('bournvita')) return 'coffee';
   if (n.includes('tea') || n.includes('chai')) return 'tea';
 
   if (n.includes('egg')) return 'eggs';
-  if (n.includes('chicken') || n.includes('meat')) return 'chicken';
+  if (n.includes('chicken') || n.includes('fish') || n.includes('meat')) return 'chicken';
 
-  if (n.includes('body wash') || n.includes('soap')) return 'bodywash';
-  if (n.includes('shampoo')) return 'shampoo';
-  if (n.includes('toothpaste')) return 'toothpaste';
-  if (n.includes('face wash')) return 'facewash';
+  if (n.includes('body wash') || n.includes('soap') || n.includes('handwash')) return 'bodywash';
+  if (n.includes('shampoo') || n.includes('conditioner') || n.includes('hair oil')) return 'shampoo';
+  if (n.includes('toothpaste') || n.includes('toothbrush') || n.includes('mouthwash')) return 'toothpaste';
+  if (n.includes('face wash') || n.includes('sunscreen') || n.includes('moisturizer') || n.includes('deodorant') || n.includes('razor') || n.includes('pad')) return 'facewash';
 
-  if (n.includes('tissue') || n.includes('paper')) return 'tissue';
+  if (n.includes('tissue') || n.includes('paper') || n.includes('foil')) return 'tissue';
   if (n.includes('trash') || n.includes('garbage') || n.includes('bag')) return 'bags';
-  if (n.includes('bulb') || n.includes('led')) return 'bulb';
-  if (n.includes('container')) return 'container';
+  if (n.includes('bulb') || n.includes('led') || n.includes('agarbatti') || n.includes('camphor')) return 'bulb';
+  if (n.includes('container') || n.includes('cookware') || n.includes('frypan') || n.includes('tawa')) return 'container';
   if (n.includes('bottle') || n.includes('flask')) return 'bottle';
 
-  if (n.includes('detergent') || n.includes('laundry')) return 'detergent';
-  if (n.includes('dishwash')) return 'dishwash';
-  if (n.includes('floor') || n.includes('surface cleaner') || n.includes('disinfectant')) return 'cleaner';
+  if (n.includes('detergent') || n.includes('laundry') || n.includes('fabric')) return 'detergent';
+  if (n.includes('dishwash') || n.includes('scrubber') || n.includes('sponge')) return 'dishwash';
+  if (n.includes('floor') || n.includes('surface cleaner') || n.includes('toilet') || n.includes('glass') || n.includes('broom') || n.includes('mop') || n.includes('mosquito') || n.includes('disinfectant')) return 'cleaner';
 
-  if (n.includes('cable') || n.includes('usb') || n.includes('charger')) return 'cable';
-  if (n.includes('batter')) return 'battery';
+  if (n.includes('cable') || n.includes('usb') || n.includes('charger') || n.includes('earphone') || n.includes('mouse')) return 'cable';
+  if (n.includes('batter') || n.includes('extension')) return 'battery';
   if (n.includes('sock')) return 'socks';
   if (n.includes('t-shirt') || n.includes('shirt') || n.includes('tee')) return 'tshirt';
-  if (n.includes('vitamin') || n.includes('tablet') || n.includes('tab')) return 'vitamin';
-  if (n.includes('bandage') || n.includes('first aid')) return 'bandage';
+  if (n.includes('vitamin') || n.includes('tablet') || n.includes('tab') || n.includes('ors') || n.includes('balm') || n.includes('eno')) return 'vitamin';
+  if (n.includes('bandage') || n.includes('first aid') || n.includes('antiseptic') || n.includes('thermometer')) return 'bandage';
   if (n.includes('notebook') || n.includes('spiral')) return 'notebook';
   if (n.includes('pen') || n.includes('marker')) return 'pen';
 
   if (n.includes('wi-fi') || n.includes('wifi') || n.includes('broadband') || n.includes('fiber')) return 'wifi';
-  if (n.includes('recharge') || n.includes('mobile')) return 'mobile';
+  if (n.includes('recharge') || n.includes('mobile') || n.includes('dth')) return 'mobile';
   if (n.includes('electricity')) return 'electricity';
   if (n.includes('gas') || n.includes('lpg') || n.includes('cylinder')) return 'gas';
   if (n.includes('petrol') || n.includes('fuel')) return 'fuel';
-  if (n.includes('metro') || n.includes('transit')) return 'metro';
+  if (n.includes('metro') || n.includes('transit') || n.includes('cab')) return 'metro';
   if (n.includes('cinema') || n.includes('movie') || n.includes('ticket')) return 'movie';
   if (n.includes('streaming') || n.includes('music')) return 'streaming';
   if (n.includes('courier') || n.includes('parcel')) return 'parcel';
 
-  if (c.includes('grocer')) return 'rice';
+  if (c.includes('grocer') || c.includes('breakfast')) return 'rice';
   if (c.includes('fruit') || c.includes('veg')) return 'apple';
   if (c.includes('dairy')) return 'milk';
   if (c.includes('snack')) return 'chips';

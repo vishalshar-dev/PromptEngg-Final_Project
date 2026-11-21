@@ -69,7 +69,15 @@ const DEFAULT_FILTERS: ProductFilterOptions = {
   sortBy: 'default',
 };
 
-export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
+export function QuickMartGrid({
+  onOpenCart,
+  initialSection = 'home',
+  sectionSignal,
+}: {
+  onOpenCart?: () => void;
+  initialSection?: MartSection;
+  sectionSignal?: number;
+}) {
   const items = useAppStore((s) => s.items);
   const categoryConfigs = useAppStore((s) => s.categoryConfigs);
   const transactions = useAppStore((s) => s.transactions);
@@ -90,9 +98,13 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
   const quickReorderItem = useAppStore((s) => s.quickReorderItem);
   const loadBasketTemplateToCart = useAppStore((s) => s.loadBasketTemplateToCart);
 
-  const [section, setSection] = useState<MartSection>('home');
+  const [section, setSection] = useState<MartSection>(initialSection);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filters, setFilters] = useState<ProductFilterOptions>(DEFAULT_FILTERS);
+
+  useEffect(() => {
+    setSection(initialSection);
+  }, [initialSection, sectionSignal]);
 
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
   const [productFormOpen, setProductFormOpen] = useState(false);
@@ -482,7 +494,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
               type="button"
               onClick={() => {
                 setSection('home');
-                setSelectedCategory(null);
+                handleBackToHome();
               }}
               className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
                 section === 'home' && !selectedCategory
@@ -516,7 +528,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 type="button"
                 onClick={() => {
                   setSection('baskets');
-                  setSelectedCategory(null);
+                  handleBackToHome();
                 }}
                 className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
                   section === 'baskets'
@@ -541,7 +553,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 type="button"
                 onClick={() => {
                   setSection('recurring');
-                  setSelectedCategory(null);
+                  handleBackToHome();
                 }}
                 className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
                   section === 'recurring'
@@ -566,7 +578,7 @@ export function QuickMartGrid({ onOpenCart }: { onOpenCart?: () => void }) {
                 type="button"
                 onClick={() => {
                   setSection('history');
-                  setSelectedCategory(null);
+                  handleBackToHome();
                 }}
                 className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
                   section === 'history'

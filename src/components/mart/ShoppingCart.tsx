@@ -87,7 +87,7 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
       {/* Compact Sticky Cart Bar (only visible when cart has items or right after checkout) */}
       {(hasItems || doneBanner) && (
         <div
-          className={`fixed bottom-[68px] lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 animate-slide-up ${
+          className={`fixed bottom-4 lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 animate-slide-up ${
             expanded ? 'z-50' : 'z-40'
           }`}
         >
