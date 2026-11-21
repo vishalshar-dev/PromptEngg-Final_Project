@@ -328,8 +328,7 @@ export function PennyChatCore({
       .map((c) => `${c.category} (₹${formatCurrencyExact(c.spent)})`)
       .join(', ');
     const summaryText =
-      `Live Gemini reasoning isn't enabled yet (add GEMINI_API_KEY in Settings > Secrets for full AI answers). ` +
-      `Here is your live offline snapshot right now:\n` +
+      `Live AI isn't available right now, so here is your live offline snapshot:\n` +
       `• Month spent: ₹${formatCurrencyExact(pennyContext.budgetOverview.currentMonthSpent)} of ₹${formatCurrencyExact(pennyContext.budgetOverview.monthlyBudget)} (${pennyContext.budgetOverview.budgetUsedPct}% used, ₹${formatCurrencyExact(pennyContext.budgetOverview.rawRemainingBudget)} left)\n` +
       `• Active cart: ${pennyContext.currentCart.lineCount} item${pennyContext.currentCart.lineCount === 1 ? '' : 's'} (₹${formatCurrencyExact(pennyContext.currentCart.totalAmount)})\n` +
       (topCats ? `• Top categories: ${topCats}` : '• Switch to Quick Log anytime to log expenses in plain English.');
@@ -567,7 +566,7 @@ export function PennyChatCore({
               title={
                 geminiConfigured
                   ? 'Connected to Gemini AI'
-                  : 'Offline instant parser active — set GEMINI_API_KEY in Settings > Secrets for live AI'
+                  : 'Offline instant parser active'
               }
               className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border whitespace-nowrap ${
                 geminiConfigured

@@ -16,27 +16,38 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/gif',
 ]);
 
-function resolveGeminiApiKey(): string | undefined {
-  return (
-    process.env.GEMINI_API_KEY?.trim() ||
-    process.env.CartAudit_GEMINI_API_KEY?.trim() ||
-    process.env.CARTAUDIT_GEMINI_API_KEY?.trim() ||
-    process.env.GOOGLE_API_KEY?.trim() ||
-    process.env.API_KEY?.trim()
-  );
+interface GeminiKeyCandidate {
+  key: string;
+  source: string;
 }
 
-function getGeminiClient(): GoogleGenAI {
-  const apiKey = resolveGeminiApiKey();
-  if (!apiKey) {
-    const err = new Error(
-      'GEMINI_API_KEY is not set. Add it in Settings > Secrets to enable AI features.'
-    ) as Error & { code?: string; status?: number };
-    err.code = 'MISSING_API_KEY';
-    err.status = 503;
-    throw err;
+function getGeminiKeyCandidates(): GeminiKeyCandidate[] {
+  const rawCandidates: Array<[string, string | undefined]> = [
+    ['CartAudit_GEMINIAPI_KEY', process.env.CartAudit_GEMINIAPI_KEY],
+    ['CARTAUDIT_GEMINIAPI_KEY', process.env.CARTAUDIT_GEMINIAPI_KEY],
+    ['CartAudit_GEMINI_API_KEY', process.env.CartAudit_GEMINI_API_KEY],
+    ['CARTAUDIT_GEMINI_API_KEY', process.env.CARTAUDIT_GEMINI_API_KEY],
+    ['GEMINI_API_KEY', process.env.GEMINI_API_KEY],
+    ['GOOGLE_API_KEY', process.env.GOOGLE_API_KEY],
+    ['API_KEY', process.env.API_KEY],
+  ];
+  const seen = new Set<string>();
+  const result: GeminiKeyCandidate[] = [];
+  for (const [source, raw] of rawCandidates) {
+    if (!raw) continue;
+    const cleaned = raw.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
+    if (!cleaned || seen.has(cleaned)) continue;
+    seen.add(cleaned);
+    result.push({ key: cleaned, source });
   }
+  return result;
+}
 
+function resolveGeminiKeyInfo(): GeminiKeyCandidate | undefined {
+  return getGeminiKeyCandidates()[0];
+}
+
+function createGeminiClient(apiKey: string): GoogleGenAI {
   return new GoogleGenAI({
     apiKey,
     httpOptions: {
@@ -45,6 +56,51 @@ function getGeminiClient(): GoogleGenAI {
       },
     },
   });
+}
+
+function isAuthKeyError(status: number, message: string, code: string): boolean {
+  return (
+    status === 401 ||
+    code === 'UNAUTHENTICATED' ||
+    message.includes('API_KEY_INVALID') ||
+    message.includes('API key not valid') ||
+    message.includes('PERMISSION_DENIED')
+  );
+}
+
+async function runWithGeminiFallback<T>(
+  operationName: string,
+  fn: (ai: GoogleGenAI, source: string) => Promise<T>
+): Promise<T> {
+  const candidates = getGeminiKeyCandidates();
+  if (candidates.length === 0) {
+    const err = new Error(
+      'No Gemini API key is configured on the server.'
+    ) as Error & { code?: string; status?: number };
+    err.code = 'MISSING_API_KEY';
+    err.status = 503;
+    throw err;
+  }
+
+  let lastErr: unknown;
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[i];
+    const ai = createGeminiClient(candidate.key);
+    try {
+      return await fn(ai, candidate.source);
+    } catch (err) {
+      lastErr = err;
+      const parsed = extractReadableError(err);
+      if (isAuthKeyError(parsed.status, parsed.message, parsed.code) && i < candidates.length - 1) {
+        console.warn(
+          `[${operationName}] Key from ${candidate.source} was rejected (${parsed.status}: ${parsed.message}); falling back to ${candidates[i + 1].source}.`
+        );
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
 }
 
 function extractReadableError(err: unknown): { status: number; message: string; code: string } {
@@ -203,9 +259,11 @@ async function startServer() {
 
   app.get('/api/health', (_req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    const info = resolveGeminiKeyInfo();
     res.json({
       ok: true,
-      geminiConfigured: Boolean(resolveGeminiApiKey()),
+      geminiConfigured: Boolean(info),
+      keySource: info?.source ?? null,
       model: 'gemini-4-hydrogen',
     });
   });
@@ -230,44 +288,45 @@ async function startServer() {
         return;
       }
 
-      const ai = getGeminiClient();
       const startedAt = Date.now();
-      let response;
       let modelUsed = 'gemini-4-hydrogen';
 
-      try {
-        response = await runReceiptVisionModel(
-          ai,
-          'gemini-4-hydrogen',
-          normalizedMime,
-          imageBase64,
-          true,
-          25000
-        );
-      } catch (primaryErr) {
-        const parsedPrimary = extractReadableError(primaryErr);
-        console.warn(
-          `[scan-receipt] Primary model (${modelUsed}) error (${parsedPrimary.status}): ${parsedPrimary.message}`
-        );
-        if (
-          !isTransientUpstreamError(
-            parsedPrimary.status,
-            parsedPrimary.message,
-            parsedPrimary.code
-          )
-        ) {
-          throw primaryErr;
+      const response = await runWithGeminiFallback('scan-receipt', async (ai) => {
+        try {
+          modelUsed = 'gemini-4-hydrogen';
+          return await runReceiptVisionModel(
+            ai,
+            'gemini-4-hydrogen',
+            normalizedMime,
+            imageBase64,
+            true,
+            25000
+          );
+        } catch (primaryErr) {
+          const parsedPrimary = extractReadableError(primaryErr);
+          console.warn(
+            `[scan-receipt] Primary model (${modelUsed}) error (${parsedPrimary.status}): ${parsedPrimary.message}`
+          );
+          if (
+            !isTransientUpstreamError(
+              parsedPrimary.status,
+              parsedPrimary.message,
+              parsedPrimary.code
+            )
+          ) {
+            throw primaryErr;
+          }
+          modelUsed = 'gemini-3.1-flash-lite';
+          return await runReceiptVisionModel(
+            ai,
+            modelUsed,
+            normalizedMime,
+            imageBase64,
+            false,
+            25000
+          );
         }
-        modelUsed = 'gemini-3.1-flash-lite';
-        response = await runReceiptVisionModel(
-          ai,
-          modelUsed,
-          normalizedMime,
-          imageBase64,
-          false,
-          25000
-        );
-      }
+      });
 
       console.info(
         `[scan-receipt] ${modelUsed} succeeded in ${Date.now() - startedAt}ms`
@@ -277,10 +336,9 @@ async function startServer() {
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[scan-receipt] Error (${status}): ${message}`);
-
-      if (message.includes('API_KEY_INVALID') || message.includes('PERMISSION_DENIED')) {
+      if (isAuthKeyError(status, message, code)) {
         res.status(403).json({
-          error: 'Gemini API key is invalid or unauthorized. Please check Settings > Secrets.',
+          error: 'Live AI receipt scanning is temporarily unavailable because the server API key was rejected.',
           code: 'API_KEY_INVALID',
         });
         return;
@@ -413,9 +471,8 @@ async function startServer() {
               .join('\n')
           : 'None';
 
-      const ai = getGeminiClient();
-
       const runPennyChatModel = async (
+        ai: GoogleGenAI,
         model: string,
         useLowThinking: boolean,
         timeoutMs: number
@@ -591,32 +648,32 @@ async function startServer() {
         ]);
       };
 
-      let response;
-      try {
-        response = await runPennyChatModel('gemini-4-hydrogen', true, 25000);
-      } catch (primaryErr) {
-        const parsedPrimary = extractReadableError(primaryErr);
-        if (
-          !isTransientUpstreamError(
-            parsedPrimary.status,
-            parsedPrimary.message,
-            parsedPrimary.code
-          )
-        ) {
-          throw primaryErr;
+      const response = await runWithGeminiFallback('penny-chat', async (ai) => {
+        try {
+          return await runPennyChatModel(ai, 'gemini-4-hydrogen', true, 25000);
+        } catch (primaryErr) {
+          const parsedPrimary = extractReadableError(primaryErr);
+          if (
+            !isTransientUpstreamError(
+              parsedPrimary.status,
+              parsedPrimary.message,
+              parsedPrimary.code
+            )
+          ) {
+            throw primaryErr;
+          }
+          return await runPennyChatModel(ai, 'gemini-3.1-flash-lite', false, 25000);
         }
-        response = await runPennyChatModel('gemini-3.1-flash-lite', false, 25000);
-      }
+      });
 
       const parsed = parseJsonResponse(response.text ?? '{}');
       res.json(parsed);
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[penny-chat] Error (${status}): ${message}`);
-
-      if (message.includes('API_KEY_INVALID') || message.includes('PERMISSION_DENIED')) {
+      if (isAuthKeyError(status, message, code)) {
         res.status(403).json({
-          error: 'Gemini API key is invalid or unauthorized. Please check Settings > Secrets.',
+          error: 'Live AI reasoning is temporarily unavailable because the server API key was rejected.',
           code: 'API_KEY_INVALID',
         });
         return;
@@ -656,9 +713,12 @@ async function startServer() {
           ? todayDate
           : new Date().toISOString().slice(0, 10);
 
-      const ai = getGeminiClient();
-
-      const runParseModel = async (model: string, useLowThinking: boolean, timeoutMs: number) => {
+      const runParseModel = async (
+        ai: GoogleGenAI,
+        model: string,
+        useLowThinking: boolean,
+        timeoutMs: number
+      ) => {
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => {
             const err = new Error(
@@ -704,32 +764,32 @@ async function startServer() {
         ]);
       };
 
-      let response;
-      try {
-        response = await runParseModel('gemini-4-hydrogen', true, 20000);
-      } catch (primaryErr) {
-        const parsedPrimary = extractReadableError(primaryErr);
-        if (
-          !isTransientUpstreamError(
-            parsedPrimary.status,
-            parsedPrimary.message,
-            parsedPrimary.code
-          )
-        ) {
-          throw primaryErr;
+      const response = await runWithGeminiFallback('penny-parse-expense', async (ai) => {
+        try {
+          return await runParseModel(ai, 'gemini-4-hydrogen', true, 20000);
+        } catch (primaryErr) {
+          const parsedPrimary = extractReadableError(primaryErr);
+          if (
+            !isTransientUpstreamError(
+              parsedPrimary.status,
+              parsedPrimary.message,
+              parsedPrimary.code
+            )
+          ) {
+            throw primaryErr;
+          }
+          return await runParseModel(ai, 'gemini-3.1-flash-lite', false, 20000);
         }
-        response = await runParseModel('gemini-3.1-flash-lite', false, 20000);
-      }
+      });
 
       const parsed = parseJsonResponse(response.text ?? '{}');
       res.json(parsed);
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[penny-parse-expense] Error (${status}): ${message}`);
-
-      if (message.includes('API_KEY_INVALID') || message.includes('PERMISSION_DENIED')) {
+      if (isAuthKeyError(status, message, code)) {
         res.status(403).json({
-          error: 'Gemini API key is invalid or unauthorized. Please check Settings > Secrets.',
+          error: 'Live AI expense parsing is temporarily unavailable because the server API key was rejected.',
           code: 'API_KEY_INVALID',
         });
         return;

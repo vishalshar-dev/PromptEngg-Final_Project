@@ -283,7 +283,7 @@ export function ReceiptUploader() {
         if (!aiReady) {
           await runOfflineOcrOnFile(
             scanFile,
-            'Live Gemini Vision is on standby (GEMINI_API_KEY not set in Settings > Secrets).'
+            'Live AI Vision is temporarily unavailable — using offline browser OCR.'
           );
           return;
         }
@@ -688,7 +688,7 @@ export function ReceiptUploader() {
             </p>
             <p className="text-xs text-[#697386]" data-testid="scanner-ai-mode">
               {geminiConfigured === false
-                ? 'Offline Browser OCR + Text Parse ready · Add GEMINI_API_KEY in Secrets for AI Vision'
+                ? 'Offline Browser OCR + Text Parse ready'
                 : 'AI Vision extraction · PNG, JPG, WebP, or TXT'}
             </p>
           </div>
