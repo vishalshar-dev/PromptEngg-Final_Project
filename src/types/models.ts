@@ -94,6 +94,7 @@ export interface Person {
   id: string;
   name: string;
   contact?: string;
+  upiId?: string;
   createdAt: string;
 }
 
@@ -402,6 +403,10 @@ export interface BackupData {
   basketTemplatesSeeded?: boolean;
   theme?: ThemeMode;
   featureSettings?: FeatureSettings;
+  pennyMessages?: PennyChatMessage[];
+  pennyProfile?: PennyInteractionProfile;
+  myUpiId?: string;
+  myUpiName?: string;
 }
 
 export type ThemeMode = 'light' | 'dark';
@@ -414,6 +419,8 @@ export interface FeatureSettings {
   showInsights: boolean;
   showScanner: boolean;
   showWellness: boolean;
+  // Global Companion
+  showPennyCompanion: boolean;
   // Feature & Widget Granular Visibility
   showSmartInsightsOnOverview: boolean;
   showShopSummaryMetrics: boolean;
@@ -427,5 +434,119 @@ export interface FeatureSettings {
   showAuditHistory: boolean;
   showAuditExportBackup: boolean;
 }
+
+export type PennyTonePreference = 'auto' | 'friendly' | 'strict_coach' | 'crisp';
+
+export type PennyFocusTopic =
+  | 'general'
+  | 'groceries'
+  | 'splits'
+  | 'budgets'
+  | 'discipline'
+  | 'prices';
+
+export interface PennyInteractionProfile {
+  tonePreference: PennyTonePreference;
+  messageCount: number;
+  avgUserWords: number;
+  conciseBias: number; // 0 (detailed) to 100 (very crisp)
+  casualBias: number; // 0 (formal) to 100 (very casual)
+  focusWeights: Record<PennyFocusTopic, number>;
+  topFocus: PennyFocusTopic;
+  resolvedSummary: string;
+  lastUpdatedAt?: string;
+}
+
+export type PennyProposalType =
+  | 'log_expense'
+  | 'add_split'
+  | 'settle_split'
+  | 'build_cart'
+  | 'load_basket'
+  | 'add_due_recurring'
+  | 'set_budget'
+  | 'set_category_limit'
+  | 'toggle_broke_mode'
+  | 'set_recurrence'
+  | 'add_price_alert'
+  | 'navigate';
+
+export interface PennyProposedAction {
+  id: string;
+  type: PennyProposalType;
+  title: string;
+  summary: string;
+  status?: 'pending' | 'applied' | 'dismissed';
+  appliedMessage?: string;
+  expense?: {
+    name: string;
+    amount: number;
+    category: string;
+    date?: string;
+  };
+  split?: {
+    name: string;
+    totalAmount: number;
+    category: string;
+    paidBy: string; // 'self' or person name
+    participantNames: string[]; // other people involved (not including self unless parsed)
+    includeSelf?: boolean;
+  };
+  settlement?: {
+    personName: string;
+    direction: 'i_pay' | 'they_pay';
+    amount: number;
+    note?: string;
+  };
+  cartItems?: Array<{
+    itemId: string;
+    itemName: string;
+    quantity: number;
+    variantId?: string;
+    unitPrice?: number;
+  }>;
+  basketId?: string;
+  totalBudget?: number;
+  categoryLimit?: {
+    category: string;
+    limitAmount: number;
+    period: 'daily' | 'weekly' | 'monthly';
+  };
+  brokeModeEnabled?: boolean;
+  recurrence?: {
+    itemId: string;
+    itemName: string;
+    frequency: 'daily' | 'weekly' | 'monthly' | 'custom';
+    intervalDays?: number;
+  };
+  priceAlert?: {
+    productId: string;
+    productName: string;
+    unitOfMeasurement: string;
+    targetUnitPrice?: number;
+    increaseThresholdPct?: number;
+  };
+  destination?: {
+    section: 'overview' | 'shopping' | 'insights' | 'expenses' | 'scanner' | 'wellness';
+    subTab?: string;
+  };
+}
+
+export interface PennyHighlightMetric {
+  label: string;
+  value: string;
+}
+
+export interface PennyChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  highlights?: PennyHighlightMetric[];
+  proposedActions?: PennyProposedAction[];
+  followUpQuestions?: string[];
+  timestamp: string;
+  pageContext?: string;
+}
+
 
 

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_FEATURE_SETTINGS,
   PRESET_DEFINITIONS,
+  TOTAL_FEATURE_TOGGLES_COUNT,
   countEnabledFeatures,
   detectSettingsPreset,
   getPresetSettings,
@@ -20,15 +21,18 @@ test('getPresetSettings returns clean presets with accurate enabled counts', () 
   const full = getPresetSettings('full');
 
   assert.equal(simple.preset, 'simple');
+  assert.equal(simple.showPennyCompanion, false);
   assert.equal(countEnabledFeatures(simple), 0);
 
   assert.equal(standard.preset, 'standard');
   assert.equal(standard.showInsights, true);
   assert.equal(standard.showScanner, true);
+  assert.equal(standard.showPennyCompanion, true);
   assert.equal(standard.showWellness, false);
 
   assert.equal(full.preset, 'full');
-  assert.equal(countEnabledFeatures(full), 14);
+  assert.equal(full.showPennyCompanion, true);
+  assert.equal(countEnabledFeatures(full), TOTAL_FEATURE_TOGGLES_COUNT);
 });
 
 test('mergeFeatureSettings switches to custom when deviated and detects matching preset again', () => {

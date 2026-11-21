@@ -33,6 +33,8 @@ export function DataBackup() {
   const disciplineCheckIns = useAppStore((s) => s.disciplineCheckIns);
   const theme = useAppStore((s) => s.theme);
   const featureSettings = useAppStore((s) => s.featureSettings);
+  const pennyMessages = useAppStore((s) => s.pennyMessages);
+  const pennyProfile = useAppStore((s) => s.pennyProfile);
   const importBackupData = useAppStore((s) => s.importBackupData);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -74,6 +76,8 @@ export function DataBackup() {
       disciplineCheckIns,
       theme,
       featureSettings,
+      pennyMessages,
+      pennyProfile,
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: 'application/json',

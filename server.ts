@@ -16,11 +16,19 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/gif',
 ]);
 
+function resolveGeminiApiKey(): string | undefined {
+  return (
+    process.env.CartAudit_GEMINI_API_KEY?.trim() ||
+    process.env.CARTAUDIT_GEMINI_API_KEY?.trim() ||
+    process.env.GEMINI_API_KEY?.trim()
+  );
+}
+
 function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const apiKey = resolveGeminiApiKey();
   if (!apiKey) {
     const err = new Error(
-      'GEMINI_API_KEY is not set. Add it in Settings > Secrets to enable AI receipt scanning.'
+      'CartAudit_GEMINI_API_KEY (or GEMINI_API_KEY) is not set. Add it in Settings > Secrets to enable AI features.'
     ) as Error & { code?: string; status?: number };
     err.code = 'MISSING_API_KEY';
     err.status = 503;
@@ -194,7 +202,7 @@ async function startServer() {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({
       ok: true,
-      geminiConfigured: Boolean(process.env.GEMINI_API_KEY?.trim()),
+      geminiConfigured: Boolean(resolveGeminiApiKey()),
     });
   });
 
@@ -286,6 +294,435 @@ async function startServer() {
         error: message,
         code,
       });
+    }
+  });
+
+  app.post('/api/penny-chat', async (req: Request, res: Response) => {
+    try {
+      const { question, history, context, personalityProfile } = req.body as {
+        question?: unknown;
+        history?: unknown;
+        context?: unknown;
+        personalityProfile?: unknown;
+      };
+
+      if (typeof question !== 'string' || !question.trim()) {
+        res.status(400).json({ error: 'Please enter a message for Penny.' });
+        return;
+      }
+
+      const trimmedQuestion = question.trim().slice(0, 1500);
+      if (!context || typeof context !== 'object' || Array.isArray(context)) {
+        res.status(400).json({ error: 'Missing financial context snapshot.' });
+        return;
+      }
+
+      const safeHistory = Array.isArray(history)
+        ? history
+            .slice(-10)
+            .filter(
+              (m): m is { role: 'user' | 'assistant'; text: string } =>
+                Boolean(m) &&
+                typeof m === 'object' &&
+                ((m as { role?: unknown }).role === 'user' ||
+                  (m as { role?: unknown }).role === 'assistant') &&
+                typeof (m as { text?: unknown }).text === 'string'
+            )
+            .map((m) => ({
+              role: m.role,
+              text: m.text.slice(0, 900),
+            }))
+        : [];
+
+      const profileObj =
+        personalityProfile && typeof personalityProfile === 'object'
+          ? (personalityProfile as Record<string, unknown>)
+          : {};
+      const tonePref =
+        typeof profileObj.tonePreference === 'string' ? profileObj.tonePreference : 'auto';
+      const conciseBias = Number(profileObj.conciseBias ?? 50);
+      const casualBias = Number(profileObj.casualBias ?? 55);
+      const topFocus = typeof profileObj.topFocus === 'string' ? profileObj.topFocus : 'general';
+      const resolvedSummary =
+        typeof profileObj.resolvedSummary === 'string' ? profileObj.resolvedSummary : 'Auto · Balanced';
+
+      const ctxRecord = context as Record<string, unknown>;
+      const budgetObj =
+        ctxRecord.budgetOverview && typeof ctxRecord.budgetOverview === 'object'
+          ? (ctxRecord.budgetOverview as Record<string, unknown>)
+          : {};
+      const isBrokeMode = Boolean(budgetObj.isBrokeMode);
+      const activeScreen =
+        typeof ctxRecord.activeScreen === 'string' ? ctxRecord.activeScreen : 'overview';
+
+      const styleDirectives: string[] = [];
+      if (tonePref === 'strict_coach') {
+        styleDirectives.push(
+          'Tone override: STRICT FINANCE COACH. Be direct, protective of cashflow, firm about cutting junk/impulse spending, no fluff.'
+        );
+      } else if (tonePref === 'friendly') {
+        styleDirectives.push(
+          'Tone override: WARM & ENCOURAGING COMPANION. Be supportive, approachable, celebratory on wins, gentle on overspending.'
+        );
+      } else if (tonePref === 'crisp') {
+        styleDirectives.push(
+          'Tone override: ULTRA-CRISP EXECUTIVE. Lead with numbers first, short punchy lines or 2-3 bullets under 75 words.'
+        );
+      } else {
+        // Auto-adaptive voice matching the user
+        if (conciseBias >= 65) {
+          styleDirectives.push(
+            'Length style: User prefers quick messages — keep answers super crisp (50–90 words) and punchy.'
+          );
+        } else if (conciseBias <= 35) {
+          styleDirectives.push(
+            'Length style: User asks thoughtful detailed questions — give clear step-by-step reasoning and helpful context (110–190 words).'
+          );
+        } else {
+          styleDirectives.push('Length style: Balanced & readable (75–130 words).');
+        }
+
+        if (casualBias >= 65) {
+          styleDirectives.push(
+            'Voice: Match user’s casual, conversational, natural tone (conversational phrasing, no stiff corporate jargon).'
+          );
+        } else if (casualBias <= 35) {
+          styleDirectives.push(
+            'Voice: Match user’s structured, polite, analytical tone cleanly.'
+          );
+        } else {
+          styleDirectives.push('Voice: Warm, natural, everyday helpful friend who happens to be great with money.');
+        }
+      }
+
+      if (isBrokeMode) {
+        styleDirectives.push(
+          'BROKE MODE IS ACTIVE: Protect essential groceries/bills and warn if a purchase or request eats into strict remaining allowance.'
+        );
+      }
+
+      const contextJson = JSON.stringify(context).slice(0, 32000);
+      const historyBlock =
+        safeHistory.length > 0
+          ? safeHistory
+              .map((m) => `${m.role === 'user' ? 'User' : 'Penny'}: ${m.text}`)
+              .join('\n')
+          : 'None';
+
+      const ai = getGeminiClient();
+
+      const runPennyChatModel = async (
+        model: string,
+        useLowThinking: boolean,
+        timeoutMs: number
+      ) => {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            const err = new Error(
+              `Penny (${model}) timed out after ${Math.round(timeoutMs / 1000)} seconds.`
+            ) as Error & { code?: string; status?: number };
+            err.code = 'UPSTREAM_TIMEOUT';
+            err.status = 504;
+            reject(err);
+          }, timeoutMs);
+        });
+
+        const systemInstruction =
+          'You are Penny, a full-fledged, conversational AI companion inside CartAudit (an Indian INR ₹ spending, Quick Mart grocery & bills cart, split-ledger, receipt scanner, price tracker, and budget guardrail app). ' +
+          `Current screen: "${activeScreen}". User personality profile (${resolvedSummary}, primary focus: ${topFocus}). ` +
+          `${styleDirectives.join(' ')} ` +
+          'CAPABILITIES: Answer ANY question the user asks naturally — personal spending history, upcoming bills/refills, split balances, cart affordability, Indian grocery/meal planning on a budget, savings strategies, or general everyday conversation. ' +
+          'GROUNDING RULE: Whenever referencing the user’s CartAudit numbers, past transactions, splits, people, upcoming recurring items, baskets, or Quick Mart catalog items/prices, ONLY cite facts present in the provided JSON context. Never invent fake user transactions, balances, or catalog IDs. General cooking/budgeting/life advice is welcome as long as you distinguish general suggestions from the user’s real CartAudit records. ' +
+          'ACTION PROPOSALS: Whenever the user asks you to DO something (or an immediate helpful action fits their question), include 1–2 structured entries in `proposedActions` so the user can confirm & execute in one click! Never claim an action is already done — phrase it as ready to confirm. ' +
+          'Supported `proposedActions[].type` values and required nested fields:\n' +
+          '- `log_expense`: fill `expense` { name, amount (>0), category (strictly from context.availableCategories), date (YYYY-MM-DD optional) }\n' +
+          '- `add_split`: fill `split` { name, totalAmount (>0), category, paidBy ("self" or person name), participantNames (non-empty string array of other people), includeSelf (boolean) }\n' +
+          '- `settle_split`: fill `settlement` { personName, direction ("i_pay" | "they_pay"), amount (>0), note }\n' +
+          '- `build_cart`: fill `cartItems` [{ itemId (EXACT id from context.catalogItems), itemName, quantity (>=1) }] — ONLY use items that exist in context.catalogItems!\n' +
+          '- `load_basket`: set `basketId` to EXACT id from context.savedBaskets\n' +
+          '- `add_due_recurring`: queues overdue/due-today recurring items into cart\n' +
+          '- `set_budget`: set `totalBudget` (>0 number)\n' +
+          '- `set_category_limit`: fill `categoryLimit` { category (from context.availableCategories), limitAmount (>0), period ("daily"|"weekly"|"monthly") }\n' +
+          '- `toggle_broke_mode`: set `brokeModeEnabled` (boolean)\n' +
+          '- `set_recurrence`: fill `recurrence` { itemId (from context.catalogItems), itemName, frequency ("daily"|"weekly"|"monthly"|"custom"), intervalDays }\n' +
+          '- `add_price_alert`: fill `priceAlert` { productId, productName, unitOfMeasurement, targetUnitPrice OR increaseThresholdPct }\n' +
+          '- `navigate`: fill `destination` { section ("overview"|"shopping"|"insights"|"expenses"|"scanner"|"wellness"), subTab }\n' +
+          'If no in-app action is relevant (pure Q&A/chat), return `proposedActions: []`. Always set `title` and `summary` on every proposedAction.';
+
+        const config: Record<string, unknown> = {
+          systemInstruction,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              answer: {
+                type: Type.STRING,
+                description: 'Conversational, grounded response adapted to the user tone and length profile.',
+              },
+              highlights: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    label: { type: Type.STRING },
+                    value: { type: Type.STRING },
+                  },
+                  required: ['label', 'value'],
+                },
+                description: 'Up to 3 concise metric callouts when numbers are helpful, else empty array.',
+              },
+              proposedActions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    type: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    summary: { type: Type.STRING },
+                    expense: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        amount: { type: Type.NUMBER },
+                        category: { type: Type.STRING },
+                        date: { type: Type.STRING },
+                      },
+                    },
+                    split: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        totalAmount: { type: Type.NUMBER },
+                        category: { type: Type.STRING },
+                        paidBy: { type: Type.STRING },
+                        participantNames: { type: Type.ARRAY, items: { type: Type.STRING } },
+                        includeSelf: { type: Type.BOOLEAN },
+                      },
+                    },
+                    settlement: {
+                      type: Type.OBJECT,
+                      properties: {
+                        personName: { type: Type.STRING },
+                        direction: { type: Type.STRING },
+                        amount: { type: Type.NUMBER },
+                        note: { type: Type.STRING },
+                      },
+                    },
+                    cartItems: {
+                      type: Type.ARRAY,
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          itemId: { type: Type.STRING },
+                          itemName: { type: Type.STRING },
+                          quantity: { type: Type.NUMBER },
+                        },
+                      },
+                    },
+                    basketId: { type: Type.STRING },
+                    totalBudget: { type: Type.NUMBER },
+                    categoryLimit: {
+                      type: Type.OBJECT,
+                      properties: {
+                        category: { type: Type.STRING },
+                        limitAmount: { type: Type.NUMBER },
+                        period: { type: Type.STRING },
+                      },
+                    },
+                    brokeModeEnabled: { type: Type.BOOLEAN },
+                    recurrence: {
+                      type: Type.OBJECT,
+                      properties: {
+                        itemId: { type: Type.STRING },
+                        itemName: { type: Type.STRING },
+                        frequency: { type: Type.STRING },
+                        intervalDays: { type: Type.NUMBER },
+                      },
+                    },
+                    priceAlert: {
+                      type: Type.OBJECT,
+                      properties: {
+                        productId: { type: Type.STRING },
+                        productName: { type: Type.STRING },
+                        unitOfMeasurement: { type: Type.STRING },
+                        targetUnitPrice: { type: Type.NUMBER },
+                        increaseThresholdPct: { type: Type.NUMBER },
+                      },
+                    },
+                    destination: {
+                      type: Type.OBJECT,
+                      properties: {
+                        section: { type: Type.STRING },
+                        subTab: { type: Type.STRING },
+                      },
+                    },
+                  },
+                  required: ['type', 'title', 'summary'],
+                },
+              },
+              followUpQuestions: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: '2 or 3 short natural follow-up prompts.',
+              },
+            },
+            required: ['answer', 'highlights', 'proposedActions', 'followUpQuestions'],
+          },
+        };
+
+        if (useLowThinking) {
+          config.thinkingConfig = { thinkingLevel: ThinkingLevel.LOW };
+        }
+
+        return Promise.race([
+          ai.models.generateContent({
+            model,
+            contents:
+              `USER LIVE CONTEXT & CATALOG (JSON):\n${contextJson}\n\n` +
+              `RECENT CONVERSATION:\n${historyBlock}\n\n` +
+              `CURRENT USER MESSAGE:\n${trimmedQuestion}`,
+            config,
+          }),
+          timeoutPromise,
+        ]);
+      };
+
+      let response;
+      try {
+        response = await runPennyChatModel('gemini-4-hydrogen', true, 12000);
+      } catch (primaryErr) {
+        const parsedPrimary = extractReadableError(primaryErr);
+        if (
+          !isTransientUpstreamError(
+            parsedPrimary.status,
+            parsedPrimary.message,
+            parsedPrimary.code
+          )
+        ) {
+          throw primaryErr;
+        }
+        response = await runPennyChatModel('gemini-3.1-flash-lite', false, 15000);
+      }
+
+      const parsed = parseJsonResponse(response.text ?? '{}');
+      res.json(parsed);
+    } catch (err) {
+      const { status, message, code } = extractReadableError(err);
+      console.error(`[penny-chat] Error (${status}): ${message}`);
+
+      if (message.includes('API_KEY_INVALID') || message.includes('PERMISSION_DENIED')) {
+        res.status(403).json({
+          error: 'Gemini API key is invalid or unauthorized. Please check Settings > Secrets.',
+          code: 'API_KEY_INVALID',
+        });
+        return;
+      }
+
+      if (status === 429 || message.includes('RESOURCE_EXHAUSTED')) {
+        res.status(429).json({
+          error: 'Gemini API rate limit reached. Please wait a moment and try again.',
+          code: 'RESOURCE_EXHAUSTED',
+        });
+        return;
+      }
+
+      res.status(status).json({ error: message, code });
+    }
+  });
+
+  app.post('/api/penny-parse-expense', async (req: Request, res: Response) => {
+    try {
+      const { text, categories, todayDate } = req.body as {
+        text?: unknown;
+        categories?: unknown;
+        todayDate?: unknown;
+      };
+
+      if (typeof text !== 'string' || !text.trim()) {
+        res.status(400).json({ error: 'Enter a short expense note like "Paid 180 for coffee".' });
+        return;
+      }
+
+      const allowedCategories = Array.isArray(categories)
+        ? categories.filter((c): c is string => typeof c === 'string' && c.trim().length > 0).slice(0, 40)
+        : ['Groceries', 'Snacks & Beverages', 'Fuel & Transportation', 'Other Expenses'];
+
+      const safeToday =
+        typeof todayDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(todayDate)
+          ? todayDate
+          : new Date().toISOString().slice(0, 10);
+
+      const ai = getGeminiClient();
+
+      const runParseModel = async (model: string, useLowThinking: boolean, timeoutMs: number) => {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            const err = new Error(
+              `Expense parser (${model}) timed out.`
+            ) as Error & { code?: string; status?: number };
+            err.code = 'UPSTREAM_TIMEOUT';
+            err.status = 504;
+            reject(err);
+          }, timeoutMs);
+        });
+
+        const config: Record<string, unknown> = {
+          systemInstruction:
+            `Extract a single structured expense entry from the user's natural-language text. Today is ${safeToday}. ` +
+            `Choose category strictly from: ${allowedCategories.join(', ')}. ` +
+            `If no amount is explicitly stated, return amount 0. If the user mentions splitting with someone, set isSplitHint true and put the person name in splitPersonHint.`,
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING, description: 'Clean expense title, e.g. Cold Coffee & Sandwich' },
+              amount: { type: Type.NUMBER, description: 'Amount in INR' },
+              category: { type: Type.STRING, description: 'Best matching category from allowed list' },
+              date: { type: Type.STRING, description: 'YYYY-MM-DD date string' },
+              isSplitHint: { type: Type.BOOLEAN },
+              splitPersonHint: { type: Type.STRING },
+            },
+            required: ['name', 'amount', 'category', 'date', 'isSplitHint', 'splitPersonHint'],
+          },
+        };
+
+        if (useLowThinking) {
+          config.thinkingConfig = { thinkingLevel: ThinkingLevel.LOW };
+        }
+
+        return Promise.race([
+          ai.models.generateContent({
+            model,
+            contents: text.trim().slice(0, 300),
+            config,
+          }),
+          timeoutPromise,
+        ]);
+      };
+
+      let response;
+      try {
+        response = await runParseModel('gemini-4-hydrogen', true, 10000);
+      } catch (primaryErr) {
+        const parsedPrimary = extractReadableError(primaryErr);
+        if (
+          !isTransientUpstreamError(
+            parsedPrimary.status,
+            parsedPrimary.message,
+            parsedPrimary.code
+          )
+        ) {
+          throw primaryErr;
+        }
+        response = await runParseModel('gemini-3.1-flash-lite', false, 14000);
+      }
+
+      const parsed = parseJsonResponse(response.text ?? '{}');
+      res.json(parsed);
+    } catch (err) {
+      const { status, message, code } = extractReadableError(err);
+      console.error(`[penny-parse-expense] Error (${status}): ${message}`);
+      res.status(status).json({ error: message, code });
     }
   });
 

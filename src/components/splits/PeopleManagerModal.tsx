@@ -17,12 +17,14 @@ export function PeopleManagerModal({
 
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
+  const [upiId, setUpiId] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editContact, setEditContact] = useState('');
+  const [editUpiId, setEditUpiId] = useState('');
 
   if (!isOpen) return null;
 
@@ -33,9 +35,10 @@ export function PeopleManagerModal({
       setFormError('Name is required.');
       return;
     }
-    addPerson(trimmed, contact);
+    addPerson(trimmed, contact, upiId);
     setName('');
     setContact('');
+    setUpiId('');
     setFormError(null);
   };
 
@@ -43,12 +46,13 @@ export function PeopleManagerModal({
     setEditingId(person.id);
     setEditName(person.name);
     setEditContact(person.contact ?? '');
+    setEditUpiId(person.upiId ?? '');
     setDeleteError(null);
   };
 
   const handleSaveEdit = (id: string) => {
     if (!editName.trim()) return;
-    updatePerson(id, editName, editContact);
+    updatePerson(id, editName, editContact, editUpiId);
     setEditingId(null);
   };
 
@@ -120,6 +124,14 @@ export function PeopleManagerModal({
             onChange={(e) => setContact(e.target.value)}
             className="input-field w-full px-3 py-2 text-sm"
           />
+          <input
+            type="text"
+            aria-label="UPI ID"
+            placeholder="UPI ID e.g. rahul@okaxis (optional)"
+            value={upiId}
+            onChange={(e) => setUpiId(e.target.value)}
+            className="input-field w-full px-3 py-2 text-sm font-mono"
+          />
           {formError && <p className="text-xs text-[#DE5252] font-medium">{formError}</p>}
           <button
             type="submit"
@@ -168,6 +180,14 @@ export function PeopleManagerModal({
                       placeholder="Phone or email"
                       className="input-field w-full px-2.5 py-1.5 text-xs"
                     />
+                    <input
+                      type="text"
+                      aria-label={`Edit UPI ID for ${person.name}`}
+                      value={editUpiId}
+                      onChange={(e) => setEditUpiId(e.target.value)}
+                      placeholder="UPI ID (optional)"
+                      className="input-field w-full px-2.5 py-1.5 text-xs font-mono"
+                    />
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -192,6 +212,7 @@ export function PeopleManagerModal({
                       <p className="text-sm font-bold text-[#151922] truncate">{person.name}</p>
                       <p className="text-xs text-[#697386] truncate">
                         {person.contact || 'No contact info'}
+                        {person.upiId ? ` · ${person.upiId}` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

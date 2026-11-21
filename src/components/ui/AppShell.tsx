@@ -12,10 +12,15 @@ import {
   Moon,
   Menu,
   X,
+  Cloud,
+  CloudOff,
+  LogIn,
+  RefreshCw,
 } from 'lucide-react';
 import type { FeatureSettings, ThemeMode } from '../../types/models';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
 import { isSectionEnabled } from '../../utils/settingsEngine';
+import { useCloudSync } from '../../contexts/CloudSyncContext';
 import { ProgressBar } from './ProgressBar';
 import { SettingsModal } from '../settings/SettingsModal';
 
@@ -95,6 +100,30 @@ export function AppShell({
         : 'success';
 
   const isDark = theme === 'dark';
+  const {
+    user,
+    syncStatus,
+    isSigningIn,
+    signInWithGoogle,
+  } = useCloudSync();
+
+  const syncLabel =
+    syncStatus === 'syncing' || syncStatus === 'connecting'
+      ? 'Syncing…'
+      : syncStatus === 'synced'
+        ? 'Cloud Synced'
+        : syncStatus === 'offline'
+          ? 'Offline (Local)'
+          : syncStatus === 'conflict'
+            ? 'Review Merge'
+            : syncStatus === 'error'
+              ? 'Sync Issue'
+              : 'Local Only';
+
+  const userInitial = (user?.displayName || user?.email || 'U')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
 
   return (
     <div className="min-h-screen bg-[#F7F8FA] text-[#151922] flex flex-col lg:flex-row">
@@ -164,8 +193,66 @@ export function AppShell({
           </nav>
         </div>
 
-        {/* Bottom Workspace Controls + Budget Status */}
+        {/* Bottom Workspace Controls + Cloud Account + Budget Status */}
         <div className="shrink-0 space-y-3">
+          {/* Multi-Device Cloud Account */}
+          {user ? (
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              data-testid="sidebar-cloud-account"
+              aria-label={`Cloud account ${user.displayName || user.email || ''} (${syncLabel})`}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-left transition-colors"
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="w-7 h-7 rounded-lg object-cover shrink-0 border border-[#E7EAF0]"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-[#365FE8] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {userInitial}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-[#151922] truncate leading-tight">
+                  {user.displayName || 'Synced Account'}
+                </p>
+                <p
+                  className={`text-[10.5px] font-semibold truncate leading-tight mt-0.5 flex items-center gap-1 ${
+                    syncStatus === 'error'
+                      ? 'text-[#DE5252]'
+                      : syncStatus === 'offline'
+                        ? 'text-[#C7851F]'
+                        : 'text-[#15966B]'
+                  }`}
+                >
+                  {syncStatus === 'syncing' || syncStatus === 'connecting' ? (
+                    <RefreshCw className="w-2.5 h-2.5 animate-spin shrink-0" />
+                  ) : syncStatus === 'offline' ? (
+                    <CloudOff className="w-2.5 h-2.5 shrink-0" />
+                  ) : (
+                    <Cloud className="w-2.5 h-2.5 shrink-0" />
+                  )}
+                  <span>{syncLabel}</span>
+                </p>
+              </div>
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={isSigningIn}
+              onClick={() => void signInWithGoogle()}
+              data-testid="sidebar-google-signin"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#DCE6FF] border border-[#D4E0FF] text-[#365FE8] text-xs font-bold transition-colors whitespace-nowrap"
+            >
+              <LogIn className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} />
+              <span>{isSigningIn ? 'Connecting…' : 'Sign in to Sync'}</span>
+            </button>
+          )}
+
           {/* Quick Theme & Settings Controls */}
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -292,6 +379,39 @@ export function AppShell({
               </span>
             </div>
 
+            {user ? (
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Account and sync settings"
+                data-testid="mobile-account-button"
+                className="w-8 h-8 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center overflow-hidden shrink-0"
+              >
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-bold text-[#365FE8]">{userInitial}</span>
+                )}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isSigningIn}
+                onClick={() => void signInWithGoogle()}
+                aria-label="Sign in to sync across devices"
+                data-testid="mobile-google-signin"
+                className="h-8 px-2.5 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap"
+              >
+                <LogIn className="w-3.5 h-3.5 shrink-0" />
+                <span>Sync</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onToggleTheme}
@@ -406,6 +526,53 @@ export function AppShell({
                 );
               })}
             </nav>
+
+            <div className="shrink-0 pt-2 border-t border-[#E7EAF0]">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    setSettingsOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] text-left"
+                >
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="w-7 h-7 rounded-lg object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-[#365FE8] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                      {userInitial}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-[#151922] truncate">
+                      {user.displayName || 'Synced Account'}
+                    </p>
+                    <p className="text-[10.5px] font-semibold text-[#15966B] truncate">
+                      {syncLabel}
+                    </p>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSigningIn}
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    void signInWithGoogle();
+                  }}
+                  className="btn-primary w-full px-3 py-2 text-xs"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{isSigningIn ? 'Connecting…' : 'Sign in with Google'}</span>
+                </button>
+              )}
+            </div>
           </aside>
         </div>
       )}

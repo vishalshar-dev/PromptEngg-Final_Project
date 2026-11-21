@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   X,
   Sun,
@@ -10,11 +10,27 @@ import {
   ShoppingBag,
   LineChart,
   ScanLine,
+  Sparkles,
+  Trash2,
+  Cloud,
+  CloudOff,
+  LogIn,
+  LogOut,
+  RefreshCw,
+  AlertTriangle,
+  QrCode,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
-import type { FeatureSettings, SettingsPreset } from '../../types/models';
+import { useCloudSync } from '../../contexts/CloudSyncContext';
+import { isValidUpiId, normalizeUpiId } from '../../utils/upiEngine';
+import type {
+  FeatureSettings,
+  PennyTonePreference,
+  SettingsPreset,
+} from '../../types/models';
 import {
   PRESET_DEFINITIONS,
+  TOTAL_FEATURE_TOGGLES_COUNT,
   countEnabledFeatures,
 } from '../../utils/settingsEngine';
 
@@ -150,10 +166,45 @@ function SwitchRow({
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const theme = useAppStore((s) => s.theme);
   const featureSettings = useAppStore((s) => s.featureSettings);
+  const pennyProfile = useAppStore((s) => s.pennyProfile);
+  const pennyMessages = useAppStore((s) => s.pennyMessages);
   const setTheme = useAppStore((s) => s.setTheme);
   const applyFeaturePreset = useAppStore((s) => s.applyFeaturePreset);
   const updateFeatureSettings = useAppStore((s) => s.updateFeatureSettings);
   const resetFeatureSettings = useAppStore((s) => s.resetFeatureSettings);
+  const setPennyTonePreference = useAppStore((s) => s.setPennyTonePreference);
+  const resetPennyProfile = useAppStore((s) => s.resetPennyProfile);
+  const clearPennyMessages = useAppStore((s) => s.clearPennyMessages);
+  const myUpiId = useAppStore((s) => s.myUpiId);
+  const myUpiName = useAppStore((s) => s.myUpiName);
+  const setMyUpiProfile = useAppStore((s) => s.setMyUpiProfile);
+
+  const [upiIdDraft, setUpiIdDraft] = useState(myUpiId);
+  const [upiNameDraft, setUpiNameDraft] = useState(myUpiName);
+  const [upiSavedStatus, setUpiSavedStatus] = useState<string | null>(null);
+  const [upiValidationError, setUpiValidationError] = useState<string | null>(null);
+
+  const {
+    user,
+    syncStatus,
+    lastSyncedAt,
+    syncError,
+    quotaUpgradeUrl,
+    deviceLabel,
+    isSigningIn,
+    signInWithGoogle,
+    signOutAccount,
+    syncNow,
+  } = useCloudSync();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const state = useAppStore.getState();
+    setUpiIdDraft(state.myUpiId);
+    setUpiNameDraft(state.myUpiName);
+    setUpiSavedStatus(null);
+    setUpiValidationError(null);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -216,6 +267,139 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Body */}
         <div className="p-5 space-y-6 overflow-y-auto scrollbar-thin">
+          {/* 0. Multi-Device Cloud Sync & Account */}
+          <section className="surface-subtle p-4 space-y-3" aria-label="Account and cloud sync">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {syncStatus === 'offline' ? (
+                  <CloudOff className="w-4 h-4 text-[#C7851F] shrink-0" />
+                ) : (
+                  <Cloud className="w-4 h-4 text-[#365FE8] shrink-0" />
+                )}
+                <h3 className="text-xs font-bold text-[#151922]">
+                  Account &amp; Multi-Device Cloud Sync
+                </h3>
+              </div>
+              <span
+                className={`text-[11px] font-mono font-semibold ${
+                  syncStatus === 'synced'
+                    ? 'text-[#15966B]'
+                    : syncStatus === 'error'
+                      ? 'text-[#DE5252]'
+                      : syncStatus === 'offline'
+                        ? 'text-[#C7851F]'
+                        : 'text-[#697386]'
+                }`}
+              >
+                {syncStatus === 'synced'
+                  ? 'Live Sync Active'
+                  : syncStatus === 'syncing' || syncStatus === 'connecting'
+                    ? 'Syncing…'
+                    : syncStatus === 'offline'
+                      ? 'Offline'
+                      : syncStatus === 'conflict'
+                        ? 'Merge Needed'
+                        : syncStatus === 'error'
+                          ? 'Sync Error'
+                          : 'Local Browser Only'}
+              </span>
+            </div>
+
+            {user ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#E7EAF0] rounded-xl p-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {user.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="w-9 h-9 rounded-xl object-cover shrink-0 border border-[#E7EAF0]"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-[#365FE8] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                        {(user.displayName || user.email || 'U').trim().charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-bold text-[#151922] truncate">
+                        {user.displayName || 'CartAudit Account'}
+                      </p>
+                      <p className="text-[11px] text-[#697386] truncate">
+                        {user.email} · {deviceLabel}
+                      </p>
+                      {lastSyncedAt && (
+                        <p className="text-[10.5px] text-[#929BAB] font-mono tabular-nums mt-0.5">
+                          Last synced: {new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      disabled={syncStatus === 'syncing'}
+                      onClick={() => void syncNow()}
+                      className="btn-secondary px-3 py-1.5 text-xs whitespace-nowrap"
+                    >
+                      <RefreshCw
+                        className={`w-3.5 h-3.5 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}
+                      />
+                      <span>Sync Now</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void signOutAccount()}
+                      className="btn-secondary px-3 py-1.5 text-xs text-[#DE5252] whitespace-nowrap"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-[11.5px] text-[#697386] leading-relaxed">
+                  Sign in with Google to automatically sync your expenses, splits, catalog, and Penny history across your phone and laptop.
+                </p>
+                <button
+                  type="button"
+                  disabled={isSigningIn}
+                  onClick={() => void signInWithGoogle()}
+                  data-testid="settings-google-signin"
+                  className="btn-primary px-4 py-2 text-xs whitespace-nowrap shrink-0"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{isSigningIn ? 'Connecting…' : 'Sign in with Google'}</span>
+                </button>
+              </div>
+            )}
+
+            {syncError && (
+              <div
+                role="alert"
+                className="rounded-xl px-3 py-2 bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B] text-xs flex items-start gap-2"
+              >
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p>{syncError}</p>
+                  {quotaUpgradeUrl && (
+                    <a
+                      href={quotaUpgradeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline font-semibold inline-block"
+                    >
+                      Open Firebase Console Usage
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+
           {/* 1. Theme Selector (White vs Black) */}
           <section className="space-y-2.5" aria-label="Theme selection">
             <div className="flex items-center justify-between">
@@ -292,8 +476,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </h3>
               <span className="text-[11px] font-semibold text-[#697386]">
                 {featureSettings.preset === 'custom'
-                  ? `Custom (${enabledCount}/14 tools)`
-                  : `${PRESET_DEFINITIONS[featureSettings.preset].label} (${enabledCount}/14 tools)`}
+                  ? `Custom (${enabledCount}/${TOTAL_FEATURE_TOGGLES_COUNT} tools)`
+                  : `${PRESET_DEFINITIONS[featureSettings.preset].label} (${enabledCount}/${TOTAL_FEATURE_TOGGLES_COUNT} tools)`}
               </span>
             </div>
 
@@ -333,7 +517,173 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          {/* 3. Navigation Tabs */}
+          {/* 3. Penny AI Companion */}
+          <section className="surface-subtle p-4 space-y-3" aria-label="Penny AI companion controls">
+            <div className="space-y-1 pb-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#365FE8] shrink-0" />
+                  <h3 className="text-xs font-bold text-[#151922]">
+                    Penny AI Companion
+                  </h3>
+                </div>
+                <span className="text-[11px] font-mono font-semibold text-[#365FE8] truncate max-w-full">
+                  {pennyProfile.resolvedSummary}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#697386] pl-6">
+                Global floating chat assistant that learns your style and executes confirmed actions.
+              </p>
+            </div>
+
+            <SwitchRow
+              label="Floating Penny Launcher Everywhere"
+              description="Show the quick Ask Penny button in the bottom-right corner across every tab."
+              checked={featureSettings.showPennyCompanion}
+              onToggle={() => toggleKey('showPennyCompanion')}
+            />
+
+            <div className="pt-1 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11.5px] font-semibold text-[#697386]">
+                  Personality Mode ({pennyProfile.messageCount}{' '}
+                  {pennyProfile.messageCount === 1 ? 'chat' : 'chats'} learned)
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={resetPennyProfile}
+                    className="text-[11px] font-semibold text-[#697386] hover:text-[#151922] inline-flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset Style
+                  </button>
+                  {pennyMessages.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearPennyMessages}
+                      className="text-[11px] font-semibold text-[#DE5252] hover:underline inline-flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Clear Chat ({pennyMessages.length})
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(
+                  [
+                    { id: 'auto', label: 'Auto Adapt', hint: 'Matches your vibe' },
+                    { id: 'friendly', label: 'Friendly', hint: 'Warm & encouraging' },
+                    { id: 'crisp', label: 'Crisp', hint: 'Direct bullets' },
+                    { id: 'strict_coach', label: 'Strict Coach', hint: 'Firm guardrail tone' },
+                  ] as Array<{ id: PennyTonePreference; label: string; hint: string }>
+                ).map((modeOpt) => {
+                  const active = pennyProfile.tonePreference === modeOpt.id;
+                  return (
+                    <button
+                      key={modeOpt.id}
+                      type="button"
+                      onClick={() => setPennyTonePreference(modeOpt.id)}
+                      aria-pressed={active}
+                      className={`p-2 rounded-xl border text-left transition-colors ${
+                        active
+                          ? 'bg-[#EDF2FF] border-[#365FE8] text-[#151922]'
+                          : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                      }`}
+                    >
+                      <p className="text-xs font-bold leading-tight">{modeOpt.label}</p>
+                      <p className="text-[10.5px] opacity-80 mt-0.5 leading-tight">{modeOpt.hint}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* 3.5 UPI Profile for Split Settlements */}
+          <section className="surface-subtle p-4 space-y-3" aria-label="UPI profile settings">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-[#365FE8]" />
+                <div>
+                  <h3 className="text-xs font-bold text-[#151922]">
+                    UPI Profile for Split Settlements
+                  </h3>
+                  <p className="text-[11px] text-[#697386]">
+                    Used to generate scannable QR codes when friends owe you money.
+                  </p>
+                </div>
+              </div>
+              {myUpiId && (
+                <span className="text-[11px] font-mono font-semibold text-[#15966B]">
+                  Saved
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <label className="block space-y-1">
+                <span className="text-[11px] font-medium text-[#697386]">Your UPI ID</span>
+                <input
+                  type="text"
+                  value={upiIdDraft}
+                  onChange={(e) => {
+                    setUpiIdDraft(e.target.value);
+                    setUpiValidationError(null);
+                    setUpiSavedStatus(null);
+                  }}
+                  placeholder="e.g. name@okaxis"
+                  data-testid="settings-upi-id-input"
+                  className="input-field w-full px-3 py-1.5 text-xs font-mono"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-[11px] font-medium text-[#697386]">Display Name (optional)</span>
+                <input
+                  type="text"
+                  value={upiNameDraft}
+                  onChange={(e) => {
+                    setUpiNameDraft(e.target.value);
+                    setUpiSavedStatus(null);
+                  }}
+                  placeholder={user?.displayName || 'Your name'}
+                  className="input-field w-full px-3 py-1.5 text-xs"
+                />
+              </label>
+            </div>
+
+            {upiValidationError && (
+              <p className="text-[11.5px] font-medium text-[#DE5252]">{upiValidationError}</p>
+            )}
+            {upiSavedStatus && (
+              <p className="text-[11.5px] font-semibold text-[#15966B]">{upiSavedStatus}</p>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                data-testid="settings-upi-save"
+                onClick={() => {
+                  const clean = normalizeUpiId(upiIdDraft);
+                  if (clean && !isValidUpiId(clean)) {
+                    setUpiValidationError('Enter a valid UPI ID such as name@okaxis or mobile@ybl.');
+                    setUpiSavedStatus(null);
+                    return;
+                  }
+                  setMyUpiProfile(clean, upiNameDraft);
+                  setUpiValidationError(null);
+                  setUpiSavedStatus(clean ? `Saved ${clean}` : 'Cleared saved UPI ID.');
+                }}
+                className="btn-secondary px-3.5 py-1.5 text-xs"
+              >
+                Save UPI Profile
+              </button>
+            </div>
+          </section>
+
+          {/* 4. Navigation Tabs */}
           <section className="surface-subtle p-4 space-y-2" aria-label="Navigation modules">
             <div className="flex items-center gap-2 pb-1">
               <LayoutGrid className="w-4 h-4 text-[#365FE8]" />
@@ -359,7 +709,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          {/* 4. Overview & Shopping Widgets */}
+          {/* 5. Overview & Shopping Widgets */}
           <section className="surface-subtle p-4 space-y-2" aria-label="Overview and Shopping controls">
             <div className="flex items-center gap-2 pb-1">
               <ShoppingBag className="w-4 h-4 text-[#15966B]" />
@@ -385,7 +735,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
           </section>
 
-          {/* 5. Insights & Receipt Scanner Widgets */}
+          {/* 6. Insights & Receipt Scanner Widgets */}
           <section className="surface-subtle p-4 space-y-2" aria-label="Insights and Scanner controls">
             <div className="flex items-center gap-2 pb-1">
               {featureSettings.showScanner ? (

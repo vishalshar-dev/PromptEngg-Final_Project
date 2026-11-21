@@ -15,6 +15,7 @@ import {
   Receipt,
   ChevronRight,
   History,
+  QrCode,
 } from 'lucide-react';
 import { SELF_PERSON_ID, type SharedExpense } from '../../types/models';
 import { useAppStore } from '../../store/useStore';
@@ -30,6 +31,7 @@ import { SplitExpenseModal } from './SplitExpenseModal';
 import { PeopleManagerModal } from './PeopleManagerModal';
 import { SettlementModal } from './SettlementModal';
 import { PersonLedgerView } from './PersonLedgerView';
+import { UpiRemindModal } from './UpiRemindModal';
 
 export function SplitLedgerDashboard() {
   const people = useAppStore((s) => s.people);
@@ -54,6 +56,11 @@ export function SplitLedgerDashboard() {
     direction?: 'i_pay' | 'they_pay';
     amount?: number;
     expenseId?: string;
+  }>({ isOpen: false });
+  const [upiModalState, setUpiModalState] = useState<{
+    isOpen: boolean;
+    personId?: string;
+    direction?: 'they_pay' | 'i_pay';
   }>({ isOpen: false });
 
   const [confirmDeleteExpenseId, setConfirmDeleteExpenseId] = useState<string | null>(null);
@@ -89,8 +96,25 @@ export function SplitLedgerDashboard() {
     });
   };
 
+  const openUpiRemind = (opts: {
+    personId: string;
+    direction: 'they_pay' | 'i_pay';
+  }) => {
+    setUpiModalState({
+      isOpen: true,
+      ...opts,
+    });
+  };
+
   const activePersonSummary = selectedPersonId
     ? ledger.personSummaries[selectedPersonId]
+    : undefined;
+
+  const upiTargetPerson = upiModalState.personId
+    ? people.find((p) => p.id === upiModalState.personId) ?? null
+    : null;
+  const upiTargetSummary = upiModalState.personId
+    ? ledger.personSummaries[upiModalState.personId]
     : undefined;
 
   if (activePersonSummary) {
@@ -100,6 +124,7 @@ export function SplitLedgerDashboard() {
           summary={activePersonSummary}
           onBack={() => setSelectedPersonId(null)}
           onOpenSettle={openSettle}
+          onOpenUpiRemind={openUpiRemind}
         />
         <SettlementModal
           isOpen={settlementModalState.isOpen}
@@ -108,6 +133,14 @@ export function SplitLedgerDashboard() {
           defaultDirection={settlementModalState.direction}
           defaultAmount={settlementModalState.amount}
           defaultExpenseId={settlementModalState.expenseId}
+        />
+        <UpiRemindModal
+          isOpen={upiModalState.isOpen}
+          onClose={() => setUpiModalState({ isOpen: false })}
+          person={upiTargetPerson}
+          summary={upiTargetSummary}
+          initialDirection={upiModalState.direction}
+          onProceedToSettle={(opts) => openSettle(opts)}
         />
       </>
     );
@@ -332,23 +365,39 @@ export function SplitLedgerDashboard() {
                   </button>
 
                   {(owedToMe > 0 || iOwe > 0) && (
-                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                       <span className="text-[#697386] font-mono tabular-nums">
                         In: ₹{formatCurrencyExact(owedToMe)} · Out: ₹
                         {formatCurrencyExact(iOwe)}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openSettle({
-                            personId: person.id,
-                            direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
-                          })
-                        }
-                        className="font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] border border-[#D4E0FF] px-2.5 py-1 rounded-lg whitespace-nowrap"
-                      >
-                        Settle
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openUpiRemind({
+                              personId: person.id,
+                              direction: owedToMe >= iOwe ? 'they_pay' : 'i_pay',
+                            })
+                          }
+                          aria-label={`UPI QR and reminder for ${person.name}`}
+                          className="font-semibold text-[#151922] hover:text-[#365FE8] bg-white border border-[#E7EAF0] hover:border-[#D4E0FF] px-2 py-1 rounded-lg inline-flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <QrCode className="w-3 h-3 text-[#365FE8]" />
+                          <span>UPI / Remind</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openSettle({
+                              personId: person.id,
+                              direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
+                            })
+                          }
+                          className="font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] border border-[#D4E0FF] px-2.5 py-1 rounded-lg whitespace-nowrap"
+                        >
+                          Settle
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -752,6 +801,15 @@ export function SplitLedgerDashboard() {
         defaultDirection={settlementModalState.direction}
         defaultAmount={settlementModalState.amount}
         defaultExpenseId={settlementModalState.expenseId}
+      />
+
+      <UpiRemindModal
+        isOpen={upiModalState.isOpen}
+        onClose={() => setUpiModalState({ isOpen: false })}
+        person={upiTargetPerson}
+        summary={upiTargetSummary}
+        initialDirection={upiModalState.direction}
+        onProceedToSettle={(opts) => openSettle(opts)}
       />
     </div>
   );

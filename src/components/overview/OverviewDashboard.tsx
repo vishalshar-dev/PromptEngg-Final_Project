@@ -556,7 +556,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                   Insights
                 </p>
                 <p className="text-[12px] text-[#697386] mt-0.5">
-                  Explore trends &amp; price moves
+                  Ask Penny AI &amp; explore trends
                 </p>
               </button>
             )}
@@ -848,14 +848,24 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             subtitle="Live signals derived directly from your spending and price history"
             action={
               featureSettings.showInsights ? (
-                <button
-                  type="button"
-                  onClick={() => onNavigate('insights')}
-                  className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 transition-colors"
-                >
-                  Open Insights
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('insights', 'penny')}
+                    className="btn-primary px-3 py-1.5 text-xs whitespace-nowrap"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Ask Penny</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('insights', 'radar')}
+                    className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 transition-colors whitespace-nowrap"
+                  >
+                    Open Radar
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               ) : undefined
             }
           />

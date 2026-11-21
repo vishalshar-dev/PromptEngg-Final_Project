@@ -6,6 +6,7 @@ export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
   showInsights: true,
   showScanner: true,
   showWellness: true,
+  showPennyCompanion: true,
   showSmartInsightsOnOverview: true,
   showShopSummaryMetrics: true,
   showShopBaskets: true,
@@ -18,6 +19,26 @@ export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
   showAuditHistory: true,
   showAuditExportBackup: true,
 };
+
+export const FEATURE_TOGGLE_KEYS: Array<Exclude<keyof FeatureSettings, 'preset'>> = [
+  'showInsights',
+  'showScanner',
+  'showWellness',
+  'showPennyCompanion',
+  'showSmartInsightsOnOverview',
+  'showShopSummaryMetrics',
+  'showShopBaskets',
+  'showShopRecurring',
+  'showShopHistory',
+  'showPriceTracker',
+  'showAuditComparator',
+  'showAuditGuardrail',
+  'showAuditFeeScanner',
+  'showAuditHistory',
+  'showAuditExportBackup',
+];
+
+export const TOTAL_FEATURE_TOGGLES_COUNT = FEATURE_TOGGLE_KEYS.length;
 
 export const PRESET_DEFINITIONS: Record<
   Exclude<SettingsPreset, 'custom'>,
@@ -35,6 +56,7 @@ export const PRESET_DEFINITIONS: Record<
       showInsights: false,
       showScanner: false,
       showWellness: false,
+      showPennyCompanion: false,
       showSmartInsightsOnOverview: false,
       showShopSummaryMetrics: false,
       showShopBaskets: false,
@@ -50,12 +72,13 @@ export const PRESET_DEFINITIONS: Record<
   },
   standard: {
     label: 'Standard',
-    subtitle: 'Shopping, expenses, receipt scanner, and spending insights',
+    subtitle: 'Shopping, expenses, scanner, insights, and floating Penny',
     settings: {
       preset: 'standard',
       showInsights: true,
       showScanner: true,
       showWellness: false,
+      showPennyCompanion: true,
       showSmartInsightsOnOverview: true,
       showShopSummaryMetrics: true,
       showShopBaskets: true,
@@ -71,7 +94,7 @@ export const PRESET_DEFINITIONS: Record<
   },
   full: {
     label: 'Full Power',
-    subtitle: 'Every tool including Financial Wellness, War Room, and Comparator',
+    subtitle: 'Every tool including Wellness, Comparator, and Penny AI',
     settings: { ...DEFAULT_FEATURE_SETTINGS },
   },
 };
@@ -79,12 +102,9 @@ export const PRESET_DEFINITIONS: Record<
 export function detectSettingsPreset(
   settings: Omit<FeatureSettings, 'preset'>
 ): SettingsPreset {
-  const keys = Object.keys(DEFAULT_FEATURE_SETTINGS).filter(
-    (k): k is Exclude<keyof FeatureSettings, 'preset'> => k !== 'preset'
-  );
   for (const presetName of ['simple', 'standard', 'full'] as const) {
     const target = PRESET_DEFINITIONS[presetName].settings;
-    if (keys.every((k) => Boolean(settings[k]) === Boolean(target[k]))) {
+    if (FEATURE_TOGGLE_KEYS.every((k) => Boolean(settings[k]) === Boolean(target[k]))) {
       return presetName;
     }
   }
@@ -128,6 +148,10 @@ export function sanitizeFeatureSettings(raw: unknown): FeatureSettings {
       typeof obj.showWellness === 'boolean'
         ? obj.showWellness
         : DEFAULT_FEATURE_SETTINGS.showWellness,
+    showPennyCompanion:
+      typeof obj.showPennyCompanion === 'boolean'
+        ? obj.showPennyCompanion
+        : DEFAULT_FEATURE_SETTINGS.showPennyCompanion,
     showSmartInsightsOnOverview:
       typeof obj.showSmartInsightsOnOverview === 'boolean'
         ? obj.showSmartInsightsOnOverview
@@ -201,21 +225,6 @@ export function resolveSafeSection(
 }
 
 export function countEnabledFeatures(settings: FeatureSettings): number {
-  const toggleKeys: Array<Exclude<keyof FeatureSettings, 'preset'>> = [
-    'showInsights',
-    'showScanner',
-    'showWellness',
-    'showSmartInsightsOnOverview',
-    'showShopSummaryMetrics',
-    'showShopBaskets',
-    'showShopRecurring',
-    'showShopHistory',
-    'showPriceTracker',
-    'showAuditComparator',
-    'showAuditGuardrail',
-    'showAuditFeeScanner',
-    'showAuditHistory',
-    'showAuditExportBackup',
-  ];
-  return toggleKeys.filter((k) => settings[k]).length;
+  return FEATURE_TOGGLE_KEYS.filter((k) => settings[k]).length;
 }
+

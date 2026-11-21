@@ -1,0 +1,206 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll([
+        'ownerId',
+        'displayName',
+        'photoURL',
+        'lastDeviceLabel',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId',
+        'displayName',
+        'photoURL',
+        'lastDeviceLabel',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.ownerId is string
+      && data.ownerId == userId
+      && data.ownerId == request.auth.uid
+      && data.displayName is string
+      && data.displayName.size() <= 120
+      && data.photoURL is string
+      && data.photoURL.size() <= 500
+      && data.lastDeviceLabel is string
+      && data.lastDeviceLabel.size() <= 80
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateProfile(data, userId) {
+      return data.keys().hasAll(['ownerId', 'email', 'createdAt', 'updatedAt'])
+      && data.keys().hasOnly(['ownerId', 'email', 'createdAt', 'updatedAt'])
+      && data.ownerId is string
+      && data.ownerId == userId
+      && data.ownerId == request.auth.uid
+      && data.email is string
+      && data.email.size() >= 3
+      && data.email.size() <= 254
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceSection(data, userId, sectionId) {
+      return data.keys().hasAll([
+        'ownerId',
+        'section',
+        'clientUpdatedAt',
+        'deviceName',
+        'writerSessionId',
+        'payload',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId',
+        'section',
+        'clientUpdatedAt',
+        'deviceName',
+        'writerSessionId',
+        'payload',
+        'createdAt',
+        'updatedAt'
+      ])
+      && data.ownerId is string
+      && data.ownerId == userId
+      && data.ownerId == request.auth.uid
+      && data.section is string
+      && data.section == sectionId
+      && data.section in ['settings', 'ledger', 'catalog', 'splits', 'wellness', 'penny']
+      && data.clientUpdatedAt is string
+      && data.clientUpdatedAt.size() >= 10
+      && data.clientUpdatedAt.size() <= 64
+      && data.deviceName is string
+      && data.deviceName.size() >= 1
+      && data.deviceName.size() <= 80
+      && data.writerSessionId is string
+      && data.writerSessionId.size() >= 4
+      && data.writerSessionId.size() <= 64
+      && data.payload is map
+      && data.payload.keys().size() <= 30
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId)
+        && isValidUserAccount(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isOwner(userId)
+        && isValidUserAccount(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'photoURL',
+          'lastDeviceLabel',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+
+      match /private/{docId} {
+        allow get: if isOwner(userId) && isValidId(docId) && docId == 'info';
+        allow list: if false;
+
+        allow create: if isOwner(userId)
+          && isValidId(docId)
+          && docId == 'info'
+          && isValidUserPrivateProfile(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && existsAfter(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isOwner(userId)
+          && isValidId(docId)
+          && docId == 'info'
+          && isValidUserPrivateProfile(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['email', 'updatedAt']);
+
+        allow delete: if false;
+      }
+
+      match /workspace/{sectionId} {
+        allow get: if isOwner(userId)
+          && isValidId(sectionId)
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.ownerId == request.auth.uid;
+
+        allow list: if isVerifiedUser()
+          && isValidId(userId)
+          && request.auth.uid == userId
+          && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isOwner(userId)
+          && isValidId(sectionId)
+          && isValidWorkspaceSection(incoming(), userId, sectionId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && existsAfter(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isOwner(userId)
+          && isValidId(sectionId)
+          && isValidWorkspaceSection(incoming(), userId, sectionId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().section == existing().section
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'clientUpdatedAt',
+            'deviceName',
+            'writerSessionId',
+            'payload',
+            'updatedAt'
+          ])
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.ownerId == request.auth.uid;
+
+        allow delete: if isOwner(userId)
+          && isValidId(sectionId)
+          && exists(/databases/$(database)/documents/users/$(userId));
+      }
+    }
+  }
+}

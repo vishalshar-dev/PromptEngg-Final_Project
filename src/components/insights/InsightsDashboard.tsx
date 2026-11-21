@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Radar, LineChart } from 'lucide-react';
+import { Radar, LineChart, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { RadarDashboard } from '../analytics/RadarDashboard';
 import { PriceTrackerDashboard } from '../prices/PriceTrackerDashboard';
+import { PennyCopilotPanel } from './PennyCopilotPanel';
 
-export type InsightsTab = 'radar' | 'prices';
+export type InsightsTab = 'penny' | 'radar' | 'prices';
 
 interface InsightsDashboardProps {
   initialTab?: InsightsTab;
+  tabSignal?: number;
   onOpenExpenses?: () => void;
+  onOpenShopping?: (subTab?: 'home' | 'baskets') => void;
+  onOpenScanner?: () => void;
+  onOpenWellness?: () => void;
 }
 
 export function InsightsDashboard({
-  initialTab = 'radar',
+  initialTab = 'penny',
+  tabSignal = 0,
   onOpenExpenses,
+  onOpenShopping,
+  onOpenScanner,
+  onOpenWellness,
 }: InsightsDashboardProps) {
   const showPriceTracker = useAppStore((s) => s.featureSettings.showPriceTracker);
   const [activeTab, setActiveTab] = useState<InsightsTab>(
@@ -22,7 +31,7 @@ export function InsightsDashboard({
 
   useEffect(() => {
     setActiveTab(initialTab === 'prices' && !showPriceTracker ? 'radar' : initialTab);
-  }, [initialTab, showPriceTracker]);
+  }, [initialTab, tabSignal, showPriceTracker]);
 
   useEffect(() => {
     if (!showPriceTracker && activeTab === 'prices') {
@@ -40,22 +49,47 @@ export function InsightsDashboard({
               Insights
             </h1>
             <p className="text-[13.5px] text-[#697386] mt-1 max-w-2xl leading-relaxed">
-              Analyze category budgets, spending velocity, anomalies, and product unit-price trends.
+              Ask Penny about your spending &amp; upcoming bills, track category velocity, and monitor product unit prices.
             </p>
           </div>
+          {activeTab !== 'penny' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('penny')}
+              className="btn-primary px-3.5 py-2 text-xs whitespace-nowrap shrink-0 self-start sm:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ask Penny</span>
+            </button>
+          )}
         </div>
 
         <div
           role="tablist"
           aria-label="Insights sections"
-          className="flex items-center gap-6 -mb-px overflow-x-auto no-scrollbar"
+          className="flex items-center gap-4 sm:gap-6 -mb-px overflow-x-auto no-scrollbar"
         >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'penny'}
+            onClick={() => setActiveTab('penny')}
+            className={`flex items-center gap-1.5 sm:gap-2 pb-3 text-[13px] sm:text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'penny'
+                ? 'border-[#365FE8] text-[#365FE8]'
+                : 'border-transparent text-[#697386] hover:text-[#151922]'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Penny AI
+          </button>
+
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'radar'}
             onClick={() => setActiveTab('radar')}
-            className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+            className={`flex items-center gap-1.5 sm:gap-2 pb-3 text-[13px] sm:text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'radar'
                 ? 'border-[#365FE8] text-[#365FE8]'
                 : 'border-transparent text-[#697386] hover:text-[#151922]'
@@ -71,7 +105,7 @@ export function InsightsDashboard({
               role="tab"
               aria-selected={activeTab === 'prices'}
               onClick={() => setActiveTab('prices')}
-              className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              className={`flex items-center gap-1.5 sm:gap-2 pb-3 text-[13px] sm:text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === 'prices'
                   ? 'border-[#365FE8] text-[#365FE8]'
                   : 'border-transparent text-[#697386] hover:text-[#151922]'
@@ -84,11 +118,20 @@ export function InsightsDashboard({
         </div>
       </div>
 
-      {activeTab === 'radar' || !showPriceTracker ? (
-        <RadarDashboard onOpenLedger={onOpenExpenses} />
-      ) : (
+      {activeTab === 'penny' ? (
+        <PennyCopilotPanel
+          onSwitchInsightsTab={setActiveTab}
+          onOpenExpenses={onOpenExpenses}
+          onOpenShopping={onOpenShopping}
+          onOpenScanner={onOpenScanner}
+          onOpenWellness={onOpenWellness}
+        />
+      ) : activeTab === 'prices' && showPriceTracker ? (
         <PriceTrackerDashboard />
+      ) : (
+        <RadarDashboard onOpenLedger={onOpenExpenses} />
       )}
     </div>
   );
 }
+

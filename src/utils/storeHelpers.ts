@@ -1,4 +1,5 @@
 import { sanitizeFeatureSettings, sanitizeThemeMode } from './settingsEngine';
+import { sanitizePennyMessages, sanitizePennyProfile } from './pennyEngine';
 import type {
   BackupData,
   CartItem,
@@ -138,6 +139,12 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
     theme: data.theme !== undefined ? sanitizeThemeMode(data.theme) : undefined,
     featureSettings:
       data.featureSettings !== undefined ? sanitizeFeatureSettings(data.featureSettings) : undefined,
+    pennyMessages:
+      data.pennyMessages !== undefined ? sanitizePennyMessages(data.pennyMessages) : undefined,
+    pennyProfile:
+      data.pennyProfile !== undefined ? sanitizePennyProfile(data.pennyProfile) : undefined,
+    myUpiId: typeof data.myUpiId === 'string' ? data.myUpiId.trim().toLowerCase() : undefined,
+    myUpiName: typeof data.myUpiName === 'string' ? data.myUpiName.trim() : undefined,
   };
 }
 

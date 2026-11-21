@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Receipt,
   Trash2,
+  QrCode,
 } from 'lucide-react';
 import { SELF_PERSON_ID } from '../../types/models';
 import { useAppStore } from '../../store/useStore';
@@ -23,12 +24,17 @@ export interface PersonLedgerViewProps {
     amount?: number;
     expenseId?: string;
   }) => void;
+  onOpenUpiRemind: (opts: {
+    personId: string;
+    direction: 'i_pay' | 'they_pay';
+  }) => void;
 }
 
 export function PersonLedgerView({
   summary,
   onBack,
   onOpenSettle,
+  onOpenUpiRemind,
 }: PersonLedgerViewProps) {
   const removeSettlement = useAppStore((s) => s.removeSettlement);
   const [confirmDeleteSettlementId, setConfirmDeleteSettlementId] = useState<string | null>(null);
@@ -60,19 +66,34 @@ export function PersonLedgerView({
         </div>
 
         {hasOpenBalance && (
-          <button
-            type="button"
-            onClick={() =>
-              onOpenSettle({
-                personId: person.id,
-                direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
-              })
-            }
-            className="btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
-          >
-            <ShieldCheck className="w-4 h-4" strokeWidth={2.2} />
-            Record Repayment
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                onOpenUpiRemind({
+                  personId: person.id,
+                  direction: owedToMe >= iOwe ? 'they_pay' : 'i_pay',
+                })
+              }
+              className="btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <QrCode className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+              UPI QR &amp; Remind
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onOpenSettle({
+                  personId: person.id,
+                  direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
+                })
+              }
+              className="btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <ShieldCheck className="w-4 h-4" strokeWidth={2.2} />
+              Record Repayment
+            </button>
+          </div>
         )}
       </div>
 

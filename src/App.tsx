@@ -10,6 +10,8 @@ import {
 import { ExpensesDashboard } from './components/expenses/ExpensesDashboard';
 import { AuditPanel } from './components/audit/AuditPanel';
 import { SurvivalSandbox } from './components/analytics/SurvivalSandbox';
+import { PennyFloatingCompanion } from './components/penny/PennyFloatingCompanion';
+import { CloudSyncConflictModal } from './components/cloud/CloudSyncConflictModal';
 import { useAppStore } from './store/useStore';
 import {
   calculateCartTotals,
@@ -20,7 +22,8 @@ import { resolveSafeSection } from './utils/settingsEngine';
 export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>('overview');
   const [insightsInitialTab, setInsightsInitialTab] =
-    useState<InsightsTab>('radar');
+    useState<InsightsTab>('penny');
+  const [insightsTabSignal, setInsightsTabSignal] = useState(0);
   const [shopInitialSection, setShopInitialSection] =
     useState<'home' | 'baskets'>('home');
   const [shopSectionSignal, setShopSectionSignal] = useState(0);
@@ -80,10 +83,15 @@ export default function App() {
       setShopInitialSection(target);
       setShopSectionSignal((n) => n + 1);
     }
-    if (safeSection === 'insights' && (subTab === 'radar' || subTab === 'prices')) {
-      setInsightsInitialTab(
-        subTab === 'prices' && !featureSettings.showPriceTracker ? 'radar' : subTab
-      );
+    if (safeSection === 'insights') {
+      if (subTab === 'radar' || subTab === 'prices' || subTab === 'penny') {
+        setInsightsInitialTab(
+          subTab === 'prices' && !featureSettings.showPriceTracker ? 'radar' : subTab
+        );
+      } else {
+        setInsightsInitialTab('penny');
+      }
+      setInsightsTabSignal((n) => n + 1);
     }
     if (safeSection === 'wellness') {
       setWarRoomInitialTab(subTab === 'broke' ? 'broke' : 'overview');
@@ -127,7 +135,11 @@ export default function App() {
       {activeSection === 'insights' && featureSettings.showInsights && (
         <InsightsDashboard
           initialTab={insightsInitialTab}
+          tabSignal={insightsTabSignal}
           onOpenExpenses={() => handleNavigate('expenses')}
+          onOpenShopping={(sub) => handleNavigate('shopping', sub)}
+          onOpenScanner={() => handleNavigate('scanner')}
+          onOpenWellness={() => handleNavigate('wellness')}
         />
       )}
 
@@ -156,6 +168,16 @@ export default function App() {
       {(activeSection === 'shopping' || hasCartItems) && (
         <CartDrawer openSignal={cartOpenSignal} />
       )}
+
+      {featureSettings.showPennyCompanion && (
+        <PennyFloatingCompanion
+          activeScreen={activeSection}
+          hasCartBarVisible={activeSection === 'shopping' || hasCartItems}
+          onNavigate={handleNavigate}
+        />
+      )}
+
+      <CloudSyncConflictModal />
     </AppShell>
   );
 }

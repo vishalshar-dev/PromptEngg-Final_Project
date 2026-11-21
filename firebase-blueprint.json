@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "User Account",
+      "description": "Owner-only synced account metadata for multi-device CartAudit sync.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the account owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name from Google sign-in.",
+          "maxLength": 120
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile avatar URL from Google sign-in.",
+          "maxLength": 500
+        },
+        "lastDeviceLabel": {
+          "type": "string",
+          "description": "Friendly browser/platform device label.",
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account sync record was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest account update."
+        }
+      },
+      "required": ["ownerId", "displayName", "photoURL", "lastDeviceLabel", "createdAt", "updatedAt"]
+    },
+    "UserPrivateProfile": {
+      "title": "User Private Profile",
+      "description": "PII-isolated private profile storing verified user email.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the account owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified account email address.",
+          "maxLength": 254
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when private profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when private profile was updated."
+        }
+      },
+      "required": ["ownerId", "email", "createdAt", "updatedAt"]
+    },
+    "WorkspaceSection": {
+      "title": "Workspace Sync Section",
+      "description": "Native-map snapshot of one logical CartAudit state domain scoped strictly to a user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID owning this workspace section.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "section": {
+          "type": "string",
+          "description": "Sync domain identifier.",
+          "enum": ["settings", "ledger", "catalog", "splits", "wellness", "penny"]
+        },
+        "clientUpdatedAt": {
+          "type": "string",
+          "description": "ISO timestamp when client generated this sync snapshot.",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "deviceName": {
+          "type": "string",
+          "description": "Browser/OS label of the syncing device.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "writerSessionId": {
+          "type": "string",
+          "description": "Ephemeral session ID to avoid self-echo loops on snapshots.",
+          "minLength": 4,
+          "maxLength": 64
+        },
+        "payload": {
+          "type": "object",
+          "description": "Native Firestore Map containing the domain fields (no JSON strings)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when section document was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest sync write."
+        }
+      },
+      "required": [
+        "ownerId",
+        "section",
+        "clientUpdatedAt",
+        "deviceName",
+        "writerSessionId",
+        "payload",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Owner-only account summary document."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateProfile" },
+      "description": "PII-isolated private document (docId: info) containing email."
+    },
+    "/users/{userId}/workspace/{sectionId}": {
+      "schema": { "$ref": "#/entities/WorkspaceSection" },
+      "description": "Multi-device synced CartAudit domain slices owned by userId."
+    }
+  }
+}

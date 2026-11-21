@@ -16,6 +16,9 @@ import {
   type FinancialTarget,
   type FinancialTargetType,
   type ParsedReceipt,
+  type PennyChatMessage,
+  type PennyInteractionProfile,
+  type PennyTonePreference,
   type Person,
   type PriceAlert,
   type PriceEntryKind,
@@ -45,6 +48,13 @@ import {
   sanitizeFeatureSettings,
   sanitizeThemeMode,
 } from '../utils/settingsEngine';
+import {
+  DEFAULT_PENNY_PROFILE,
+  describePennyStyle,
+  evolvePennyProfile,
+  sanitizePennyMessages,
+  sanitizePennyProfile,
+} from '../utils/pennyEngine';
 import {
   clampQuantity,
   mergeBackupItems,
@@ -205,11 +215,33 @@ export interface AppState {
   theme: ThemeMode;
   featureSettings: FeatureSettings;
 
+  pennyMessages: PennyChatMessage[];
+  pennyProfile: PennyInteractionProfile;
+  isPennyOpen: boolean;
+
+  myUpiId: string;
+  myUpiName: string;
+  setMyUpiProfile: (upiId: string, name?: string) => void;
+
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
   applyFeaturePreset: (preset: Exclude<SettingsPreset, 'custom'>) => void;
   updateFeatureSettings: (patch: Partial<FeatureSettings>) => void;
   resetFeatureSettings: () => void;
+
+  setPennyOpen: (open: boolean) => void;
+  togglePennyOpen: () => void;
+  appendPennyMessage: (msg: PennyChatMessage) => void;
+  recordUserInteractionForPenny: (userText: string) => PennyInteractionProfile;
+  setPennyProposalStatus: (
+    messageId: string,
+    proposalId: string,
+    status: 'applied' | 'dismissed',
+    appliedMessage?: string
+  ) => void;
+  setPennyTonePreference: (tone: PennyTonePreference) => void;
+  clearPennyMessages: () => void;
+  resetPennyProfile: () => void;
 
   addCategory: (categoryName: string) => void;
   addCategoryConfig: (input: CategoryInput) => CategoryConfig | null;
@@ -318,8 +350,8 @@ export interface AppState {
   dismissTriggeredAlert: (id: string) => void;
   clearTriggeredAlerts: () => void;
 
-  addPerson: (name: string, contact?: string) => Person;
-  updatePerson: (id: string, name: string, contact?: string) => void;
+  addPerson: (name: string, contact?: string, upiId?: string) => Person;
+  updatePerson: (id: string, name: string, contact?: string, upiId?: string) => void;
   removePerson: (id: string) => boolean;
 
   addSharedExpense: (input: SharedExpenseInput) => SharedExpense;
@@ -466,17 +498,87 @@ export const useAppStore = create<AppState>()(
       theme: 'light',
       featureSettings: { ...DEFAULT_FEATURE_SETTINGS },
 
+      pennyMessages: [],
+      pennyProfile: { ...DEFAULT_PENNY_PROFILE },
+      isPennyOpen: false,
+
+      myUpiId: '',
+      myUpiName: '',
+      setMyUpiProfile: (upiId, name) =>
+        set((state) => ({
+          myUpiId: upiId.trim().toLowerCase(),
+          myUpiName: name !== undefined ? name.trim() : state.myUpiName,
+        })),
+
       setTheme: (theme) => set({ theme: sanitizeThemeMode(theme) }),
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
       applyFeaturePreset: (preset) =>
-        set({ featureSettings: getPresetSettings(preset) }),
+        set((state) => {
+          const next = getPresetSettings(preset);
+          return {
+            featureSettings: next,
+            isPennyOpen: next.showPennyCompanion ? state.isPennyOpen : false,
+          };
+        }),
       updateFeatureSettings: (patch) =>
-        set((state) => ({
-          featureSettings: mergeFeatureSettings(state.featureSettings, patch),
-        })),
+        set((state) => {
+          const next = mergeFeatureSettings(state.featureSettings, patch);
+          return {
+            featureSettings: next,
+            isPennyOpen: next.showPennyCompanion ? state.isPennyOpen : false,
+          };
+        }),
       resetFeatureSettings: () =>
         set({ featureSettings: { ...DEFAULT_FEATURE_SETTINGS } }),
+
+      setPennyOpen: (open) => set({ isPennyOpen: open }),
+      togglePennyOpen: () => set((state) => ({ isPennyOpen: !state.isPennyOpen })),
+      appendPennyMessage: (msg) =>
+        set((state) => ({
+          pennyMessages: [...state.pennyMessages, msg].slice(-50),
+        })),
+      recordUserInteractionForPenny: (userText) => {
+        const current = get();
+        const nextProfile = evolvePennyProfile(current.pennyProfile, userText, {
+          isBrokeMode: current.isBrokeMode,
+        });
+        set({ pennyProfile: nextProfile });
+        return nextProfile;
+      },
+      setPennyProposalStatus: (messageId, proposalId, status, appliedMessage) =>
+        set((state) => ({
+          pennyMessages: state.pennyMessages.map((m) =>
+            m.id !== messageId || !m.proposedActions
+              ? m
+              : {
+                  ...m,
+                  proposedActions: m.proposedActions.map((act) =>
+                    act.id === proposalId
+                      ? { ...act, status, appliedMessage: appliedMessage ?? act.appliedMessage }
+                      : act
+                  ),
+                }
+          ),
+        })),
+      setPennyTonePreference: (tone) =>
+        set((state) => {
+          const next: PennyInteractionProfile = {
+            ...state.pennyProfile,
+            tonePreference: tone,
+            resolvedSummary: '',
+          };
+          next.resolvedSummary = describePennyStyle(next, state.isBrokeMode);
+          return { pennyProfile: next };
+        }),
+      clearPennyMessages: () => set({ pennyMessages: [] }),
+      resetPennyProfile: () =>
+        set((state) => ({
+          pennyProfile: {
+            ...DEFAULT_PENNY_PROFILE,
+            resolvedSummary: describePennyStyle(DEFAULT_PENNY_PROFILE, state.isBrokeMode),
+          },
+        })),
 
       addCategory: (categoryName) => {
         get().addCategoryConfig({ name: categoryName });
@@ -2155,13 +2257,15 @@ export const useAppStore = create<AppState>()(
 
       clearTriggeredAlerts: () => set({ triggeredPriceAlerts: [] }),
 
-      addPerson: (name, contact) => {
+      addPerson: (name, contact, upiId) => {
         const trimmedName = name.trim();
         const trimmedContact = contact?.trim() || undefined;
+        const trimmedUpi = upiId?.trim().toLowerCase() || undefined;
         const newPerson: Person = {
           id: crypto.randomUUID(),
           name: trimmedName,
           contact: trimmedContact,
+          upiId: trimmedUpi,
           createdAt: new Date().toISOString(),
         };
         set((state) => ({
@@ -2170,7 +2274,7 @@ export const useAppStore = create<AppState>()(
         return newPerson;
       },
 
-      updatePerson: (id, name, contact) =>
+      updatePerson: (id, name, contact, upiId) =>
         set((state) => ({
           people: state.people.map((p) =>
             p.id === id
@@ -2178,6 +2282,7 @@ export const useAppStore = create<AppState>()(
                   ...p,
                   name: name.trim() || p.name,
                   contact: contact?.trim() || undefined,
+                  upiId: upiId !== undefined ? upiId.trim().toLowerCase() || undefined : p.upiId,
                 }
               : p
           ),
@@ -2554,6 +2659,16 @@ export const useAppStore = create<AppState>()(
             featureSettings: data.featureSettings
               ? sanitizeFeatureSettings(data.featureSettings)
               : undefined,
+            pennyMessages: data.pennyMessages
+              ? sanitizePennyMessages(data.pennyMessages)
+              : undefined,
+            pennyProfile: data.pennyProfile
+              ? sanitizePennyProfile(data.pennyProfile)
+              : undefined,
+            myUpiId:
+              typeof data.myUpiId === 'string' ? data.myUpiId.trim().toLowerCase() : undefined,
+            myUpiName:
+              typeof data.myUpiName === 'string' ? data.myUpiName.trim() : undefined,
           };
         }),
     }),
@@ -2563,6 +2678,10 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         theme: state.theme,
         featureSettings: state.featureSettings,
+        pennyMessages: state.pennyMessages.slice(-40),
+        pennyProfile: state.pennyProfile,
+        myUpiId: state.myUpiId,
+        myUpiName: state.myUpiName,
         totalBudget: state.totalBudget,
         sessionBudget: state.sessionBudget,
         isBrokeMode: state.isBrokeMode,
@@ -2700,6 +2819,8 @@ export const useAppStore = create<AppState>()(
             : [],
           theme: sanitizeThemeMode(state.theme),
           featureSettings: sanitizeFeatureSettings(state.featureSettings),
+          pennyMessages: sanitizePennyMessages(state.pennyMessages),
+          pennyProfile: sanitizePennyProfile(state.pennyProfile),
         };
       },
     }

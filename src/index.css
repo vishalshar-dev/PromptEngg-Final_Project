@@ -363,6 +363,10 @@ html.dark .recharts-cartesian-axis-tick-value {
       transparent 100%
     );
   }
+
+  .qr-quiet-frame {
+    background-color: #ffffff;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
