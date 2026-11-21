@@ -167,8 +167,8 @@ export function ReceiptUploader() {
   }, []);
 
   const ensureGeminiConfigured = useCallback(async (): Promise<boolean> => {
-    if (geminiConfigured !== null) return geminiConfigured;
-    const status = await fetchGeminiHealth();
+    if (geminiConfigured === true) return true;
+    const status = await fetchGeminiHealth(true);
     setGeminiConfigured(status.geminiConfigured);
     return status.geminiConfigured;
   }, [geminiConfigured]);

@@ -18,9 +18,9 @@ const ALLOWED_MIME_TYPES = new Set([
 
 function resolveGeminiApiKey(): string | undefined {
   return (
+    process.env.GEMINI_API_KEY?.trim() ||
     process.env.CartAudit_GEMINI_API_KEY?.trim() ||
     process.env.CARTAUDIT_GEMINI_API_KEY?.trim() ||
-    process.env.GEMINI_API_KEY?.trim() ||
     process.env.GOOGLE_API_KEY?.trim()
   );
 }
@@ -29,7 +29,7 @@ function getGeminiClient(): GoogleGenAI {
   const apiKey = resolveGeminiApiKey();
   if (!apiKey) {
     const err = new Error(
-      'CartAudit_GEMINI_API_KEY (or GEMINI_API_KEY) is not set. Add it in Settings > Secrets to enable AI features.'
+      'GEMINI_API_KEY is not set. Add it in Settings > Secrets to enable AI features.'
     ) as Error & { code?: string; status?: number };
     err.code = 'MISSING_API_KEY';
     err.status = 503;
@@ -240,7 +240,7 @@ async function startServer() {
           normalizedMime,
           imageBase64,
           true,
-          12000
+          25000
         );
       } catch (primaryErr) {
         const parsedPrimary = extractReadableError(primaryErr);
@@ -263,7 +263,7 @@ async function startServer() {
           normalizedMime,
           imageBase64,
           false,
-          16000
+          25000
         );
       }
 
@@ -591,7 +591,7 @@ async function startServer() {
 
       let response;
       try {
-        response = await runPennyChatModel('gemini-4-hydrogen', true, 12000);
+        response = await runPennyChatModel('gemini-4-hydrogen', true, 25000);
       } catch (primaryErr) {
         const parsedPrimary = extractReadableError(primaryErr);
         if (
@@ -603,7 +603,7 @@ async function startServer() {
         ) {
           throw primaryErr;
         }
-        response = await runPennyChatModel('gemini-3.1-flash-lite', false, 15000);
+        response = await runPennyChatModel('gemini-3.1-flash-lite', false, 25000);
       }
 
       const parsed = parseJsonResponse(response.text ?? '{}');
@@ -704,7 +704,7 @@ async function startServer() {
 
       let response;
       try {
-        response = await runParseModel('gemini-4-hydrogen', true, 10000);
+        response = await runParseModel('gemini-4-hydrogen', true, 20000);
       } catch (primaryErr) {
         const parsedPrimary = extractReadableError(primaryErr);
         if (
@@ -716,7 +716,7 @@ async function startServer() {
         ) {
           throw primaryErr;
         }
-        response = await runParseModel('gemini-3.1-flash-lite', false, 14000);
+        response = await runParseModel('gemini-3.1-flash-lite', false, 20000);
       }
 
       const parsed = parseJsonResponse(response.text ?? '{}');
@@ -724,6 +724,23 @@ async function startServer() {
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[penny-parse-expense] Error (${status}): ${message}`);
+
+      if (message.includes('API_KEY_INVALID') || message.includes('PERMISSION_DENIED')) {
+        res.status(403).json({
+          error: 'Gemini API key is invalid or unauthorized. Please check Settings > Secrets.',
+          code: 'API_KEY_INVALID',
+        });
+        return;
+      }
+
+      if (status === 429 || message.includes('RESOURCE_EXHAUSTED')) {
+        res.status(429).json({
+          error: 'Gemini API rate limit reached. Please wait a moment and try again.',
+          code: 'RESOURCE_EXHAUSTED',
+        });
+        return;
+      }
+
       res.status(status).json({ error: message, code });
     }
   });

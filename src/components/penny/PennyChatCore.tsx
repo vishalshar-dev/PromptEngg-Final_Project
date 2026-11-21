@@ -184,8 +184,8 @@ export function PennyChatCore({
   }, []);
 
   const ensureGeminiConfigured = async (): Promise<boolean> => {
-    if (geminiConfigured !== null) return geminiConfigured;
-    const status = await fetchGeminiHealth();
+    if (geminiConfigured === true) return true;
+    const status = await fetchGeminiHealth(true);
     setGeminiConfigured(status.geminiConfigured);
     return status.geminiConfigured;
   };
@@ -419,9 +419,9 @@ export function PennyChatCore({
         if (res.status === 503 && payload.code === 'MISSING_API_KEY') {
           setGeminiConfigured(false);
           markGeminiConfigured(false);
-        }
-        if ((res.status === 503 || res.status === 504 || res.status === 429) && tryAppendOfflineChatFallback(questionText)) {
-          return;
+          if (tryAppendOfflineChatFallback(questionText)) {
+            return;
+          }
         }
         throw new Error(payload.error || `Penny could not respond (${res.status}).`);
       }
@@ -450,9 +450,6 @@ export function PennyChatCore({
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 60);
     } catch (err) {
-      if (tryAppendOfflineChatFallback(questionText)) {
-        return;
-      }
       setChatError(err instanceof Error ? err.message : 'Could not reach Penny right now.');
     } finally {
       setIsAsking(false);
