@@ -18,6 +18,8 @@ import {
   Clock,
   Bookmark,
   ShoppingBag,
+  Scale,
+  AlertCircle,
 } from 'lucide-react';
 import { useAppStore, type CartItem } from '../../store/useStore';
 import {
@@ -30,6 +32,7 @@ import {
   calculateMonthlyShoppingSpend,
   computeFrequentlyPurchasedInsights,
   computeRecentlyPurchasedItems,
+  computeRunningLowItems,
   evaluateBasketTemplate,
   filterAndSortProducts,
   getDueRecurringItems,
@@ -71,10 +74,12 @@ const DEFAULT_FILTERS: ProductFilterOptions = {
 
 export function QuickMartGrid({
   onOpenCart,
+  onOpenComparator,
   initialSection = 'home',
   sectionSignal,
 }: {
   onOpenCart?: () => void;
+  onOpenComparator?: () => void;
   initialSection?: MartSection;
   sectionSignal?: number;
 }) {
@@ -136,6 +141,7 @@ export function QuickMartGrid({
   );
   const remainingMonthlyBudget = totalBudget - monthlySpend;
   const dueRecurring = useMemo(() => getDueRecurringItems(items), [items]);
+  const runningLowItems = useMemo(() => computeRunningLowItems(items), [items]);
   const brokeStatus = useMemo(
     () => computeBrokeModeStatus(transactions, brokeModeConfig),
     [transactions, brokeModeConfig]
@@ -250,6 +256,20 @@ export function QuickMartGrid({
     const count = addDueRecurringToCart();
     if (count > 0) {
       setDueAddedFlash(count);
+      setTimeout(() => setDueAddedFlash(null), 2200);
+    }
+  };
+
+  const handleRestockRunningLow = () => {
+    let added = 0;
+    for (const entry of runningLowItems) {
+      if (entry.item.quantity <= 0) {
+        addToCart(entry.item, 1);
+        added += 1;
+      }
+    }
+    if (added > 0) {
+      setDueAddedFlash(added);
       setTimeout(() => setDueAddedFlash(null), 2200);
     }
   };
@@ -388,6 +408,18 @@ export function QuickMartGrid({
               <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
               <span>Categories</span>
             </button>
+
+            {cartSummary.lineCount > 0 && onOpenComparator && featureSettings.showScanner && (
+              <button
+                type="button"
+                onClick={onOpenComparator}
+                aria-label="Compare current basket across apps"
+                className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
+              >
+                <Scale className="w-3.5 h-3.5 text-[#15966B] shrink-0" />
+                <span className="hidden sm:inline">Compare Basket</span>
+              </button>
+            )}
 
             {cartSummary.lineCount > 0 && (
               <button
@@ -802,42 +834,60 @@ export function QuickMartGrid({
             </div>
           )}
 
-          {/* Due Recurring Quick Action */}
-          {featureSettings.showShopRecurring && dueRecurring.length > 0 && !isSearchingOrFiltering && (
-            <div className="bg-white rounded-2xl p-4 border border-[#365FE8]/25 shadow-card flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center flex-shrink-0">
-                  <Repeat className="w-4 h-4" />
+          {/* Running Low & Due Recurring Quick Action */}
+          {featureSettings.showShopRecurring &&
+            runningLowItems.length > 0 &&
+            !isSearchingOrFiltering && (
+              <div className="bg-white rounded-2xl p-4 border border-[#365FE8]/25 shadow-card flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center flex-shrink-0">
+                    {dueRecurring.length > 0 ? (
+                      <Repeat className="w-4 h-4" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold text-[#151922]">
+                        Running Low ({runningLowItems.length})
+                      </p>
+                      {dueRecurring.length > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-[#FEF6E7] border border-[#F3D8A8] text-[#9E6614] text-[10.5px] font-mono font-semibold">
+                          {dueRecurring.length} due today
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#697386] truncate">
+                      {runningLowItems
+                        .slice(0, 3)
+                        .map((entry) => `${entry.item.name} (${entry.statusLabel})`)
+                        .join(' · ')}
+                      {runningLowItems.length > 3
+                        ? ` +${runningLowItems.length - 3} more`
+                        : ''}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-[#151922] truncate">
-                    {dueRecurring.length} Recurring Item{dueRecurring.length > 1 ? 's' : ''} Due
-                  </p>
-                  <p className="text-xs text-[#697386] truncate">
-                    {dueRecurring
-                      .slice(0, 3)
-                      .map((i) => i.name)
-                      .join(', ')}
-                    {dueRecurring.length > 3 ? ` +${dueRecurring.length - 3}` : ''}
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  data-testid="restock-running-low-btn"
+                  onClick={
+                    dueRecurring.length > 0 ? handleAddDueQuick : handleRestockRunningLow
+                  }
+                  className="px-3.5 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#365FE8] border border-[#365FE8]/25 text-[#365FE8] hover:text-white text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors"
+                >
+                  {dueAddedFlash !== null ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      Added {dueAddedFlash}
+                    </>
+                  ) : (
+                    'Restock Running-Low'
+                  )}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleAddDueQuick}
-                className="px-3.5 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#365FE8] border border-[#365FE8]/25 text-[#365FE8] hover:text-white text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors"
-              >
-                {dueAddedFlash !== null ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    Added {dueAddedFlash}
-                  </>
-                ) : (
-                  'Add Due to Cart'
-                )}
-              </button>
-            </div>
-          )}
+            )}
 
           {isSearchingOrFiltering ? (
             <div className="space-y-3">

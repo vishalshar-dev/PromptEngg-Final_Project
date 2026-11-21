@@ -158,7 +158,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                 aria-label="New category name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="input-field"
+                className="input-field w-full"
               />
               <input
                 type="url"
@@ -166,7 +166,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                 aria-label="Category image URL"
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
-                className="input-field"
+                className="input-field w-full"
               />
             </div>
 
@@ -177,7 +177,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                 aria-label="New category subcategories"
                 value={newSubcategoriesText}
                 onChange={(e) => setNewSubcategoriesText(e.target.value)}
-                className="input-field text-xs"
+                className="input-field w-full text-xs"
               />
             </div>
 

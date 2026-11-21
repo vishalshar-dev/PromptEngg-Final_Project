@@ -98,6 +98,8 @@ html.dark {
   }
 
   .input-field {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     color: var(--text-primary);
@@ -120,6 +122,7 @@ html.dark {
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
     background-color: #365FE8;
     color: #FFFFFF;
     font-weight: 600;
@@ -145,6 +148,7 @@ html.dark {
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     color: var(--text-primary);
@@ -161,7 +165,9 @@ html.dark {
 
 /* Harmonized Dark Mode Surface / Typography Mapping for Existing Semantic Tokens */
 html.dark .bg-white,
-html.dark .bg-\[\#FFFFFF\] {
+html.dark .bg-\[\#FFFFFF\],
+html.dark .bg-\[\#FFFDF9\],
+html.dark .bg-\[\#FBFBFA\] {
   background-color: var(--bg-surface);
 }
 
@@ -171,7 +177,8 @@ html.dark .bg-white\/90 {
 }
 
 html.dark .bg-\[\#F7F8FA\],
-html.dark .bg-\[\#FFFDF7\] {
+html.dark .bg-\[\#FFFDF7\],
+html.dark .bg-\[\#F7F7F5\] {
   background-color: var(--bg-canvas);
 }
 
@@ -182,6 +189,8 @@ html.dark .bg-\[\#EFF2F7\] {
 }
 
 html.dark .bg-\[\#F1F3F6\],
+html.dark .bg-\[\#F1F1EE\],
+html.dark .bg-\[\#EFEFEA\],
 html.dark .bg-\[\#ECEFF4\],
 html.dark .bg-\[\#E7EAF0\],
 html.dark .bg-\[\#D5DBE5\],
@@ -193,6 +202,7 @@ html.dark .hover\:bg-\[\#E7EAF0\]:hover {
 }
 
 html.dark .bg-\[\#EDF2FF\],
+html.dark .bg-\[\#EEF2FE\],
 html.dark .bg-\[\#DCE6FF\],
 html.dark .bg-\[\#DFE8FF\],
 html.dark .hover\:bg-\[\#EDF2FF\]:hover,
@@ -205,6 +215,7 @@ html.dark .bg-\[\#EDF2FF\]\/35 {
 }
 
 html.dark .bg-\[\#E8F7F1\],
+html.dark .bg-\[\#EAF6F1\],
 html.dark .bg-\[\#F5FCF9\] {
   background-color: rgba(34, 197, 139, 0.14);
 }
@@ -213,11 +224,14 @@ html.dark .bg-\[\#FEF6E7\],
 html.dark .bg-\[\#FFF9EE\],
 html.dark .bg-\[\#FDF0D5\],
 html.dark .bg-\[\#FDEBC7\],
+html.dark .bg-\[\#FBF5EA\],
+html.dark .bg-\[\#FCF6EB\],
 html.dark .hover\:bg-\[\#FDEBC7\]:hover {
   background-color: rgba(245, 183, 79, 0.15);
 }
 
 html.dark .bg-\[\#FDECEC\],
+html.dark .bg-\[\#FDF1F1\],
 html.dark .bg-\[\#FFF8F8\],
 html.dark .bg-\[\#FFF9F9\],
 html.dark .bg-\[\#FADADA\],
@@ -228,37 +242,48 @@ html.dark .hover\:bg-\[\#FADADA\]:hover {
 }
 
 html.dark .border-\[\#E7EAF0\],
+html.dark .border-\[\#F1F3F7\],
+html.dark .border-\[\#E9E9E5\],
 html.dark .divide-\[\#E7EAF0\] > :not([hidden]) ~ :not([hidden]) {
   border-color: var(--border-subtle);
 }
 
 html.dark .border-\[\#D5DBE5\],
 html.dark .border-\[\#D5DBE6\],
+html.dark .border-\[\#DCDCD6\],
 html.dark .hover\:border-\[\#D5DBE5\]:hover {
   border-color: var(--border-strong);
 }
 
 html.dark .border-\[\#F3D8A8\],
-html.dark .border-\[\#FDE8C4\] {
+html.dark .border-\[\#FDE8C4\],
+html.dark .border-\[\#ECDAB8\],
+html.dark .border-\[\#ECDCB8\] {
   border-color: rgba(245, 183, 79, 0.32);
 }
 
 html.dark .border-\[\#C8EDE0\],
-html.dark .border-\[\#B7E4D3\] {
+html.dark .border-\[\#B7E4D3\],
+html.dark .border-\[\#C6E6D9\],
+html.dark .border-\[\#C3E3D9\] {
   border-color: rgba(34, 197, 139, 0.32);
 }
 
 html.dark .border-\[\#FAD4D4\],
-html.dark .border-\[\#F6B8B8\] {
+html.dark .border-\[\#F6B8B8\],
+html.dark .border-\[\#F3C5C5\],
+html.dark .border-\[\#F0C6C6\] {
   border-color: rgba(240, 106, 106, 0.34);
 }
 
 html.dark .border-\[\#D4E0FF\],
+html.dark .border-\[\#D3DEFB\],
 html.dark .hover\:border-\[\#D4E0FF\]:hover {
   border-color: rgba(77, 116, 249, 0.38);
 }
 
 html.dark .text-\[\#151922\],
+html.dark .text-\[\#17191F\],
 html.dark .hover\:text-\[\#151922\]:hover {
   color: var(--text-primary);
 }
@@ -269,11 +294,13 @@ html.dark .text-\[\#4F5869\] {
   color: var(--text-tertiary);
 }
 
-html.dark .text-\[\#697386\] {
+html.dark .text-\[\#697386\],
+html.dark .text-\[\#707783\] {
   color: var(--text-secondary);
 }
 
-html.dark .text-\[\#929BAB\] {
+html.dark .text-\[\#929BAB\],
+html.dark .text-\[\#A0A5AD\] {
   color: var(--text-muted);
 }
 
@@ -284,30 +311,40 @@ html.dark .text-\[\#294FCC\] {
 
 html.dark .text-\[\#0D5E43\],
 html.dark .text-\[\#107855\],
-html.dark .text-\[\#15966B\] {
+html.dark .text-\[\#15966B\],
+html.dark .text-\[\#198567\] {
   color: #3DD598;
 }
 
 html.dark .text-\[\#784D0E\],
 html.dark .text-\[\#7D4F0C\],
 html.dark .text-\[\#9E6614\],
-html.dark .text-\[\#C7851F\] {
+html.dark .text-\[\#9A6820\],
+html.dark .text-\[\#C7851F\],
+html.dark .text-\[\#B98435\] {
   color: #F6C15C;
 }
 
 html.dark .text-\[\#B93B3B\],
 html.dark .text-\[\#C23838\],
-html.dark .text-\[\#DE5252\] {
+html.dark .text-\[\#DE5252\],
+html.dark .text-\[\#CE5555\] {
   color: #F47A7A;
 }
 
-/* Recharts dark mode axes & grid legibility */
+/* Recharts dark mode axes, grid & tooltip legibility */
 html.dark .recharts-cartesian-grid line {
   stroke: #232A38;
 }
 
 html.dark .recharts-cartesian-axis-tick-value {
   fill: #9CA6BA;
+}
+
+html.dark .recharts-default-tooltip {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
 }
 
 @layer utilities {

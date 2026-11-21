@@ -83,7 +83,16 @@ export function UpiRemindModal({
     const amt = defaultDir === 'they_pay' ? summary.owedToMe : summary.iOwe;
     setAmountInput(amt > 0 ? String(roundCurrency(amt)) : '');
     setUpiInput(defaultDir === 'they_pay' ? useAppStore.getState().myUpiId : person.upiId ?? '');
-    setNoteInput('CartAudit split settlement');
+    let savedNote = 'CartAudit split settlement';
+    try {
+      const stored = window.localStorage.getItem(`cartaudit_upi_note_${person.id}`);
+      if (stored !== null) {
+        savedNote = stored;
+      }
+    } catch {
+      // Ignore storage access errors
+    }
+    setNoteInput(savedNote);
     setUpiSaveMsg(null);
     setUpiError(null);
     setCopiedType(null);
@@ -381,7 +390,17 @@ export function UpiRemindModal({
                 type="text"
                 maxLength={60}
                 value={noteInput}
-                onChange={(e) => setNoteInput(e.target.value)}
+                onChange={(e) => {
+                  const nextNote = e.target.value;
+                  setNoteInput(nextNote);
+                  if (person) {
+                    try {
+                      window.localStorage.setItem(`cartaudit_upi_note_${person.id}`, nextNote);
+                    } catch {
+                      // Ignore storage access errors
+                    }
+                  }
+                }}
                 placeholder="CartAudit split settlement"
                 className="input-field w-full px-3 py-2 text-xs"
               />

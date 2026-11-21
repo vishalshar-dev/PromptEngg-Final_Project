@@ -633,20 +633,36 @@ export function SplitLedgerDashboard() {
 
                         <div className="flex items-center gap-1.5">
                           {view.remainingAmount > 0 && otherParticipantId && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openSettle({
-                                  personId: otherParticipantId,
-                                  direction:
-                                    view.direction === 'i_owe' ? 'i_pay' : 'they_pay',
-                                  expenseId: expense.id,
-                                })
-                              }
-                              className="text-xs font-semibold bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8] border border-[#D4E0FF] px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
-                            >
-                              Settle
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openUpiRemind({
+                                    personId: otherParticipantId,
+                                    direction:
+                                      view.direction === 'i_owe' ? 'i_pay' : 'they_pay',
+                                  })
+                                }
+                                className="text-xs font-semibold bg-white hover:bg-[#EDF2FF] text-[#151922] hover:text-[#365FE8] border border-[#E7EAF0] hover:border-[#D4E0FF] px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1 whitespace-nowrap"
+                              >
+                                <QrCode className="w-3 h-3" />
+                                <span>UPI / Remind</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openSettle({
+                                    personId: otherParticipantId,
+                                    direction:
+                                      view.direction === 'i_owe' ? 'i_pay' : 'they_pay',
+                                    expenseId: expense.id,
+                                  })
+                                }
+                                className="text-xs font-semibold bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8] border border-[#D4E0FF] px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                Settle
+                              </button>
+                            </>
                           )}
                           <button
                             type="button"

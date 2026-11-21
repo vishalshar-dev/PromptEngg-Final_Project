@@ -211,19 +211,19 @@ export function CheckoutSummary({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[#151922]/35 backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-xl max-h-[92vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-xl max-h-[92vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-2xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7EAF0]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4" strokeWidth={2.2} />
+            <div className="w-8 h-8 rounded-lg bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+              <ShoppingBag className="w-4 h-4" strokeWidth={2} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#151922]">Checkout Summary</h3>
-              <p className="text-xs text-[#697386]">
+              <h3 className="text-[16px] font-semibold text-[#151922]">Checkout Summary</h3>
+              <p className="text-[12px] text-[#697386]">
                 Review itemized basket &amp; record expenditure
               </p>
             </div>
@@ -241,8 +241,8 @@ export function CheckoutSummary({
         {/* Scrollable Content */}
         <div className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
           {/* Itemized List */}
-          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-2xl p-4 space-y-2.5">
-            <p className="text-xs font-semibold text-[#697386]">
+          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-4 space-y-2.5">
+            <p className="text-[12px] font-medium text-[#697386]">
               Items ({formatQuantity(breakdown.totalCount)} units across {breakdown.lines.length}{' '}
               {breakdown.lines.length === 1 ? 'line' : 'lines'})
             </p>
@@ -250,10 +250,10 @@ export function CheckoutSummary({
               {breakdown.lines.map((line) => (
                 <div
                   key={line.lineKey}
-                  className="flex items-center justify-between text-xs gap-2"
+                  className="flex items-center justify-between text-[12.5px] gap-2"
                 >
                   <div className="min-w-0">
-                    <span className="font-semibold text-[#151922]">
+                    <span className="font-medium text-[#151922]">
                       {line.item.name}
                       {line.variantLabel ? ` · ${line.variantLabel}` : ''}
                     </span>
@@ -261,27 +261,27 @@ export function CheckoutSummary({
                       {formatQuantity(line.quantity)} × ₹{formatCurrencyExact(line.price)} ({line.unit})
                     </span>
                   </div>
-                  <span className="font-mono font-bold text-[#151922] tabular-nums flex-shrink-0">
+                  <span className="font-mono font-semibold text-[#151922] tabular-nums flex-shrink-0">
                     ₹{formatCurrencyExact(line.subtotal)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-2 border-t border-[#E7EAF0] flex flex-wrap gap-2 text-xs text-[#697386]">
+            <div className="pt-2 border-t border-[#E7EAF0] flex flex-wrap gap-2 text-[12px] text-[#697386]">
               {categoryEntries.map(([cat, amt], i) => (
                 <span key={cat} className="tabular-nums">
                   {i > 0 && <span className="mr-2 text-[#D5DBE5]" aria-hidden="true">·</span>}
-                  {cat}: <span className="font-mono font-semibold text-[#151922]">₹{formatCurrencyExact(amt)}</span>
+                  {cat}: <span className="font-mono font-medium text-[#151922]">₹{formatCurrencyExact(amt)}</span>
                 </span>
               ))}
             </div>
 
             <div className="pt-2.5 border-t border-[#E7EAF0] flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#697386]">
+              <span className="text-[12px] font-medium text-[#697386]">
                 Cart Total
               </span>
-              <span className="text-xl font-bold font-mono text-[#151922] tabular-nums">
+              <span className="text-[20px] font-semibold font-mono text-[#151922] tabular-nums">
                 ₹{formatCurrencyExact(breakdown.totalAmount)}
               </span>
             </div>
@@ -330,7 +330,7 @@ export function CheckoutSummary({
                       type="text"
                       value={expenseName}
                       onChange={(e) => setExpenseName(e.target.value)}
-                      className="input-field py-2 text-xs"
+                      className="input-field w-full py-2 text-xs"
                     />
                   </div>
                   <div>
@@ -341,7 +341,7 @@ export function CheckoutSummary({
                       aria-label="Paid by"
                       value={paidById}
                       onChange={(e) => setPaidById(e.target.value)}
-                      className="input-field py-2 text-xs"
+                      className="input-field w-full py-2 text-xs"
                     >
                       {allPeopleChoices.map((person) => (
                         <option key={person.id} value={person.id}>
@@ -377,14 +377,14 @@ export function CheckoutSummary({
                           aria-label="New participant name"
                           value={newPersonName}
                           onChange={(e) => setNewPersonName(e.target.value)}
-                          className="input-field py-1.5 text-xs"
+                          className="input-field w-full py-1.5 text-xs"
                         />
                         <input
                           type="text"
                           placeholder="Phone or email (optional)"
                           value={newPersonContact}
                           onChange={(e) => setNewPersonContact(e.target.value)}
-                          className="input-field py-1.5 text-xs"
+                          className="input-field w-full py-1.5 text-xs"
                         />
                       </div>
                       {personError && (

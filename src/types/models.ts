@@ -385,6 +385,8 @@ export interface BackupData {
   purchaseHistory?: PurchaseSession[];
   totalBudget: number;
   sessionBudget: number | null;
+  budgetResetDay?: number;
+  budgetRolloverEnabled?: boolean;
   categoryCaps: CategoryCaps;
   savedAudits: SavedAudit[];
   people?: Person[];

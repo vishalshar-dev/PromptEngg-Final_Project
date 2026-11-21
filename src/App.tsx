@@ -13,10 +13,8 @@ import { SurvivalSandbox } from './components/analytics/SurvivalSandbox';
 import { PennyFloatingCompanion } from './components/penny/PennyFloatingCompanion';
 import { CloudSyncConflictModal } from './components/cloud/CloudSyncConflictModal';
 import { useAppStore } from './store/useStore';
-import {
-  calculateCartTotals,
-  getEffectiveTransactionAmount,
-} from './utils/martEngine';
+import { calculateCartTotals } from './utils/martEngine';
+import { computeBudgetCycleSummary } from './utils/budgetCycle';
 import { resolveSafeSection } from './utils/settingsEngine';
 
 export default function App() {
@@ -36,6 +34,8 @@ export default function App() {
 
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
+  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
+  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const items = useAppStore((s) => s.items);
   const theme = useAppStore((s) => s.theme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
@@ -58,15 +58,19 @@ export default function App() {
     }
   }, [activeSection, featureSettings]);
 
-  const totalSpent = useMemo(
+  const cycleSummary = useMemo(
     () =>
-      transactions.reduce(
-        (sum, tx) => sum + getEffectiveTransactionAmount(tx),
-        0
-      ),
-    [transactions]
+      computeBudgetCycleSummary({
+        transactions,
+        totalBudget,
+        resetDay: budgetResetDay,
+        rolloverEnabled: budgetRolloverEnabled,
+      }),
+    [transactions, totalBudget, budgetResetDay, budgetRolloverEnabled]
   );
-  const remaining = totalBudget - totalSpent;
+  const effectiveBudget = cycleSummary.effectiveBudget;
+  const totalSpent = cycleSummary.currentSpent;
+  const remaining = cycleSummary.remainingBudget;
 
   const cartTotals = useMemo(() => calculateCartTotals(items), [items]);
   const hasCartItems = cartTotals.lineCount > 0;
@@ -112,10 +116,11 @@ export default function App() {
     <AppShell
       activeSection={activeSection}
       onSelectSection={(sec, subTab) => handleNavigate(sec, subTab)}
-      totalBudget={totalBudget}
+      totalBudget={effectiveBudget}
       totalSpent={totalSpent}
       remainingBudget={remaining}
       cartItemCount={cartTotals.lineCount}
+      onOpenCart={() => setCartOpenSignal((n) => n + 1)}
       theme={theme}
       onToggleTheme={toggleTheme}
       featureSettings={featureSettings}
@@ -129,6 +134,7 @@ export default function App() {
           initialSection={shopInitialSection}
           sectionSignal={shopSectionSignal}
           onOpenCart={() => setCartOpenSignal((n) => n + 1)}
+          onOpenComparator={() => handleNavigate('scanner', 'comparator')}
         />
       )}
 
@@ -166,13 +172,16 @@ export default function App() {
       )}
 
       {(activeSection === 'shopping' || hasCartItems) && (
-        <CartDrawer openSignal={cartOpenSignal} />
+        <CartDrawer
+          openSignal={cartOpenSignal}
+          showFloatingBar={activeSection === 'shopping'}
+        />
       )}
 
       {featureSettings.showPennyCompanion && (
         <PennyFloatingCompanion
           activeScreen={activeSection}
-          hasCartBarVisible={activeSection === 'shopping' || hasCartItems}
+          hasCartBarVisible={activeSection === 'shopping' && hasCartItems}
           onNavigate={handleNavigate}
         />
       )}

@@ -850,6 +850,62 @@ export function getDueRecurringItems(items: CartItem[], now: Date = new Date()):
   return items.filter((item) => isRecurringItemDue(item, now));
 }
 
+export interface RunningLowItem {
+  item: CartItem;
+  daysUntilDue: number;
+  statusLabel: string;
+}
+
+export function computeRunningLowItems(
+  items: CartItem[],
+  now: Date = new Date()
+): RunningLowItem[] {
+  const todayMidday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0).getTime();
+  const dayMs = 1000 * 60 * 60 * 24;
+  const results: RunningLowItem[] = [];
+
+  for (const item of items) {
+    if (!item.recurrence) continue;
+    let dueMidday: number;
+    if (item.recurrence.nextDueDate) {
+      const m = item.recurrence.nextDueDate.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) continue;
+      dueMidday = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0).getTime();
+    } else if (item.recurrence.lastAddedAt) {
+      const last = new Date(item.recurrence.lastAddedAt);
+      const interval = getRecurrenceIntervalDays(item.recurrence);
+      dueMidday = new Date(
+        last.getFullYear(),
+        last.getMonth(),
+        last.getDate() + interval,
+        12,
+        0,
+        0,
+        0
+      ).getTime();
+    } else {
+      dueMidday = todayMidday;
+    }
+
+    const daysUntilDue = Math.round((dueMidday - todayMidday) / dayMs);
+    if (daysUntilDue <= 2) {
+      const statusLabel =
+        daysUntilDue < 0
+          ? `Overdue ${Math.abs(daysUntilDue)}d`
+          : daysUntilDue === 0
+            ? 'Due today'
+            : daysUntilDue === 1
+              ? 'Due tomorrow'
+              : `Due in ${daysUntilDue}d`;
+      results.push({ item, daysUntilDue, statusLabel });
+    }
+  }
+
+  return results.sort(
+    (a, b) => a.daysUntilDue - b.daysUntilDue || a.item.name.localeCompare(b.item.name)
+  );
+}
+
 export function getEffectiveTransactionAmount(tx: Transaction): number {
   if (!tx) return 0;
   if (tx.status === 'cancelled') return 0;

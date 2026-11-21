@@ -38,6 +38,10 @@ export function SurvivalSandbox({
   tabSignal?: number;
 }) {
   const [section, setSection] = useState<WarRoomSection>(initialTab);
+  const [prefillLimitCategory, setPrefillLimitCategory] = useState<{
+    category: string;
+    nonce: number;
+  } | null>(null);
 
   useEffect(() => {
     setSection(initialTab);
@@ -257,6 +261,10 @@ export function SurvivalSandbox({
           onDismissAlert={dismissWarRoomAlert}
           onCheckInToday={() => recordDisciplineCheckIn()}
           onReclassify={updateTransactionClassification}
+          onQuickCapCategory={(cat) => {
+            setPrefillLimitCategory({ category: cat, nonce: Date.now() });
+            setSection('limits');
+          }}
         />
       )}
 
@@ -287,6 +295,7 @@ export function SurvivalSandbox({
           dismissedCount={
             alertsResult.allAlerts.length - alertsResult.activeAlerts.length
           }
+          prefillLimitCategory={prefillLimitCategory}
           onUpsertLimit={upsertCategoryLimit}
           onDeleteLimit={deleteCategoryLimit}
           onDismissAlert={dismissWarRoomAlert}

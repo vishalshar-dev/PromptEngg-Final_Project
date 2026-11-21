@@ -49,7 +49,7 @@ export function CartItemRow({
   };
 
   return (
-    <div className="flex items-center gap-3 bg-[#F7F8FA] rounded-xl p-2.5 border border-[#E7EAF0]">
+    <div className="flex items-center gap-3 py-3">
       <ProductVisual
         name={item.name}
         category={item.category}
@@ -61,20 +61,17 @@ export function CartItemRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
-          <p className="text-sm font-bold text-[#151922] truncate">{item.name}</p>
+          <p className="text-[13.5px] font-semibold text-[#151922] truncate">{item.name}</p>
           {variantLabel && (
-            <span className="text-xs font-medium text-[#365FE8] flex-shrink-0">
+            <span className="text-[12px] font-medium text-[#697386] flex-shrink-0">
               · {variantLabel}
             </span>
           )}
         </div>
-        {item.brand && (
-          <p className="text-[11px] text-[#697386] font-medium truncate">{item.brand}</p>
-        )}
 
         {editingPrice ? (
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-xs text-[#365FE8] font-bold">₹</span>
+            <span className="text-[12px] text-[#365FE8] font-semibold">₹</span>
             <input
               type="number"
               min="1"
@@ -89,7 +86,7 @@ export function CartItemRow({
                   setTempPrice('');
                 }
               }}
-              className="w-16 bg-white border border-[#365FE8] rounded px-1.5 py-0.5 text-xs text-[#151922] font-mono outline-none"
+              className="w-16 bg-white border border-[#365FE8] rounded px-1.5 py-0.5 text-[12px] text-[#151922] font-mono outline-none"
               autoFocus
             />
             <button
@@ -98,7 +95,7 @@ export function CartItemRow({
               aria-label="Save price"
               className="w-5 h-5 rounded bg-[#365FE8] text-white flex items-center justify-center"
             >
-              <Check className="w-3 h-3" strokeWidth={3} />
+              <Check className="w-3 h-3" strokeWidth={2.5} />
             </button>
             <button
               type="button"
@@ -107,14 +104,20 @@ export function CartItemRow({
                 setTempPrice('');
               }}
               aria-label="Cancel price edit"
-              className="w-5 h-5 rounded bg-[#E7EAF0] text-[#697386] flex items-center justify-center"
+              className="w-5 h-5 rounded bg-[#F1F3F6] text-[#697386] flex items-center justify-center"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-xs text-[#697386] font-mono tabular-nums">
-            <span>₹{formatCurrencyExact(price)}</span>
+          <div className="flex items-center gap-1.5 text-[12px] text-[#697386] mt-0.5 tabular-nums">
+            {item.brand && (
+              <>
+                <span className="truncate max-w-[90px]">{item.brand}</span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <span className="font-mono">₹{formatCurrencyExact(price)}</span>
             <span aria-hidden="true">·</span>
             <span>{unit}</span>
             <button
@@ -124,7 +127,7 @@ export function CartItemRow({
                 setTempPrice(String(price));
               }}
               aria-label={`Edit price of ${item.name}`}
-              className="text-[#929BAB] hover:text-[#365FE8] p-0.5"
+              className="text-[#929BAB] hover:text-[#151922] p-0.5"
             >
               <Pencil className="w-3 h-3" />
             </button>
@@ -133,14 +136,14 @@ export function CartItemRow({
       </div>
 
       {/* Quantity Controls */}
-      <div className="flex items-center gap-1 bg-white rounded-lg p-1 border border-[#E7EAF0]">
+      <div className="flex items-center gap-1 bg-[#F7F8FA] rounded-lg p-0.5 border border-[#E7EAF0] shrink-0">
         <button
           type="button"
           onClick={() => onUpdateQuantity(item.id, -step, variantId)}
           aria-label={`Decrease ${item.name} quantity`}
-          className="w-6 h-6 rounded-md bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center"
+          className="w-6 h-6 rounded-md hover:bg-white flex items-center justify-center transition-colors"
         >
-          <Minus className="w-3 h-3 text-[#151922]" strokeWidth={2.5} />
+          <Minus className="w-3 h-3 text-[#151922]" strokeWidth={2.2} />
         </button>
 
         {editingQty ? (
@@ -159,7 +162,7 @@ export function CartItemRow({
                 setTempQty('');
               }
             }}
-            className="w-11 bg-white border border-[#365FE8] rounded px-1 py-0.5 text-xs text-[#151922] font-mono text-center outline-none"
+            className="w-11 bg-white border border-[#365FE8] rounded px-1 py-0.5 text-[12px] text-[#151922] font-mono text-center outline-none"
             autoFocus
           />
         ) : (
@@ -170,7 +173,7 @@ export function CartItemRow({
               setTempQty(String(quantity));
             }}
             title="Click to enter exact quantity"
-            className="text-xs font-bold text-[#151922] font-mono min-w-[1.75rem] px-1 text-center tabular-nums hover:text-[#365FE8]"
+            className="text-[12px] font-semibold text-[#151922] font-mono min-w-[1.5rem] px-1 text-center tabular-nums hover:text-[#365FE8]"
           >
             {formatQuantity(quantity)}
           </button>
@@ -180,15 +183,15 @@ export function CartItemRow({
           type="button"
           onClick={() => onUpdateQuantity(item.id, step, variantId)}
           aria-label={`Increase ${item.name} quantity`}
-          className="w-6 h-6 rounded-md bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white flex items-center justify-center transition-colors"
+          className="w-6 h-6 rounded-md bg-white border border-[#E7EAF0] hover:border-[#D5DBE5] text-[#151922] flex items-center justify-center transition-colors"
         >
-          <Plus className="w-3 h-3" strokeWidth={2.5} />
+          <Plus className="w-3 h-3" strokeWidth={2.2} />
         </button>
       </div>
 
       {/* Subtotal + Remove */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-xs font-bold text-[#151922] font-mono tabular-nums w-16 text-right">
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <span className="text-[13px] font-semibold text-[#151922] font-mono tabular-nums w-16 text-right">
           ₹{formatCurrencyExact(subtotal)}
         </span>
         <button

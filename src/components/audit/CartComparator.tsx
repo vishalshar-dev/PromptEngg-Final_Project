@@ -212,13 +212,13 @@ export function CartComparator() {
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-[#B7E4D3] flex items-center justify-between text-xs">
-            <span className="text-[#4F5869] font-medium">
+            <span className="text-[#697386] font-medium">
               {winnerCart.platform}:{' '}
               <span className="font-mono font-bold text-[#151922]">
                 ₹{formatCurrency(winnerResult.total)}
               </span>
             </span>
-            <span className="text-[#4F5869] font-medium">
+            <span className="text-[#697386] font-medium">
               {(winner === 'A' ? cartB : cartA).platform}:{' '}
               <span className="font-mono font-semibold text-[#697386]">
                 ₹{formatCurrency(loserResult.total)}
@@ -295,9 +295,9 @@ function CartColumn({
     <div
       className={`rounded-xl border p-3.5 space-y-2.5 transition-colors ${
         isWinner
-          ? 'border-[#B7E4D3] bg-[#F5FCF9]'
+          ? 'border-[#B7E4D3] bg-[#E8F7F1]/50'
           : isLoser
-          ? 'border-[#F6B8B8] bg-[#FFF9F9]'
+          ? 'border-[#F6B8B8] bg-[#FDECEC]/40'
           : 'border-[#E7EAF0] bg-[#F7F8FA]'
       }`}
     >
@@ -402,7 +402,7 @@ function CartColumn({
                 result.overheadPct > 15
                   ? 'text-[#DE5252]'
                   : result.overheadPct > 5
-                  ? 'text-[#9E6614]'
+                  ? 'text-[#C7851F]'
                   : 'text-[#697386]'
               }`}
             >
@@ -419,7 +419,7 @@ function CartColumn({
           ₹{formatCurrency(result.total)}
         </p>
         {result.extraFees > 0 && (
-          <p className="text-[11px] text-[#9E6614] font-mono mt-0.5">
+          <p className="text-[11px] text-[#C7851F] font-mono mt-0.5">
             +₹{formatCurrency(result.extraFees)} in fees
           </p>
         )}

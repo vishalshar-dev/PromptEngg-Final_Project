@@ -8,9 +8,9 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+    <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-[#E7EAF0]">
       <div className="min-w-0">
-        <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
+        <h1 className="text-[24px] sm:text-[28px] font-semibold tracking-tight text-[#151922] leading-tight">
           {title}
         </h1>
         {description && (
@@ -20,10 +20,10 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
         )}
       </div>
       {actions && (
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {actions}
         </div>
       )}
-    </div>
+    </header>
   );
 }

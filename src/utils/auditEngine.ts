@@ -566,14 +566,14 @@ export const FEE_SEVERITY_STYLES: Record<
   { text: string; bg: string; border: string }
 > = {
   warning: {
-    text: 'text-amber-800',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
+    text: 'text-amber-800 dark:text-amber-300',
+    bg: 'bg-amber-50 dark:bg-amber-500/15',
+    border: 'border-amber-200 dark:border-amber-500/30',
   },
   critical: {
-    text: 'text-red-700',
-    bg: 'bg-red-50',
-    border: 'border-red-200',
+    text: 'text-red-700 dark:text-red-300',
+    bg: 'bg-red-50 dark:bg-red-500/15',
+    border: 'border-red-200 dark:border-red-500/30',
   },
 };
 

@@ -39,6 +39,7 @@ import {
   getCategoryStyle,
 } from '../../utils/categoryStyles';
 import { getEffectiveTransactionAmount } from '../../utils/martEngine';
+import { computeBudgetCycleSummary } from '../../utils/budgetCycle';
 import {
   computeCategoryAnalytics,
   computeRadarBudgetMonitor,
@@ -68,12 +69,17 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const setTotalBudget = useAppStore((s) => s.setTotalBudget);
+  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
+  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const categories = useAppStore((s) => s.categories);
   const categoryCaps = useAppStore((s) => s.categoryCaps);
   const items = useAppStore((s) => s.items);
   const priceObservations = useAppStore((s) => s.priceObservations);
   const theme = useAppStore((s) => s.theme);
   const featureSettings = useAppStore((s) => s.featureSettings);
+  const isSampleDataLoaded = useAppStore((s) => s.isSampleDataLoaded);
+  const loadSampleMonth = useAppStore((s) => s.loadSampleMonth);
+  const clearWorkspaceData = useAppStore((s) => s.clearWorkspaceData);
   const isDark = theme === 'dark';
 
   const [editingBudget, setEditingBudget] = useState(false);
@@ -96,19 +102,21 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
     [transactions]
   );
 
-  const totalSpent = useMemo(
+  const cycleSummary = useMemo(
     () =>
-      transactions.reduce(
-        (sum, tx) => sum + getEffectiveTransactionAmount(tx),
-        0
-      ),
-    [transactions]
+      computeBudgetCycleSummary({
+        transactions,
+        totalBudget,
+        resetDay: budgetResetDay,
+        rolloverEnabled: budgetRolloverEnabled,
+      }),
+    [transactions, totalBudget, budgetResetDay, budgetRolloverEnabled]
   );
 
-  const safeBudget = Math.max(0, totalBudget);
-  const remaining = safeBudget - totalSpent;
-  const utilizationPct =
-    safeBudget > 0 ? Math.round((totalSpent / safeBudget) * 1000) / 10 : 0;
+  const totalSpent = cycleSummary.currentSpent;
+  const safeBudget = cycleSummary.effectiveBudget;
+  const remaining = cycleSummary.remainingBudget;
+  const utilizationPct = cycleSummary.utilizationPct;
 
   const budgetStatus =
     safeBudget > 0 && remaining < 0
@@ -303,7 +311,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
   return (
     <div className="space-y-5">
       {/* Section A: Greeting & Date */}
-      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <p className="text-[12.5px] font-medium text-[#697386]">
             {formattedDate}
@@ -312,16 +320,40 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             {greeting}
           </h1>
         </div>
-        <p className="text-[13px] text-[#697386]">
-          Track your spending, compare baskets, and audit hidden fees in one view.
-        </p>
+        <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
+          {transactions.length === 0 ? (
+            <button
+              type="button"
+              onClick={loadSampleMonth}
+              data-testid="overview-load-sample-btn"
+              className="btn-secondary px-3.5 py-2 text-[12.5px]"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#365FE8]" />
+              <span>Try Sample Month</span>
+            </button>
+          ) : isSampleDataLoaded ? (
+            <button
+              type="button"
+              onClick={clearWorkspaceData}
+              data-testid="overview-clear-sample-btn"
+              className="btn-secondary px-3 py-1.5 text-[12px]"
+            >
+              <X className="w-3.5 h-3.5 text-[#DE5252]" />
+              <span>Sample Month · Clear</span>
+            </button>
+          ) : (
+            <p className="text-[13px] text-[#697386]">
+              Track your spending, compare baskets, and audit hidden fees in one view.
+            </p>
+          )}
+        </div>
       </header>
 
       {/* Section B: Main Budget Overview Card */}
       <section aria-label="Budget overview" className="surface-card p-5 sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[12.5px] font-semibold text-[#697386]">
                 Remaining Balance
               </span>
@@ -330,6 +362,25 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               >
                 {budgetStatus.label}
               </span>
+              <span
+                data-testid="overview-cycle-window"
+                className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#F1F3F6] border border-[#E7EAF0] text-[#697386]"
+              >
+                {cycleSummary.window.label}
+              </span>
+              {budgetRolloverEnabled && cycleSummary.rolloverDelta !== 0 && (
+                <span
+                  data-testid="overview-rollover-badge"
+                  className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
+                    cycleSummary.rolloverDelta > 0
+                      ? 'bg-[#E8F7F1] text-[#0D5E43] border-[#C8EDE0]'
+                      : 'bg-[#FEF6E7] text-[#9E6614] border-[#FDE8C4]'
+                  }`}
+                >
+                  {cycleSummary.rolloverDelta > 0 ? '+' : '-'}₹
+                  {formatCurrency(Math.abs(cycleSummary.rolloverDelta))} rollover
+                </span>
+              )}
             </div>
             <p
               data-testid="overview-remaining-balance"
@@ -339,17 +390,17 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             </p>
             <p className="text-[12.5px] text-[#697386] pt-0.5">
               {activeTransactions.length === 0
-                ? 'No active expenses logged yet this period.'
+                ? 'No active expenses logged yet this cycle.'
                 : `${activeTransactions.length} active expense${
                     activeTransactions.length === 1 ? '' : 's'
-                  } recorded`}
+                  } recorded · ${cycleSummary.window.daysRemaining}d left in cycle`}
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-[#E7EAF0] lg:pl-8">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[12px] font-medium text-[#697386]">
+          <div className="grid grid-cols-3 gap-3 sm:gap-8 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-[#E7EAF0] lg:pl-8">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] sm:text-[12px] font-medium text-[#697386] whitespace-nowrap">
                   Total Budget
                 </span>
                 {!editingBudget && (
@@ -357,16 +408,16 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                     type="button"
                     onClick={handleOpenEditBudget}
                     aria-label="Edit total budget"
-                    className="p-1 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF] transition-colors"
+                    className="p-0.5 sm:p-1 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF] transition-colors shrink-0"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                 )}
               </div>
               {!editingBudget ? (
                 <p
                   data-testid="overview-total-budget"
-                  className="text-[18px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1"
+                  className="text-[16px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 truncate"
                 >
                   ₹{formatCurrency(safeBudget)}
                 </p>
@@ -411,23 +462,23 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               )}
             </div>
 
-            <div>
-              <p className="text-[12px] font-medium text-[#697386]">Spent</p>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-[12px] font-medium text-[#697386] whitespace-nowrap">Spent</p>
               <p
                 data-testid="overview-total-spent"
-                className="text-[18px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1"
+                className="text-[16px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 truncate"
               >
                 ₹{formatCurrencyExact(totalSpent)}
               </p>
             </div>
 
-            <div>
-              <p className="text-[12px] font-medium text-[#697386]">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-[12px] font-medium text-[#697386] whitespace-nowrap">
                 Utilization
               </p>
               <p
                 data-testid="overview-utilization"
-                className="text-[18px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1"
+                className="text-[16px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 truncate"
               >
                 {utilizationPct}%
               </p>
@@ -632,13 +683,25 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               title="No spending activity yet"
               description="Log an expense, scan a receipt, or check out from Shopping to visualize your spending trends."
               action={
-                <button
-                  type="button"
-                  onClick={() => setAddExpenseOpen(true)}
-                  className="btn-primary px-4 py-2 text-[13px]"
-                >
-                  Add First Expense
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAddExpenseOpen(true)}
+                    className="btn-primary px-4 py-2 text-[13px]"
+                  >
+                    Add First Expense
+                  </button>
+                  {transactions.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={loadSampleMonth}
+                      className="btn-secondary px-4 py-2 text-[13px]"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#365FE8]" />
+                      <span>Load Sample Month</span>
+                    </button>
+                  )}
+                </div>
               }
             />
           ) : (

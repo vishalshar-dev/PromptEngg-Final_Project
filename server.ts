@@ -20,7 +20,8 @@ function resolveGeminiApiKey(): string | undefined {
   return (
     process.env.CartAudit_GEMINI_API_KEY?.trim() ||
     process.env.CARTAUDIT_GEMINI_API_KEY?.trim() ||
-    process.env.GEMINI_API_KEY?.trim()
+    process.env.GEMINI_API_KEY?.trim() ||
+    process.env.GOOGLE_API_KEY?.trim()
   );
 }
 
@@ -203,6 +204,7 @@ async function startServer() {
     res.json({
       ok: true,
       geminiConfigured: Boolean(resolveGeminiApiKey()),
+      model: 'gemini-4-hydrogen',
     });
   });
 

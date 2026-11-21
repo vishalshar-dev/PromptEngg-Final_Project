@@ -12,11 +12,11 @@ interface PennyFloatingCompanionProps {
 
 const SCREEN_LABELS: Record<AppSection, string> = {
   overview: 'Overview',
-  shopping: 'Quick Mart',
+  shopping: 'Shopping',
   insights: 'Insights',
   expenses: 'Expenses',
-  scanner: 'Scanner',
-  wellness: 'Wellness',
+  scanner: 'Receipt Scanner',
+  wellness: 'Financial Wellness',
 };
 
 export function PennyFloatingCompanion({
@@ -114,17 +114,22 @@ export function PennyFloatingCompanion({
         <button
           type="button"
           onClick={() => setPennyOpen(true)}
-          aria-label="Open Penny AI assistant"
+          aria-label="Open Penny AI assistant (Cmd or Ctrl + K)"
+          title="Ask Penny (⌘K / Ctrl+K)"
           data-testid="penny-floating-launcher"
           className={`fixed right-4 lg:right-6 z-40 h-11 px-4 rounded-2xl bg-[#365FE8] hover:bg-[#294FCC] text-white shadow-modal flex items-center gap-2 text-xs font-bold whitespace-nowrap transition-all ${
-            hasCartBarVisible ? 'bottom-[100px] lg:bottom-6' : 'bottom-4 lg:bottom-6'
+            hasCartBarVisible ? 'bottom-[84px] lg:bottom-6' : 'bottom-4 lg:bottom-6'
           }`}
         >
           <Sparkles className="w-4 h-4 shrink-0" strokeWidth={2.2} />
           <span>Ask Penny</span>
-          {pennyMessages.length > 0 && (
+          {pennyMessages.length > 0 ? (
             <span className="font-mono tabular-nums text-[11px] text-white/85">
               ({pennyMessages.length})
+            </span>
+          ) : (
+            <span className="hidden sm:inline text-[10px] font-mono text-white/75 ml-0.5">
+              ⌘K
             </span>
           )}
         </button>

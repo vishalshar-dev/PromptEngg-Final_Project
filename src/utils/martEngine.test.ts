@@ -21,6 +21,7 @@ import {
   computeBasketSavedTotal,
   computeFrequentlyPurchasedInsights,
   computeRecentlyPurchasedItems,
+  computeRunningLowItems,
   computeUnitPriceStats,
   evaluateBasketTemplate,
   expandCartLines,
@@ -492,3 +493,44 @@ test('basket template helpers preserve multi-variant & decimal lines, evaluate i
   assert.equal(fromSession[0].quantity, 2);
   assert.equal(fromSession[0].savedPrice, 29);
 });
+
+test('computeRunningLowItems finds recurring items due within 2 days or overdue sorted by urgency', () => {
+  const now = new Date(2026, 10, 21, 12, 0, 0); // 2026-11-21
+  const items: CartItem[] = [
+    {
+      id: 'far',
+      name: 'Rice',
+      price: 100,
+      category: 'Groceries',
+      icon: '🍚',
+      quantity: 0,
+      recurrence: { frequency: 'monthly', nextDueDate: '2026-11-30' },
+    },
+    {
+      id: 'soon',
+      name: 'Bread',
+      price: 45,
+      category: 'Dairy & Bakery',
+      icon: '🍞',
+      quantity: 0,
+      recurrence: { frequency: 'weekly', nextDueDate: '2026-11-23' }, // +2d
+    },
+    {
+      id: 'overdue',
+      name: 'Milk',
+      price: 60,
+      category: 'Dairy & Bakery',
+      icon: '🥛',
+      quantity: 0,
+      recurrence: { frequency: 'daily', nextDueDate: '2026-11-19' }, // -2d
+    },
+  ];
+
+  const runningLow = computeRunningLowItems(items, now);
+  assert.equal(runningLow.length, 2);
+  assert.equal(runningLow[0].item.id, 'overdue');
+  assert.equal(runningLow[0].statusLabel, 'Overdue 2d');
+  assert.equal(runningLow[1].item.id, 'soon');
+  assert.equal(runningLow[1].statusLabel, 'Due in 2d');
+});
+

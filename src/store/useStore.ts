@@ -99,6 +99,10 @@ import {
   inferCategoryFromName,
   resolveCanonicalProduct,
 } from '../utils/priceTrackerEngine';
+import {
+  buildEmptyWorkspacePatch,
+  buildSampleMonthDataset,
+} from '../utils/demoDataEngine';
 
 export type {
   BackupData,
@@ -186,6 +190,8 @@ export interface AppState {
   transactions: Transaction[];
   totalBudget: number;
   sessionBudget: number | null;
+  budgetResetDay: number;
+  budgetRolloverEnabled: boolean;
   isBrokeMode: boolean;
   brokeModeConfig: BrokeModeConfig;
   categoryLimits: CategorySpendingLimit[];
@@ -218,6 +224,7 @@ export interface AppState {
   pennyMessages: PennyChatMessage[];
   pennyProfile: PennyInteractionProfile;
   isPennyOpen: boolean;
+  isSampleDataLoaded: boolean;
 
   myUpiId: string;
   myUpiName: string;
@@ -364,6 +371,8 @@ export interface AppState {
 
   setSessionBudget: (amount: number | null) => void;
   setTotalBudget: (amount: number) => void;
+  setBudgetResetDay: (day: number) => void;
+  setBudgetRolloverEnabled: (enabled: boolean) => void;
   setCategoryCap: (category: string, amount: number | null) => void;
   setFeeFlags: (flags: FeeFlag[]) => void;
   addParsedReceipt: (receipt: ParsedReceipt) => void;
@@ -374,6 +383,8 @@ export interface AppState {
   removeSavedAudit: (id: string) => void;
   clearSavedAudits: () => void;
   importBackupData: (data: BackupData) => void;
+  loadSampleMonth: () => void;
+  clearWorkspaceData: () => void;
 }
 
 function getUserShareFromParticipants(participants: ExpenseParticipantShare[]): number {
@@ -469,6 +480,8 @@ export const useAppStore = create<AppState>()(
       transactions: [],
       totalBudget: 5000,
       sessionBudget: null,
+      budgetResetDay: 1,
+      budgetRolloverEnabled: false,
       isBrokeMode: false,
       brokeModeConfig: { ...DEFAULT_BROKE_MODE_CONFIG },
       categoryLimits: [],
@@ -501,6 +514,7 @@ export const useAppStore = create<AppState>()(
       pennyMessages: [],
       pennyProfile: { ...DEFAULT_PENNY_PROFILE },
       isPennyOpen: false,
+      isSampleDataLoaded: false,
 
       myUpiId: '',
       myUpiName: '',
@@ -2529,6 +2543,13 @@ export const useAppStore = create<AppState>()(
 
       setSessionBudget: (amount) => set({ sessionBudget: amount }),
       setTotalBudget: (amount) => set({ totalBudget: amount }),
+      setBudgetResetDay: (day) =>
+        set({
+          budgetResetDay: Number.isFinite(day)
+            ? Math.min(28, Math.max(1, Math.round(day)))
+            : 1,
+        }),
+      setBudgetRolloverEnabled: (enabled) => set({ budgetRolloverEnabled: Boolean(enabled) }),
       setCategoryCap: (category, amount) =>
         set((state) => {
           const nextCaps = { ...state.categoryCaps, [category]: amount };
@@ -2639,6 +2660,11 @@ export const useAppStore = create<AppState>()(
             triggeredPriceAlerts: [],
             totalBudget: data.totalBudget,
             sessionBudget: data.sessionBudget,
+            budgetResetDay:
+              typeof data.budgetResetDay === 'number'
+                ? Math.min(28, Math.max(1, Math.round(data.budgetResetDay)))
+                : 1,
+            budgetRolloverEnabled: Boolean(data.budgetRolloverEnabled),
             categoryCaps: data.categoryCaps,
             savedAudits: data.savedAudits,
             people: data.people ?? [],
@@ -2669,6 +2695,37 @@ export const useAppStore = create<AppState>()(
               typeof data.myUpiId === 'string' ? data.myUpiId.trim().toLowerCase() : undefined,
             myUpiName:
               typeof data.myUpiName === 'string' ? data.myUpiName.trim() : undefined,
+            isSampleDataLoaded: false,
+          };
+        }),
+
+      loadSampleMonth: () =>
+        set((state) => {
+          const sample = buildSampleMonthDataset(new Date(), state.items);
+          return {
+            ...sample,
+            items: state.items.map((item) => ({
+              ...item,
+              quantity: 0,
+              variantQuantities: undefined,
+            })),
+            feeFlags: [],
+            parsedReceipts: [],
+            dismissedWarRoomAlerts: [],
+            lastCheckoutMeta: null,
+          };
+        }),
+
+      clearWorkspaceData: () =>
+        set((state) => {
+          const empty = buildEmptyWorkspacePatch();
+          return {
+            ...empty,
+            items: state.items.map((item) => ({
+              ...item,
+              quantity: 0,
+              variantQuantities: undefined,
+            })),
           };
         }),
     }),
@@ -2680,10 +2737,13 @@ export const useAppStore = create<AppState>()(
         featureSettings: state.featureSettings,
         pennyMessages: state.pennyMessages.slice(-40),
         pennyProfile: state.pennyProfile,
+        isSampleDataLoaded: state.isSampleDataLoaded,
         myUpiId: state.myUpiId,
         myUpiName: state.myUpiName,
         totalBudget: state.totalBudget,
         sessionBudget: state.sessionBudget,
+        budgetResetDay: state.budgetResetDay,
+        budgetRolloverEnabled: state.budgetRolloverEnabled,
         isBrokeMode: state.isBrokeMode,
         brokeModeConfig: state.brokeModeConfig,
         categoryLimits: state.categoryLimits,
@@ -2821,6 +2881,11 @@ export const useAppStore = create<AppState>()(
           featureSettings: sanitizeFeatureSettings(state.featureSettings),
           pennyMessages: sanitizePennyMessages(state.pennyMessages),
           pennyProfile: sanitizePennyProfile(state.pennyProfile),
+          budgetResetDay:
+            typeof state.budgetResetDay === 'number' && Number.isFinite(state.budgetResetDay)
+              ? Math.min(28, Math.max(1, Math.round(state.budgetResetDay)))
+              : 1,
+          budgetRolloverEnabled: Boolean(state.budgetRolloverEnabled),
         };
       },
     }

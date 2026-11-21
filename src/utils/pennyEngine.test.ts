@@ -8,7 +8,9 @@ import {
   computeUpcomingCommitments,
   describePennyStyle,
   evolvePennyProfile,
+  groupCommitmentsAgenda,
   normalizePennyProposals,
+  parseQuickExpenseLocally,
   sanitizePennyProfile,
 } from './pennyEngine';
 import { SELF_PERSON_ID, type CartItem, type Person, type SharedExpense, type Transaction } from '../types/models';
@@ -332,4 +334,50 @@ test('normalizePennyProposals filters invalid actions and resolves real catalog 
   assert.equal(proposals[2].type, 'toggle_broke_mode');
   assert.equal(proposals[2].brokeModeEnabled, true);
 });
+
+test('groupCommitmentsAgenda buckets commitments into Overdue/Today, Next 7 Days, and Later', () => {
+  const summary = computeUpcomingCommitments({
+    items: [
+      ...sampleItems,
+      {
+        id: 'gas-1',
+        name: 'Cooking Gas',
+        price: 900,
+        category: 'Utilities & Bills',
+        icon: '🔥',
+        quantity: 0,
+        recurrence: { frequency: 'monthly', nextDueDate: '2026-12-08' }, // +17d
+      },
+    ],
+    people,
+    sharedExpenses,
+    settlements: [],
+    transactions,
+    totalBudget: 5000,
+    now: NOW,
+  });
+
+  const grouped = groupCommitmentsAgenda(summary.commitments);
+  assert.equal(grouped.overdueOrToday.length, 2); // overdue milk + split payable with Rahul
+  assert.equal(grouped.next7Days.length, 1); // fiber broadband in 5d
+  assert.equal(grouped.later.length, 1); // cooking gas in 17d
+});
+
+test('parseQuickExpenseLocally parses amounts, inferred categories, and relative dates cleanly', () => {
+  const cats = ['Groceries', 'Snacks & Beverages', 'Fuel & Transportation', 'Utilities & Bills'];
+  const p1 = parseQuickExpenseLocally('coffee 180', cats, '2026-11-21');
+  assert.ok(p1?.expense);
+  assert.equal(p1.expense.amount, 180);
+  assert.equal(p1.expense.category, 'Snacks & Beverages');
+  assert.equal(p1.expense.date, '2026-11-21');
+
+  const p2 = parseQuickExpenseLocally('spent ₹450 on petrol yesterday', cats, '2026-11-21');
+  assert.ok(p2?.expense);
+  assert.equal(p2.expense.amount, 450);
+  assert.equal(p2.expense.category, 'Fuel & Transportation');
+  assert.equal(p2.expense.date, '2026-11-20');
+
+  assert.equal(parseQuickExpenseLocally('just some text without numbers', cats, '2026-11-21'), null);
+});
+
 

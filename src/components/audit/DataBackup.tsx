@@ -32,6 +32,8 @@ export function DataBackup() {
   const dismissedWarRoomAlerts = useAppStore((s) => s.dismissedWarRoomAlerts);
   const disciplineCheckIns = useAppStore((s) => s.disciplineCheckIns);
   const theme = useAppStore((s) => s.theme);
+  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
+  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const featureSettings = useAppStore((s) => s.featureSettings);
   const pennyMessages = useAppStore((s) => s.pennyMessages);
   const pennyProfile = useAppStore((s) => s.pennyProfile);
@@ -61,6 +63,8 @@ export function DataBackup() {
       priceObservations,
       priceAlerts,
       totalBudget,
+      budgetResetDay,
+      budgetRolloverEnabled,
       sessionBudget,
       categoryCaps,
       savedAudits,

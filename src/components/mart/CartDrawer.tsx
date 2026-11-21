@@ -1,5 +1,15 @@
 import { ShoppingCart } from './ShoppingCart';
 
-export function CartDrawer({ openSignal }: { openSignal?: number }) {
-  return <ShoppingCart externalOpenRequest={openSignal} />;
+interface CartDrawerProps {
+  openSignal?: number;
+  showFloatingBar?: boolean;
+}
+
+export function CartDrawer({ openSignal, showFloatingBar = true }: CartDrawerProps) {
+  return (
+    <ShoppingCart
+      externalOpenRequest={openSignal}
+      showFloatingBar={showFloatingBar}
+    />
+  );
 }

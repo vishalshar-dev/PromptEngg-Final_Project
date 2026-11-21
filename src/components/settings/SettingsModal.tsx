@@ -19,10 +19,15 @@ import {
   RefreshCw,
   AlertTriangle,
   QrCode,
+  Calendar,
+  Download,
+  FileJson,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { useCloudSync } from '../../contexts/CloudSyncContext';
 import { isValidUpiId, normalizeUpiId } from '../../utils/upiEngine';
+import { getActiveBudgetCycleWindow } from '../../utils/budgetCycle';
+import { downloadTextReport, generateReportText } from '../../utils/reportGenerator';
 import type {
   FeatureSettings,
   PennyTonePreference,
@@ -178,11 +183,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const myUpiId = useAppStore((s) => s.myUpiId);
   const myUpiName = useAppStore((s) => s.myUpiName);
   const setMyUpiProfile = useAppStore((s) => s.setMyUpiProfile);
+  const isSampleDataLoaded = useAppStore((s) => s.isSampleDataLoaded);
+  const loadSampleMonth = useAppStore((s) => s.loadSampleMonth);
+  const clearWorkspaceData = useAppStore((s) => s.clearWorkspaceData);
+  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
+  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
+  const setBudgetResetDay = useAppStore((s) => s.setBudgetResetDay);
+  const setBudgetRolloverEnabled = useAppStore((s) => s.setBudgetRolloverEnabled);
 
   const [upiIdDraft, setUpiIdDraft] = useState(myUpiId);
   const [upiNameDraft, setUpiNameDraft] = useState(myUpiName);
   const [upiSavedStatus, setUpiSavedStatus] = useState<string | null>(null);
   const [upiValidationError, setUpiValidationError] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const [confirmClearData, setConfirmClearData] = useState(false);
 
   const {
     user,
@@ -204,6 +218,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setUpiNameDraft(state.myUpiName);
     setUpiSavedStatus(null);
     setUpiValidationError(null);
+    setConfirmClearData(false);
   }, [isOpen]);
 
   useEffect(() => {
@@ -250,7 +265,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 Workspace Settings &amp; Theme
               </h2>
               <p className="text-xs text-[#697386] truncate">
-                Switch between White &amp; Black themes or hide tools to keep your workspace minimal.
+                Switch between Light &amp; Dark themes, budget cycles, or module visibility.
               </p>
             </div>
           </div>
@@ -400,14 +415,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
           </section>
 
-          {/* 1. Theme Selector (White vs Black) */}
+          {/* 1. Theme Selector (Light vs Dark) */}
           <section className="space-y-2.5" aria-label="Theme selection">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#697386]">
                 Appearance Theme
               </h3>
               <span className="text-xs font-mono font-semibold text-[#365FE8]">
-                {theme === 'dark' ? 'Black Theme' : 'White Theme'}
+                {theme === 'dark' ? 'Dark Theme' : 'Light Theme'}
               </span>
             </div>
 
@@ -428,13 +443,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-[#151922]">White Theme</span>
+                    <span className="text-sm font-bold text-[#151922]">Light Theme</span>
                     {theme === 'light' && (
                       <Check className="w-4 h-4 text-[#365FE8] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
                   <p className="text-[11.5px] text-[#697386] mt-0.5">
-                    Bright studio white surfaces &amp; crisp slate text.
+                    Crisp bright surfaces &amp; high-contrast slate typography.
                   </p>
                 </div>
               </button>
@@ -455,17 +470,74 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-[#151922]">Black Theme</span>
+                    <span className="text-sm font-bold text-[#151922]">Dark Theme</span>
                     {theme === 'dark' && (
                       <Check className="w-4 h-4 text-[#365FE8] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
                   <p className="text-[11.5px] text-[#697386] mt-0.5">
-                    Deep obsidian black canvas for low-glare clarity.
+                    Deep obsidian canvas for low-glare clarity.
                   </p>
                 </div>
               </button>
             </div>
+          </section>
+
+          {/* 1.5 Budget Cycle & Rollover */}
+          <section className="surface-subtle p-4 space-y-3" aria-label="Budget cycle settings">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#365FE8] shrink-0" />
+                <div>
+                  <h3 className="text-xs font-bold text-[#151922]">
+                    Monthly Budget Cycle &amp; Rollover
+                  </h3>
+                  <p className="text-[11px] text-[#697386]">
+                    Match your salary date so budget balances reset when you get paid.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono font-semibold text-[#365FE8]">
+                {getActiveBudgetCycleWindow(budgetResetDay).label}
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-[#E7EAF0]">
+              <label htmlFor="budget-reset-day-select" className="text-[12.5px] font-semibold text-[#151922]">
+                Cycle Reset Day
+              </label>
+              <select
+                id="budget-reset-day-select"
+                data-testid="settings-budget-reset-day"
+                value={budgetResetDay}
+                onChange={(e) => setBudgetResetDay(Number(e.target.value))}
+                className="input-field px-3 py-1.5 text-xs font-mono font-semibold sm:w-48"
+              >
+                {Array.from({ length: 28 }, (_, idx) => idx + 1).map((day) => {
+                  const suffix =
+                    day === 1 || day === 21
+                      ? 'st'
+                      : day === 2 || day === 22
+                        ? 'nd'
+                        : day === 3 || day === 23
+                          ? 'rd'
+                          : 'th';
+                  return (
+                    <option key={day} value={day}>
+                      {day}
+                      {suffix} of every month
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <SwitchRow
+              label="Carry Unused Budget / Deficit (Rollover)"
+              description="Adjusts your current cycle budget by last cycle's surplus or overspend."
+              checked={budgetRolloverEnabled}
+              onToggle={() => setBudgetRolloverEnabled(!budgetRolloverEnabled)}
+            />
           </section>
 
           {/* 2. Quick Layout Simplicity Presets */}
@@ -762,6 +834,163 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   onToggle={() => toggleKey(item.key)}
                 />
               ))}
+            </div>
+          </section>
+
+          {/* 7. Workspace Data, Backup & Export */}
+          <section className="surface-subtle p-4 space-y-3" aria-label="Workspace data, export and backup">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <FileJson className="w-4 h-4 text-[#365FE8]" />
+                <div>
+                  <h3 className="text-xs font-bold text-[#151922]">
+                    Workspace Data, Backup &amp; Export
+                  </h3>
+                  <p className="text-[11px] text-[#697386]">
+                    Explore with a realistic Indian budget month, clear your workspace, or export backups.
+                  </p>
+                </div>
+              </div>
+              {exportStatus && (
+                <span className="text-[11px] font-semibold text-[#15966B]">{exportStatus}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                data-testid="settings-load-sample"
+                onClick={() => {
+                  loadSampleMonth();
+                  setConfirmClearData(false);
+                  setExportStatus('Sample month loaded');
+                  setTimeout(() => setExportStatus(null), 2500);
+                }}
+                className="btn-secondary px-3.5 py-2 text-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#365FE8]" />
+                <span>{isSampleDataLoaded ? 'Reload Sample Month' : 'Load Sample Month'}</span>
+              </button>
+
+              {!confirmClearData ? (
+                <button
+                  type="button"
+                  data-testid="settings-clear-data"
+                  onClick={() => setConfirmClearData(true)}
+                  className="btn-secondary px-3.5 py-2 text-xs text-[#C23838]"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-[#DE5252]" />
+                  <span>Clear Workspace Data</span>
+                </button>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 rounded-xl border border-[#FAD4D4] bg-[#FDECEC] px-2.5 py-1">
+                  <span className="text-[11px] font-semibold text-[#B93B3B]">
+                    Reset all entries?
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="settings-confirm-clear-data"
+                    onClick={() => {
+                      clearWorkspaceData();
+                      setConfirmClearData(false);
+                      setExportStatus('Workspace cleared');
+                      setTimeout(() => setExportStatus(null), 2500);
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-[#DE5252] text-white text-[11px] font-semibold hover:bg-[#C23838]"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClearData(false)}
+                    className="px-2 py-0.5 rounded-lg bg-white text-[#697386] text-[11px] font-semibold border border-[#E7EAF0]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                data-testid="settings-export-json"
+                onClick={() => {
+                  const st = useAppStore.getState();
+                  const payload = {
+                    version: 1,
+                    exportedAt: new Date().toISOString(),
+                    transactions: st.transactions,
+                    customItems: st.items,
+                    categories: st.categories,
+                    categoryConfigs: st.categoryConfigs,
+                    priceHistory: st.priceHistory,
+                    purchaseHistory: st.purchaseHistory,
+                    totalBudget: st.totalBudget,
+                    sessionBudget: st.sessionBudget,
+                    budgetResetDay: st.budgetResetDay,
+                    budgetRolloverEnabled: st.budgetRolloverEnabled,
+                    categoryCaps: st.categoryCaps,
+                    savedAudits: st.savedAudits,
+                    people: st.people,
+                    sharedExpenses: st.sharedExpenses,
+                    settlements: st.settlements,
+                    priceObservations: st.priceObservations,
+                    priceAlerts: st.priceAlerts,
+                    isBrokeMode: st.isBrokeMode,
+                    brokeModeConfig: st.brokeModeConfig,
+                    categoryLimits: st.categoryLimits,
+                    warRoomChallenges: st.warRoomChallenges,
+                    warRoomTargets: st.warRoomTargets,
+                    dismissedWarRoomAlerts: st.dismissedWarRoomAlerts,
+                    disciplineCheckIns: st.disciplineCheckIns,
+                    basketTemplates: st.basketTemplates,
+                    basketTemplatesSeeded: st.basketTemplatesSeeded,
+                    theme: st.theme,
+                    featureSettings: st.featureSettings,
+                    pennyMessages: st.pennyMessages,
+                    pennyProfile: st.pennyProfile,
+                    myUpiId: st.myUpiId,
+                    myUpiName: st.myUpiName,
+                  };
+                  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+                    type: 'application/json',
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `cartaudit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                  setExportStatus('JSON backup downloaded');
+                  setTimeout(() => setExportStatus(null), 2500);
+                }}
+                className="btn-secondary px-3.5 py-2 text-xs"
+              >
+                <FileJson className="w-3.5 h-3.5 text-[#365FE8]" />
+                <span>Download JSON Backup</span>
+              </button>
+              <button
+                type="button"
+                data-testid="settings-export-txt"
+                onClick={() => {
+                  const st = useAppStore.getState();
+                  const text = generateReportText({
+                    items: st.items,
+                    transactions: st.transactions,
+                    totalBudget: st.totalBudget,
+                    sessionBudget: st.sessionBudget,
+                    parsedReceipts: st.parsedReceipts,
+                    feeFlags: st.feeFlags,
+                  });
+                  downloadTextReport(text);
+                  setExportStatus('TXT report downloaded');
+                  setTimeout(() => setExportStatus(null), 2500);
+                }}
+                className="btn-secondary px-3.5 py-2 text-xs"
+              >
+                <Download className="w-3.5 h-3.5 text-[#15966B]" />
+                <span>Export Budget Report (.TXT)</span>
+              </button>
             </div>
           </section>
         </div>

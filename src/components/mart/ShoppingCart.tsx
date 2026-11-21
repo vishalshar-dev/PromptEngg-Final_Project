@@ -18,9 +18,13 @@ import { CheckoutSummary } from './CheckoutSummary';
 
 interface ShoppingCartProps {
   externalOpenRequest?: number;
+  showFloatingBar?: boolean;
 }
 
-export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
+export function ShoppingCart({
+  externalOpenRequest,
+  showFloatingBar = true,
+}: ShoppingCartProps) {
   const items = useAppStore((s) => s.items);
   const categoryConfigs = useAppStore((s) => s.categoryConfigs);
   const updateQuantity = useAppStore((s) => s.updateQuantity);
@@ -84,8 +88,8 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
         />
       )}
 
-      {/* Compact Sticky Cart Bar (only visible when cart has items or right after checkout) */}
-      {(hasItems || doneBanner) && (
+      {/* Compact Sticky Cart Bar (only visible on Shopping or when explicitly expanded / after checkout) */}
+      {(hasItems || doneBanner) && (showFloatingBar || expanded || doneBanner) && (
         <div
           className={`fixed bottom-4 lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 animate-slide-up ${
             expanded ? 'z-50' : 'z-40'
@@ -100,15 +104,15 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
               : 'border-[#E7EAF0]'
           }`}
         >
-          <div className="px-4 py-3">
-            <div className="flex items-center justify-between gap-2.5">
+          <div className="px-3 sm:px-4 py-3">
+            <div className="flex items-center justify-between gap-2 sm:gap-2.5">
               {/* Left Cart Summary Button */}
               <button
                 type="button"
                 aria-label={hasItems ? 'Toggle cart items' : 'Cart is empty'}
                 onClick={() => setExpanded((v) => (hasItems ? !v : v))}
                 disabled={!hasItems}
-                className="flex items-center gap-3 min-w-0 flex-1"
+                className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1"
               >
                 <div
                   className={`relative w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${
@@ -129,12 +133,20 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                 </div>
 
                 <div className="text-left min-w-0">
-                  <p className="text-xs text-[#697386] font-medium truncate">
-                    {doneBanner
-                      ? 'Recorded to Budget'
-                      : hasItems
-                      ? `${uniqueProducts} item${uniqueProducts > 1 ? 's' : ''} · ${formatQuantity(totalCount)} qty`
-                      : 'Empty Cart'}
+                  <p className="text-xs text-[#697386] font-medium whitespace-nowrap">
+                    {doneBanner ? (
+                      'Recorded to Budget'
+                    ) : hasItems ? (
+                      <>
+                        {uniqueProducts} item{uniqueProducts > 1 ? 's' : ''}
+                        <span className="hidden sm:inline">
+                          {' '}
+                          · {formatQuantity(totalCount)} qty
+                        </span>
+                      </>
+                    ) : (
+                      'Empty Cart'
+                    )}
                   </p>
                   <p
                     className={`text-base font-bold font-mono tabular-nums leading-tight ${
@@ -151,7 +163,7 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
 
                 {hasItems && (
                   <ChevronUp
-                    className={`w-4 h-4 text-[#697386] transition-transform ${
+                    className={`w-4 h-4 text-[#697386] transition-transform shrink-0 ${
                       expanded ? 'rotate-180' : ''
                     }`}
                     strokeWidth={2.2}
@@ -160,13 +172,13 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
               </button>
 
               {/* Right CTA Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {hasItems && (
                   <button
                     type="button"
                     onClick={() => openCheckout(true)}
                     aria-label="Split and checkout cart"
-                    className="btn-secondary px-3 py-2 text-xs"
+                    className="btn-secondary px-2.5 sm:px-3 py-2 text-xs"
                   >
                     <Users className="w-3.5 h-3.5 text-[#365FE8]" strokeWidth={2.2} />
                     Split
@@ -176,7 +188,7 @@ export function ShoppingCart({ externalOpenRequest }: ShoppingCartProps) {
                   type="button"
                   onClick={() => openCheckout(false)}
                   disabled={!hasItems}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
                     hasItems
                       ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
                       : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'

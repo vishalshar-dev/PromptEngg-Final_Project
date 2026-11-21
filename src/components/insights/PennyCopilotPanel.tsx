@@ -17,6 +17,7 @@ import {
   buildSmartActionNudges,
   computeMonthlyDigest,
   computeUpcomingCommitments,
+  groupCommitmentsAgenda,
   type PennyActionType,
 } from '../../utils/pennyEngine';
 import { PennyChatCore } from '../penny/PennyChatCore';
@@ -70,6 +71,11 @@ export function PennyCopilotPanel({
         totalBudget,
       }),
     [items, people, sharedExpenses, settlements, transactions, totalBudget]
+  );
+
+  const groupedCommitments = useMemo(
+    () => groupCommitmentsAgenda(commitmentsSummary.commitments),
+    [commitmentsSummary.commitments]
   );
 
   const smartNudges = useMemo(
@@ -329,56 +335,86 @@ export function PennyCopilotPanel({
                 )}
               </div>
             ) : (
-              <div className="divide-y divide-[#E7EAF0]">
-                {commitmentsSummary.commitments.slice(0, 6).map((c) => (
-                  <div
-                    key={c.id}
-                    className="py-2.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-[#151922] truncate">
-                        {c.title}
+              <div className="space-y-4">
+                {[
+                  {
+                    key: 'overdue',
+                    label: 'Overdue / Today',
+                    badgeTone: 'text-[#9E6614]',
+                    rows: groupedCommitments.overdueOrToday,
+                  },
+                  {
+                    key: 'next7',
+                    label: 'Next 7 Days',
+                    badgeTone: 'text-[#365FE8]',
+                    rows: groupedCommitments.next7Days,
+                  },
+                  {
+                    key: 'later',
+                    label: 'Later (8–30 Days)',
+                    badgeTone: 'text-[#697386]',
+                    rows: groupedCommitments.later,
+                  },
+                ]
+                  .filter((bucket) => bucket.rows.length > 0)
+                  .map((bucket) => (
+                    <div key={bucket.key} className="space-y-1.5">
+                      <p className={`text-[11px] font-bold uppercase tracking-wider ${bucket.badgeTone}`}>
+                        {bucket.label} ({bucket.rows.length})
                       </p>
-                      <p className="text-xs text-[#697386] truncate">
-                        {c.kind === 'split_payable'
-                          ? 'Shared Split'
-                          : c.kind === 'recurring_bill'
-                            ? 'Recurring Bill'
-                            : 'Scheduled Restock'}{' '}
-                        · {c.subtitle}
-                        {c.dueDateKey ? ` · ${c.dueDateKey}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-[13px] font-bold font-mono tabular-nums text-[#151922]">
-                        ₹{formatCurrencyExact(c.amount)}
-                      </span>
-                      {c.kind === 'split_payable' ? (
-                        onOpenExpenses && (
-                          <button
-                            type="button"
-                            onClick={onOpenExpenses}
-                            className="btn-secondary px-2.5 py-1 text-xs whitespace-nowrap"
+                      <div className="divide-y divide-[#E7EAF0] border border-[#E7EAF0] rounded-xl px-3 bg-[#F7F8FA]">
+                        {bucket.rows.map((c) => (
+                          <div
+                            key={c.id}
+                            className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                           >
-                            Settle
-                          </button>
-                        )
-                      ) : (
-                        c.itemId && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              executeSuggestedAction('quick_reorder_item', c.itemId, c.variantId)
-                            }
-                            className="btn-secondary px-2.5 py-1 text-xs whitespace-nowrap"
-                          >
-                            Add to Cart
-                          </button>
-                        )
-                      )}
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-semibold text-[#151922] truncate">
+                                {c.title}
+                              </p>
+                              <p className="text-xs text-[#697386] truncate">
+                                {c.kind === 'split_payable'
+                                  ? 'Shared Split'
+                                  : c.kind === 'recurring_bill'
+                                    ? 'Recurring Bill'
+                                    : 'Scheduled Restock'}{' '}
+                                · {c.subtitle}
+                                {c.dueDateKey ? ` · ${c.dueDateKey}` : ''}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="text-[13px] font-bold font-mono tabular-nums text-[#151922]">
+                                ₹{formatCurrencyExact(c.amount)}
+                              </span>
+                              {c.kind === 'split_payable' ? (
+                                onOpenExpenses && (
+                                  <button
+                                    type="button"
+                                    onClick={onOpenExpenses}
+                                    className="btn-secondary px-2.5 py-1 text-xs whitespace-nowrap"
+                                  >
+                                    Settle
+                                  </button>
+                                )
+                              ) : (
+                                c.itemId && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      executeSuggestedAction('quick_reorder_item', c.itemId, c.variantId)
+                                    }
+                                    className="btn-secondary px-2.5 py-1 text-xs whitespace-nowrap"
+                                  >
+                                    Add to Cart
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>

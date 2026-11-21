@@ -1449,3 +1449,108 @@ export function normalizePennyProposals(
   return result;
 }
 
+export interface GroupedCommitmentsAgenda {
+  overdueOrToday: UpcomingCommitmentItem[];
+  next7Days: UpcomingCommitmentItem[];
+  later: UpcomingCommitmentItem[];
+}
+
+export function groupCommitmentsAgenda(
+  commitments: UpcomingCommitmentItem[]
+): GroupedCommitmentsAgenda {
+  const overdueOrToday: UpcomingCommitmentItem[] = [];
+  const next7Days: UpcomingCommitmentItem[] = [];
+  const later: UpcomingCommitmentItem[] = [];
+
+  for (const item of commitments) {
+    if (item.kind === 'split_payable' || (item.daysUntilDue ?? 0) <= 0) {
+      overdueOrToday.push(item);
+    } else if ((item.daysUntilDue ?? 0) <= 7) {
+      next7Days.push(item);
+    } else if ((item.daysUntilDue ?? 0) <= 30) {
+      later.push(item);
+    }
+  }
+
+  return { overdueOrToday, next7Days, later };
+}
+
+const OFFLINE_CATEGORY_KEYWORDS: Array<{ keywords: string[]; hints: string[] }> = [
+  { keywords: ['milk', 'curd', 'paneer', 'cheese', 'butter', 'bread', 'egg'], hints: ['dairy', 'grocer', 'breakfast'] },
+  { keywords: ['coffee', 'tea', 'chai', 'snack', 'chips', 'burger', 'pizza', 'cake', 'soda', 'cola', 'juice', 'chocolate'], hints: ['snack', 'junk', 'beverage', 'dining', 'food'] },
+  { keywords: ['petrol', 'diesel', 'fuel', 'uber', 'ola', 'cab', 'auto', 'metro', 'bus', 'toll', 'parking'], hints: ['fuel', 'transport', 'travel'] },
+  { keywords: ['wifi', 'broadband', 'internet', 'electricity', 'power', 'water', 'gas', 'recharge', 'bill', 'rent', 'netflix', 'spotify'], hints: ['bill', 'utilit', 'mobile', 'internet', 'entertainment'] },
+  { keywords: ['rice', 'atta', 'dal', 'oil', 'sugar', 'salt', 'onion', 'tomato', 'potato', 'fruit', 'apple', 'banana', 'vegetable', 'grocery', 'groceries'], hints: ['grocer', 'fruit', 'vegetable'] },
+  { keywords: ['medicine', 'pharmacy', 'doctor', 'clinic', 'tablet', 'vitamin'], hints: ['health', 'medical', 'wellness'] },
+];
+
+export function parseQuickExpenseLocally(
+  rawText: string,
+  categories: string[],
+  todayDate: string = toLocalDateKey(new Date())
+): PennyProposedAction | null {
+  const text = rawText.trim();
+  if (!text) return null;
+
+  const amountMatch = text.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:[.,]\d{1,2})?)/i);
+  if (!amountMatch) return null;
+
+  const numericStr = amountMatch[1].replace(/,/g, '');
+  const amount = roundCurrency(Number(numericStr));
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  const lower = text.toLowerCase();
+  let dateKey = todayDate;
+  if (/\byesterday\b/i.test(lower)) {
+    const baseMs = parseDateKeyToLocalMiddayMs(todayDate);
+    if (baseMs) {
+      dateKey = toLocalDateKey(new Date(baseMs - 24 * 60 * 60 * 1000));
+    }
+  }
+
+  let matchedCategory = categories[0] || 'Groceries';
+  // First check direct category name mentions
+  const directMatch = categories.find((c) => lower.includes(c.toLowerCase()));
+  if (directMatch) {
+    matchedCategory = directMatch;
+  } else {
+    for (const rule of OFFLINE_CATEGORY_KEYWORDS) {
+      if (rule.keywords.some((kw) => lower.includes(kw))) {
+        const candidate = categories.find((c) =>
+          rule.hints.some((h) => c.toLowerCase().includes(h))
+        );
+        if (candidate) {
+          matchedCategory = candidate;
+          break;
+        }
+      }
+    }
+  }
+
+  const cleanedName = text
+    .replace(amountMatch[0], ' ')
+    .replace(/\b(spent|paid|for|on|at|today|yesterday|rs|inr|rupees)\b/gi, ' ')
+    .replace(/₹/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const itemName = cleanedName
+    ? cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1)
+    : `${matchedCategory} Expense`;
+
+  return {
+    id: `offline-exp-${Date.now()}`,
+    type: 'log_expense',
+    title: `Log ₹${amount} — ${itemName}`,
+    summary: `${matchedCategory} · ${dateKey} (instant offline parse)`,
+    status: 'pending',
+    expense: {
+      name: itemName,
+      amount,
+      category: matchedCategory,
+      date: dateKey,
+    },
+  };
+}
+
+

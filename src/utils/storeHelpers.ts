@@ -113,6 +113,12 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
     totalBudget: typeof data.totalBudget === 'number' && data.totalBudget > 0 ? data.totalBudget : 5000,
     sessionBudget:
       typeof data.sessionBudget === 'number' && data.sessionBudget > 0 ? data.sessionBudget : null,
+    budgetResetDay:
+      typeof data.budgetResetDay === 'number' && Number.isFinite(data.budgetResetDay)
+        ? Math.min(28, Math.max(1, Math.round(data.budgetResetDay)))
+        : undefined,
+    budgetRolloverEnabled:
+      typeof data.budgetRolloverEnabled === 'boolean' ? data.budgetRolloverEnabled : undefined,
     categoryCaps:
       data.categoryCaps && typeof data.categoryCaps === 'object' ? data.categoryCaps : {},
     savedAudits: Array.isArray(data.savedAudits) ? data.savedAudits : [],

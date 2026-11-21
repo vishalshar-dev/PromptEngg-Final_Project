@@ -52,6 +52,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
   const [editDesc, setEditDesc] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [loadedFlashId, setLoadedFlashId] = useState<string | null>(null);
+  const [loadToast, setLoadToast] = useState<string | null>(null);
 
   const handleSaveCurrentCart = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,16 +78,32 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
   };
 
   const handleLoadBasket = (basketId: string, mode: 'merge' | 'replace') => {
+    const basket = basketTemplates.find((b) => b.id === basketId);
     const count = loadBasketTemplateToCart(basketId, mode);
     if (count > 0) {
       setLoadedFlashId(`${basketId}:${mode}`);
+      setLoadToast(
+        mode === 'replace'
+          ? `Replaced cart with “${basket?.name ?? 'Basket'}” (${count} items)`
+          : `Added “${basket?.name ?? 'Basket'}” (${count} items) to cart`
+      );
       setTimeout(() => setLoadedFlashId(null), 1800);
+      setTimeout(() => setLoadToast(null), 3000);
       onLoadedToCart?.();
     }
   };
 
   return (
     <div className="space-y-4">
+      {loadToast && (
+        <div
+          role="status"
+          className="rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] px-3.5 py-2.5 flex items-center gap-2 text-xs font-semibold text-[#15966B] animate-fade-in"
+        >
+          <Check className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+          <span>{loadToast}</span>
+        </div>
+      )}
       {/* Save Current Cart Card */}
       <form
         onSubmit={handleSaveCurrentCart}
@@ -126,7 +143,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                 if (saveError) setSaveError(null);
               }}
               placeholder="Basket name (e.g. Hostel Refill)"
-              className="input-field py-2 text-xs"
+              className="input-field w-full py-2 text-xs"
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -139,7 +156,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               placeholder="Optional note (e.g. Sunday run)"
-              className="input-field py-2 text-xs"
+              className="input-field w-full py-2 text-xs"
             />
           </div>
           <button
@@ -196,7 +213,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         aria-label={`Edit name for ${basket.name}`}
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="input-field py-2 text-xs font-semibold"
+                        className="input-field w-full py-2 text-xs font-semibold"
                       />
                       <input
                         type="text"
@@ -204,7 +221,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         value={editDesc}
                         onChange={(e) => setEditDesc(e.target.value)}
                         placeholder="Optional note"
-                        className="input-field py-2 text-xs"
+                        className="input-field w-full py-2 text-xs"
                       />
                     </div>
                     <div className="flex items-center gap-2">

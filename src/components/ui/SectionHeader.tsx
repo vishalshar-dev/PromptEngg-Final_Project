@@ -14,9 +14,7 @@ export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
           {title}
         </h2>
         {subtitle && (
-          <p className="text-[12.5px] text-[#697386] mt-0.5">
-            {subtitle}
-          </p>
+          <p className="text-[12.5px] text-[#697386] mt-0.5">{subtitle}</p>
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}

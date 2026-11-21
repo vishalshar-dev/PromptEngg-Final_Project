@@ -297,7 +297,7 @@ export function CustomProductForm({
                 placeholder="e.g. Organic Olive Oil"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-field"
+                className="input-field w-full"
               />
             </div>
 
@@ -311,7 +311,7 @@ export function CustomProductForm({
                 placeholder="e.g. Amul, Tata, Borges"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                className="input-field"
+                className="input-field w-full"
               />
             </div>
 
@@ -328,7 +328,7 @@ export function CustomProductForm({
                 placeholder="120"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="input-field font-mono"
+                className="input-field w-full font-mono"
               />
             </div>
 
@@ -342,7 +342,7 @@ export function CustomProductForm({
                 placeholder="1 kg / 500 ml / 6 pcs"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="input-field font-mono"
+                className="input-field w-full font-mono"
               />
             </div>
           </div>
@@ -428,7 +428,7 @@ export function CustomProductForm({
                 placeholder="e.g. Cooking Oil, Milk"
                 value={subcategory}
                 onChange={(e) => setSubcategory(e.target.value)}
-                className="input-field"
+                className="input-field w-full"
               />
               <datalist id="subcategory-options">
                 {suggestedSubcategories.map((sub) => (
@@ -450,7 +450,7 @@ export function CustomProductForm({
                 placeholder="Short notes about pack size, brand quality, or usage..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="input-field resize-none"
+                className="input-field w-full resize-none"
               />
             </div>
 
@@ -465,15 +465,15 @@ export function CustomProductForm({
                   aria-label="Product type"
                   value={productType}
                   onChange={(e) => setProductType(e.target.value)}
-                  className="input-field mb-2"
+                  className="input-field w-full mb-2"
                 />
                 <input
                   type="text"
-                  placeholder="Tags (comma-separated: tea, staple)"
+                  placeholder="Tags (e.g. tea, staple)"
                   aria-label="Product tags"
                   value={tagsText}
                   onChange={(e) => setTagsText(e.target.value)}
-                  className="input-field text-xs"
+                  className="input-field w-full text-xs"
                 />
               </div>
               <div>

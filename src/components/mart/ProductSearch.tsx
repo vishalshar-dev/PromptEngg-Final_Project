@@ -337,7 +337,7 @@ export function ProductSearch({
               onChange={(e) =>
                 onChange({ ...filters, category: e.target.value, subcategory: 'All' })
               }
-              className="input-field py-2 text-xs"
+              className="input-field w-full py-2 text-xs"
             >
               <option value="All">All Categories</option>
               {categories.map((cat) => (
@@ -357,7 +357,7 @@ export function ProductSearch({
                 aria-label="Filter by subcategory"
                 value={filters.subcategory ?? 'All'}
                 onChange={(e) => onChange({ ...filters, subcategory: e.target.value })}
-                className="input-field py-2 text-xs"
+                className="input-field w-full py-2 text-xs"
               >
                 <option value="All">All Subcategories</option>
                 {availableSubcategories.map((sub) => (
@@ -378,7 +378,7 @@ export function ProductSearch({
                 aria-label="Filter by brand"
                 value={filters.brand ?? 'All'}
                 onChange={(e) => onChange({ ...filters, brand: e.target.value })}
-                className="input-field py-2 text-xs"
+                className="input-field w-full py-2 text-xs"
               >
                 <option value="All">All Brands</option>
                 {availableBrands.map((brand) => (
@@ -399,7 +399,7 @@ export function ProductSearch({
                 aria-label="Filter by product type"
                 value={filters.productType ?? 'All'}
                 onChange={(e) => onChange({ ...filters, productType: e.target.value })}
-                className="input-field py-2 text-xs"
+                className="input-field w-full py-2 text-xs"
               >
                 <option value="All">All Types</option>
                 {availableProductTypes.map((pt) => (
@@ -427,7 +427,7 @@ export function ProductSearch({
                   minPrice: e.target.value === '' ? null : Math.max(0, Number(e.target.value)),
                 })
               }
-              className="input-field py-2 text-xs font-mono"
+              className="input-field w-full py-2 text-xs font-mono"
             />
           </div>
 
@@ -447,7 +447,7 @@ export function ProductSearch({
                   maxPrice: e.target.value === '' ? null : Math.max(0, Number(e.target.value)),
                 })
               }
-              className="input-field py-2 text-xs font-mono"
+              className="input-field w-full py-2 text-xs font-mono"
             />
           </div>
         </div>

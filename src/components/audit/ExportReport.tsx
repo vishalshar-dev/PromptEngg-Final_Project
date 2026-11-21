@@ -132,7 +132,7 @@ export function ExportReport() {
 
       {showPreview && (
         <div className="surface-subtle p-3.5 max-h-72 overflow-y-auto scrollbar-thin">
-          <pre className="text-[11px] leading-relaxed text-[#4F5869] font-mono whitespace-pre-wrap break-words">
+          <pre className="text-[11px] leading-relaxed text-[#697386] font-mono whitespace-pre-wrap break-words">
             {reportText}
           </pre>
         </div>

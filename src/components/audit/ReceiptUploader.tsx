@@ -30,6 +30,11 @@ import {
   resolveCanonicalProduct,
 } from '../../utils/priceTrackerEngine';
 import { formatCurrency } from '../../utils/categoryStyles';
+import {
+  fetchGeminiHealth,
+  getCachedGeminiConfigured,
+  markGeminiConfigured,
+} from '../../utils/aiReadiness';
 
 function fileToBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -146,7 +151,27 @@ export function ReceiptUploader() {
   const [receiptText, setReceiptText] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [lastImageFile, setLastImageFile] = useState<File | null>(null);
+  const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(() =>
+    getCachedGeminiConfigured()
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    void fetchGeminiHealth().then((status) => {
+      if (active) setGeminiConfigured(status.geminiConfigured);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const ensureGeminiConfigured = useCallback(async (): Promise<boolean> => {
+    if (geminiConfigured !== null) return geminiConfigured;
+    const status = await fetchGeminiHealth();
+    setGeminiConfigured(status.geminiConfigured);
+    return status.geminiConfigured;
+  }, [geminiConfigured]);
 
   const parseAndStoreText = useCallback(
     (rawText: string, sourceLabel?: string) => {
@@ -242,7 +267,7 @@ export function ReceiptUploader() {
       });
 
       setIsScanning(true);
-      setScanStatus('Optimizing image & scanning with Gemini Vision...');
+      setScanStatus('Checking scanner mode & preparing image...');
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => controller.abort(), 35000);
       let scanFile: File = file;
@@ -254,6 +279,16 @@ export function ReceiptUploader() {
             : new File([prepared.blob], 'receipt.jpg', { type: prepared.mimeType });
         setLastImageFile(scanFile);
 
+        const aiReady = await ensureGeminiConfigured();
+        if (!aiReady) {
+          await runOfflineOcrOnFile(
+            scanFile,
+            'Live Gemini Vision is on standby (GEMINI_API_KEY not set in Settings > Secrets).'
+          );
+          return;
+        }
+
+        setScanStatus('Scanning receipt with Gemini Vision...');
         const imageBase64 = await fileToBase64(prepared.blob);
         const res = await fetch('/api/scan-receipt', {
           method: 'POST',
@@ -265,8 +300,12 @@ export function ReceiptUploader() {
           }),
         });
 
-        const data = (await res.json()) as { error?: string } & Record<string, unknown>;
+        const data = (await res.json()) as { error?: string; code?: string } & Record<string, unknown>;
         if (!res.ok) {
+          if (res.status === 503 && data.code === 'MISSING_API_KEY') {
+            setGeminiConfigured(false);
+            markGeminiConfigured(false);
+          }
           throw new Error(data.error || 'AI Vision is temporarily unavailable.');
         }
 
@@ -310,7 +349,7 @@ export function ReceiptUploader() {
         setScanStatus('');
       }
     },
-    [addParsedReceipt, parseAndStoreText, runOfflineOcrOnFile]
+    [addParsedReceipt, ensureGeminiConfigured, parseAndStoreText, runOfflineOcrOnFile]
   );
 
   useEffect(() => {
@@ -445,6 +484,33 @@ export function ReceiptUploader() {
       ...receipt,
       items: nextItems,
       subtotal: nextSubtotal,
+      total: nextTotal,
+    });
+  };
+
+  const handleReceiptMetaChange = (
+    receiptIndex: number,
+    patch: { merchant?: string; taxTotal?: number; deliveryFee?: number }
+  ) => {
+    const receipt = parsedReceipts[receiptIndex];
+    if (!receipt) return;
+    const nextMerchant =
+      patch.merchant !== undefined ? patch.merchant : receipt.merchant;
+    const nextTax =
+      patch.taxTotal !== undefined
+        ? Math.max(0, Math.round(patch.taxTotal * 100) / 100)
+        : receipt.taxTotal;
+    const nextFee =
+      patch.deliveryFee !== undefined
+        ? Math.max(0, Math.round(patch.deliveryFee * 100) / 100)
+        : receipt.deliveryFee;
+    const nextTotal =
+      Math.round((receipt.subtotal + nextTax + nextFee) * 100) / 100;
+    updateParsedReceipt(receiptIndex, {
+      ...receipt,
+      merchant: nextMerchant,
+      taxTotal: nextTax,
+      deliveryFee: nextFee,
       total: nextTotal,
     });
   };
@@ -620,8 +686,10 @@ export function ReceiptUploader() {
             <p className="text-sm font-bold text-[#151922]">
               Upload or paste (Ctrl+V) receipt screenshot
             </p>
-            <p className="text-xs text-[#697386]">
-              AI Vision extraction · PNG, JPG, WebP, or TXT
+            <p className="text-xs text-[#697386]" data-testid="scanner-ai-mode">
+              {geminiConfigured === false
+                ? 'Offline Browser OCR + Text Parse ready · Add GEMINI_API_KEY in Secrets for AI Vision'
+                : 'AI Vision extraction · PNG, JPG, WebP, or TXT'}
             </p>
           </div>
         )}
@@ -730,11 +798,23 @@ export function ReceiptUploader() {
                     <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] text-[#365FE8] flex items-center justify-center shrink-0">
                       <Receipt className="w-4 h-4" strokeWidth={2.25} />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#151922] truncate">
-                        {receipt.merchant}
-                      </p>
-                      <p className="text-[11px] text-[#697386] font-medium">
+                    <div className="min-w-0 flex-1">
+                      {!alreadyRecorded ? (
+                        <input
+                          type="text"
+                          value={receipt.merchant}
+                          onChange={(e) =>
+                            handleReceiptMetaChange(idx, { merchant: e.target.value })
+                          }
+                          aria-label="Receipt merchant name"
+                          className="input-field w-full max-w-[260px] px-2 py-0.5 text-sm font-bold text-[#151922]"
+                        />
+                      ) : (
+                        <p className="text-sm font-bold text-[#151922] truncate">
+                          {receipt.merchant}
+                        </p>
+                      )}
+                      <p className="text-[11px] text-[#697386] font-medium mt-0.5">
                         {new Date(receipt.date).toLocaleDateString('en-IN', {
                           month: 'short',
                           day: 'numeric',
@@ -978,16 +1058,60 @@ export function ReceiptUploader() {
                     </p>
                   </div>
                   <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
-                    <p className="text-[10px] font-semibold uppercase text-[#697386]">Tax</p>
-                    <p className="text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5">
-                      ₹{formatCurrency(receipt.taxTotal)}
-                    </p>
+                    <label
+                      htmlFor={`receipt-tax-${idx}`}
+                      className="block text-[10px] font-semibold uppercase text-[#697386]"
+                    >
+                      Tax (₹)
+                    </label>
+                    {!alreadyRecorded ? (
+                      <input
+                        id={`receipt-tax-${idx}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        aria-label="Receipt tax amount"
+                        value={receipt.taxTotal}
+                        onChange={(e) =>
+                          handleReceiptMetaChange(idx, {
+                            taxTotal: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="input-field w-full px-1.5 py-0.5 text-center text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5"
+                      />
+                    ) : (
+                      <p className="text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5">
+                        ₹{formatCurrency(receipt.taxTotal)}
+                      </p>
+                    )}
                   </div>
                   <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
-                    <p className="text-[10px] font-semibold uppercase text-[#697386]">Fees</p>
-                    <p className="text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5">
-                      ₹{formatCurrency(receipt.deliveryFee)}
-                    </p>
+                    <label
+                      htmlFor={`receipt-fee-${idx}`}
+                      className="block text-[10px] font-semibold uppercase text-[#697386]"
+                    >
+                      Fees (₹)
+                    </label>
+                    {!alreadyRecorded ? (
+                      <input
+                        id={`receipt-fee-${idx}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        aria-label="Receipt delivery or platform fees"
+                        value={receipt.deliveryFee}
+                        onChange={(e) =>
+                          handleReceiptMetaChange(idx, {
+                            deliveryFee: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="input-field w-full px-1.5 py-0.5 text-center text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5"
+                      />
+                    ) : (
+                      <p className="text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5">
+                        ₹{formatCurrency(receipt.deliveryFee)}
+                      </p>
+                    )}
                   </div>
                 </div>
 

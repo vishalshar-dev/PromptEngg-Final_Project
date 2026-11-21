@@ -21,6 +21,7 @@ import type { FeatureSettings, ThemeMode } from '../../types/models';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
 import { isSectionEnabled } from '../../utils/settingsEngine';
 import { useCloudSync } from '../../contexts/CloudSyncContext';
+import { useAppStore } from '../../store/useStore';
 import { ProgressBar } from './ProgressBar';
 import { SettingsModal } from '../settings/SettingsModal';
 
@@ -54,6 +55,7 @@ interface AppShellProps {
   totalSpent: number;
   remainingBudget: number;
   cartItemCount: number;
+  onOpenCart?: () => void;
   theme: ThemeMode;
   onToggleTheme: () => void;
   featureSettings: FeatureSettings;
@@ -67,6 +69,7 @@ export function AppShell({
   totalSpent,
   remainingBudget,
   cartItemCount,
+  onOpenCart,
   theme,
   onToggleTheme,
   featureSettings,
@@ -83,6 +86,18 @@ export function AppShell({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [mobileDrawerOpen]);
+
+  useEffect(() => {
+    if (!featureSettings.showPennyCompanion) return;
+    const onShortcut = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        useAppStore.getState().togglePennyOpen();
+      }
+    };
+    window.addEventListener('keydown', onShortcut);
+    return () => window.removeEventListener('keydown', onShortcut);
+  }, [featureSettings.showPennyCompanion]);
 
   const visibleNavItems = APP_NAV_ITEMS.filter((item) =>
     isSectionEnabled(item.id, featureSettings)
@@ -253,24 +268,43 @@ export function AppShell({
             </button>
           )}
 
+          {/* Active Cart Shortcut (Accessible from any section) */}
+          {cartItemCount > 0 && onOpenCart && (
+            <button
+              type="button"
+              onClick={onOpenCart}
+              aria-label={`Open shopping cart with ${cartItemCount} items`}
+              data-testid="sidebar-open-cart"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#DCE6FF] border border-[#D4E0FF] text-[#365FE8] text-xs font-bold transition-colors"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} />
+                <span className="truncate">Open Cart</span>
+              </span>
+              <span className="px-1.5 py-0.5 rounded-md bg-[#365FE8] text-white text-[11px] font-mono tabular-nums">
+                {cartItemCount}
+              </span>
+            </button>
+          )}
+
           {/* Quick Theme & Settings Controls */}
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={onToggleTheme}
-              aria-label={isDark ? 'Switch to White theme' : 'Switch to Black theme'}
+              aria-label={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
               data-testid="sidebar-theme-toggle"
               className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-xs font-semibold text-[#151922] transition-colors"
             >
               {isDark ? (
                 <>
                   <Sun className="w-3.5 h-3.5 text-[#F5B74F]" strokeWidth={2.2} />
-                  <span>White</span>
+                  <span>Light</span>
                 </>
               ) : (
                 <>
                   <Moon className="w-3.5 h-3.5 text-[#365FE8]" strokeWidth={2.2} />
-                  <span>Black</span>
+                  <span>Dark</span>
                 </>
               )}
             </button>
@@ -354,24 +388,24 @@ export function AppShell({
             <button
               type="button"
               onClick={() => onSelectSection('overview')}
-              className="flex items-center gap-2 text-left min-w-0"
+              className="flex items-center gap-2 text-left shrink-0"
             >
               <div className="w-7 h-7 rounded-lg bg-[#365FE8] flex items-center justify-center shrink-0">
                 <Wallet className="w-3.5 h-3.5 text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-[15px] font-bold tracking-tight text-[#151922] truncate">
+              <span className="text-[15px] font-bold tracking-tight text-[#151922] whitespace-nowrap">
                 CartAudit
               </span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <div className="text-right leading-tight mr-0.5">
-              <span className="block text-[10px] font-medium text-[#697386]">
+              <span className="hidden sm:block text-[10px] font-medium text-[#697386]">
                 Balance
               </span>
               <span
-                className={`text-[13px] font-bold font-mono tabular-nums ${
+                className={`text-[12.5px] sm:text-[13px] font-bold font-mono tabular-nums ${
                   remainingBudget < 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
                 }`}
               >
@@ -405,17 +439,30 @@ export function AppShell({
                 onClick={() => void signInWithGoogle()}
                 aria-label="Sign in to sync across devices"
                 data-testid="mobile-google-signin"
-                className="h-8 px-2.5 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap"
+                className="h-8 px-2 sm:px-2.5 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap"
               >
                 <LogIn className="w-3.5 h-3.5 shrink-0" />
-                <span>Sync</span>
+                <span className="hidden sm:inline">Sync</span>
+              </button>
+            )}
+
+            {cartItemCount > 0 && onOpenCart && (
+              <button
+                type="button"
+                onClick={onOpenCart}
+                aria-label={`Open shopping cart with ${cartItemCount} items`}
+                data-testid="mobile-open-cart"
+                className="h-8 px-2 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] text-xs font-bold flex items-center gap-1 shrink-0"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} />
+                <span className="font-mono tabular-nums">{cartItemCount}</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={onToggleTheme}
-              aria-label={isDark ? 'Switch to White theme' : 'Switch to Black theme'}
+              aria-label={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
               data-testid="mobile-theme-toggle"
               className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#151922]"
             >
