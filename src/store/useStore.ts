@@ -248,6 +248,7 @@ export interface AppState {
   ) => void;
   setPennyTonePreference: (tone: PennyTonePreference) => void;
   clearPennyMessages: () => void;
+  pruneOfflinePennyMessages: () => void;
   resetPennyProfile: () => void;
 
   addCategory: (categoryName: string) => void;
@@ -586,6 +587,20 @@ export const useAppStore = create<AppState>()(
           return { pennyProfile: next };
         }),
       clearPennyMessages: () => set({ pennyMessages: [] }),
+      pruneOfflinePennyMessages: () =>
+        set((state) => {
+          const filtered = state.pennyMessages.filter(
+            (m) =>
+              !(
+                m.role === 'assistant' &&
+                (m.id.startsWith('a-offline-') ||
+                  m.text.startsWith("Live Gemini reasoning isn't enabled yet") ||
+                  m.text.startsWith('Gemini AI is on standby'))
+              )
+          );
+          if (filtered.length === state.pennyMessages.length) return state;
+          return { pennyMessages: filtered };
+        }),
       resetPennyProfile: () =>
         set((state) => ({
           pennyProfile: {

@@ -158,7 +158,7 @@ export function ReceiptUploader() {
 
   useEffect(() => {
     let active = true;
-    void fetchGeminiHealth().then((status) => {
+    void fetchGeminiHealth(true).then((status) => {
       if (active) setGeminiConfigured(status.geminiConfigured);
     });
     return () => {

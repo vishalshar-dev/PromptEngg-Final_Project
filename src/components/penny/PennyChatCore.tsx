@@ -152,6 +152,7 @@ export function PennyChatCore({
   const setPennyProposalStatus = useAppStore((s) => s.setPennyProposalStatus);
   const setPennyTonePreference = useAppStore((s) => s.setPennyTonePreference);
   const clearPennyMessages = useAppStore((s) => s.clearPennyMessages);
+  const pruneOfflinePennyMessages = useAppStore((s) => s.pruneOfflinePennyMessages);
   const addTransaction = useAppStore((s) => s.addTransaction);
 
   const [mode, setMode] = useState<'chat' | 'quick_log'>('chat');
@@ -175,20 +176,17 @@ export function PennyChatCore({
 
   useEffect(() => {
     let active = true;
-    void fetchGeminiHealth().then((status) => {
-      if (active) setGeminiConfigured(status.geminiConfigured);
+    void fetchGeminiHealth(true).then((status) => {
+      if (!active) return;
+      setGeminiConfigured(status.geminiConfigured);
+      if (status.geminiConfigured) {
+        pruneOfflinePennyMessages();
+      }
     });
     return () => {
       active = false;
     };
-  }, []);
-
-  const ensureGeminiConfigured = async (): Promise<boolean> => {
-    if (geminiConfigured === true) return true;
-    const status = await fetchGeminiHealth(true);
-    setGeminiConfigured(status.geminiConfigured);
-    return status.geminiConfigured;
-  };
+  }, [pruneOfflinePennyMessages]);
 
   const chatVoice = useVoiceInput({
     onFinalTranscript: (spoken) => {
@@ -385,16 +383,6 @@ export function PennyChatCore({
     }, 30);
 
     try {
-      const configured = await ensureGeminiConfigured();
-      if (!configured) {
-        if (tryAppendOfflineChatFallback(questionText)) {
-          return;
-        }
-        throw new Error(
-          'Gemini AI is not configured right now. Add GEMINI_API_KEY in Settings > Secrets or use Quick Log for instant offline expense parsing.'
-        );
-      }
-
       const res = await fetch('/api/penny-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -424,6 +412,12 @@ export function PennyChatCore({
           }
         }
         throw new Error(payload.error || `Penny could not respond (${res.status}).`);
+      }
+
+      if (geminiConfigured !== true) {
+        setGeminiConfigured(true);
+        markGeminiConfigured(true);
+        pruneOfflinePennyMessages();
       }
 
       const validatedProposals = normalizePennyProposals(payload.proposedActions, {
@@ -479,14 +473,6 @@ export function PennyChatCore({
     };
 
     try {
-      const configured = await ensureGeminiConfigured();
-      if (!configured) {
-        if (!applyOfflineQuickParse(text)) {
-          setParseError('Include an amount like "Paid 240 for coffee" for offline instant parsing.');
-        }
-        return;
-      }
-
       const res = await fetch('/api/penny-parse-expense', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -505,6 +491,12 @@ export function PennyChatCore({
         }
         if (applyOfflineQuickParse(text)) return;
         throw new Error(payload.error || 'Could not parse expense note.');
+      }
+
+      if (geminiConfigured !== true) {
+        setGeminiConfigured(true);
+        markGeminiConfigured(true);
+        pruneOfflinePennyMessages();
       }
 
       setParsedDraft({

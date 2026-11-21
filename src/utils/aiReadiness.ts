@@ -17,7 +17,7 @@ export async function fetchGeminiHealth(forceRefresh = false): Promise<GeminiHea
 
   inflightRequest = (async () => {
     try {
-      const res = await fetch('/api/health');
+      const res = await fetch('/api/health', { cache: 'no-store' });
       if (!res.ok) {
         cachedHealth = { ok: false, geminiConfigured: false };
         return cachedHealth;

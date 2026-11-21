@@ -21,7 +21,8 @@ function resolveGeminiApiKey(): string | undefined {
     process.env.GEMINI_API_KEY?.trim() ||
     process.env.CartAudit_GEMINI_API_KEY?.trim() ||
     process.env.CARTAUDIT_GEMINI_API_KEY?.trim() ||
-    process.env.GOOGLE_API_KEY?.trim()
+    process.env.GOOGLE_API_KEY?.trim() ||
+    process.env.API_KEY?.trim()
   );
 }
 
@@ -201,6 +202,7 @@ async function startServer() {
   app.use(express.json({ limit: '15mb' }));
 
   app.get('/api/health', (_req: Request, res: Response) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json({
       ok: true,
       geminiConfigured: Boolean(resolveGeminiApiKey()),
