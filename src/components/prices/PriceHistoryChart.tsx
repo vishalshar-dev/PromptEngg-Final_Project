@@ -14,6 +14,7 @@ import type { PriceObservation, PriceTimeframe } from '../../types/models';
 import { useAppStore } from '../../store/useStore';
 import { filterObservationsByTimeframe } from '../../utils/priceTrackerEngine';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
+import { getChartThemeTokens } from '../../utils/settingsEngine';
 
 const TIMEFRAMES: { id: PriceTimeframe; label: string }[] = [
   { id: '7d', label: '7D' },
@@ -93,7 +94,8 @@ export function PriceHistoryChart({
   averagePrice,
 }: PriceHistoryChartProps) {
   const theme = useAppStore((s) => s.theme);
-  const isDark = theme === 'dark';
+  const visualTheme = useAppStore((s) => s.visualTheme);
+  const chartTokens = getChartThemeTokens(theme, visualTheme.mood);
   const [timeframe, setTimeframe] = useState<PriceTimeframe>('all');
   const [showAverageLine, setShowAverageLine] = useState(true);
 
@@ -169,7 +171,7 @@ export function PriceHistoryChart({
 
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
             role="group"
             aria-label="Chart timeframe"
           >
@@ -225,14 +227,14 @@ export function PriceHistoryChart({
             <LineChart data={chartData} margin={{ top: 14, right: 26, left: -4, bottom: 4 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke={isDark ? '#232A38' : '#E7EAF0'}
+                stroke={chartTokens.gridStroke}
                 vertical={false}
               />
               <XAxis
                 dataKey="dateLabel"
                 padding={{ left: 16, right: 20 }}
                 tick={{
-                  fill: isDark ? '#9CA6BA' : '#697386',
+                  fill: chartTokens.tickColor,
                   fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
@@ -244,7 +246,7 @@ export function PriceHistoryChart({
                 domain={yDomain}
                 tickFormatter={(v: number) => `₹${v}`}
                 tick={{
-                  fill: isDark ? '#9CA6BA' : '#697386',
+                  fill: chartTokens.tickColor,
                   fontSize: 11,
                   fontFamily: 'JetBrains Mono, monospace',
                 }}
@@ -254,7 +256,7 @@ export function PriceHistoryChart({
               />
               <Tooltip
                 cursor={{
-                  stroke: isDark ? '#323B4F' : '#D5DBE6',
+                  stroke: chartTokens.gridStroke,
                   strokeDasharray: '3 3',
                 }}
                 content={<PriceChartTooltip />}
@@ -262,13 +264,13 @@ export function PriceHistoryChart({
               {showAverageLine && averagePrice > 0 && (
                 <ReferenceLine
                   y={averagePrice}
-                  stroke="#E5A23B"
+                  stroke={chartTokens.warning}
                   strokeDasharray="5 5"
                   strokeOpacity={0.9}
                   label={{
                     value: `Avg ₹${formatCurrencyExact(averagePrice)}`,
                     position: 'insideTopRight',
-                    fill: isDark ? '#F6C15C' : '#9E6614',
+                    fill: chartTokens.warning,
                     fontSize: 10,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
@@ -277,19 +279,19 @@ export function PriceHistoryChart({
               <Line
                 type="linear"
                 dataKey="unitPrice"
-                stroke="#4D74F9"
+                stroke={chartTokens.accent}
                 strokeWidth={2.5}
                 isAnimationActive={false}
                 dot={{
                   r: 4.5,
-                  fill: isDark ? '#11141B' : '#FFFFFF',
-                  stroke: '#4D74F9',
+                  fill: chartTokens.tooltipStyle.backgroundColor,
+                  stroke: chartTokens.accent,
                   strokeWidth: 2.2,
                 }}
                 activeDot={{
                   r: 6,
-                  fill: '#4D74F9',
-                  stroke: isDark ? '#11141B' : '#FFFFFF',
+                  fill: chartTokens.accent,
+                  stroke: chartTokens.tooltipStyle.backgroundColor,
                   strokeWidth: 2,
                 }}
               />

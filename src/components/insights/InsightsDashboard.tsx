@@ -10,6 +10,7 @@ export type InsightsTab = 'penny' | 'radar' | 'prices';
 interface InsightsDashboardProps {
   initialTab?: InsightsTab;
   tabSignal?: number;
+  onTabChange?: (tab: InsightsTab) => void;
   onOpenExpenses?: () => void;
   onOpenShopping?: (subTab?: 'home' | 'baskets') => void;
   onOpenScanner?: () => void;
@@ -19,6 +20,7 @@ interface InsightsDashboardProps {
 export function InsightsDashboard({
   initialTab = 'penny',
   tabSignal = 0,
+  onTabChange,
   onOpenExpenses,
   onOpenShopping,
   onOpenScanner,
@@ -38,6 +40,10 @@ export function InsightsDashboard({
       setActiveTab('radar');
     }
   }, [showPriceTracker, activeTab]);
+
+  useEffect(() => {
+    onTabChange?.(activeTab);
+  }, [activeTab, onTabChange]);
 
   return (
     <div className="space-y-5">

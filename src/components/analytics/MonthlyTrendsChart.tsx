@@ -19,6 +19,7 @@ import {
   type MonthlySpendPoint,
 } from '../../utils/spendingTrends';
 import { formatCompact, formatCurrency } from '../../utils/categoryStyles';
+import { getChartThemeTokens } from '../../utils/settingsEngine';
 
 type RangeOption = 6 | 12;
 type ChartMode = 'area' | 'bar';
@@ -99,7 +100,8 @@ export function MonthlyTrendsChart() {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const theme = useAppStore((s) => s.theme);
-  const isDark = theme === 'dark';
+  const visualTheme = useAppStore((s) => s.visualTheme);
+  const chartTokens = getChartThemeTokens(theme, visualTheme.mood);
 
   const [range, setRange] = useState<RangeOption>(6);
   const [chartMode, setChartMode] = useState<ChartMode>('area');
@@ -149,7 +151,7 @@ export function MonthlyTrendsChart() {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {/* Range Selector */}
           <div
-            className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
             role="group"
             aria-label="Month range"
           >
@@ -175,7 +177,7 @@ export function MonthlyTrendsChart() {
 
           {/* Chart Type Toggle */}
           <div
-            className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
             role="group"
             aria-label="Chart style"
           >
@@ -300,19 +302,19 @@ export function MonthlyTrendsChart() {
                 >
                   <defs>
                     <linearGradient id="monthlySpendGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#365FE8" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="#365FE8" stopOpacity={0.01} />
+                      <stop offset="0%" stopColor={chartTokens.accent} stopOpacity={0.26} />
+                      <stop offset="100%" stopColor={chartTokens.accent} stopOpacity={0.01} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke={isDark ? '#232A38' : '#E7EAF0'}
+                    stroke={chartTokens.gridStroke}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -326,7 +328,7 @@ export function MonthlyTrendsChart() {
                       v === 0 ? '₹0' : `₹${formatCompact(v)}`
                     }
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -336,7 +338,7 @@ export function MonthlyTrendsChart() {
                   />
                   <Tooltip
                     cursor={{
-                      stroke: isDark ? '#323B4F' : '#D5DBE6',
+                      stroke: chartTokens.gridStroke,
                       strokeDasharray: '3 3',
                     }}
                     content={<CustomTrendsTooltip />}
@@ -344,13 +346,13 @@ export function MonthlyTrendsChart() {
                   {totalBudget > 0 && (
                     <ReferenceLine
                       y={totalBudget}
-                      stroke="#E5A23B"
+                      stroke={chartTokens.warning}
                       strokeDasharray="5 5"
                       strokeOpacity={0.9}
                       label={{
                         value: `Budget ₹${formatCompact(totalBudget)}`,
                         position: 'insideTopRight',
-                        fill: isDark ? '#F6C15C' : '#9E6614',
+                        fill: chartTokens.warning,
                         fontSize: 10,
                         fontFamily: 'JetBrains Mono, monospace',
                       }}
@@ -359,20 +361,20 @@ export function MonthlyTrendsChart() {
                   <Area
                     type="monotone"
                     dataKey="spent"
-                    stroke="#4D74F9"
+                    stroke={chartTokens.accent}
                     strokeWidth={2.5}
                     fill="url(#monthlySpendGrad)"
                     isAnimationActive={false}
                     dot={{
                       r: 3.5,
-                      fill: isDark ? '#11141B' : '#FFFFFF',
-                      stroke: '#4D74F9',
+                      fill: chartTokens.tooltipStyle.backgroundColor,
+                      stroke: chartTokens.accent,
                       strokeWidth: 2,
                     }}
                     activeDot={{
                       r: 5.5,
-                      fill: '#4D74F9',
-                      stroke: isDark ? '#11141B' : '#FFFFFF',
+                      fill: chartTokens.accent,
+                      stroke: chartTokens.tooltipStyle.backgroundColor,
                       strokeWidth: 2,
                     }}
                   />
@@ -384,13 +386,13 @@ export function MonthlyTrendsChart() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke={isDark ? '#232A38' : '#E7EAF0'}
+                    stroke={chartTokens.gridStroke}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -404,7 +406,7 @@ export function MonthlyTrendsChart() {
                       v === 0 ? '₹0' : `₹${formatCompact(v)}`
                     }
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -413,19 +415,19 @@ export function MonthlyTrendsChart() {
                     width={54}
                   />
                   <Tooltip
-                    cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
+                    cursor={{ fill: chartTokens.cursorFill }}
                     content={<CustomTrendsTooltip />}
                   />
                   {totalBudget > 0 && (
                     <ReferenceLine
                       y={totalBudget}
-                      stroke="#E5A23B"
+                      stroke={chartTokens.warning}
                       strokeDasharray="5 5"
                       strokeOpacity={0.9}
                       label={{
                         value: `Budget ₹${formatCompact(totalBudget)}`,
                         position: 'insideTopRight',
-                        fill: isDark ? '#F6C15C' : '#9E6614',
+                        fill: chartTokens.warning,
                         fontSize: 10,
                         fontFamily: 'JetBrains Mono, monospace',
                       }}
@@ -437,12 +439,10 @@ export function MonthlyTrendsChart() {
                         key={entry.monthKey}
                         fill={
                           entry.isOverBudget
-                            ? '#DE5252'
+                            ? chartTokens.danger
                             : entry.txCount > 0
-                            ? '#4D74F9'
-                            : isDark
-                            ? '#232A38'
-                            : '#E7EAF0'
+                            ? chartTokens.accent
+                            : chartTokens.mutedBarFill
                         }
                       />
                     ))}

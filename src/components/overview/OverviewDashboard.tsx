@@ -38,6 +38,7 @@ import {
   formatCurrencyExact,
   getCategoryStyle,
 } from '../../utils/categoryStyles';
+import { getChartThemeTokens } from '../../utils/settingsEngine';
 import { getEffectiveTransactionAmount } from '../../utils/martEngine';
 import { computeBudgetCycleSummary } from '../../utils/budgetCycle';
 import {
@@ -76,11 +77,15 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
   const items = useAppStore((s) => s.items);
   const priceObservations = useAppStore((s) => s.priceObservations);
   const theme = useAppStore((s) => s.theme);
+  const visualTheme = useAppStore((s) => s.visualTheme);
   const featureSettings = useAppStore((s) => s.featureSettings);
   const isSampleDataLoaded = useAppStore((s) => s.isSampleDataLoaded);
   const loadSampleMonth = useAppStore((s) => s.loadSampleMonth);
   const clearWorkspaceData = useAppStore((s) => s.clearWorkspaceData);
-  const isDark = theme === 'dark';
+  const chartTokens = useMemo(
+    () => getChartThemeTokens(theme, visualTheme.mood),
+    [theme, visualTheme.mood]
+  );
 
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetDraft, setBudgetDraft] = useState(String(totalBudget));
@@ -123,20 +128,23 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       ? {
           label: 'Budget exceeded',
           tone: 'danger' as const,
-          badgeClass: 'bg-[#FDECEC] text-[#C23838] border-[#FAD4D4]',
+          statusTextClass: 'text-[#C23838]',
+          dotClass: 'bg-[#DE5252]',
           balanceClass: 'text-[#DE5252]',
         }
       : utilizationPct >= 80
         ? {
             label: 'Approaching limit',
             tone: 'warning' as const,
-            badgeClass: 'bg-[#FEF6E7] text-[#9E6614] border-[#FDE8C4]',
+            statusTextClass: 'text-[#9E6614]',
+            dotClass: 'bg-[#E5A23B]',
             balanceClass: 'text-[#C7851F]',
           }
         : {
             label: 'On track',
             tone: 'success' as const,
-            badgeClass: 'bg-[#E8F7F1] text-[#0D5E43] border-[#C8EDE0]',
+            statusTextClass: 'text-[#0D5E43]',
+            dotClass: 'bg-[#15966B]',
             balanceClass: 'text-[#15966B]',
           };
 
@@ -350,41 +358,45 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       </header>
 
       {/* Section B: Main Budget Overview Card */}
-      <section aria-label="Budget overview" className="surface-card p-5 sm:p-6">
+      <section aria-label="Budget overview" className="hero-deck p-5 sm:p-7">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[12.5px] font-semibold text-[#697386]">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap text-[12px]">
+              <span className="font-semibold text-[#697386]">
                 Remaining Balance
               </span>
-              <span
-                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${budgetStatus.badgeClass}`}
-              >
+              <span className="text-[#929BAB]" aria-hidden="true">·</span>
+              <span className={`inline-flex items-center gap-1.5 font-semibold ${budgetStatus.statusTextClass}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${budgetStatus.dotClass}`} aria-hidden="true" />
                 {budgetStatus.label}
               </span>
+              <span className="text-[#929BAB]" aria-hidden="true">·</span>
               <span
                 data-testid="overview-cycle-window"
-                className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#F1F3F6] border border-[#E7EAF0] text-[#697386]"
+                className="font-mono font-medium text-[#697386] tabular-nums"
               >
                 {cycleSummary.window.label}
               </span>
               {budgetRolloverEnabled && cycleSummary.rolloverDelta !== 0 && (
-                <span
-                  data-testid="overview-rollover-badge"
-                  className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
-                    cycleSummary.rolloverDelta > 0
-                      ? 'bg-[#E8F7F1] text-[#0D5E43] border-[#C8EDE0]'
-                      : 'bg-[#FEF6E7] text-[#9E6614] border-[#FDE8C4]'
-                  }`}
-                >
-                  {cycleSummary.rolloverDelta > 0 ? '+' : '-'}₹
-                  {formatCurrency(Math.abs(cycleSummary.rolloverDelta))} rollover
-                </span>
+                <>
+                  <span className="text-[#929BAB]" aria-hidden="true">·</span>
+                  <span
+                    data-testid="overview-rollover-badge"
+                    className={`font-mono font-semibold tabular-nums ${
+                      cycleSummary.rolloverDelta > 0
+                        ? 'text-[#0D5E43]'
+                        : 'text-[#9E6614]'
+                    }`}
+                  >
+                    {cycleSummary.rolloverDelta > 0 ? '+' : '-'}₹
+                    {formatCurrency(Math.abs(cycleSummary.rolloverDelta))} rollover
+                  </span>
+                </>
               )}
             </div>
             <p
               data-testid="overview-remaining-balance"
-              className={`text-[32px] sm:text-[38px] font-bold font-mono tabular-nums tracking-tight leading-none ${budgetStatus.balanceClass}`}
+              className={`text-[34px] sm:text-[42px] font-bold font-mono tabular-nums tracking-tight leading-none ${budgetStatus.balanceClass}`}
             >
               {remaining < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(remaining))}
             </p>
@@ -529,7 +541,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             <button
               type="button"
               onClick={() => onNavigate('shopping')}
-              className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+              className="surface-card-interactive p-4 text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
                 <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={2} />
@@ -545,7 +557,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             <button
               type="button"
               onClick={() => setAddExpenseOpen(true)}
-              className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+              className="surface-card-interactive p-4 text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] text-[#15966B] flex items-center justify-center mb-3 group-hover:bg-[#15966B] group-hover:text-white transition-colors">
                 <Plus className="w-[18px] h-[18px]" strokeWidth={2.2} />
@@ -562,7 +574,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               type="button"
               onClick={() => onNavigate('expenses')}
               data-testid="quick-action-ledger"
-              className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+              className="surface-card-interactive p-4 text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] text-[#151922] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
                 <Receipt className="w-[18px] h-[18px]" strokeWidth={2} />
@@ -579,7 +591,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               <button
                 type="button"
                 onClick={() => onNavigate('scanner')}
-                className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+                className="surface-card-interactive p-4 text-left group"
               >
                 <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] text-[#C7851F] flex items-center justify-center mb-3 group-hover:bg-[#E5A23B] group-hover:text-white transition-colors">
                   <ScanLine className="w-[18px] h-[18px]" strokeWidth={2} />
@@ -598,7 +610,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                 type="button"
                 onClick={() => onNavigate('insights', 'radar')}
                 data-testid="quick-action-radar-room"
-                className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+                className="surface-card-interactive p-4 text-left group"
               >
                 <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
                   <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
@@ -617,7 +629,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                 type="button"
                 onClick={() => onNavigate('wellness')}
                 data-testid="quick-action-war-room"
-                className="surface-card p-4 text-left hover:border-[#365FE8]/40 hover:shadow-card-hover transition-all group"
+                className="surface-card-interactive p-4 text-left group"
               >
                 <div className="w-9 h-9 rounded-xl bg-[#FDECEC] text-[#DE5252] flex items-center justify-center mb-3 group-hover:bg-[#DE5252] group-hover:text-white transition-colors">
                   <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2} />
@@ -649,7 +661,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                 : 'Top spending categories this month'
             }
             action={
-              <div className="inline-flex items-center p-1 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0]">
+              <div className="inline-flex items-center p-1 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] tactile-well">
                 <button
                   type="button"
                   onClick={() => setChartMode('daily')}
@@ -715,33 +727,24 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
-                      stroke={isDark ? '#232A38' : '#E7EAF0'}
+                      stroke={chartTokens.gridStroke}
                     />
                     <XAxis
                       dataKey="label"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: isDark ? '#9CA6BA' : '#697386', fontSize: 11 }}
+                      tick={{ fill: chartTokens.tickColor, fontSize: 11 }}
                       interval="preserveStartEnd"
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: isDark ? '#9CA6BA' : '#697386', fontSize: 11 }}
+                      tick={{ fill: chartTokens.tickColor, fontSize: 11 }}
                       tickFormatter={(v) => `₹${v}`}
                     />
                     <Tooltip
-                      cursor={{ fill: isDark ? '#181D27' : '#F1F3F6' }}
-                      contentStyle={{
-                        backgroundColor: isDark ? '#11141B' : '#FFFFFF',
-                        borderColor: isDark ? '#232A38' : '#E7EAF0',
-                        borderRadius: '12px',
-                        boxShadow: isDark
-                          ? '0 8px 24px rgba(0, 0, 0, 0.45)'
-                          : '0 8px 24px rgba(21, 25, 34, 0.08)',
-                        fontSize: '12px',
-                        color: isDark ? '#F3F5F9' : '#151922',
-                      }}
+                      cursor={{ fill: chartTokens.cursorFill }}
+                      contentStyle={chartTokens.tooltipStyle}
                       formatter={(val) => [
                         `₹${formatCurrencyExact(Number(val))}`,
                         'Spent',
@@ -751,7 +754,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                       {recentDailyChartData.map((entry, idx) => (
                         <Cell
                           key={entry.label + idx}
-                          fill={entry.spent > 0 ? '#365FE8' : isDark ? '#232A38' : '#E7EAF0'}
+                          fill={entry.spent > 0 ? chartTokens.accent : chartTokens.mutedBarFill}
                         />
                       ))}
                     </Bar>
@@ -765,13 +768,13 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                     <CartesianGrid
                       strokeDasharray="3 3"
                       horizontal={false}
-                      stroke={isDark ? '#232A38' : '#E7EAF0'}
+                      stroke={chartTokens.gridStroke}
                     />
                     <XAxis
                       type="number"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: isDark ? '#9CA6BA' : '#697386', fontSize: 11 }}
+                      tick={{ fill: chartTokens.tickColor, fontSize: 11 }}
                       tickFormatter={(v) => `₹${v}`}
                     />
                     <YAxis
@@ -780,20 +783,11 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                       width={110}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: isDark ? '#F3F5F9' : '#151922', fontSize: 11.5 }}
+                      tick={{ fill: chartTokens.tickColor, fontSize: 11.5 }}
                     />
                     <Tooltip
-                      cursor={{ fill: isDark ? '#181D27' : '#F1F3F6' }}
-                      contentStyle={{
-                        backgroundColor: isDark ? '#11141B' : '#FFFFFF',
-                        borderColor: isDark ? '#232A38' : '#E7EAF0',
-                        borderRadius: '12px',
-                        boxShadow: isDark
-                          ? '0 8px 24px rgba(0, 0, 0, 0.45)'
-                          : '0 8px 24px rgba(21, 25, 34, 0.08)',
-                        fontSize: '12px',
-                        color: isDark ? '#F3F5F9' : '#151922',
-                      }}
+                      cursor={{ fill: chartTokens.cursorFill }}
+                      contentStyle={chartTokens.tooltipStyle}
                       formatter={(val) => [
                         `₹${formatCurrencyExact(Number(val))}`,
                         'Spent',
@@ -801,7 +795,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                     />
                     <Bar
                       dataKey="spent"
-                      fill="#365FE8"
+                      fill={chartTokens.accent}
                       radius={[0, 6, 6, 0]}
                       maxBarSize={24}
                     />
@@ -993,7 +987,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                         insight.targetSubTab
                       )
                     }
-                    className="text-left rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] p-4 transition-colors flex flex-col justify-between gap-3"
+                    className="surface-card-interactive text-left p-4 flex flex-col justify-between gap-3"
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">

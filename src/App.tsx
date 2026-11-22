@@ -21,6 +21,8 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<AppSection>('overview');
   const [insightsInitialTab, setInsightsInitialTab] =
     useState<InsightsTab>('penny');
+  const [insightsActiveTab, setInsightsActiveTab] =
+    useState<InsightsTab>('penny');
   const [insightsTabSignal, setInsightsTabSignal] = useState(0);
   const [shopInitialSection, setShopInitialSection] =
     useState<'home' | 'baskets'>('home');
@@ -38,6 +40,7 @@ export default function App() {
   const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const items = useAppStore((s) => s.items);
   const theme = useAppStore((s) => s.theme);
+  const visualTheme = useAppStore((s) => s.visualTheme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
   const featureSettings = useAppStore((s) => s.featureSettings);
 
@@ -49,7 +52,11 @@ export default function App() {
       root.classList.remove('dark');
     }
     root.style.colorScheme = theme;
-  }, [theme]);
+    root.setAttribute('data-theme-mood', visualTheme.mood);
+    root.setAttribute('data-surface', visualTheme.surface);
+    root.setAttribute('data-font', visualTheme.font);
+    root.setAttribute('data-motion', visualTheme.motion);
+  }, [theme, visualTheme]);
 
   useEffect(() => {
     const safe = resolveSafeSection(activeSection, featureSettings);
@@ -142,6 +149,7 @@ export default function App() {
         <InsightsDashboard
           initialTab={insightsInitialTab}
           tabSignal={insightsTabSignal}
+          onTabChange={setInsightsActiveTab}
           onOpenExpenses={() => handleNavigate('expenses')}
           onOpenShopping={(sub) => handleNavigate('shopping', sub)}
           onOpenScanner={() => handleNavigate('scanner')}
@@ -182,6 +190,7 @@ export default function App() {
         <PennyFloatingCompanion
           activeScreen={activeSection}
           hasCartBarVisible={activeSection === 'shopping' && hasCartItems}
+          hideLauncher={activeSection === 'insights' && insightsActiveTab === 'penny'}
           onNavigate={handleNavigate}
         />
       )}

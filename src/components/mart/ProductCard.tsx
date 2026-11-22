@@ -73,12 +73,12 @@ export function ProductCard({
 
   return (
     <div
-      className={`group rounded-2xl p-3 flex flex-col justify-between transition-all duration-150 border ${
+      className={`group rounded-2xl p-3 flex flex-col justify-between transition-all border ${
         totalItemCartQty > 0
           ? 'bg-[#EDF2FF]/35 border-[#365FE8]/45 shadow-card'
           : isBrokeWatched
           ? 'bg-white border-[#F3D8A8] shadow-card hover:border-[#E5A23B]'
-          : 'bg-white border-[#E7EAF0] shadow-card hover:border-[#D5DBE5] hover:-translate-y-0.5'
+          : 'surface-card-interactive'
       }`}
     >
       <div>

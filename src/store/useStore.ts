@@ -39,14 +39,18 @@ import {
   type Transaction,
   type TransactionStatus,
   type TriggeredPriceAlert,
+  type VisualThemeConfig,
   type WarRoomPeriod,
 } from '../types/models';
 import {
   DEFAULT_FEATURE_SETTINGS,
+  DEFAULT_VISUAL_THEME,
   getPresetSettings,
   mergeFeatureSettings,
+  mergeVisualTheme,
   sanitizeFeatureSettings,
   sanitizeThemeMode,
+  sanitizeVisualTheme,
 } from '../utils/settingsEngine';
 import {
   DEFAULT_PENNY_PROFILE,
@@ -222,6 +226,7 @@ export interface AppState {
   settlements: Settlement[];
 
   theme: ThemeMode;
+  visualTheme: VisualThemeConfig;
   featureSettings: FeatureSettings;
 
   pennyMessages: PennyChatMessage[];
@@ -235,6 +240,8 @@ export interface AppState {
 
   setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
+  setVisualTheme: (patch: Partial<VisualThemeConfig>) => void;
+  resetVisualTheme: () => void;
   applyFeaturePreset: (preset: Exclude<SettingsPreset, 'custom'>) => void;
   updateFeatureSettings: (patch: Partial<FeatureSettings>) => void;
   resetFeatureSettings: () => void;
@@ -514,6 +521,7 @@ export const useAppStore = create<AppState>()(
       settlements: [],
 
       theme: 'light',
+      visualTheme: { ...DEFAULT_VISUAL_THEME },
       featureSettings: { ...DEFAULT_FEATURE_SETTINGS },
 
       pennyMessages: [],
@@ -532,6 +540,12 @@ export const useAppStore = create<AppState>()(
       setTheme: (theme) => set({ theme: sanitizeThemeMode(theme) }),
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+      setVisualTheme: (patch) =>
+        set((state) => ({
+          visualTheme: mergeVisualTheme(state.visualTheme, patch),
+        })),
+      resetVisualTheme: () =>
+        set({ visualTheme: { ...DEFAULT_VISUAL_THEME } }),
       applyFeaturePreset: (preset) =>
         set((state) => {
           const next = getPresetSettings(preset);
@@ -2821,6 +2835,9 @@ export const useAppStore = create<AppState>()(
               ? data.disciplineCheckIns
               : [],
             theme: data.theme ? sanitizeThemeMode(data.theme) : undefined,
+            visualTheme: data.visualTheme
+              ? sanitizeVisualTheme(data.visualTheme)
+              : undefined,
             featureSettings: data.featureSettings
               ? sanitizeFeatureSettings(data.featureSettings)
               : undefined,
@@ -2880,6 +2897,7 @@ export const useAppStore = create<AppState>()(
       version: 3,
       partialize: (state) => ({
         theme: state.theme,
+        visualTheme: state.visualTheme,
         featureSettings: state.featureSettings,
         pennyMessages: state.pennyMessages.slice(-40),
         pennyProfile: state.pennyProfile,
@@ -3068,6 +3086,7 @@ export const useAppStore = create<AppState>()(
             ? state.disciplineCheckIns
             : [],
           theme: sanitizeThemeMode(state.theme),
+          visualTheme: sanitizeVisualTheme(state.visualTheme),
           featureSettings: sanitizeFeatureSettings(state.featureSettings),
           pennyMessages: sanitizePennyMessages(state.pennyMessages),
           pennyProfile: sanitizePennyProfile(state.pennyProfile),

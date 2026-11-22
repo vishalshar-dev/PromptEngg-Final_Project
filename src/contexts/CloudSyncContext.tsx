@@ -119,6 +119,7 @@ function extractSyncableState(): SyncableWorkspaceState {
     sharedExpenses: s.sharedExpenses,
     settlements: s.settlements,
     theme: s.theme,
+    visualTheme: s.visualTheme,
     featureSettings: s.featureSettings,
     pennyMessages: s.pennyMessages,
     pennyProfile: s.pennyProfile,

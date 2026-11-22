@@ -7,6 +7,7 @@ import { PennyChatCore } from './PennyChatCore';
 interface PennyFloatingCompanionProps {
   activeScreen: AppSection;
   hasCartBarVisible: boolean;
+  hideLauncher?: boolean;
   onNavigate: (section: AppSection, subTab?: string) => void;
 }
 
@@ -22,6 +23,7 @@ const SCREEN_LABELS: Record<AppSection, string> = {
 export function PennyFloatingCompanion({
   activeScreen,
   hasCartBarVisible,
+  hideLauncher = false,
   onNavigate,
 }: PennyFloatingCompanionProps) {
   const isPennyOpen = useAppStore((s) => s.isPennyOpen);
@@ -53,10 +55,10 @@ export function PennyFloatingCompanion({
             role="dialog"
             aria-label="Penny AI companion window"
             data-testid="penny-floating-window"
-            className="fixed z-50 inset-x-2.5 bottom-2.5 top-16 sm:inset-auto sm:bottom-5 sm:right-5 sm:w-[410px] sm:h-[580px] sm:max-h-[calc(100vh-2.5rem)] flex flex-col bg-white border border-[#E7EAF0] rounded-2xl shadow-modal overflow-hidden animate-slide-up"
+            className="fixed z-50 inset-x-2.5 bottom-2.5 top-16 sm:inset-auto sm:bottom-5 sm:right-5 sm:w-[410px] sm:h-[580px] sm:max-h-[calc(100vh-2.5rem)] flex flex-col modal-panel rounded-2xl overflow-hidden animate-slide-up"
           >
             {/* Header */}
-            <div className="px-4 py-3 border-b border-[#E7EAF0] flex items-center justify-between gap-2 shrink-0 bg-[#FFFFFF]">
+            <div className="px-4 py-3 border-b border-[#E7EAF0] flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-[#365FE8] text-white flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4" strokeWidth={2.2} />
@@ -110,21 +112,27 @@ export function PennyFloatingCompanion({
       )}
 
       {/* Compact Global Floating Launcher */}
-      {!isPennyOpen && (
+      {!isPennyOpen && !hideLauncher && (
         <button
           type="button"
           onClick={() => setPennyOpen(true)}
           aria-label="Open Penny AI assistant (Cmd or Ctrl + K)"
           title="Ask Penny (⌘K / Ctrl+K)"
           data-testid="penny-floating-launcher"
-          className={`fixed right-4 lg:right-6 z-40 h-11 px-4 rounded-2xl bg-[#365FE8] hover:bg-[#294FCC] text-white shadow-modal flex items-center gap-2 text-xs font-bold whitespace-nowrap transition-all ${
-            hasCartBarVisible ? 'bottom-[84px] lg:bottom-6' : 'bottom-4 lg:bottom-6'
+          className={`fixed z-40 h-11 rounded-2xl bg-[#365FE8] hover:bg-[#294FCC] text-white shadow-modal flex items-center justify-center gap-2 text-xs font-bold whitespace-nowrap transition-all ${
+            hasCartBarVisible
+              ? 'right-3 sm:right-4 lg:right-6 bottom-[84px] lg:bottom-6 w-11 sm:w-auto px-0 sm:px-4'
+              : 'right-4 lg:right-6 bottom-4 lg:bottom-6 px-4'
           }`}
         >
           <Sparkles className="w-4 h-4 shrink-0" strokeWidth={2.2} />
-          <span>Ask Penny</span>
+          <span className={hasCartBarVisible ? 'hidden sm:inline' : ''}>Ask Penny</span>
           {pennyMessages.length > 0 ? (
-            <span className="font-mono tabular-nums text-[11px] text-white/85">
+            <span
+              className={`font-mono tabular-nums text-[11px] text-white/85 ${
+                hasCartBarVisible ? 'hidden sm:inline' : ''
+              }`}
+            >
               ({pennyMessages.length})
             </span>
           ) : (

@@ -22,6 +22,11 @@ import {
   Calendar,
   Download,
   FileJson,
+  Palette,
+  Layers,
+  Type,
+  Zap,
+  Wand2,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { useCloudSync } from '../../contexts/CloudSyncContext';
@@ -34,9 +39,16 @@ import type {
   SettingsPreset,
 } from '../../types/models';
 import {
+  DEFAULT_VISUAL_THEME,
+  FONT_PAIRING_OPTIONS,
+  MOTION_PROFILE_OPTIONS,
   PRESET_DEFINITIONS,
+  SURFACE_STYLE_OPTIONS,
+  THEME_MOOD_OPTIONS,
   TOTAL_FEATURE_TOGGLES_COUNT,
+  VISUAL_BUNDLES,
   countEnabledFeatures,
+  isSameVisualTheme,
 } from '../../utils/settingsEngine';
 
 interface SettingsModalProps {
@@ -170,10 +182,13 @@ function SwitchRow({
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const theme = useAppStore((s) => s.theme);
+  const visualTheme = useAppStore((s) => s.visualTheme);
   const featureSettings = useAppStore((s) => s.featureSettings);
   const pennyProfile = useAppStore((s) => s.pennyProfile);
   const pennyMessages = useAppStore((s) => s.pennyMessages);
   const setTheme = useAppStore((s) => s.setTheme);
+  const setVisualTheme = useAppStore((s) => s.setVisualTheme);
+  const resetVisualTheme = useAppStore((s) => s.resetVisualTheme);
   const applyFeaturePreset = useAppStore((s) => s.applyFeaturePreset);
   const updateFeatureSettings = useAppStore((s) => s.updateFeatureSettings);
   const resetFeatureSettings = useAppStore((s) => s.resetFeatureSettings);
@@ -250,7 +265,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col modal-panel rounded-t-3xl sm:rounded-2xl animate-slide-up overflow-hidden">
         {/* Header */}
         <div className="px-5 py-4 border-b border-[#E7EAF0] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -415,17 +430,34 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
           </section>
 
-          {/* 1. Theme Selector (Light vs Dark) */}
-          <section className="space-y-2.5" aria-label="Theme selection">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#697386]">
-                Appearance Theme
-              </h3>
-              <span className="text-xs font-mono font-semibold text-[#365FE8]">
-                {theme === 'dark' ? 'Dark Theme' : 'Light Theme'}
-              </span>
+          {/* 1. Appearance & Tactile Studio */}
+          <section className="space-y-4" aria-label="Appearance and tactile studio">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-[#365FE8] shrink-0" />
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#697386]">
+                    Appearance &amp; Tactile Studio
+                  </h3>
+                  <p className="text-[11px] text-[#697386]">
+                    Customize color mood, surface material, typography, and motion feel.
+                  </p>
+                </div>
+              </div>
+              {!isSameVisualTheme(visualTheme, DEFAULT_VISUAL_THEME) && (
+                <button
+                  type="button"
+                  onClick={resetVisualTheme}
+                  data-testid="settings-reset-visual-theme"
+                  className="text-[11px] font-semibold text-[#697386] hover:text-[#151922] inline-flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Visual Studio</span>
+                </button>
+              )}
             </div>
 
+            {/* Light / Dark Mode Switch */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -438,18 +470,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] text-[#151922] flex items-center justify-center shrink-0 shadow-xs">
-                  <Sun className="w-4 h-4 text-[#C7851F]" strokeWidth={2.2} />
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    color: '#0F172A',
+                  }}
+                >
+                  <Sun className="w-4 h-4" style={{ color: '#C7851F' }} strokeWidth={2.2} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-[#151922]">Light Theme</span>
+                    <span className="text-sm font-bold text-[#151922]">Light Mode</span>
                     {theme === 'light' && (
                       <Check className="w-4 h-4 text-[#365FE8] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
                   <p className="text-[11.5px] text-[#697386] mt-0.5">
-                    Crisp bright surfaces &amp; high-contrast slate typography.
+                    Porcelain daylight surfaces &amp; crisp slate contrast.
                   </p>
                 </div>
               </button>
@@ -465,21 +504,269 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-[#090B0F] border border-[#232A38] text-[#F3F5F9] flex items-center justify-center shrink-0 shadow-xs">
-                  <Moon className="w-4 h-4 text-[#7B9BFF]" strokeWidth={2.2} />
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    backgroundColor: '#090B0F',
+                    border: '1px solid #232A38',
+                    color: '#F3F5F9',
+                  }}
+                >
+                  <Moon className="w-4 h-4" style={{ color: '#7B9BFF' }} strokeWidth={2.2} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-[#151922]">Dark Theme</span>
+                    <span className="text-sm font-bold text-[#151922]">Dark Mode</span>
                     {theme === 'dark' && (
                       <Check className="w-4 h-4 text-[#365FE8] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
                   <p className="text-[11.5px] text-[#697386] mt-0.5">
-                    Deep obsidian canvas for low-glare clarity.
+                    Low-glare obsidian atmosphere &amp; luminous accents.
                   </p>
                 </div>
               </button>
+            </div>
+
+            {/* One-Tap Curated Aesthetic Bundles */}
+            <div className="surface-subtle p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Wand2 className="w-3.5 h-3.5 text-[#365FE8]" />
+                  <span className="text-[11.5px] font-bold text-[#151922]">
+                    Curated Aesthetic Bundles
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono text-[#697386]">One-tap styles</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {VISUAL_BUNDLES.map((bundle) => {
+                  const active = isSameVisualTheme(visualTheme, bundle.config);
+                  return (
+                    <button
+                      key={bundle.id}
+                      type="button"
+                      onClick={() => setVisualTheme(bundle.config)}
+                      aria-pressed={active}
+                      data-testid={`settings-bundle-${bundle.id}`}
+                      className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
+                        active
+                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
+                          : 'bg-white border-[#E7EAF0] hover:border-[#D5DBE5]'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#151922] truncate">{bundle.label}</p>
+                        <p className="text-[10.5px] text-[#697386] truncate mt-0.5">
+                          {bundle.tagline}
+                        </p>
+                      </div>
+                      {active && (
+                        <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 4 Color Moods with Protected Inline Live Swatches */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11.5px] font-bold text-[#151922]">Color Mood</span>
+                <span className="text-[11px] font-mono text-[#365FE8]">
+                  {THEME_MOOD_OPTIONS.find((m) => m.id === visualTheme.mood)?.inspiredBy}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {THEME_MOOD_OPTIONS.map((opt) => {
+                  const active = visualTheme.mood === opt.id;
+                  const swatch = theme === 'dark' ? opt.darkPreview : opt.lightPreview;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setVisualTheme({ mood: opt.id })}
+                      aria-pressed={active}
+                      data-testid={`settings-mood-${opt.id}`}
+                      className={`p-3 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                        active
+                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
+                          : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                      }`}
+                    >
+                      {/* Miniature live UI preview using protected inline colors */}
+                      <div
+                        className="w-12 h-11 rounded-xl p-1.5 flex flex-col justify-between shrink-0"
+                        style={{
+                          backgroundColor: swatch.canvas,
+                          border: `1px solid ${swatch.border}`,
+                        }}
+                        aria-hidden="true"
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: swatch.accent }}
+                          />
+                          <span
+                            className="h-1.5 w-4 rounded-full"
+                            style={{ backgroundColor: swatch.text, opacity: 0.7 }}
+                          />
+                        </div>
+                        <div
+                          className="h-4 rounded-md px-1 flex items-center justify-between"
+                          style={{
+                            backgroundColor: swatch.surface,
+                            border: `1px solid ${swatch.border}`,
+                          }}
+                        >
+                          <span
+                            className="h-1 w-3.5 rounded-full"
+                            style={{ backgroundColor: swatch.text, opacity: 0.55 }}
+                          />
+                          <span
+                            className="h-1.5 w-2 rounded-sm"
+                            style={{ backgroundColor: swatch.accent }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-xs font-bold text-[#151922] truncate">
+                            {opt.label}
+                          </span>
+                          {active && (
+                            <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-[#697386] mt-0.5 leading-snug line-clamp-2">
+                          {opt.subtitle}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3 Tactile Surface Finishes */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#365FE8]" />
+                <span className="text-[11.5px] font-bold text-[#151922]">
+                  Tactile Surface Finish
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {SURFACE_STYLE_OPTIONS.map((opt) => {
+                  const active = visualTheme.surface === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setVisualTheme({ surface: opt.id })}
+                      aria-pressed={active}
+                      data-testid={`settings-surface-${opt.id}`}
+                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                        active
+                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
+                          : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-xs font-bold text-[#151922]">{opt.label}</span>
+                        {active && (
+                          <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                        )}
+                      </div>
+                      <p className="text-[10.5px] text-[#697386] mt-0.5 leading-snug">
+                        {opt.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3 Typography Pairings & 3 Motion Profiles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Type className="w-3.5 h-3.5 text-[#365FE8]" />
+                  <span className="text-[11.5px] font-bold text-[#151922]">
+                    Typography Pairing
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {FONT_PAIRING_OPTIONS.map((opt) => {
+                    const active = visualTheme.font === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setVisualTheme({ font: opt.id })}
+                        aria-pressed={active}
+                        data-testid={`settings-font-${opt.id}`}
+                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
+                          active
+                            ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
+                            : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-[#151922]">{opt.label}</p>
+                          <p className="text-[10.5px] text-[#697386] truncate">{opt.description}</p>
+                        </div>
+                        <span
+                          className="text-xs font-bold text-[#365FE8] tabular-nums shrink-0"
+                          style={{ fontFamily: opt.specimenFont }}
+                        >
+                          ₹12,480
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-[#365FE8]" />
+                  <span className="text-[11.5px] font-bold text-[#151922]">
+                    Motion Profile
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {MOTION_PROFILE_OPTIONS.map((opt) => {
+                    const active = visualTheme.motion === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setVisualTheme({ motion: opt.id })}
+                        aria-pressed={active}
+                        data-testid={`settings-motion-${opt.id}`}
+                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
+                          active
+                            ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
+                            : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-[#151922]">{opt.label}</p>
+                          <p className="text-[10.5px] text-[#697386] truncate">{opt.description}</p>
+                        </div>
+                        {active && (
+                          <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </section>
 
@@ -944,6 +1231,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     basketTemplates: st.basketTemplates,
                     basketTemplatesSeeded: st.basketTemplatesSeeded,
                     theme: st.theme,
+                    visualTheme: st.visualTheme,
                     featureSettings: st.featureSettings,
                     pennyMessages: st.pennyMessages,
                     pennyProfile: st.pennyProfile,

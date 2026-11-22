@@ -60,7 +60,7 @@ export function MetricCard({
         </div>
         {Icon && (
           <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${styles.iconWrap}`}
+            className={`w-9 h-9 rounded-xl border border-[#E7EAF0] flex items-center justify-center shrink-0 ${styles.iconWrap}`}
           >
             <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
           </div>

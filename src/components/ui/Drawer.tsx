@@ -46,7 +46,7 @@ export function Drawer({
       />
 
       <div
-        className={`relative z-10 w-full ${maxWidthClass} bg-white border-t lg:border-t-0 lg:border-l border-[#E7EAF0] rounded-t-2xl lg:rounded-none shadow-modal flex flex-col max-h-[88vh] lg:max-h-screen lg:h-full animate-slide-up lg:animate-fade-in`}
+        className={`relative z-10 w-full ${maxWidthClass} modal-panel border-t lg:border-t-0 lg:border-l border-[#E7EAF0] rounded-t-2xl lg:rounded-none flex flex-col max-h-[88vh] lg:max-h-screen lg:h-full animate-slide-up lg:animate-fade-in`}
       >
         {/* Mobile sheet drag handle */}
         <div className="lg:hidden flex justify-center pt-2.5 pb-1">

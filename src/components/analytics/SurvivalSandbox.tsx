@@ -208,7 +208,7 @@ export function SurvivalSandbox({
       <div
         role="tablist"
         aria-label="Financial Wellness sections"
-        className="flex items-center gap-1 bg-[#F1F3F6] border border-[#E7EAF0] p-1 rounded-xl overflow-x-auto no-scrollbar"
+        className="tactile-well flex items-center gap-1 bg-[#F1F3F6] border border-[#E7EAF0] p-1 rounded-xl overflow-x-auto no-scrollbar"
       >
         {navItems.map((item) => {
           const Icon = item.icon;

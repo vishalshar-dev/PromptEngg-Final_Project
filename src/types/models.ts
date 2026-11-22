@@ -410,6 +410,7 @@ export interface BackupData {
   basketTemplates?: BasketTemplate[];
   basketTemplatesSeeded?: boolean;
   theme?: ThemeMode;
+  visualTheme?: VisualThemeConfig;
   featureSettings?: FeatureSettings;
   pennyMessages?: PennyChatMessage[];
   pennyProfile?: PennyInteractionProfile;
@@ -418,6 +419,34 @@ export interface BackupData {
 }
 
 export type ThemeMode = 'light' | 'dark';
+
+export type ThemeMood =
+  | 'obsidian_indigo'
+  | 'stealth_mint'
+  | 'frosted_sapphire'
+  | 'titanium_amber';
+
+export type SurfaceStyle =
+  | 'hairline_bevel'
+  | 'frosted_glass'
+  | 'tactile_wells';
+
+export type FontPairing =
+  | 'manrope_mono'
+  | 'jakarta_mono'
+  | 'bricolage_dm';
+
+export type MotionProfile =
+  | 'crisp_micro'
+  | 'calm_minimal'
+  | 'rich_tactile';
+
+export interface VisualThemeConfig {
+  mood: ThemeMood;
+  surface: SurfaceStyle;
+  font: FontPairing;
+  motion: MotionProfile;
+}
 
 export type SettingsPreset = 'simple' | 'standard' | 'full' | 'custom';
 

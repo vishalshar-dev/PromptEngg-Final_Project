@@ -21,9 +21,15 @@ import type {
   SharedExpense,
   ThemeMode,
   Transaction,
+  VisualThemeConfig,
 } from '../types/models';
 import { sanitizePennyMessages, sanitizePennyProfile } from './pennyEngine';
-import { sanitizeFeatureSettings, sanitizeThemeMode } from './settingsEngine';
+import {
+  DEFAULT_VISUAL_THEME,
+  sanitizeFeatureSettings,
+  sanitizeThemeMode,
+  sanitizeVisualTheme,
+} from './settingsEngine';
 import { DEFAULT_ITEMS, mergeBackupItems, mergeCategories } from './storeHelpers';
 import { DEFAULT_BROKE_MODE_CONFIG } from './warRoomEngine';
 
@@ -64,6 +70,7 @@ export interface SyncableWorkspaceState {
   sharedExpenses: SharedExpense[];
   settlements: Settlement[];
   theme: ThemeMode;
+  visualTheme?: VisualThemeConfig;
   featureSettings: FeatureSettings;
   pennyMessages: PennyChatMessage[];
   pennyProfile: PennyInteractionProfile;
@@ -87,6 +94,7 @@ export interface SyncSectionPayloads {
     totalBudget: number;
     sessionBudget: number | null;
     theme: ThemeMode;
+    visualTheme?: VisualThemeConfig;
     featureSettings: FeatureSettings;
     categories: string[];
     categoryConfigs: CategoryConfig[];
@@ -208,6 +216,7 @@ export function buildSectionPayloads(
       totalBudget: state.totalBudget,
       sessionBudget: state.sessionBudget,
       theme: state.theme,
+      visualTheme: sanitizeVisualTheme(state.visualTheme ?? DEFAULT_VISUAL_THEME),
       featureSettings: state.featureSettings,
       categories: state.categories,
       categoryConfigs: state.categoryConfigs,
@@ -392,6 +401,9 @@ export function applyCloudSectionsToBackup(
     theme: settingsSec?.theme
       ? sanitizeThemeMode(settingsSec.theme)
       : sanitizeThemeMode(currentState.theme),
+    visualTheme: settingsSec?.visualTheme
+      ? sanitizeVisualTheme(settingsSec.visualTheme)
+      : sanitizeVisualTheme(currentState.visualTheme ?? DEFAULT_VISUAL_THEME),
     featureSettings: settingsSec?.featureSettings
       ? sanitizeFeatureSettings(settingsSec.featureSettings)
       : sanitizeFeatureSettings(currentState.featureSettings),
@@ -490,6 +502,9 @@ export function backupToSyncableState(
     sharedExpenses: backup.sharedExpenses ?? fallback.sharedExpenses,
     settlements: backup.settlements ?? fallback.settlements,
     theme: backup.theme ? sanitizeThemeMode(backup.theme) : fallback.theme,
+    visualTheme: backup.visualTheme
+      ? sanitizeVisualTheme(backup.visualTheme)
+      : sanitizeVisualTheme(fallback.visualTheme ?? DEFAULT_VISUAL_THEME),
     featureSettings: backup.featureSettings
       ? sanitizeFeatureSettings(backup.featureSettings)
       : fallback.featureSettings,

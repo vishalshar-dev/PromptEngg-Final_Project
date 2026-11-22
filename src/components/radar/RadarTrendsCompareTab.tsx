@@ -15,6 +15,7 @@ import {
 import { ArrowDownRight, ArrowUpRight, GitCompare, Info, Repeat, TrendingUp } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCompact, formatCurrencyExact } from '../../utils/categoryStyles';
+import { getChartThemeTokens } from '../../utils/settingsEngine';
 import type {
   RadarComparisonPreset,
   RadarDateWindow,
@@ -22,26 +23,6 @@ import type {
   RadarSpendingTrendsResult,
   TrendGranularity,
 } from '../../utils/radarEngine';
-
-const LINE_COLORS = ['#365FE8', '#15966B', '#E5A23B', '#7C3AED'];
-
-const LIGHT_TOOLTIP_STYLE = {
-  backgroundColor: '#FFFFFF',
-  borderColor: '#E7EAF0',
-  borderRadius: '12px',
-  fontSize: '12px',
-  color: '#151922',
-  boxShadow: '0 8px 24px rgba(21,25,34,0.08)',
-};
-
-const DARK_TOOLTIP_STYLE = {
-  backgroundColor: '#11141B',
-  borderColor: '#232A38',
-  borderRadius: '12px',
-  fontSize: '12px',
-  color: '#F3F5F9',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
-};
 
 interface RadarTrendsCompareTabProps {
   window: RadarDateWindow;
@@ -63,10 +44,13 @@ export function RadarTrendsCompareTab({
   comparisonResult,
 }: RadarTrendsCompareTabProps) {
   const theme = useAppStore((s) => s.theme);
+  const visualTheme = useAppStore((s) => s.visualTheme);
   const isDark = theme === 'dark';
-  const tooltipStyle = isDark ? DARK_TOOLTIP_STYLE : LIGHT_TOOLTIP_STYLE;
-  const gridStroke = isDark ? '#232A38' : '#E7EAF0';
-  const tickColor = isDark ? '#9CA6BA' : '#697386';
+  const chartTokens = getChartThemeTokens(theme, visualTheme.mood);
+  const lineColors = chartTokens.secondarySeries;
+  const tooltipStyle = chartTokens.tooltipStyle;
+  const gridStroke = chartTokens.gridStroke;
+  const tickColor = chartTokens.tickColor;
   const [chartType, setChartType] = useState<'area' | 'bar'>('area');
   const [selectedTrendCats, setSelectedTrendCats] = useState<string[]>(() =>
     trendsResult.availableCategories.slice(0, 3)
@@ -132,7 +116,7 @@ export function RadarTrendsCompareTab({
 
           <div className="flex flex-wrap items-center gap-2">
             <div
-              className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+              className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
               role="group"
               aria-label="Trend granularity"
             >
@@ -160,7 +144,7 @@ export function RadarTrendsCompareTab({
             </div>
 
             <div
-              className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+              className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
               role="group"
               aria-label="Chart mode"
             >
@@ -244,8 +228,8 @@ export function RadarTrendsCompareTab({
               >
                 <defs>
                   <linearGradient id="radarTrendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#365FE8" stopOpacity={0.22} />
-                    <stop offset="100%" stopColor="#365FE8" stopOpacity={0.01} />
+                    <stop offset="0%" stopColor={chartTokens.accent} stopOpacity={0.26} />
+                    <stop offset="100%" stopColor={chartTokens.accent} stopOpacity={0.01} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
@@ -264,7 +248,7 @@ export function RadarTrendsCompareTab({
                   width={54}
                 />
                 <Tooltip
-                  cursor={{ stroke: isDark ? '#323B4F' : '#D5DBE6', strokeDasharray: '3 3' }}
+                  cursor={{ stroke: chartTokens.gridStroke, strokeDasharray: '3 3' }}
                   formatter={(v: unknown) => [`₹${formatCurrencyExact(Number(v ?? 0))}`, 'Spent']}
                   labelFormatter={(_, payload) =>
                     String(payload?.[0]?.payload?.fullLabel ?? '')
@@ -274,11 +258,11 @@ export function RadarTrendsCompareTab({
                 <Area
                   type="monotone"
                   dataKey="spent"
-                  stroke="#4D74F9"
+                  stroke={chartTokens.accent}
                   strokeWidth={2.5}
                   fill="url(#radarTrendGrad)"
                   isAnimationActive={false}
-                  dot={{ r: 3, fill: isDark ? '#11141B' : '#FFFFFF', stroke: '#4D74F9', strokeWidth: 2 }}
+                  dot={{ r: 3, fill: chartTokens.tooltipStyle.backgroundColor, stroke: chartTokens.accent, strokeWidth: 2 }}
                 />
               </AreaChart>
             ) : (
@@ -302,14 +286,14 @@ export function RadarTrendsCompareTab({
                   width={54}
                 />
                 <Tooltip
-                  cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
+                  cursor={{ fill: chartTokens.cursorFill }}
                   formatter={(v: unknown) => [`₹${formatCurrencyExact(Number(v ?? 0))}`, 'Spent']}
                   labelFormatter={(_, payload) =>
                     String(payload?.[0]?.payload?.fullLabel ?? '')
                   }
                   contentStyle={tooltipStyle}
                 />
-                <Bar dataKey="spent" fill="#4D74F9" radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+                <Bar dataKey="spent" fill={chartTokens.accent} radius={[5, 5, 0, 0]} maxBarSize={28} isAnimationActive={false} />
               </BarChart>
             )}
           </ResponsiveContainer>
@@ -340,7 +324,7 @@ export function RadarTrendsCompareTab({
                 {trendsResult.availableCategories.slice(0, 8).map((cat) => {
                   const idx = activeCategorySelection.indexOf(cat);
                   const active = idx !== -1;
-                  const lineColor = active ? LINE_COLORS[idx % LINE_COLORS.length] : undefined;
+                  const lineColor = active ? lineColors[idx % lineColors.length] : undefined;
                   return (
                     <button
                       key={cat}
@@ -394,7 +378,7 @@ export function RadarTrendsCompareTab({
                         key={cat}
                         type="monotone"
                         dataKey={cat}
-                        stroke={LINE_COLORS[idx % LINE_COLORS.length]}
+                        stroke={lineColors[idx % lineColors.length]}
                         strokeWidth={2}
                         dot={{ r: 3 }}
                         isAnimationActive={false}
@@ -463,7 +447,7 @@ export function RadarTrendsCompareTab({
           </div>
 
           <div
-            className="inline-flex flex-wrap items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex flex-wrap items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
             role="group"
             aria-label="Comparison period mode"
           >

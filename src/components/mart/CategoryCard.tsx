@@ -26,10 +26,10 @@ export function CategoryCard({
       type="button"
       onClick={() => onSelect(category.name)}
       aria-pressed={selected}
-      className={`group relative text-left rounded-2xl border p-3 transition-all duration-150 flex flex-col gap-2.5 ${
+      className={`group relative text-left rounded-2xl border p-3 transition-all flex flex-col gap-2.5 ${
         selected
           ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20 shadow-card'
-          : 'bg-white border-[#E7EAF0] shadow-card hover:border-[#D5DBE5] hover:-translate-y-0.5'
+          : 'surface-card-interactive'
       }`}
     >
       <div className="relative w-full h-20 rounded-xl overflow-hidden">

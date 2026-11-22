@@ -5,7 +5,7 @@ import { Ledger } from '../ledgers/Ledger';
 import { SplitLedgerDashboard } from '../splits/SplitLedgerDashboard';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
-import { getEffectiveTransactionAmount } from '../../utils/martEngine';
+import { computeBudgetCycleSummary } from '../../utils/budgetCycle';
 import { computeLedgerState } from '../../utils/splitLedgerEngine';
 
 export type ExpensesTab = 'transactions' | 'splits';
@@ -18,17 +18,21 @@ export function ExpensesDashboard({
   const [activeTab, setActiveTab] = useState<ExpensesTab>(initialTab);
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
+  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
+  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const people = useAppStore((s) => s.people);
   const sharedExpenses = useAppStore((s) => s.sharedExpenses);
   const settlements = useAppStore((s) => s.settlements);
 
-  const totalSpent = useMemo(
+  const cycleSummary = useMemo(
     () =>
-      transactions.reduce(
-        (sum, tx) => sum + getEffectiveTransactionAmount(tx),
-        0
-      ),
-    [transactions]
+      computeBudgetCycleSummary({
+        transactions,
+        totalBudget,
+        resetDay: budgetResetDay,
+        rolloverEnabled: budgetRolloverEnabled,
+      }),
+    [transactions, totalBudget, budgetResetDay, budgetRolloverEnabled]
   );
 
   const activeCount = useMemo(
@@ -36,7 +40,9 @@ export function ExpensesDashboard({
     [transactions]
   );
 
-  const remaining = totalBudget - totalSpent;
+  const cycleSpent = cycleSummary.currentSpent;
+  const effectiveBudget = cycleSummary.effectiveBudget;
+  const remaining = cycleSummary.remainingBudget;
 
   const ledgerState = useMemo(
     () => computeLedgerState(people, sharedExpenses, settlements),
@@ -97,16 +103,16 @@ export function ExpensesDashboard({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
-          label="Total Spent"
-          value={`₹${formatCurrencyExact(totalSpent)}`}
-          sublabel={`${activeCount} active transactions`}
+          label="Cycle Spent"
+          value={`₹${formatCurrencyExact(cycleSpent)}`}
+          sublabel={`${cycleSummary.window.label} · ${activeCount} logged`}
           icon={TrendingDown}
           tone="default"
         />
         <MetricCard
           label="Budget Remaining"
           value={`${remaining < 0 ? '-' : ''}₹${formatCurrencyExact(Math.abs(remaining))}`}
-          sublabel={`of ₹${formatCurrencyExact(totalBudget)}`}
+          sublabel={`of ₹${formatCurrencyExact(effectiveBudget)}`}
           icon={Wallet}
           tone={remaining < 0 ? 'danger' : 'success'}
         />

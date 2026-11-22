@@ -24,6 +24,7 @@ import type {
 } from '../../types/models';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
+import { getChartThemeTokens } from '../../utils/settingsEngine';
 import {
   CHALLENGE_TEMPLATES,
   type BehaviourAnalyticsSummary,
@@ -80,7 +81,8 @@ export function DisciplineChallengesPanel({
   onDeleteTarget,
 }: DisciplineChallengesPanelProps) {
   const theme = useAppStore((s) => s.theme);
-  const isDark = theme === 'dark';
+  const visualTheme = useAppStore((s) => s.visualTheme);
+  const chartTokens = getChartThemeTokens(theme, visualTheme.mood);
   const [customTitle, setCustomTitle] = useState('');
   const [customDays, setCustomDays] = useState('7');
   const [customCategory, setCustomCategory] = useState('');
@@ -240,7 +242,7 @@ export function DisciplineChallengesPanel({
                         {pts} / {max}
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[#ECEFF4] overflow-hidden">
+                    <div className="h-1.5 rounded-full tactile-well bg-[#ECEFF4] overflow-hidden">
                       <div
                         className="h-full rounded-full bg-[#365FE8]"
                         style={{ width: `${Math.round((pts / max) * 100)}%` }}
@@ -288,11 +290,11 @@ export function DisciplineChallengesPanel({
                 data={behaviour.disciplineTrend}
                 margin={{ top: 10, right: 12, left: -16, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#232A38' : '#E7EAF0'} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartTokens.gridStroke} />
                 <XAxis
                   dataKey="label"
                   tick={{
-                    fill: isDark ? '#9CA6BA' : '#697386',
+                    fill: chartTokens.tickColor,
                     fontSize: 11,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
@@ -300,29 +302,22 @@ export function DisciplineChallengesPanel({
                 <YAxis
                   domain={[0, 100]}
                   tick={{
-                    fill: isDark ? '#9CA6BA' : '#697386',
+                    fill: chartTokens.tickColor,
                     fontSize: 11,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
                 />
                 <Tooltip
-                  cursor={{ stroke: isDark ? '#323B4F' : '#D5DBE6' }}
-                  contentStyle={{
-                    backgroundColor: isDark ? '#11141B' : '#FFFFFF',
-                    border: `1px solid ${isDark ? '#232A38' : '#E7EAF0'}`,
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    color: isDark ? '#F3F5F9' : '#151922',
-                    boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 8px 24px rgba(21,25,34,0.08)',
-                  }}
+                  cursor={{ stroke: chartTokens.gridStroke }}
+                  contentStyle={chartTokens.tooltipStyle}
                 />
                 <Line
                   type="monotone"
                   dataKey="score"
                   name="Discipline Score"
-                  stroke="#365FE8"
+                  stroke={chartTokens.accent}
                   strokeWidth={2.5}
-                  dot={{ r: 4, fill: '#365FE8' }}
+                  dot={{ r: 4, fill: chartTokens.accent }}
                   connectNulls={false}
                 />
               </LineChart>

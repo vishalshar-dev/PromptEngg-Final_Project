@@ -23,7 +23,7 @@ export function ProgressBar({
 
   return (
     <div
-      className={`w-full ${heightClass} rounded-full bg-[#F1F3F6] overflow-hidden`}
+      className={`w-full ${heightClass} rounded-full bg-[#F1F3F6] tactile-well overflow-hidden`}
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}

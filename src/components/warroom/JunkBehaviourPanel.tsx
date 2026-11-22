@@ -20,6 +20,7 @@ import {
 import type { SpendingClassification } from '../../types/models';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
+import { getChartThemeTokens } from '../../utils/settingsEngine';
 import type {
   BehaviourAnalyticsSummary,
   ClassifiedTransaction,
@@ -43,7 +44,8 @@ export function JunkBehaviourPanel({
   onReclassify,
 }: JunkBehaviourPanelProps) {
   const theme = useAppStore((s) => s.theme);
-  const isDark = theme === 'dark';
+  const visualTheme = useAppStore((s) => s.visualTheme);
+  const chartTokens = getChartThemeTokens(theme, visualTheme.mood);
   const [timeRange, setTimeRange] = useState<BehaviourTimeRange>('weekly');
   const [txFilter, setTxFilter] = useState<TxFilter>('all');
 
@@ -214,7 +216,7 @@ export function JunkBehaviourPanel({
                     : '6 months'}
                 </p>
               </div>
-              <div className="flex items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0]">
+              <div className="tactile-well flex items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0]">
                 {(['daily', 'weekly', 'monthly'] as const).map((r) => (
                   <button
                     key={r}
@@ -238,52 +240,45 @@ export function JunkBehaviourPanel({
                   data={timeSeries}
                   margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#232A38' : '#E7EAF0'} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTokens.gridStroke} />
                   <XAxis
                     dataKey="label"
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
                   />
                   <YAxis
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
                   />
                   <Tooltip
-                    cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
-                    contentStyle={{
-                      backgroundColor: isDark ? '#11141B' : '#FFFFFF',
-                      border: `1px solid ${isDark ? '#232A38' : '#E7EAF0'}`,
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      color: isDark ? '#F3F5F9' : '#151922',
-                      boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 8px 24px rgba(21,25,34,0.08)',
-                    }}
+                    cursor={{ fill: chartTokens.cursorFill }}
+                    contentStyle={chartTokens.tooltipStyle}
                   />
-                  <Legend wrapperStyle={{ fontSize: '12px', color: isDark ? '#C1C8D7' : '#4F5869' }} />
+                  <Legend wrapperStyle={{ fontSize: '12px', color: chartTokens.tickColor }} />
                   <Bar
                     dataKey="essential"
                     name="Essential"
                     stackId="a"
-                    fill="#15966B"
+                    fill={chartTokens.success}
                     radius={[0, 0, 0, 0]}
                   />
                   <Bar
                     dataKey="nonEssential"
                     name="Non-Essential"
                     stackId="a"
-                    fill="#E5A23B"
+                    fill={chartTokens.warning}
                   />
                   <Bar
                     dataKey="impulsive"
                     name="Impulsive"
                     stackId="a"
-                    fill="#DE5252"
+                    fill={chartTokens.danger}
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -308,11 +303,11 @@ export function JunkBehaviourPanel({
                   layout="vertical"
                   margin={{ top: 4, right: 16, left: 10, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#232A38' : '#E7EAF0'} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartTokens.gridStroke} />
                   <XAxis
                     type="number"
                     tick={{
-                      fill: isDark ? '#9CA6BA' : '#697386',
+                      fill: chartTokens.tickColor,
                       fontSize: 11,
                       fontFamily: 'JetBrains Mono, monospace',
                     }}
@@ -321,30 +316,23 @@ export function JunkBehaviourPanel({
                     dataKey="category"
                     type="category"
                     width={90}
-                    tick={{ fill: isDark ? '#F3F5F9' : '#151922', fontSize: 11 }}
+                    tick={{ fill: chartTokens.tooltipStyle.color, fontSize: 11 }}
                   />
                   <Tooltip
-                    cursor={{ fill: isDark ? 'rgba(77, 116, 249, 0.12)' : 'rgba(54, 95, 232, 0.05)' }}
-                    contentStyle={{
-                      backgroundColor: isDark ? '#11141B' : '#FFFFFF',
-                      border: `1px solid ${isDark ? '#232A38' : '#E7EAF0'}`,
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      color: isDark ? '#F3F5F9' : '#151922',
-                      boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : '0 8px 24px rgba(21,25,34,0.08)',
-                    }}
+                    cursor={{ fill: chartTokens.cursorFill }}
+                    contentStyle={chartTokens.tooltipStyle}
                   />
                   <Bar
                     dataKey="nonEssential"
                     name="Non-Essential"
                     stackId="c"
-                    fill="#E5A23B"
+                    fill={chartTokens.warning}
                   />
                   <Bar
                     dataKey="impulsive"
                     name="Impulsive"
                     stackId="c"
-                    fill="#DE5252"
+                    fill={chartTokens.danger}
                     radius={[0, 4, 4, 0]}
                   />
                 </BarChart>

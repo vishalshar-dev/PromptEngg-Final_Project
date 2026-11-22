@@ -32,6 +32,7 @@ export function DataBackup() {
   const dismissedWarRoomAlerts = useAppStore((s) => s.dismissedWarRoomAlerts);
   const disciplineCheckIns = useAppStore((s) => s.disciplineCheckIns);
   const theme = useAppStore((s) => s.theme);
+  const visualTheme = useAppStore((s) => s.visualTheme);
   const budgetResetDay = useAppStore((s) => s.budgetResetDay);
   const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const featureSettings = useAppStore((s) => s.featureSettings);
@@ -79,6 +80,7 @@ export function DataBackup() {
       dismissedWarRoomAlerts,
       disciplineCheckIns,
       theme,
+      visualTheme,
       featureSettings,
       pennyMessages,
       pennyProfile,

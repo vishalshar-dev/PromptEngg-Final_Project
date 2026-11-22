@@ -27,7 +27,7 @@ export function Tabs<T extends string = string>({
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className="inline-flex items-center p-1 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] overflow-x-auto no-scrollbar max-w-full"
+        className="inline-flex items-center p-1 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] tactile-well overflow-x-auto no-scrollbar max-w-full"
       >
         {items.map((item) => {
           const Icon = item.icon;

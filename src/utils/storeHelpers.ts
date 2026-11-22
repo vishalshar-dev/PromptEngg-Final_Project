@@ -1,4 +1,4 @@
-import { sanitizeFeatureSettings, sanitizeThemeMode } from './settingsEngine';
+import { sanitizeFeatureSettings, sanitizeThemeMode, sanitizeVisualTheme } from './settingsEngine';
 import { sanitizePennyMessages, sanitizePennyProfile } from './pennyEngine';
 import type {
   BackupData,
@@ -143,6 +143,8 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
     basketTemplatesSeeded:
       typeof data.basketTemplatesSeeded === 'boolean' ? data.basketTemplatesSeeded : undefined,
     theme: data.theme !== undefined ? sanitizeThemeMode(data.theme) : undefined,
+    visualTheme:
+      data.visualTheme !== undefined ? sanitizeVisualTheme(data.visualTheme) : undefined,
     featureSettings:
       data.featureSettings !== undefined ? sanitizeFeatureSettings(data.featureSettings) : undefined,
     pennyMessages:

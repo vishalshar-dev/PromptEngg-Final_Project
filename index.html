@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme-mood="obsidian_indigo" data-surface="hairline_bevel" data-font="manrope_mono" data-motion="crisp_micro">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E" />
@@ -8,15 +8,34 @@
     <meta name="description" content="Smart quick-commerce budget radar, multi-app cart comparator, hidden-fee detector, and multimodal receipt scanner." />
     <meta property="og:title" content="CartAudit — Smart Budget Radar" />
     <meta property="og:description" content="Smart quick-commerce budget radar, multi-app cart comparator, hidden-fee detector, and multimodal receipt scanner." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
   </head>
-  <body class="bg-[#F7F8FA] dark:bg-[#090B0F] text-[#151922] dark:text-[#F3F5F9] antialiased selection:bg-[#365FE8] selection:text-white">
+  <body class="antialiased">
     <script>
       try {
+        var root = document.documentElement;
         var raw = localStorage.getItem('cartaudit-store');
         if (raw) {
           var parsed = JSON.parse(raw);
-          if (parsed && parsed.state && parsed.state.theme === 'dark') {
-            document.documentElement.classList.add('dark');
+          var st = parsed && parsed.state;
+          if (st) {
+            if (st.theme === 'dark') {
+              root.classList.add('dark');
+            }
+            var vt = st.visualTheme || {};
+            var moods = ['obsidian_indigo', 'stealth_mint', 'frosted_sapphire', 'titanium_amber'];
+            var surfaces = ['hairline_bevel', 'frosted_glass', 'tactile_wells'];
+            var fonts = ['manrope_mono', 'jakarta_mono', 'bricolage_dm'];
+            var motions = ['crisp_micro', 'calm_minimal', 'rich_tactile'];
+            if (moods.indexOf(vt.mood) !== -1) root.setAttribute('data-theme-mood', vt.mood);
+            if (surfaces.indexOf(vt.surface) !== -1) root.setAttribute('data-surface', vt.surface);
+            if (fonts.indexOf(vt.font) !== -1) root.setAttribute('data-font', vt.font);
+            if (motions.indexOf(vt.motion) !== -1) root.setAttribute('data-motion', vt.motion);
           }
         }
       } catch (e) {}

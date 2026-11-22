@@ -141,7 +141,7 @@ export function AppShell({
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA] text-[#151922] flex flex-col lg:flex-row">
+    <div className="min-h-screen app-canvas-atmosphere text-[#151922] flex flex-col lg:flex-row">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-[#365FE8] focus:text-white focus:text-sm focus:font-semibold"
@@ -150,18 +150,18 @@ export function AppShell({
       </a>
 
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-[252px] shrink-0 bg-white border-r border-[#E7EAF0] sticky top-0 h-screen px-4 py-5 gap-4">
+      <aside className="hidden lg:flex lg:flex-col w-[256px] shrink-0 shell-sidebar sticky top-0 h-screen px-4 py-5 gap-4">
         {/* Brand */}
         <button
           type="button"
           onClick={() => onSelectSection('overview')}
-          className="w-full shrink-0 flex items-center gap-3 px-2 py-1 text-left rounded-xl hover:bg-[#F7F8FA] transition-colors"
+          className="w-full shrink-0 flex items-center gap-3 px-2 py-1.5 text-left rounded-xl hover:bg-[#F7F8FA] transition-colors"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_2px_6px_rgba(0,0,0,0.16)]">
             <Wallet className="w-[18px] h-[18px] text-white" strokeWidth={2.2} />
           </div>
           <div className="min-w-0">
-            <p className="text-[15px] font-bold tracking-tight text-[#151922] leading-tight">
+            <p className="text-[15px] font-bold font-display tracking-tight text-[#151922] leading-tight">
               CartAudit
             </p>
             <p className="text-[11px] font-medium text-[#697386] leading-tight mt-0.5">
@@ -182,13 +182,19 @@ export function AppShell({
                   type="button"
                   onClick={() => onSelectSection(item.id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] transition-colors ${
+                  className={`relative w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] transition-all ${
                     active
-                      ? 'bg-[#EDF2FF] text-[#365FE8] font-semibold'
-                      : 'text-[#697386] font-medium hover:bg-[#F7F8FA] hover:text-[#151922]'
+                      ? 'bg-[#EDF2FF] text-[#365FE8] font-semibold border border-[#D4E0FF]'
+                      : 'text-[#697386] font-medium border border-transparent hover:bg-[#F7F8FA] hover:text-[#151922]'
                   }`}
                 >
-                  <span className="flex items-center gap-3 min-w-0">
+                  {active && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute left-1 top-2 bottom-2 w-[3px] rounded-full bg-[#365FE8]"
+                    />
+                  )}
+                  <span className="flex items-center gap-3 min-w-0 pl-1">
                     <Icon
                       className={`w-[18px] h-[18px] shrink-0 ${
                         active ? 'text-[#365FE8]' : 'text-[#697386]'
@@ -322,7 +328,7 @@ export function AppShell({
           </div>
 
           {/* Bottom Budget Status Card */}
-          <div className="rounded-2xl bg-[#F7F8FA] border border-[#E7EAF0] p-4 space-y-2.5">
+          <div className="surface-subtle p-4 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                 Budget Status
@@ -368,8 +374,8 @@ export function AppShell({
       {/* Main Column */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Compact Sticky Mobile/Tablet Header (Single Clean Row + Hamburger Drawer) */}
-        <header className="lg:hidden sticky top-0 z-30 h-[52px] bg-white/95 backdrop-blur border-b border-[#E7EAF0] px-3 sm:px-5 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+        <header className="lg:hidden sticky top-0 z-30 h-[54px] shell-header px-3 sm:px-5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
@@ -388,12 +394,12 @@ export function AppShell({
             <button
               type="button"
               onClick={() => onSelectSection('overview')}
-              className="flex items-center gap-2 text-left shrink-0"
+              className="flex items-center gap-2 text-left min-w-0"
             >
               <div className="w-7 h-7 rounded-lg bg-[#365FE8] flex items-center justify-center shrink-0">
                 <Wallet className="w-3.5 h-3.5 text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-[15px] font-bold tracking-tight text-[#151922] whitespace-nowrap">
+              <span className="text-[15px] font-bold tracking-tight text-[#151922] truncate">
                 CartAudit
               </span>
             </button>
@@ -405,7 +411,7 @@ export function AppShell({
                 Balance
               </span>
               <span
-                className={`text-[12.5px] sm:text-[13px] font-bold font-mono tabular-nums ${
+                className={`text-[12.5px] sm:text-[13px] font-bold font-mono tabular-nums whitespace-nowrap ${
                   remainingBudget < 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
                 }`}
               >
@@ -413,7 +419,7 @@ export function AppShell({
               </span>
             </div>
 
-            {user ? (
+            {user && (
               <button
                 type="button"
                 onClick={() => setSettingsOpen(true)}
@@ -431,18 +437,6 @@ export function AppShell({
                 ) : (
                   <span className="text-xs font-bold text-[#365FE8]">{userInitial}</span>
                 )}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={isSigningIn}
-                onClick={() => void signInWithGoogle()}
-                aria-label="Sign in to sync across devices"
-                data-testid="mobile-google-signin"
-                className="h-8 px-2 sm:px-2.5 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap"
-              >
-                <LogIn className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline">Sync</span>
               </button>
             )}
 
@@ -464,7 +458,7 @@ export function AppShell({
               onClick={onToggleTheme}
               aria-label={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
               data-testid="mobile-theme-toggle"
-              className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#151922]"
+              className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#151922] shrink-0"
             >
               {isDark ? (
                 <Sun className="w-4 h-4 text-[#F5B74F]" strokeWidth={2.2} />
@@ -478,7 +472,7 @@ export function AppShell({
               onClick={() => setSettingsOpen(true)}
               aria-label="Open settings"
               data-testid="mobile-settings-button"
-              className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+              className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] shrink-0"
             >
               <Settings className="w-4 h-4" strokeWidth={2.2} />
             </button>
@@ -488,7 +482,7 @@ export function AppShell({
         {/* Page Content */}
         <main
           id="main-content"
-          className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-10 lg:pb-12"
+          className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 lg:pb-16"
         >
           <div key={activeSection} className="animate-fade-in-up">
             {children}
@@ -500,10 +494,10 @@ export function AppShell({
       {mobileDrawerOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
-            className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
+            className="fixed inset-0 bg-[#151922]/45 backdrop-blur-[3px] animate-fade-in"
             onClick={() => setMobileDrawerOpen(false)}
           />
-          <aside className="relative z-10 w-[280px] max-w-[85vw] h-full bg-white border-r border-[#E7EAF0] px-4 py-4 flex flex-col gap-4 shadow-modal animate-fade-in">
+          <aside className="relative z-10 w-[280px] max-w-[85vw] h-full modal-panel border-r border-[#E7EAF0] px-4 py-4 flex flex-col gap-4 animate-fade-in">
             {/* Drawer Header */}
             <div className="shrink-0 flex items-center justify-between gap-2 px-1">
               <button

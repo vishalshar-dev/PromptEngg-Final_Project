@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_PENNY_PROFILE } from './pennyEngine';
-import { DEFAULT_FEATURE_SETTINGS } from './settingsEngine';
+import { DEFAULT_FEATURE_SETTINGS, DEFAULT_VISUAL_THEME } from './settingsEngine';
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_CATEGORY_CAPS,
@@ -46,6 +46,7 @@ function createEmptyState(): SyncableWorkspaceState {
     sharedExpenses: [],
     settlements: [],
     theme: 'light',
+    visualTheme: { ...DEFAULT_VISUAL_THEME },
     featureSettings: { ...DEFAULT_FEATURE_SETTINGS },
     pennyMessages: [],
     pennyProfile: { ...DEFAULT_PENNY_PROFILE },
@@ -194,6 +195,12 @@ test('backupToSyncableState preserves settings, wellness, and Penny profile for 
   const local = createEmptyState();
   const cloud = createEmptyState();
   cloud.theme = 'dark';
+  cloud.visualTheme = {
+    mood: 'titanium_amber',
+    surface: 'tactile_wells',
+    font: 'bricolage_dm',
+    motion: 'rich_tactile',
+  };
   cloud.isBrokeMode = true;
   cloud.pennyProfile = {
     ...DEFAULT_PENNY_PROFILE,
@@ -203,7 +210,9 @@ test('backupToSyncableState preserves settings, wellness, and Penny profile for 
 
   const cloudSections = buildSectionPayloads(cloud, DEFAULT_ITEMS);
   const backup = applyCloudSectionsToBackup(cloudSections, local, DEFAULT_ITEMS);
+  assert.deepEqual(backup.visualTheme, cloud.visualTheme);
   const hydratedCloud = backupToSyncableState(backup, local);
+  assert.deepEqual(hydratedCloud.visualTheme, cloud.visualTheme);
 
   const localHashes = computeSectionHashes(buildSectionPayloads(local, DEFAULT_ITEMS));
   const cloudHashes = computeSectionHashes(buildSectionPayloads(hydratedCloud, DEFAULT_ITEMS));

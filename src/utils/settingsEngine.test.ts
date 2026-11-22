@@ -2,16 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_FEATURE_SETTINGS,
+  DEFAULT_VISUAL_THEME,
   PRESET_DEFINITIONS,
   TOTAL_FEATURE_TOGGLES_COUNT,
+  VISUAL_BUNDLES,
   countEnabledFeatures,
   detectSettingsPreset,
+  getChartThemeTokens,
   getPresetSettings,
+  isSameVisualTheme,
   isSectionEnabled,
   mergeFeatureSettings,
+  mergeVisualTheme,
   resolveSafeSection,
   sanitizeFeatureSettings,
   sanitizeThemeMode,
+  sanitizeVisualTheme,
 } from './settingsEngine';
 import { normalizeBackupPayload } from './storeHelpers';
 
@@ -84,11 +90,17 @@ test('isSectionEnabled and resolveSafeSection keep core routes accessible and gu
   assert.equal(resolveSafeSection('shopping', simple), 'shopping');
 });
 
-test('normalizeBackupPayload preserves valid theme and featureSettings safely', () => {
+test('normalizeBackupPayload preserves valid theme, visualTheme, and featureSettings safely', () => {
   const normalized = normalizeBackupPayload({
     version: 1,
     transactions: [],
     theme: 'dark',
+    visualTheme: {
+      mood: 'stealth_mint',
+      surface: 'tactile_wells',
+      font: 'jakarta_mono',
+      motion: 'rich_tactile',
+    },
     featureSettings: {
       showInsights: true,
       showScanner: false,
@@ -97,8 +109,54 @@ test('normalizeBackupPayload preserves valid theme and featureSettings safely', 
   });
 
   assert.equal(normalized.theme, 'dark');
+  assert.deepEqual(normalized.visualTheme, {
+    mood: 'stealth_mint',
+    surface: 'tactile_wells',
+    font: 'jakarta_mono',
+    motion: 'rich_tactile',
+  });
   assert.equal(normalized.featureSettings?.showInsights, true);
   assert.equal(normalized.featureSettings?.showScanner, false);
   assert.equal(normalized.featureSettings?.showWellness, false);
   assert.equal(normalized.featureSettings?.preset, 'custom');
+});
+
+test('sanitizeVisualTheme, mergeVisualTheme, and isSameVisualTheme handle valid and invalid inputs', () => {
+  assert.deepEqual(sanitizeVisualTheme(null), DEFAULT_VISUAL_THEME);
+  assert.deepEqual(
+    sanitizeVisualTheme({
+      mood: 'invalid_mood',
+      surface: 'frosted_glass',
+      font: 123,
+      motion: 'calm_minimal',
+    }),
+    {
+      mood: DEFAULT_VISUAL_THEME.mood,
+      surface: 'frosted_glass',
+      font: DEFAULT_VISUAL_THEME.font,
+      motion: 'calm_minimal',
+    }
+  );
+
+  const merged = mergeVisualTheme(DEFAULT_VISUAL_THEME, {
+    mood: 'frosted_sapphire',
+    surface: 'frosted_glass',
+  });
+  assert.equal(merged.mood, 'frosted_sapphire');
+  assert.equal(merged.surface, 'frosted_glass');
+  assert.equal(merged.font, DEFAULT_VISUAL_THEME.font);
+
+  const credBundle = VISUAL_BUNDLES.find((b) => b.id === 'cred_obsidian');
+  assert.ok(credBundle);
+  assert.equal(isSameVisualTheme(credBundle.config, { ...credBundle.config }), true);
+  assert.equal(isSameVisualTheme(credBundle.config, DEFAULT_VISUAL_THEME), false);
+});
+
+test('getChartThemeTokens adapts colors to theme mode and mood cleanly', () => {
+  const lightIndigo = getChartThemeTokens('light', 'obsidian_indigo');
+  const darkMint = getChartThemeTokens('dark', 'stealth_mint');
+
+  assert.notEqual(lightIndigo.accent, darkMint.accent);
+  assert.notEqual(lightIndigo.tooltipStyle.backgroundColor, darkMint.tooltipStyle.backgroundColor);
+  assert.ok(darkMint.secondarySeries.length >= 5);
 });

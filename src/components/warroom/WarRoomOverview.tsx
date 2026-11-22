@@ -280,7 +280,7 @@ export function WarRoomOverview({
                           }`}
                         >
                           {alert.periodLabel}
-                        </span>
+                        </span>{' '}
                         {alert.title}
                       </p>
                       <p className="text-[12.5px] text-[#697386] mt-1 leading-relaxed">
