@@ -4,6 +4,7 @@ import type { Transaction } from '../types/models';
 import {
   clampBudgetResetDay,
   computeBudgetCycleSummary,
+  computeCycleProgressMetrics,
   getActiveBudgetCycleWindow,
 } from './budgetCycle';
 
@@ -119,3 +120,71 @@ test('computeBudgetCycleSummary scopes spending to custom cycle and computes rol
   assert.equal(newUserSummary.rolloverDelta, 0);
   assert.equal(newUserSummary.effectiveBudget, 5000);
 });
+
+test('computeCycleProgressMetrics computes bar width, pace marker, and tone states from cycleSummary', () => {
+  const now = new Date(2026, 10, 15, 12, 0); // Nov 15 -> day 15 of 30 (50% of cycle)
+  const onTrack = computeBudgetCycleSummary({
+    transactions: [
+      {
+        id: 'tx-1',
+        name: 'Groceries',
+        amount: 2500,
+        category: 'Groceries',
+        timestamp: new Date(2026, 10, 10, 10, 0).toISOString(),
+        status: 'active',
+      },
+    ],
+    totalBudget: 10000,
+    resetDay: 1,
+    now,
+  });
+  const onTrackMetrics = computeCycleProgressMetrics(onTrack);
+  assert.equal(onTrackMetrics.barWidthPct, 25);
+  assert.equal(onTrackMetrics.availablePct, 75);
+  assert.equal(onTrackMetrics.cycleElapsedPct, 50);
+  assert.equal(onTrackMetrics.tone, 'success');
+  assert.equal(onTrackMetrics.isExceeded, false);
+
+  const warningSummary = computeBudgetCycleSummary({
+    transactions: [
+      {
+        id: 'tx-2',
+        name: 'Rent & Bills',
+        amount: 8500,
+        category: 'Bills & Utilities',
+        timestamp: new Date(2026, 10, 10, 10, 0).toISOString(),
+        status: 'active',
+      },
+    ],
+    totalBudget: 10000,
+    resetDay: 1,
+    now,
+  });
+  const warningMetrics = computeCycleProgressMetrics(warningSummary);
+  assert.equal(warningMetrics.barWidthPct, 85);
+  assert.equal(warningMetrics.tone, 'warning');
+  assert.equal(warningMetrics.isExceeded, false);
+
+  const exceededSummary = computeBudgetCycleSummary({
+    transactions: [
+      {
+        id: 'tx-3',
+        name: 'Large Expense',
+        amount: 12500,
+        category: 'Shopping',
+        timestamp: new Date(2026, 10, 10, 10, 0).toISOString(),
+        status: 'active',
+      },
+    ],
+    totalBudget: 10000,
+    resetDay: 1,
+    now,
+  });
+  const exceededMetrics = computeCycleProgressMetrics(exceededSummary);
+  assert.equal(exceededMetrics.utilizationPct, 125);
+  assert.equal(exceededMetrics.barWidthPct, 100);
+  assert.equal(exceededMetrics.availablePct, 0);
+  assert.equal(exceededMetrics.tone, 'danger');
+  assert.equal(exceededMetrics.isExceeded, true);
+});
+

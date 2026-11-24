@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronUp,
   ShoppingBag,
-  Sparkles,
   Wallet,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
@@ -21,6 +20,7 @@ import {
   type PennyActionType,
 } from '../../utils/pennyEngine';
 import { PennyChatCore } from '../penny/PennyChatCore';
+import { PennyEmblem } from '../penny/PennyEmblem';
 import type { AppSection } from '../ui/AppShell';
 import type { InsightsTab } from './InsightsDashboard';
 
@@ -422,16 +422,14 @@ export function PennyCopilotPanel({
       </section>
 
       {/* Section 2: Main 2-Column Split — Penny Co-Pilot + Nudges/Digest */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left: Penny AI Co-Pilot & Quick Expense Parser (Synced with Floating Window) */}
         <section
           aria-label="Penny AI co-pilot"
-          className="lg:col-span-7 surface-card p-5 flex flex-col gap-3 min-h-[500px]"
+          className="lg:col-span-7 surface-card p-5 flex flex-col gap-3 min-h-[560px] lg:h-[640px]"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#365FE8] text-white flex items-center justify-center shrink-0">
-              <Sparkles className="w-[18px] h-[18px]" strokeWidth={2.2} />
-            </div>
+            <PennyEmblem size="md" />
             <div className="min-w-0">
               <h2 className="text-[15px] font-bold text-[#151922] leading-tight">
                 Penny — Your Money Co-Pilot
@@ -533,7 +531,7 @@ export function PennyCopilotPanel({
           {/* Monthly Money Digest */}
           <section
             aria-label="Monthly money digest"
-            className="surface-card p-5 flex-1 flex flex-col justify-between gap-3"
+            className="surface-card p-5 space-y-3.5"
           >
             <div className="flex items-center justify-between gap-2">
               <div>

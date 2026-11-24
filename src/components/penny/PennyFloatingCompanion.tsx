@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { Minimize2, Sparkles, X } from 'lucide-react';
+import { Maximize2, X } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import type { AppSection } from '../ui/AppShell';
 import { PennyChatCore } from './PennyChatCore';
+import { PennyEmblem } from './PennyEmblem';
 
 interface PennyFloatingCompanionProps {
   activeScreen: AppSection;
@@ -30,6 +31,7 @@ export function PennyFloatingCompanion({
   const setPennyOpen = useAppStore((s) => s.setPennyOpen);
   const pennyMessages = useAppStore((s) => s.pennyMessages);
   const showPennyCompanion = useAppStore((s) => s.featureSettings.showPennyCompanion);
+  const showInsights = useAppStore((s) => s.featureSettings.showInsights);
 
   useEffect(() => {
     if (!isPennyOpen) return;
@@ -42,64 +44,73 @@ export function PennyFloatingCompanion({
 
   if (!showPennyCompanion) return null;
 
+  const handleExpandToStudio = () => {
+    setPennyOpen(false);
+    onNavigate('insights', 'penny');
+  };
+
   return (
     <>
-      {/* Floating Docked Chat Window */}
+      {/* Floating Docked Assistant Sheet */}
       {isPennyOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-[#151922]/35 sm:bg-transparent backdrop-blur-[1px] sm:backdrop-blur-none sm:pointer-events-none"
+            className="fixed inset-0 z-40 bg-[var(--backdrop-scrim)] sm:bg-transparent backdrop-blur-[1px] sm:backdrop-blur-none sm:pointer-events-none"
             onClick={() => setPennyOpen(false)}
           />
           <section
             role="dialog"
             aria-label="Penny AI companion window"
             data-testid="penny-floating-window"
-            className="fixed z-50 inset-x-2.5 bottom-2.5 top-16 sm:inset-auto sm:bottom-5 sm:right-5 sm:w-[410px] sm:h-[580px] sm:max-h-[calc(100vh-2.5rem)] flex flex-col modal-panel rounded-2xl overflow-hidden animate-slide-up"
+            className="fixed z-50 inset-x-2.5 bottom-2.5 top-16 sm:inset-auto sm:bottom-5 sm:right-5 sm:w-[436px] sm:h-[620px] sm:max-h-[calc(100vh-2.25rem)] flex flex-col modal-panel rounded-2xl overflow-hidden animate-slide-up"
           >
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-[#E7EAF0] flex items-center justify-between gap-2 shrink-0">
+            {/* Streamlined Single Header */}
+            <div className="px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)] flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#365FE8] text-white flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4" strokeWidth={2.2} />
-                </div>
+                <PennyEmblem size="sm" />
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-[14px] font-bold text-[#151922] leading-tight truncate">
-                      Penny AI
+                  <div className="flex items-center gap-1.5">
+                    <h2 className="text-[14px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">
+                      Penny
                     </h2>
-                    <span className="text-[11px] font-semibold text-[#697386] truncate">
-                      · {SCREEN_LABELS[activeScreen]}
+                    <span className="text-[var(--text-muted)] text-xs" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="text-[11.5px] font-medium text-[var(--text-secondary)] truncate">
+                      {SCREEN_LABELS[activeScreen]}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#697386] truncate">
-                    Adaptive companion · Ask or act anywhere
+                  <p className="text-[11px] text-[var(--text-secondary)] truncate">
+                    Money co-pilot · ask or confirm 1-click actions
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setPennyOpen(false)}
-                  aria-label="Minimize Penny chat"
-                  className="w-7 h-7 rounded-lg bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] hover:text-[#151922] flex items-center justify-center transition-colors"
-                >
-                  <Minimize2 className="w-3.5 h-3.5" />
-                </button>
+                {showInsights && (
+                  <button
+                    type="button"
+                    onClick={handleExpandToStudio}
+                    aria-label="Open full Penny Co-Pilot workspace"
+                    title="Expand to Insights → Penny"
+                    className="w-8 h-8 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center transition-colors"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setPennyOpen(false)}
                   aria-label="Close Penny window"
-                  className="w-7 h-7 rounded-lg bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] hover:text-[#151922] flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center transition-colors"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Shared Conversational Core */}
-            <div className="flex-1 min-h-0 p-3.5 flex flex-col">
+            <div className="flex-1 min-h-0 p-3.5 flex flex-col bg-[var(--bg-surface)]">
               <PennyChatCore
                 activeScreen={activeScreen}
                 onNavigate={onNavigate}
@@ -111,7 +122,7 @@ export function PennyFloatingCompanion({
         </>
       )}
 
-      {/* Compact Global Floating Launcher */}
+      {/* Sleek Tactile Floating Launcher */}
       {!isPennyOpen && !hideLauncher && (
         <button
           type="button"
@@ -119,26 +130,26 @@ export function PennyFloatingCompanion({
           aria-label="Open Penny AI assistant (Cmd or Ctrl + K)"
           title="Ask Penny (⌘K / Ctrl+K)"
           data-testid="penny-floating-launcher"
-          className={`fixed z-40 h-11 rounded-2xl bg-[#365FE8] hover:bg-[#294FCC] text-white shadow-modal flex items-center justify-center gap-2 text-xs font-bold whitespace-nowrap transition-all ${
+          className={`fixed z-40 h-11 rounded-2xl bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-strong)] shadow-[var(--shadow-raised)] flex items-center justify-center gap-2 text-xs font-semibold whitespace-nowrap transition-all ${
             hasCartBarVisible
-              ? 'right-3 sm:right-4 lg:right-6 bottom-[84px] lg:bottom-6 w-11 sm:w-auto px-0 sm:px-4'
-              : 'right-4 lg:right-6 bottom-4 lg:bottom-6 px-4'
+              ? 'right-3 sm:right-4 lg:right-6 bottom-[84px] lg:bottom-6 w-11 sm:w-auto px-0 sm:px-3.5'
+              : 'right-4 lg:right-6 bottom-4 lg:bottom-6 px-3.5'
           }`}
         >
-          <Sparkles className="w-4 h-4 shrink-0" strokeWidth={2.2} />
+          <PennyEmblem size="xs" />
           <span className={hasCartBarVisible ? 'hidden sm:inline' : ''}>Ask Penny</span>
           {pennyMessages.length > 0 ? (
             <span
-              className={`font-mono tabular-nums text-[11px] text-white/85 ${
+              className={`font-mono tabular-nums text-[11px] text-[var(--accent-ink)] ${
                 hasCartBarVisible ? 'hidden sm:inline' : ''
               }`}
             >
-              ({pennyMessages.length})
+              · {pennyMessages.length}
             </span>
           ) : (
-            <span className="hidden sm:inline text-[10px] font-mono text-white/75 ml-0.5">
+            <kbd className="hidden sm:inline text-[10px] font-mono text-[var(--text-muted)] ml-0.5">
               ⌘K
-            </span>
+            </kbd>
           )}
         </button>
       )}

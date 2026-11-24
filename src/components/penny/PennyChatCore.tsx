@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
+  ArrowUp,
+  ArrowUpRight,
   Check,
   CheckCircle2,
-  MessageSquare,
   Mic,
   MicOff,
   Plus,
+  RefreshCw,
   RotateCcw,
-  Send,
   ShoppingCart,
   SlidersHorizontal,
-  Sparkles,
   Users,
   Wallet,
   X,
@@ -22,6 +22,7 @@ import { useVoiceInput } from '../../hooks/useVoiceInput';
 import type { AppSection } from '../ui/AppShell';
 import { formatCurrencyExact } from '../../utils/categoryStyles';
 import {
+  answerPennyLocally,
   buildPennyContextSnapshot,
   describePennyStyle,
   normalizePennyProposals,
@@ -31,14 +32,19 @@ import { executePennyProposal } from '../../utils/pennyActions';
 import {
   fetchGeminiHealth,
   getCachedGeminiConfigured,
-  markGeminiConfigured,
 } from '../../utils/aiReadiness';
+import {
+  clearLiveAiCooldown,
+  enqueueAiPost,
+  getLiveAiAvailability,
+} from '../../utils/aiClient';
 import type {
   PennyChatMessage,
   PennyProposedAction,
   PennyTonePreference,
   WarRoomPeriod,
 } from '../../types/models';
+import { PennyEmblem } from './PennyEmblem';
 
 interface ParsedQuickExpense {
   name: string;
@@ -57,50 +63,123 @@ interface PennyChatCoreProps {
   inputId?: string;
 }
 
-const VIBE_OPTIONS: Array<{ id: PennyTonePreference; label: string }> = [
-  { id: 'auto', label: 'Auto Adapt' },
-  { id: 'friendly', label: 'Friendly' },
-  { id: 'crisp', label: 'Crisp' },
-  { id: 'strict_coach', label: 'Strict Coach' },
+const VIBE_OPTIONS: Array<{
+  id: PennyTonePreference;
+  label: string;
+  hint: string;
+}> = [
+  { id: 'auto', label: 'Auto', hint: 'Matches your pace & tone' },
+  { id: 'friendly', label: 'Friendly', hint: 'Warm & encouraging' },
+  { id: 'crisp', label: 'Crisp', hint: 'Numbers first, ultra brief' },
+  { id: 'strict_coach', label: 'Coach', hint: 'Strict cashflow guardrails' },
 ];
 
-function getContextPrompts(activeScreen: AppSection, hasCartItems: boolean): string[] {
+const QUICK_LOG_EXAMPLES = [
+  'Paid ₹180 for cold coffee',
+  'Spent ₹450 on petrol yesterday',
+  'Split ₹600 dinner with Rahul',
+];
+
+function getContextPrompts(
+  activeScreen: AppSection,
+  hasCartItems: boolean
+): Array<{ title: string; prompt: string }> {
   if (activeScreen === 'shopping') {
     return hasCartItems
       ? [
-          'Can I safely afford my current cart today?',
-          'Build me a dinner cart under ₹250 from Quick Mart',
-          'Which saved basket saves me money right now?',
-          'Add my due recurring items to cart',
+          {
+            title: 'Cart Affordability',
+            prompt: 'Can I safely afford my current cart today?',
+          },
+          {
+            title: 'Dinner Under ₹250',
+            prompt: 'Build me a dinner cart under ₹250 from Quick Mart',
+          },
+          {
+            title: 'Saved Baskets',
+            prompt: 'Which saved basket saves me money right now?',
+          },
+          {
+            title: 'Due Refills',
+            prompt: 'Add my due recurring items to cart',
+          },
         ]
       : [
-          'Build me a breakfast cart under ₹200',
-          'What recurring refills are due or overdue?',
-          'Suggest a frugal grocery combo this week',
-          'Log ₹120 snacks expense for me',
+          {
+            title: 'Breakfast Under ₹200',
+            prompt: 'Build me a breakfast cart under ₹200',
+          },
+          {
+            title: 'Recurring Refills',
+            prompt: 'What recurring refills are due or overdue?',
+          },
+          {
+            title: 'Frugal Combo',
+            prompt: 'Suggest a frugal grocery combo this week',
+          },
+          {
+            title: 'Quick Expense',
+            prompt: 'Log ₹120 snacks expense for me',
+          },
         ];
   }
   if (activeScreen === 'expenses') {
     return [
-      'Who do I owe in Splits right now?',
-      'Split ₹600 dinner equally with Rahul',
-      'Log ₹180 cold coffee under Snacks',
-      'How much can I safely spend daily this month?',
+      {
+        title: 'Split Balances',
+        prompt: 'Who do I owe in Splits right now?',
+      },
+      {
+        title: 'Quick Split',
+        prompt: 'Split ₹600 dinner equally with Rahul',
+      },
+      {
+        title: 'Log Snack',
+        prompt: 'Log ₹180 cold coffee under Snacks',
+      },
+      {
+        title: 'Daily Safe Spend',
+        prompt: 'How much can I safely spend daily this month?',
+      },
     ];
   }
   if (activeScreen === 'wellness') {
     return [
-      'Should I turn Broke Mode on right now?',
-      'Set a ₹1200 monthly cap for Junk food',
-      'What is hurting my discipline score this month?',
-      'How much safe money is left after bills?',
+      {
+        title: 'Broke Mode Check',
+        prompt: 'Should I turn Broke Mode on right now?',
+      },
+      {
+        title: 'Category Guardrail',
+        prompt: 'Set a ₹1200 monthly cap for Snacks & Beverages',
+      },
+      {
+        title: 'Discipline Audit',
+        prompt: 'What is hurting my discipline score this month?',
+      },
+      {
+        title: 'Safe After Bills',
+        prompt: 'How much safe money is left after bills?',
+      },
     ];
   }
   return [
-    'What upcoming payments & refills do I have?',
-    'Build a quick grocery cart under ₹200',
-    'Who do I owe in Splits right now?',
-    'How much can I safely spend per day?',
+    {
+      title: 'Upcoming Bills',
+      prompt: 'What upcoming payments & refills do I have?',
+    },
+    {
+      title: 'Cart Under ₹200',
+      prompt: 'Build a quick grocery cart under ₹200',
+    },
+    {
+      title: 'Split Balances',
+      prompt: 'Who do I owe in Splits right now?',
+    },
+    {
+      title: 'Daily Safe Limit',
+      prompt: 'How much can I safely spend per day?',
+    },
   ];
 }
 
@@ -109,16 +188,16 @@ function getProposalBadgeIcon(type: PennyProposedAction['type']) {
     case 'build_cart':
     case 'load_basket':
     case 'add_due_recurring':
-      return <ShoppingCart className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />;
+      return <ShoppingCart className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />;
     case 'add_split':
     case 'settle_split':
-      return <Users className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />;
+      return <Users className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />;
     case 'set_budget':
     case 'set_category_limit':
     case 'toggle_broke_mode':
-      return <Wallet className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />;
+      return <Wallet className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />;
     default:
-      return <Sparkles className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />;
+      return <ArrowRight className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />;
   }
 }
 
@@ -148,6 +227,7 @@ export function PennyChatCore({
   const pennyMessages = useAppStore((s) => s.pennyMessages);
   const pennyProfile = useAppStore((s) => s.pennyProfile);
   const appendPennyMessage = useAppStore((s) => s.appendPennyMessage);
+  const replacePennyMessage = useAppStore((s) => s.replacePennyMessage);
   const recordUserInteractionForPenny = useAppStore((s) => s.recordUserInteractionForPenny);
   const setPennyProposalStatus = useAppStore((s) => s.setPennyProposalStatus);
   const setPennyTonePreference = useAppStore((s) => s.setPennyTonePreference);
@@ -159,11 +239,17 @@ export function PennyChatCore({
   const [showVibePicker, setShowVibePicker] = useState(false);
   const [input, setInput] = useState('');
   const [isAsking, setIsAsking] = useState(false);
+  const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [actionBanner, setActionBanner] = useState<string | null>(null);
 
-  const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(() =>
-    getCachedGeminiConfigured()
+  const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(() => {
+    if (getLiveAiAvailability().mode !== 'live') return false;
+    return getCachedGeminiConfigured();
+  });
+  const [cooldownSecs, setCooldownSecs] = useState<number>(() =>
+    Math.ceil(getLiveAiAvailability().retryAfterMs / 1000)
   );
   const [proposalDrafts, setProposalDrafts] = useState<Record<string, PennyProposedAction>>({});
   const [quickText, setQuickText] = useState('');
@@ -173,20 +259,92 @@ export function PennyChatCore({
   const [quickSavedMsg, setQuickSavedMsg] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const syncAvailabilityState = useCallback(() => {
+    const avail = getLiveAiAvailability();
+    if (avail.mode === 'live') {
+      setCooldownSecs(0);
+      return true;
+    }
+    setCooldownSecs(Math.max(1, Math.ceil(avail.retryAfterMs / 1000)));
+    setGeminiConfigured(false);
+    return false;
+  }, []);
+
+  const refreshHealth = useCallback(async () => {
+    setIsReconnecting(true);
+    clearLiveAiCooldown();
+    setCooldownSecs(0);
+    try {
+      const status = await fetchGeminiHealth(true);
+      setGeminiConfigured(status.geminiConfigured);
+      if (status.geminiConfigured) {
+        pruneOfflinePennyMessages();
+      }
+    } finally {
+      setIsReconnecting(false);
+    }
+  }, [pruneOfflinePennyMessages]);
 
   useEffect(() => {
     let active = true;
     void fetchGeminiHealth(true).then((status) => {
       if (!active) return;
+      if (getLiveAiAvailability().mode !== 'live') {
+        syncAvailabilityState();
+        return;
+      }
       setGeminiConfigured(status.geminiConfigured);
       if (status.geminiConfigured) {
         pruneOfflinePennyMessages();
       }
     });
+
+    const onOnlineOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        if (getLiveAiAvailability().mode !== 'live') {
+          syncAvailabilityState();
+          return;
+        }
+        void fetchGeminiHealth(true).then((status) => {
+          if (!active) return;
+          setGeminiConfigured(status.geminiConfigured);
+        });
+      }
+    };
+
+    window.addEventListener('online', onOnlineOrFocus);
+    window.addEventListener('focus', onOnlineOrFocus);
     return () => {
       active = false;
+      window.removeEventListener('online', onOnlineOrFocus);
+      window.removeEventListener('focus', onOnlineOrFocus);
     };
-  }, [pruneOfflinePennyMessages]);
+  }, [pruneOfflinePennyMessages, syncAvailabilityState]);
+
+  useEffect(() => {
+    if (geminiConfigured !== false) return;
+    const interval = window.setInterval(() => {
+      const avail = getLiveAiAvailability();
+      if (avail.mode === 'live') {
+        setCooldownSecs(0);
+        void fetchGeminiHealth(true).then((status) => {
+          setGeminiConfigured(status.geminiConfigured);
+        });
+      } else {
+        setCooldownSecs(Math.max(1, Math.ceil(avail.retryAfterMs / 1000)));
+      }
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, [geminiConfigured]);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 108)}px`;
+  }, [input]);
 
   const chatVoice = useVoiceInput({
     onFinalTranscript: (spoken) => {
@@ -299,59 +457,30 @@ export function PennyChatCore({
     setPennyProposalStatus(messageId, proposalId, 'dismissed');
   };
 
-  const tryAppendOfflineChatFallback = (questionText: string): boolean => {
-    const localProposal = parseQuickExpenseLocally(
-      questionText,
+  const appendLocalFallbackReply = (questionText: string) => {
+    const localReply = answerPennyLocally({
+      question: questionText,
+      context: pennyContext,
+      items,
+      basketTemplates,
       categories,
-      pennyContext.asOfDate
-    );
-    if (localProposal) {
-      const assistantMsg: PennyChatMessage = {
-        id: `a-offline-${Date.now()}`,
-        role: 'assistant',
-        text: 'Gemini AI is on standby (offline parser active), so I parsed this expense locally for you to review and confirm:',
-        highlights: [{ label: 'Mode', value: 'Offline instant parse' }],
-        proposedActions: [localProposal],
-        followUpQuestions: [],
-        timestamp: new Date().toISOString(),
-        pageContext: activeScreen,
-      };
-      appendPennyMessage(assistantMsg);
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 60);
-      return true;
-    }
-
-    const topCats = pennyContext.categoryBreakdownThisMonth
-      .slice(0, 3)
-      .map((c) => `${c.category} (₹${formatCurrencyExact(c.spent)})`)
-      .join(', ');
-    const summaryText =
-      `Live AI isn't available right now, so here is your live offline snapshot:\n` +
-      `• Month spent: ₹${formatCurrencyExact(pennyContext.budgetOverview.currentMonthSpent)} of ₹${formatCurrencyExact(pennyContext.budgetOverview.monthlyBudget)} (${pennyContext.budgetOverview.budgetUsedPct}% used, ₹${formatCurrencyExact(pennyContext.budgetOverview.rawRemainingBudget)} left)\n` +
-      `• Active cart: ${pennyContext.currentCart.lineCount} item${pennyContext.currentCart.lineCount === 1 ? '' : 's'} (₹${formatCurrencyExact(pennyContext.currentCart.totalAmount)})\n` +
-      (topCats ? `• Top categories: ${topCats}` : '• Switch to Quick Log anytime to log expenses in plain English.');
+    });
 
     const assistantMsg: PennyChatMessage = {
-      id: `a-offline-summary-${Date.now()}`,
+      id: `a-local-${Date.now()}`,
       role: 'assistant',
-      text: summaryText,
-      highlights: [
-        { label: 'Remaining', value: `₹${formatCurrencyExact(pennyContext.budgetOverview.rawRemainingBudget)}` },
-        { label: 'Cart Total', value: `₹${formatCurrencyExact(pennyContext.currentCart.totalAmount)}` },
-        { label: 'Mode', value: 'Offline Snapshot' },
-      ],
-      proposedActions: [],
-      followUpQuestions: [],
+      text: localReply.answer,
+      highlights: localReply.highlights,
+      proposedActions: localReply.proposedActions,
+      followUpQuestions: localReply.followUpQuestions,
       timestamp: new Date().toISOString(),
       pageContext: activeScreen,
+      isLocalFallback: true,
     };
     appendPennyMessage(assistantMsg);
     setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 60);
-    return true;
   };
 
   const handleAskPenny = async (promptOverride?: string) => {
@@ -375,6 +504,14 @@ export function PennyChatCore({
 
     appendPennyMessage(userMsg);
     if (!promptOverride) setInput('');
+
+    const availBefore = getLiveAiAvailability();
+    if (availBefore.mode !== 'live') {
+      syncAvailabilityState();
+      appendLocalFallbackReply(questionText);
+      return;
+    }
+
     setIsAsking(true);
 
     setTimeout(() => {
@@ -382,44 +519,35 @@ export function PennyChatCore({
     }, 30);
 
     try {
-      const res = await fetch('/api/penny-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: questionText,
-          history: recentHistory,
-          context: pennyContext,
-          personalityProfile: updatedProfile,
-        }),
-      });
-
-      const payload = (await res.json()) as {
+      const result = await enqueueAiPost<{
         answer?: string;
         highlights?: Array<{ label: string; value: string }>;
         proposedActions?: unknown;
         followUpQuestions?: string[];
-        error?: string;
-        code?: string;
-      };
+      }>(
+        '/api/penny-chat',
+        {
+          question: questionText,
+          history: recentHistory,
+          context: pennyContext,
+          personalityProfile: updatedProfile,
+        },
+        { timeoutMs: 14_000 }
+      );
 
-      if (!res.ok) {
-        if (res.status === 503 && payload.code === 'MISSING_API_KEY') {
-          setGeminiConfigured(false);
-          markGeminiConfigured(false);
-          if (tryAppendOfflineChatFallback(questionText)) {
-            return;
-          }
-        }
-        throw new Error(payload.error || `Penny could not respond (${res.status}).`);
+      if (!result.ok || typeof result.data.answer !== 'string') {
+        syncAvailabilityState();
+        appendLocalFallbackReply(questionText);
+        return;
       }
 
+      setCooldownSecs(0);
       if (geminiConfigured !== true) {
         setGeminiConfigured(true);
-        markGeminiConfigured(true);
         pruneOfflinePennyMessages();
       }
 
-      const validatedProposals = normalizePennyProposals(payload.proposedActions, {
+      const validatedProposals = normalizePennyProposals(result.data.proposedActions, {
         items,
         basketTemplates,
         categories,
@@ -428,24 +556,94 @@ export function PennyChatCore({
       const assistantMsg: PennyChatMessage = {
         id: `a-${Date.now()}`,
         role: 'assistant',
-        text: payload.answer || 'I reviewed your context, but could not format a reply.',
-        highlights: Array.isArray(payload.highlights) ? payload.highlights.slice(0, 3) : [],
+        text: result.data.answer || 'I reviewed your context, but could not format a reply.',
+        highlights: Array.isArray(result.data.highlights) ? result.data.highlights.slice(0, 3) : [],
         proposedActions: validatedProposals,
-        followUpQuestions: Array.isArray(payload.followUpQuestions)
-          ? payload.followUpQuestions.slice(0, 3)
+        followUpQuestions: Array.isArray(result.data.followUpQuestions)
+          ? result.data.followUpQuestions.slice(0, 3)
           : [],
         timestamp: new Date().toISOString(),
         pageContext: activeScreen,
+        isLocalFallback: false,
       };
 
       appendPennyMessage(assistantMsg);
       setTimeout(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 60);
-    } catch (err) {
-      setChatError(err instanceof Error ? err.message : 'Could not reach Penny right now.');
     } finally {
       setIsAsking(false);
+    }
+  };
+
+  const handleRetryMessageWithLiveAi = async (assistantMessageId: string) => {
+    if (isAsking || retryingMessageId) return;
+    const idx = pennyMessages.findIndex((m) => m.id === assistantMessageId);
+    if (idx <= 0) return;
+
+    let matchingQuestion = '';
+    for (let i = idx - 1; i >= 0; i -= 1) {
+      if (pennyMessages[i].role === 'user') {
+        matchingQuestion = pennyMessages[i].text;
+        break;
+      }
+    }
+    if (!matchingQuestion) return;
+
+    setChatError(null);
+    setRetryingMessageId(assistantMessageId);
+    clearLiveAiCooldown();
+
+    const recentHistory = pennyMessages
+      .slice(Math.max(0, idx - 8), idx - 1)
+      .map((m) => ({ role: m.role, text: m.text }));
+
+    try {
+      const result = await enqueueAiPost<{
+        answer?: string;
+        highlights?: Array<{ label: string; value: string }>;
+        proposedActions?: unknown;
+        followUpQuestions?: string[];
+      }>(
+        '/api/penny-chat',
+        {
+          question: matchingQuestion,
+          history: recentHistory,
+          context: pennyContext,
+          personalityProfile: pennyProfile,
+        },
+        { timeoutMs: 14_000, bypassCooldown: true }
+      );
+
+      if (!result.ok || typeof result.data.answer !== 'string') {
+        syncAvailabilityState();
+        showTempBanner('Live AI servers are temporarily busy — kept your Local Engine reply.');
+        return;
+      }
+
+      setCooldownSecs(0);
+      setGeminiConfigured(true);
+      const validatedProposals = normalizePennyProposals(result.data.proposedActions, {
+        items,
+        basketTemplates,
+        categories,
+      });
+
+      replacePennyMessage(assistantMessageId, {
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        text: result.data.answer,
+        highlights: Array.isArray(result.data.highlights) ? result.data.highlights.slice(0, 3) : [],
+        proposedActions: validatedProposals,
+        followUpQuestions: Array.isArray(result.data.followUpQuestions)
+          ? result.data.followUpQuestions.slice(0, 3)
+          : [],
+        timestamp: new Date().toISOString(),
+        pageContext: activeScreen,
+        isLocalFallback: false,
+      });
+    } finally {
+      setRetryingMessageId(null);
     }
   };
 
@@ -456,7 +654,6 @@ export function PennyChatCore({
 
     setParseError(null);
     setQuickSavedMsg(null);
-    setIsParsingExpense(true);
 
     const applyOfflineQuickParse = (raw: string): boolean => {
       const local = parseQuickExpenseLocally(raw, categories, pennyContext.asOfDate);
@@ -471,33 +668,43 @@ export function PennyChatCore({
       return true;
     };
 
+    if (getLiveAiAvailability().mode !== 'live') {
+      syncAvailabilityState();
+      if (!applyOfflineQuickParse(text)) {
+        setParseError('Include an amount like "Paid 240 for coffee" so Penny can log it.');
+      }
+      return;
+    }
+
+    setIsParsingExpense(true);
+
     try {
-      const res = await fetch('/api/penny-parse-expense', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await enqueueAiPost<ParsedQuickExpense>(
+        '/api/penny-parse-expense',
+        {
           text,
           categories,
           todayDate: pennyContext.asOfDate,
-        }),
-      });
+        },
+        { timeoutMs: 12_000 }
+      );
 
-      const payload = (await res.json()) as ParsedQuickExpense & { error?: string; code?: string };
-      if (!res.ok) {
-        if (res.status === 503 && payload.code === 'MISSING_API_KEY') {
-          setGeminiConfigured(false);
-          markGeminiConfigured(false);
-        }
+      if (!result.ok) {
+        syncAvailabilityState();
         if (applyOfflineQuickParse(text)) return;
-        throw new Error(payload.error || 'Could not parse expense note.');
+        setParseError(
+          result.error || 'Include an amount like "Paid 240 for coffee" so Penny can log it.'
+        );
+        return;
       }
 
+      setCooldownSecs(0);
       if (geminiConfigured !== true) {
         setGeminiConfigured(true);
-        markGeminiConfigured(true);
         pruneOfflinePennyMessages();
       }
 
+      const payload = result.data;
       setParsedDraft({
         name: payload.name?.trim() || text,
         amount: Number.isFinite(Number(payload.amount)) ? Number(payload.amount) : 0,
@@ -510,9 +717,6 @@ export function PennyChatCore({
         splitPersonHint: payload.splitPersonHint || '',
         isOfflineFallback: false,
       });
-    } catch (err) {
-      if (applyOfflineQuickParse(text)) return;
-      setParseError(err instanceof Error ? err.message : 'Unable to parse expense note.');
     } finally {
       setIsParsingExpense(false);
     }
@@ -545,46 +749,75 @@ export function PennyChatCore({
     setParseError(null);
   };
 
+  const isLiveCloud = geminiConfigured === true;
+  const activeVibeOption =
+    VIBE_OPTIONS.find((opt) => opt.id === pennyProfile.tonePreference) ?? VIBE_OPTIONS[0];
+
   return (
     <div className="flex flex-col h-full min-h-0 gap-3">
-      {/* Top Sub-bar: Adaptive Vibe & Mode Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#E7EAF0] shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
+      {/* Unified Sleek Control Bar */}
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--border-subtle)] shrink-0">
+        <div className="flex items-center gap-1.5 min-w-0 text-[11.5px]">
+          {geminiConfigured !== null && (
+            <span
+              data-testid="penny-ai-status"
+              title={
+                isLiveCloud
+                  ? 'Connected to Live Gemini AI'
+                  : cooldownSecs > 0
+                    ? `Live AI servers busy — using Local Engine (auto-retrying in ${cooldownSecs}s)`
+                    : 'Running Local Smart Engine (works offline and when AI Studio is closed)'
+              }
+              className="inline-flex items-center gap-1.5 font-medium text-[var(--text-secondary)] whitespace-nowrap shrink-0"
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isLiveCloud ? 'bg-[var(--accent-success)]' : 'bg-[var(--accent-warning)]'
+                }`}
+              />
+              <span>{isLiveCloud ? 'Live AI' : 'Local Engine'}</span>
+            </span>
+          )}
+
+          {geminiConfigured === false && (
+            <button
+              type="button"
+              onClick={() => void refreshHealth()}
+              disabled={isReconnecting}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap shrink-0 disabled:opacity-50"
+              title={
+                cooldownSecs > 0
+                  ? `Retry Live AI now (auto-resumes in ${cooldownSecs}s)`
+                  : 'Check if Live Gemini AI backend is reachable'
+              }
+            >
+              <RefreshCw className={`w-3 h-3 ${isReconnecting ? 'animate-spin' : ''}`} />
+              <span>{isReconnecting ? 'Checking…' : compact ? 'Retry' : 'Reconnect'}</span>
+            </button>
+          )}
+
+          <span className="text-[var(--text-muted)] shrink-0" aria-hidden="true">
+            ·
+          </span>
+
           <button
             type="button"
             onClick={() => setShowVibePicker((v) => !v)}
             aria-expanded={showVibePicker}
             data-testid="penny-vibe-toggle"
-            className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] truncate"
+            title={liveStyleSummary}
+            className={`inline-flex items-center gap-1 font-semibold text-[var(--accent-ink)] hover:opacity-80 transition-opacity ${
+              compact ? 'shrink-0 whitespace-nowrap' : 'min-w-0 truncate'
+            }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{liveStyleSummary}</span>
-          </button>
-          {geminiConfigured !== null && (
-            <span
-              data-testid="penny-ai-status"
-              title={
-                geminiConfigured
-                  ? 'Connected to Gemini AI'
-                  : 'Offline instant parser active'
-              }
-              className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold border whitespace-nowrap ${
-                geminiConfigured
-                  ? 'bg-[#E8F7F1] text-[#0D5E43] border-[#B7E4D3]'
-                  : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  geminiConfigured ? 'bg-[#15966B]' : 'bg-[#94A0B4]'
-                }`}
-              />
-              {geminiConfigured ? 'Live AI' : 'Offline Mode'}
+            <span className={compact ? 'whitespace-nowrap' : 'truncate'}>
+              {compact ? activeVibeOption.label : liveStyleSummary}
             </span>
-          )}
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {pennyMessages.length > 0 && mode === 'chat' && (
             <button
               type="button"
@@ -593,38 +826,43 @@ export function PennyChatCore({
                 setChatError(null);
               }}
               aria-label="Clear Penny chat"
-              className="text-[11px] font-semibold text-[#697386] hover:text-[#151922] inline-flex items-center gap-1 whitespace-nowrap"
+              title="New chat"
+              className="px-1.5 py-1 rounded-lg text-[11px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] inline-flex items-center gap-1 whitespace-nowrap transition-colors"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Clear</span>
+              {!compact && <span>New Chat</span>}
             </button>
           )}
 
           <div
             role="group"
             aria-label="Penny mode"
-            className="inline-flex items-center p-0.5 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0]"
+            className="tactile-well inline-flex items-center p-0.5 rounded-xl bg-[var(--bg-well)] border border-[var(--border-subtle)]"
           >
             <button
               type="button"
               onClick={() => setMode('chat')}
               aria-pressed={mode === 'chat'}
-              className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold whitespace-nowrap transition-colors ${
+              className={`${
+                compact ? 'px-2' : 'px-2.5'
+              } py-1 rounded-[9px] text-[11.5px] font-semibold whitespace-nowrap border transition-all ${
                 mode === 'chat'
-                  ? 'bg-white text-[#151922] shadow-xs'
-                  : 'text-[#697386] hover:text-[#151922]'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-subtle)] shadow-xs'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
-              Chat
+              Ask Penny
             </button>
             <button
               type="button"
               onClick={() => setMode('quick_log')}
               aria-pressed={mode === 'quick_log'}
-              className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold whitespace-nowrap transition-colors ${
+              className={`${
+                compact ? 'px-2' : 'px-2.5'
+              } py-1 rounded-[9px] text-[11.5px] font-semibold whitespace-nowrap border transition-all ${
                 mode === 'quick_log'
-                  ? 'bg-white text-[#151922] shadow-xs'
-                  : 'text-[#697386] hover:text-[#151922]'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-subtle)] shadow-xs'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               Quick Log
@@ -633,16 +871,24 @@ export function PennyChatCore({
         </div>
       </div>
 
-      {/* Inline Personality Override Bar (collapsible) */}
+      {/* Collapsible Tone Override Drawer */}
       {showVibePicker && (
         <div className="surface-subtle p-2.5 space-y-2 shrink-0">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold text-[#697386]">
-              Penny adapts automatically ({pennyProfile.messageCount}{' '}
+          <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--text-secondary)]">
+            <span className="font-medium">
+              Adapts automatically ({pennyProfile.messageCount}{' '}
               {pennyProfile.messageCount === 1 ? 'chat' : 'chats'}). Override anytime:
             </span>
+            <button
+              type="button"
+              onClick={() => setShowVibePicker(false)}
+              aria-label="Close tone selector"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             {VIBE_OPTIONS.map((opt) => {
               const active = pennyProfile.tonePreference === opt.id;
               return (
@@ -651,13 +897,21 @@ export function PennyChatCore({
                   type="button"
                   onClick={() => setPennyTonePreference(opt.id)}
                   aria-pressed={active}
-                  className={`px-2 py-1.5 rounded-lg border text-[11px] font-semibold text-center whitespace-nowrap transition-colors ${
+                  title={opt.hint}
+                  className={`px-2.5 py-1.5 rounded-lg border text-left transition-colors ${
                     active
-                      ? 'bg-[#365FE8] border-[#365FE8] text-white'
-                      : 'bg-white border-[#E7EAF0] text-[#4B5565] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white'
+                      : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-strong)]'
                   }`}
                 >
-                  {opt.label}
+                  <p className="text-[11px] font-semibold leading-tight">{opt.label}</p>
+                  <p
+                    className={`text-[10px] truncate mt-0.5 ${
+                      active ? 'text-white/80' : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {opt.hint}
+                  </p>
                 </button>
               );
             })}
@@ -668,7 +922,7 @@ export function PennyChatCore({
       {actionBanner && (
         <div
           role="status"
-          className="rounded-xl px-3 py-2 bg-[#E8F7F1] border border-[#B7E4D3] text-[#0D5E43] text-xs font-semibold flex items-center justify-between gap-2 shrink-0"
+          className="rounded-xl px-3 py-2 bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] text-[var(--accent-success-ink)] text-xs font-semibold flex items-center justify-between gap-2 shrink-0"
         >
           <span className="flex items-center gap-1.5 min-w-0">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -688,381 +942,466 @@ export function PennyChatCore({
 
       {mode === 'chat' ? (
         <>
-          {/* Starter Prompts when chat is empty or in full panel */}
-          {pennyMessages.length === 0 && (
-            <div className="space-y-1.5 shrink-0">
-              <span className="text-[11px] font-semibold text-[#697386]">
-                Suggested for this page ({activeScreen})
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {starterPrompts.slice(0, compact ? 3 : 4).map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    disabled={isAsking}
-                    onClick={() => void handleAskPenny(prompt)}
-                    className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium bg-[#F7F8FA] hover:bg-[#EDF2FF] text-[#151922] hover:text-[#365FE8] border border-[#E7EAF0] hover:border-[#D4E0FF] transition-colors text-left"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Conversation Thread */}
+          {/* Conversation Viewport */}
           <div
-            className={`flex-1 overflow-y-auto scrollbar-thin space-y-3 pr-1 ${
-              compact ? 'min-h-[200px]' : 'min-h-[240px] max-h-[400px]'
+            className={`flex-1 overflow-y-auto scrollbar-thin pr-1 ${
+              compact ? 'min-h-[220px]' : 'min-h-[320px]'
             }`}
           >
             {pennyMessages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center py-5 px-3">
-                <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-2.5">
-                  <MessageSquare className="w-5 h-5" />
+              <div className="h-full flex flex-col justify-between gap-4 py-2">
+                {/* Editorial Welcome + Live Money Pulse */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center gap-3">
+                    <PennyEmblem size={compact ? 'md' : 'lg'} />
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight leading-snug">
+                        Ask Penny anything about your money
+                      </h3>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                        Grounded in your live CartAudit ledger, cart, and split balances.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Live Grounded Telemetry Strip */}
+                  <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)]/70 py-2.5">
+                    <div className="px-3 min-w-0">
+                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                        Remaining
+                      </p>
+                      <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
+                        {pennyContext.budgetOverview.rawRemainingBudget < 0 ? '-' : ''}₹
+                        {formatCurrencyExact(
+                          Math.abs(pennyContext.budgetOverview.rawRemainingBudget)
+                        )}
+                      </p>
+                    </div>
+                    <div className="px-3 min-w-0">
+                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                        Safe / Day
+                      </p>
+                      <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-0.5 truncate">
+                        ₹{formatCurrencyExact(pennyContext.futureCommitments.safeDailySpend)}
+                      </p>
+                    </div>
+                    <div className="px-3 min-w-0">
+                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                        Commitments
+                      </p>
+                      <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
+                        ₹{formatCurrencyExact(pennyContext.futureCommitments.committedUpcoming30d)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[13px] font-semibold text-[#151922]">
-                  Ask Penny anything — money, meals, cart, splits, or advice
-                </p>
-                <p className="text-xs text-[#697386] mt-1 max-w-sm leading-relaxed">
-                  Penny adapts to your tone, reads your live cart &amp; ledger, and can log expenses, split bills, or build carts with your 1-click confirmation.
-                </p>
+
+                {/* Interactive 2x2 Prompt Cards */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold text-[var(--text-muted)]">
+                    Quick prompts
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {starterPrompts.slice(0, 4).map((item) => (
+                      <button
+                        key={item.prompt}
+                        type="button"
+                        disabled={isAsking}
+                        onClick={() => void handleAskPenny(item.prompt)}
+                        className="group rounded-xl p-2.5 border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent-border)] hover:bg-[var(--bg-hover)] transition-all text-left flex items-start justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[11.5px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-ink)] truncate transition-colors">
+                            {item.title}
+                          </p>
+                          <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 mt-0.5 leading-snug">
+                            {item.prompt}
+                          </p>
+                        </div>
+                        <ArrowUpRight className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--accent-ink)] shrink-0 mt-0.5 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
-              pennyMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${
-                    msg.role === 'user' ? 'items-end' : 'items-start'
-                  }`}
-                >
+              <div className="space-y-4 py-1">
+                {pennyMessages.map((msg) => (
                   <div
-                    className={`max-w-[94%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#365FE8] text-white'
-                        : 'bg-[#F1F3F6] border border-[#E7EAF0] text-[#151922]'
+                    key={msg.id}
+                    className={`flex flex-col ${
+                      msg.role === 'user' ? 'items-end' : 'items-start'
                     }`}
                   >
-                    <p className="whitespace-pre-line">{msg.text}</p>
-
-                    {msg.highlights && msg.highlights.length > 0 && (
-                      <div className="mt-2.5 pt-2.5 border-t border-[#E7EAF0] grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {msg.highlights.map((h, idx) => (
-                          <div
-                            key={`${msg.id}-h-${idx}`}
-                            className="bg-white border border-[#E7EAF0] rounded-lg px-2.5 py-1.5"
-                          >
-                            <p className="text-[11px] text-[#697386] truncate">{h.label}</p>
-                            <p className="text-xs font-bold font-mono tabular-nums text-[#151922] mt-0.5 truncate">
-                              {h.value}
-                            </p>
-                          </div>
-                        ))}
+                    {msg.role === 'user' ? (
+                      <div className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5 text-[13px] leading-relaxed bg-[var(--accent-primary)] text-white shadow-xs">
+                        <p className="whitespace-pre-line">{msg.text}</p>
                       </div>
-                    )}
+                    ) : (
+                      <div className="w-full flex items-start gap-2.5">
+                        <div className="mt-0.5">
+                          <PennyEmblem size="xs" variant="subtle" />
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-2.5">
+                          <div className="rounded-2xl rounded-tl-md bg-[var(--bg-subtle)]/80 border border-[var(--border-subtle)] px-3.5 py-3 text-[13px] leading-relaxed text-[var(--text-primary)]">
+                            <p className="whitespace-pre-line">{msg.text}</p>
 
-                    {/* Structured 1-Click Confirmation Action Cards */}
-                    {msg.proposedActions && msg.proposedActions.length > 0 && (
-                      <div className="mt-2.5 space-y-2">
-                        {msg.proposedActions.map((act) => {
-                          const draft = getEffectiveProposal(act);
-                          const isPending = act.status === 'pending';
-                          return (
-                            <div
-                              key={act.id}
-                              data-testid={`penny-proposal-${act.type}`}
-                              className="rounded-xl bg-white border border-[#D4E0FF] p-2.5 space-y-2"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-start gap-2 min-w-0">
-                                  <span className="mt-0.5">{getProposalBadgeIcon(act.type)}</span>
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-bold text-[#151922] leading-snug">
-                                      {act.title}
+                            {msg.highlights && msg.highlights.length > 0 && (
+                              <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] grid grid-cols-3 divide-x divide-[var(--border-subtle)]">
+                                {msg.highlights.map((h, idx) => (
+                                  <div
+                                    key={`${msg.id}-h-${idx}`}
+                                    className="px-2 first:pl-0 last:pr-0 min-w-0"
+                                  >
+                                    <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                                      {h.label}
                                     </p>
-                                    <p className="text-[11.5px] text-[#697386] leading-snug mt-0.5">
-                                      {act.summary}
+                                    <p className="text-xs font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
+                                      {h.value}
                                     </p>
                                   </div>
-                                </div>
+                                ))}
                               </div>
+                            )}
 
-                              {/* Inline Editing for Pending Action Proposals */}
-                              {isPending && draft.type === 'log_expense' && draft.expense && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 border-t border-[#E7EAF0]">
-                                  <input
-                                    type="text"
-                                    aria-label="Expense title"
-                                    value={draft.expense.name}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        expense: { ...c.expense!, name: e.target.value },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px]"
-                                  />
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    step="0.01"
-                                    aria-label="Expense amount"
-                                    value={draft.expense.amount}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        expense: {
-                                          ...c.expense!,
-                                          amount: Number(e.target.value) || 0,
-                                        },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px] font-mono tabular-nums"
-                                  />
-                                  <select
-                                    aria-label="Expense category"
-                                    value={draft.expense.category}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        expense: { ...c.expense!, category: e.target.value },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px]"
-                                  >
-                                    {categories.map((c) => (
-                                      <option key={c} value={c}>
-                                        {c}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <input
-                                    type="date"
-                                    aria-label="Expense date"
-                                    value={draft.expense.date || pennyContext.asOfDate}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        expense: { ...c.expense!, date: e.target.value },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px]"
-                                  />
-                                </div>
-                              )}
-
-                              {isPending && draft.type === 'set_budget' && (
-                                <div className="pt-1 border-t border-[#E7EAF0]">
-                                  <label className="flex items-center gap-2 text-[11px] font-medium text-[#697386]">
-                                    <span>Monthly Budget (₹)</span>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      step="1"
-                                      aria-label="Proposed monthly budget"
-                                      value={draft.totalBudget ?? 0}
-                                      onChange={(e) =>
-                                        updateProposalDraft(act, (c) => ({
-                                          ...c,
-                                          totalBudget: Number(e.target.value) || 0,
-                                        }))
-                                      }
-                                      className="input-field w-28 px-2 py-1 text-[11.5px] font-mono tabular-nums"
-                                    />
-                                  </label>
-                                </div>
-                              )}
-
-                              {isPending &&
-                                draft.type === 'set_category_limit' &&
-                                draft.categoryLimit && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-1 border-t border-[#E7EAF0]">
-                                    <select
-                                      aria-label="Limit category"
-                                      value={draft.categoryLimit.category}
-                                      onChange={(e) =>
-                                        updateProposalDraft(act, (c) => ({
-                                          ...c,
-                                          categoryLimit: {
-                                            ...c.categoryLimit!,
-                                            category: e.target.value,
-                                          },
-                                        }))
-                                      }
-                                      className="input-field px-2 py-1 text-[11.5px]"
+                            {/* Structured 1-Click Confirmation Action Cards */}
+                            {msg.proposedActions && msg.proposedActions.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                {msg.proposedActions.map((act) => {
+                                  const draft = getEffectiveProposal(act);
+                                  const isPending = act.status === 'pending';
+                                  return (
+                                    <div
+                                      key={act.id}
+                                      data-testid={`penny-proposal-${act.type}`}
+                                      className="rounded-xl bg-[var(--bg-surface)] border border-[var(--accent-border)] p-3 space-y-2.5 shadow-xs"
                                     >
-                                      {categories.map((c) => (
-                                        <option key={c} value={c}>
-                                          {c}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      step="1"
-                                      aria-label="Category cap amount"
-                                      value={draft.categoryLimit.limitAmount}
-                                      onChange={(e) =>
-                                        updateProposalDraft(act, (c) => ({
-                                          ...c,
-                                          categoryLimit: {
-                                            ...c.categoryLimit!,
-                                            limitAmount: Number(e.target.value) || 0,
-                                          },
-                                        }))
-                                      }
-                                      className="input-field px-2 py-1 text-[11.5px] font-mono tabular-nums"
-                                    />
-                                    <select
-                                      aria-label="Category cap period"
-                                      value={draft.categoryLimit.period}
-                                      onChange={(e) =>
-                                        updateProposalDraft(act, (c) => ({
-                                          ...c,
-                                          categoryLimit: {
-                                            ...c.categoryLimit!,
-                                            period: e.target.value as WarRoomPeriod,
-                                          },
-                                        }))
-                                      }
-                                      className="input-field px-2 py-1 text-[11.5px]"
-                                    >
-                                      <option value="daily">Daily</option>
-                                      <option value="weekly">Weekly</option>
-                                      <option value="monthly">Monthly</option>
-                                    </select>
-                                  </div>
-                                )}
+                                      <div className="flex items-start gap-2 min-w-0">
+                                        <span className="mt-0.5">
+                                          {getProposalBadgeIcon(act.type)}
+                                        </span>
+                                        <div className="min-w-0">
+                                          <p className="text-xs font-bold text-[var(--text-primary)] leading-snug">
+                                            {act.title}
+                                          </p>
+                                          <p className="text-[11.5px] text-[var(--text-secondary)] leading-snug mt-0.5">
+                                            {act.summary}
+                                          </p>
+                                        </div>
+                                      </div>
 
-                              {isPending && draft.type === 'add_split' && draft.split && (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-1 border-t border-[#E7EAF0]">
-                                  <input
-                                    type="text"
-                                    aria-label="Split expense title"
-                                    value={draft.split.name}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        split: { ...c.split!, name: e.target.value },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px]"
-                                  />
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    step="0.01"
-                                    aria-label="Split total amount"
-                                    value={draft.split.totalAmount}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        split: {
-                                          ...c.split!,
-                                          totalAmount: Number(e.target.value) || 0,
-                                        },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px] font-mono tabular-nums"
-                                  />
-                                  <select
-                                    aria-label="Split category"
-                                    value={draft.split.category}
-                                    onChange={(e) =>
-                                      updateProposalDraft(act, (c) => ({
-                                        ...c,
-                                        split: { ...c.split!, category: e.target.value },
-                                      }))
-                                    }
-                                    className="input-field px-2 py-1 text-[11.5px]"
-                                  >
-                                    {categories.map((c) => (
-                                      <option key={c} value={c}>
-                                        {c}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                              )}
+                                      {isPending && draft.type === 'log_expense' && draft.expense && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2 border-t border-[var(--border-subtle)]">
+                                          <input
+                                            type="text"
+                                            aria-label="Expense title"
+                                            value={draft.expense.name}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                expense: { ...c.expense!, name: e.target.value },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                          />
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            step="0.01"
+                                            aria-label="Expense amount"
+                                            value={draft.expense.amount}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                expense: {
+                                                  ...c.expense!,
+                                                  amount: Number(e.target.value) || 0,
+                                                },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px] font-mono tabular-nums"
+                                          />
+                                          <select
+                                            aria-label="Expense category"
+                                            value={draft.expense.category}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                expense: { ...c.expense!, category: e.target.value },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                          >
+                                            {categories.map((c) => (
+                                              <option key={c} value={c}>
+                                                {c}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <input
+                                            type="date"
+                                            aria-label="Expense date"
+                                            value={draft.expense.date || pennyContext.asOfDate}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                expense: { ...c.expense!, date: e.target.value },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                          />
+                                        </div>
+                                      )}
 
-                              {act.status === 'applied' ? (
-                                <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[#15966B]">
-                                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                                  <span>{act.appliedMessage || 'Applied'}</span>
-                                </div>
-                              ) : act.status === 'dismissed' ? (
-                                <p className="text-[11px] text-[#929BAB] font-medium">Dismissed</p>
-                              ) : (
-                                <div className="flex items-center gap-2 pt-0.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleConfirmProposal(msg.id, act)}
-                                    className="btn-primary px-3 py-1.5 text-[11.5px] whitespace-nowrap"
-                                  >
-                                    <Check className="w-3.5 h-3.5" />
-                                    <span>
-                                      {act.type === 'navigate' ? act.title : 'Confirm & Apply'}
-                                    </span>
-                                    {act.type === 'navigate' && <ArrowRight className="w-3 h-3" />}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDismissProposal(msg.id, act.id)}
-                                    className="btn-secondary px-2.5 py-1.5 text-[11.5px] whitespace-nowrap"
-                                  >
-                                    <X className="w-3 h-3" />
-                                    <span>Dismiss</span>
-                                  </button>
-                                </div>
-                              )}
+                                      {isPending && draft.type === 'set_budget' && (
+                                        <div className="pt-2 border-t border-[var(--border-subtle)]">
+                                          <label className="flex items-center gap-2 text-[11px] font-medium text-[var(--text-secondary)]">
+                                            <span>Monthly Budget (₹)</span>
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              step="1"
+                                              aria-label="Proposed monthly budget"
+                                              value={draft.totalBudget ?? 0}
+                                              onChange={(e) =>
+                                                updateProposalDraft(act, (c) => ({
+                                                  ...c,
+                                                  totalBudget: Number(e.target.value) || 0,
+                                                }))
+                                              }
+                                              className="input-field w-28 px-2.5 py-1 text-[11.5px] font-mono tabular-nums"
+                                            />
+                                          </label>
+                                        </div>
+                                      )}
+
+                                      {isPending &&
+                                        draft.type === 'set_category_limit' &&
+                                        draft.categoryLimit && (
+                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-2 border-t border-[var(--border-subtle)]">
+                                            <select
+                                              aria-label="Limit category"
+                                              value={draft.categoryLimit.category}
+                                              onChange={(e) =>
+                                                updateProposalDraft(act, (c) => ({
+                                                  ...c,
+                                                  categoryLimit: {
+                                                    ...c.categoryLimit!,
+                                                    category: e.target.value,
+                                                  },
+                                                }))
+                                              }
+                                              className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            >
+                                              {categories.map((c) => (
+                                                <option key={c} value={c}>
+                                                  {c}
+                                                </option>
+                                              ))}
+                                            </select>
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              step="1"
+                                              aria-label="Category cap amount"
+                                              value={draft.categoryLimit.limitAmount}
+                                              onChange={(e) =>
+                                                updateProposalDraft(act, (c) => ({
+                                                  ...c,
+                                                  categoryLimit: {
+                                                    ...c.categoryLimit!,
+                                                    limitAmount: Number(e.target.value) || 0,
+                                                  },
+                                                }))
+                                              }
+                                              className="input-field px-2.5 py-1.5 text-[11.5px] font-mono tabular-nums"
+                                            />
+                                            <select
+                                              aria-label="Category cap period"
+                                              value={draft.categoryLimit.period}
+                                              onChange={(e) =>
+                                                updateProposalDraft(act, (c) => ({
+                                                  ...c,
+                                                  categoryLimit: {
+                                                    ...c.categoryLimit!,
+                                                    period: e.target.value as WarRoomPeriod,
+                                                  },
+                                                }))
+                                              }
+                                              className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            >
+                                              <option value="daily">Daily</option>
+                                              <option value="weekly">Weekly</option>
+                                              <option value="monthly">Monthly</option>
+                                            </select>
+                                          </div>
+                                        )}
+
+                                      {isPending && draft.type === 'add_split' && draft.split && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-2 border-t border-[var(--border-subtle)]">
+                                          <input
+                                            type="text"
+                                            aria-label="Split expense title"
+                                            value={draft.split.name}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                split: { ...c.split!, name: e.target.value },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                          />
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            step="0.01"
+                                            aria-label="Split total amount"
+                                            value={draft.split.totalAmount}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                split: {
+                                                  ...c.split!,
+                                                  totalAmount: Number(e.target.value) || 0,
+                                                },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px] font-mono tabular-nums"
+                                          />
+                                          <select
+                                            aria-label="Split category"
+                                            value={draft.split.category}
+                                            onChange={(e) =>
+                                              updateProposalDraft(act, (c) => ({
+                                                ...c,
+                                                split: { ...c.split!, category: e.target.value },
+                                              }))
+                                            }
+                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                          >
+                                            {categories.map((c) => (
+                                              <option key={c} value={c}>
+                                                {c}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                      )}
+
+                                      {act.status === 'applied' ? (
+                                        <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--accent-success-ink)]">
+                                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                          <span>{act.appliedMessage || 'Applied'}</span>
+                                        </div>
+                                      ) : act.status === 'dismissed' ? (
+                                        <p className="text-[11px] text-[var(--text-muted)] font-medium">
+                                          Dismissed
+                                        </p>
+                                      ) : (
+                                        <div className="flex items-center gap-2 pt-0.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleConfirmProposal(msg.id, act)}
+                                            className="btn-primary px-3 py-1.5 text-[11.5px] whitespace-nowrap"
+                                          >
+                                            <Check className="w-3.5 h-3.5" />
+                                            <span>
+                                              {act.type === 'navigate'
+                                                ? act.title
+                                                : 'Confirm & Apply'}
+                                            </span>
+                                            {act.type === 'navigate' && (
+                                              <ArrowRight className="w-3 h-3" />
+                                            )}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDismissProposal(msg.id, act.id)}
+                                            className="btn-secondary px-2.5 py-1.5 text-[11.5px] whitespace-nowrap"
+                                          >
+                                            <X className="w-3 h-3" />
+                                            <span>Dismiss</span>
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {(msg.isLocalFallback || msg.id.startsWith('a-local-')) && (
+                            <div className="flex items-center gap-2 pl-0.5 text-[11px] text-[var(--text-muted)]">
+                              <span>Answered via Local Engine</span>
+                              <span aria-hidden="true">·</span>
+                              <button
+                                type="button"
+                                disabled={isAsking || retryingMessageId !== null}
+                                onClick={() => void handleRetryMessageWithLiveAi(msg.id)}
+                                className="inline-flex items-center gap-1 font-semibold text-[var(--accent-ink)] hover:underline disabled:opacity-50"
+                              >
+                                <RefreshCw
+                                  className={`w-3 h-3 ${
+                                    retryingMessageId === msg.id ? 'animate-spin' : ''
+                                  }`}
+                                />
+                                <span>
+                                  {retryingMessageId === msg.id
+                                    ? 'Retrying Live AI…'
+                                    : 'Retry with Live AI'}
+                                </span>
+                              </button>
                             </div>
-                          );
-                        })}
+                          )}
+
+                          {msg.role === 'assistant' &&
+                            msg.followUpQuestions &&
+                            msg.followUpQuestions.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 pl-0.5">
+                                {msg.followUpQuestions.map((fq) => (
+                                  <button
+                                    key={fq}
+                                    type="button"
+                                    disabled={isAsking}
+                                    onClick={() => void handleAskPenny(fq)}
+                                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--accent-ink)] hover:border-[var(--accent-border)] hover:bg-[var(--accent-primary-soft)] transition-colors text-left"
+                                  >
+                                    {fq}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                        </div>
                       </div>
                     )}
                   </div>
+                ))}
 
-                  {msg.role === 'assistant' &&
-                    msg.followUpQuestions &&
-                    msg.followUpQuestions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {msg.followUpQuestions.map((fq) => (
-                          <button
-                            key={fq}
-                            type="button"
-                            disabled={isAsking}
-                            onClick={() => void handleAskPenny(fq)}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-white border border-[#E7EAF0] text-[#365FE8] hover:bg-[#EDF2FF] transition-colors text-left"
-                          >
-                            {fq}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                </div>
-              ))
-            )}
+                {isAsking && (
+                  <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5">
+                      <PennyEmblem size="xs" variant="subtle" thinking />
+                    </div>
+                    <div className="rounded-2xl rounded-tl-md px-3.5 py-2.5 bg-[var(--bg-subtle)]/80 border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
+                      Penny is reviewing your ledger…
+                    </div>
+                  </div>
+                )}
 
-            {isAsking && (
-              <div className="flex items-start">
-                <div className="rounded-2xl px-3.5 py-2.5 bg-[#F7F8FA] border border-[#E7EAF0] text-xs text-[#697386]">
-                  Penny is thinking…
-                </div>
+                {chatError && (
+                  <div
+                    role="alert"
+                    className="rounded-xl px-3.5 py-2.5 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-xs flex items-start gap-2"
+                  >
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{chatError}</span>
+                  </div>
+                )}
+
+                <div ref={chatEndRef} />
               </div>
             )}
-
-            {chatError && (
-              <div
-                role="alert"
-                className="rounded-xl px-3.5 py-2.5 bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B] text-xs flex items-start gap-2"
-              >
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{chatError}</span>
-              </div>
-            )}
-
-            <div ref={chatEndRef} />
           </div>
 
           {/* Voice Status / Error */}
@@ -1071,8 +1410,8 @@ export function PennyChatCore({
               role={chatVoice.voiceError ? 'alert' : 'status'}
               className={`rounded-xl px-3 py-1.5 text-[11.5px] flex items-center justify-between gap-2 shrink-0 ${
                 chatVoice.voiceError
-                  ? 'bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B]'
-                  : 'bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8]'
+                  ? 'bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
+                  : 'bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)]'
               }`}
             >
               <span className="truncate">
@@ -1095,82 +1434,107 @@ export function PennyChatCore({
             </div>
           )}
 
-          {/* Input Bar */}
+          {/* Tactile Docked Composer */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               if (chatVoice.isListening) chatVoice.stopListening();
               void handleAskPenny();
             }}
-            className="flex items-center gap-2 pt-2 border-t border-[#E7EAF0] shrink-0"
+            className="shrink-0 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-well)]/80 focus-within:border-[var(--accent-primary)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)] p-1.5 pl-3 flex items-end gap-2 transition-all"
           >
             <label htmlFor={inputId} className="sr-only">
               Message Penny
             </label>
-            <input
+            <textarea
+              ref={textareaRef}
               id={inputId}
-              type="text"
+              rows={1}
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
                 if (chatError) setChatError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (chatVoice.isListening) chatVoice.stopListening();
+                  void handleAskPenny();
+                }
               }}
               placeholder={
                 chatVoice.isListening
                   ? 'Listening… speak now'
                   : hasCartItems
                     ? `Ask about your ₹${formatCurrencyExact(pennyContext.currentCart.totalAmount)} cart, splits, or anything…`
-                    : 'Ask Penny anything or tap the mic…'
+                    : 'Ask Penny anything… (Enter to send)'
               }
               disabled={isAsking}
-              className="input-field flex-1 min-w-0 px-3 py-2 text-[13px]"
+              className="flex-1 min-w-0 resize-none bg-transparent py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none leading-snug max-h-[108px]"
             />
-            <button
-              type="button"
-              onClick={chatVoice.toggleListening}
-              disabled={isAsking}
-              data-testid={`${inputId}-mic`}
-              aria-label={chatVoice.isListening ? 'Stop voice listening' : 'Speak to Penny'}
-              aria-pressed={chatVoice.isListening}
-              title={
-                chatVoice.isSupported
-                  ? chatVoice.isListening
-                    ? 'Stop listening'
-                    : 'Voice input'
-                  : 'Voice input info'
-              }
-              className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
-                chatVoice.isListening
-                  ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
-                  : 'bg-[#F7F8FA] hover:bg-[#EDF2FF] border-[#E7EAF0] text-[#697386] hover:text-[#365FE8]'
-              }`}
-            >
-              {chatVoice.isListening ? (
-                <MicOff className="w-4 h-4" />
-              ) : (
-                <Mic className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              type="submit"
-              disabled={isAsking || !input.trim()}
-              aria-label="Send message to Penny"
-              className="btn-primary px-3.5 py-2 text-xs whitespace-nowrap shrink-0"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span className={compact ? 'hidden sm:inline' : 'inline'}>
-                {isAsking ? 'Thinking…' : 'Send'}
-              </span>
-            </button>
+
+            <div className="flex items-center gap-1 shrink-0 pb-0.5">
+              <button
+                type="button"
+                onClick={chatVoice.toggleListening}
+                disabled={isAsking}
+                data-testid={`${inputId}-mic`}
+                aria-label={chatVoice.isListening ? 'Stop voice listening' : 'Speak to Penny'}
+                aria-pressed={chatVoice.isListening}
+                title={
+                  chatVoice.isSupported
+                    ? chatVoice.isListening
+                      ? 'Stop listening'
+                      : 'Voice input'
+                    : 'Voice input info'
+                }
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                  chatVoice.isListening
+                    ? 'bg-[var(--accent-danger-soft)] text-[var(--accent-danger-ink)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'
+                }`}
+              >
+                {chatVoice.isListening ? (
+                  <MicOff className="w-4 h-4" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                type="submit"
+                disabled={isAsking || !input.trim()}
+                aria-label="Send message to Penny"
+                className="w-9 h-9 rounded-xl bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] disabled:opacity-40 disabled:pointer-events-none text-white flex items-center justify-center shrink-0 transition-all shadow-xs"
+              >
+                <ArrowUp className="w-4 h-4" strokeWidth={2.4} />
+              </button>
+            </div>
           </form>
         </>
       ) : (
         /* Quick Natural-Language Expense Parser */
         <div className="flex-1 flex flex-col justify-between gap-3 overflow-y-auto scrollbar-thin">
-          <div className="space-y-3">
-            <p className="text-xs text-[#697386] leading-relaxed">
-              Type a quick note like &quot;Paid 240 for coffee&quot; and Penny will prepare a ledger entry for you to confirm.
-            </p>
+          <div className="space-y-3.5">
+            <div className="space-y-2">
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                Describe an expense in plain English and Penny will extract title, amount, category, and date — works both online and offline.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_LOG_EXAMPLES.map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => {
+                      setQuickText(example);
+                      setParseError(null);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-ink)] border border-[var(--border-subtle)] transition-colors"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <form
               onSubmit={(e) => {
@@ -1202,10 +1566,10 @@ export function PennyChatCore({
                   disabled={isParsingExpense}
                   aria-label={quickVoice.isListening ? 'Stop voice note' : 'Dictate expense note'}
                   aria-pressed={quickVoice.isListening}
-                  className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+                  className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
                     quickVoice.isListening
-                      ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
-                      : 'bg-[#F7F8FA] hover:bg-[#EDF2FF] border-[#E7EAF0] text-[#697386] hover:text-[#365FE8]'
+                      ? 'bg-[var(--accent-danger-soft)] border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
+                      : 'bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--accent-ink)]'
                   }`}
                 >
                   {quickVoice.isListening ? (
@@ -1218,10 +1582,10 @@ export function PennyChatCore({
               <button
                 type="submit"
                 disabled={isParsingExpense || !quickText.trim()}
-                className="btn-primary px-3.5 py-2 text-xs whitespace-nowrap shrink-0"
+                className="btn-primary px-4 py-2 text-xs whitespace-nowrap shrink-0"
               >
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>{isParsingExpense ? 'Parsing…' : 'Parse Note'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </form>
 
@@ -1230,8 +1594,8 @@ export function PennyChatCore({
                 role={quickVoice.voiceError ? 'alert' : 'status'}
                 className={`rounded-xl px-3 py-1.5 text-[11.5px] flex items-center justify-between gap-2 ${
                   quickVoice.voiceError
-                    ? 'bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B]'
-                    : 'bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8]'
+                    ? 'bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
+                    : 'bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)]'
                 }`}
               >
                 <span>
@@ -1256,7 +1620,7 @@ export function PennyChatCore({
             {parseError && (
               <div
                 role="alert"
-                className="rounded-xl px-3 py-2 bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B] text-xs flex items-start gap-2"
+                className="rounded-xl px-3 py-2 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-xs flex items-start gap-2"
               >
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{parseError}</span>
@@ -1266,7 +1630,7 @@ export function PennyChatCore({
             {quickSavedMsg && (
               <div
                 role="status"
-                className="rounded-xl px-3 py-2 bg-[#E8F7F1] border border-[#B7E4D3] text-[#0D5E43] text-xs flex items-center justify-between gap-2"
+                className="rounded-xl px-3 py-2 bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] text-[var(--accent-success-ink)] text-xs flex items-center justify-between gap-2"
               >
                 <span className="flex items-center gap-1.5 font-semibold">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -1287,21 +1651,26 @@ export function PennyChatCore({
             {parsedDraft && (
               <div className="surface-subtle p-3.5 space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-[#151922]">
+                  <div className="flex items-center gap-2 text-xs">
+                    <p className="font-bold text-[var(--text-primary)]">
                       Review &amp; Confirm Expense
                     </p>
                     {parsedDraft.isOfflineFallback && (
-                      <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
-                        Offline instant parse
-                      </span>
+                      <>
+                        <span className="text-[var(--text-muted)]" aria-hidden="true">
+                          ·
+                        </span>
+                        <span className="text-[11px] font-medium text-[var(--accent-warning-ink)]">
+                          Local instant parse
+                        </span>
+                      </>
                     )}
                   </div>
                   {parsedDraft.isSplitHint && parsedDraft.splitPersonHint && onNavigate && (
                     <button
                       type="button"
                       onClick={() => onNavigate('expenses')}
-                      className="text-[11px] font-semibold text-[#365FE8] hover:text-[#294FCC]"
+                      className="text-[11px] font-semibold text-[var(--accent-ink)] hover:underline"
                     >
                       Split with {parsedDraft.splitPersonHint}
                     </button>
@@ -1310,7 +1679,9 @@ export function PennyChatCore({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[#697386]">Title</span>
+                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                      Title
+                    </span>
                     <input
                       type="text"
                       value={parsedDraft.name}
@@ -1321,7 +1692,9 @@ export function PennyChatCore({
                     />
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[#697386]">Amount (₹)</span>
+                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                      Amount (₹)
+                    </span>
                     <input
                       type="number"
                       min="1"
@@ -1337,7 +1710,9 @@ export function PennyChatCore({
                     />
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[#697386]">Category</span>
+                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                      Category
+                    </span>
                     <select
                       value={parsedDraft.category}
                       onChange={(e) =>
@@ -1353,7 +1728,9 @@ export function PennyChatCore({
                     </select>
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[#697386]">Date</span>
+                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                      Date
+                    </span>
                     <input
                       type="date"
                       value={parsedDraft.date}

@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CartAudit — Team Workload &amp; Project Presentation Report</title>
+    <style>
+      :root {
+        --bg-page: #f5f7fb;
+        --bg-sheet: #ffffff;
+        --bg-subtle: #f1f4fa;
+        --ink-primary: #0f172a;
+        --ink-secondary: #475569;
+        --ink-muted: #64748b;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --accent: #365fe8;
+        --accent-soft: #eef2ff;
+        --emerald: #0f9d6e;
+        --emerald-soft: #ecfdf5;
+        --amber: #b45309;
+        --amber-soft: #fffbeb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg-page);
+        color: var(--ink-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 13.5px;
+        line-height: 1.55;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* Top Sticky Toolbar (Hidden in Print / PDF) */
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .toolbar-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .toolbar-title {
+        font-weight: 700;
+        font-size: 13.5px;
+        color: var(--ink-primary);
+      }
+
+      .toolbar-sub {
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+
+      .toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid var(--border-strong);
+        background: #ffffff;
+        color: var(--ink-primary);
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn:hover {
+        background: var(--bg-subtle);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+
+      .btn-primary:hover {
+        background: #294fcc;
+      }
+
+      /* A4 Document Sheet */
+      .sheet {
+        max-width: 920px;
+        margin: 24px auto 48px;
+        background: var(--bg-sheet);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        padding: 36px 40px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--ink-primary);
+        margin-bottom: 22px;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: var(--accent);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 16px;
+        letter-spacing: -0.02em;
+      }
+
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.2;
+        letter-spacing: -0.025em;
+        color: var(--ink-primary);
+      }
+
+      .subtitle {
+        margin: 6px 0 0;
+        color: var(--ink-secondary);
+        font-size: 13px;
+        max-width: 560px;
+      }
+
+      .meta-box {
+        text-align: right;
+        font-size: 12px;
+        color: var(--ink-secondary);
+        white-space: nowrap;
+      }
+
+      .meta-box strong {
+        color: var(--ink-primary);
+        display: block;
+        font-size: 12.5px;
+      }
+
+      /* Summary Metrics Strip */
+      .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-subtle);
+        margin-bottom: 24px;
+        overflow: hidden;
+      }
+
+      .kpi-cell {
+        padding: 12px 14px;
+        border-right: 1px solid var(--border);
+      }
+
+      .kpi-cell:last-child {
+        border-right: none;
+      }
+
+      .kpi-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-muted);
+      }
+
+      .kpi-value {
+        margin-top: 3px;
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--ink-primary);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .kpi-note {
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--ink-secondary);
+      }
+
+      h2 {
+        font-size: 15.5px;
+        font-weight: 800;
+        letter-spacing: -0.015em;
+        margin: 24px 0 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border);
+        color: var(--ink-primary);
+      }
+
+      /* Member Cards */
+      .member-card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+        background: #ffffff;
+        break-inside: avoid;
+      }
+
+      .member-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 12px;
+      }
+
+      .member-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 999px;
+        margin-bottom: 6px;
+      }
+
+      .badge-blue {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .badge-emerald {
+        background: var(--emerald-soft);
+        color: var(--emerald);
+      }
+
+      .badge-amber {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .member-title {
+        margin: 0;
+        font-size: 15.5px;
+        font-weight: 800;
+        color: var(--ink-primary);
+      }
+
+      .member-focus {
+        margin: 2px 0 0;
+        font-size: 12.5px;
+        color: var(--ink-secondary);
+      }
+
+      .editable-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--ink-primary);
+        border: 1px dashed var(--border-strong);
+        background: var(--bg-subtle);
+        padding: 5px 10px;
+        border-radius: 8px;
+        min-width: 175px;
+        text-align: center;
+      }
+
+      .editable-name:focus {
+        outline: 2px solid var(--accent);
+        background: #ffffff;
+      }
+
+      .work-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 18px;
+      }
+
+      .work-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .work-list li {
+        margin-bottom: 6px;
+        font-size: 12.8px;
+        color: var(--ink-secondary);
+      }
+
+      .work-list li strong {
+        color: var(--ink-primary);
+      }
+
+      .modules-box {
+        background: var(--bg-subtle);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .modules-title {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-muted);
+        margin: 0 0 6px;
+      }
+
+      .code-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        color: var(--ink-primary);
+        line-height: 1.6;
+      }
+
+      /* Tables */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+        font-size: 12.5px;
+        break-inside: avoid;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 9px 11px;
+        border: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--bg-subtle);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--ink-secondary);
+      }
+
+      td strong {
+        color: var(--ink-primary);
+      }
+
+      .stack-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 10px;
+        break-inside: avoid;
+      }
+
+      .stack-card {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 11px 13px;
+        background: var(--bg-subtle);
+      }
+
+      .stack-card h3 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--ink-primary);
+      }
+
+      .stack-card p {
+        margin: 0;
+        font-size: 11.8px;
+        color: var(--ink-secondary);
+      }
+
+      .footer {
+        margin-top: 24px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+
+      .page-break {
+        break-before: page;
+      }
+
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+
+      @media print {
+        html,
+        body {
+          background: #ffffff;
+        }
+        .no-print {
+          display: none !important;
+        }
+        .sheet {
+          margin: 0;
+          max-width: none;
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
+          padding: 0;
+        }
+        .editable-name {
+          border-style: solid;
+          border-color: var(--border);
+          background: transparent;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .sheet {
+          margin: 12px;
+          padding: 20px;
+        }
+        .header {
+          flex-direction: column;
+        }
+        .meta-box {
+          text-align: left;
+        }
+        .kpi-strip {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .work-grid,
+        .stack-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar no-print">
+      <div class="toolbar-info">
+        <span class="toolbar-title">CartAudit — Print-Ready Team Workload PDF</span>
+        <span class="toolbar-sub">
+          Tip: Click the dashed member name boxes below to type your real names before saving as PDF.
+        </span>
+      </div>
+      <div class="toolbar-actions">
+        <a href="/" class="btn">← Back to CartAudit</a>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          Print / Save as PDF
+        </button>
+      </div>
+    </div>
+
+    <main class="sheet">
+      <header class="header">
+        <div>
+          <div class="brand-row">
+            <span class="brand-mark">C</span>
+            <span class="eyebrow">Project Architecture &amp; Teamwork Division</span>
+          </div>
+          <h1>CartAudit — Smart Budget Radar</h1>
+          <p class="subtitle">
+            Comprehensive 3-member workload breakdown, module ownership, live demo script, and technical Q&amp;A preparation for faculty evaluation.
+          </p>
+        </div>
+        <div class="meta-box">
+          <strong>3-Member Team Report</strong>
+          <span>Date: 24 November 2026</span><br />
+          <span>Stack: React · TS · Express · Gemini · Firebase</span>
+        </div>
+      </header>
+
+      <section class="kpi-strip" aria-label="Project summary metrics">
+        <div class="kpi-cell">
+          <div class="kpi-label">App Sections</div>
+          <div class="kpi-value">6 Core Views</div>
+          <div class="kpi-note">Overview to Wellness</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">Engine Modules</div>
+          <div class="kpi-value">15+ Pure Engines</div>
+          <div class="kpi-note">Decoupled TypeScript logic</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">Automated Tests</div>
+          <div class="kpi-value">96 Unit Tests</div>
+          <div class="kpi-note">15 test suites via node:test</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-label">Backend &amp; Sync</div>
+          <div class="kpi-value">Hybrid Cloud + Local</div>
+          <div class="kpi-note">Gemini API + Firestore + Local</div>
+        </div>
+      </section>
+
+      <h2>1. Team Workload &amp; Engineering Ownership (3 Members)</h2>
+
+      <!-- MEMBER 1 -->
+      <article class="member-card">
+        <div class="member-header">
+          <div>
+            <span class="member-badge badge-blue">Member 1 · Track A (Frontend &amp; Core Commerce)</span>
+            <h3 class="member-title">UI System, Overview, Shopping Cart &amp; Split Ledger</h3>
+            <p class="member-focus">
+              Owned the visual design system, core daily workflows, group bill splitting, and UPI payments.
+            </p>
+          </div>
+          <div class="editable-name" contenteditable="true" aria-label="Member 1 Name">
+            Member 1: [Type Name]
+          </div>
+        </div>
+        <div class="work-grid">
+          <ul class="work-list">
+            <li>
+              <strong>App Shell &amp; Multi-Theme UI:</strong> Built the 6-section responsive layout, Dark/Light toggle, multiple color moods, surface styles, and Settings panel.
+            </li>
+            <li>
+              <strong>Overview Dashboard:</strong> Implemented cycle budget metrics, visual Spend vs. Budget progress bar, Recharts daily/category graphs, and Sample Month demo generator.
+            </li>
+            <li>
+              <strong>Shopping (Quick Mart &amp; Baskets):</strong> Built the product catalog, unit-price variants, recurring refill schedules, saved reusable baskets, and checkout flow.
+            </li>
+            <li>
+              <strong>Expenses, Split Ledger &amp; UPI:</strong> Implemented Equal/Custom/Percentage group bill splitting with exact paise rounding, repayment settlements, UPI deep links, QR codes, and WhatsApp reminders.
+            </li>
+          </ul>
+          <div class="modules-box">
+            <p class="modules-title">Owned Components &amp; Engines</p>
+            <ul class="code-list">
+              <li>components/ui/AppShell.tsx</li>
+              <li>components/overview/OverviewDashboard.tsx</li>
+              <li>components/mart/* &amp; components/settings/*</li>
+              <li>components/expenses/* &amp; components/splits/*</li>
+              <li>utils/budgetCycle.ts &amp; spendingTrends.ts</li>
+              <li>utils/martEngine.ts &amp; demoDataEngine.ts</li>
+              <li>utils/splitLedgerEngine.ts &amp; upiEngine.ts</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- MEMBER 2 -->
+      <article class="member-card">
+        <div class="member-header">
+          <div>
+            <span class="member-badge badge-emerald">Member 2 · Track B (AI Co-Pilot, OCR &amp; Backend)</span>
+            <h3 class="member-title">Penny AI Co-Pilot, Receipt Scanner &amp; Express API Server</h3>
+            <p class="member-focus">
+              Owned server-side Gemini integration, OCR receipt auditing, and offline AI resiliency.
+            </p>
+          </div>
+          <div class="editable-name" contenteditable="true" aria-label="Member 2 Name">
+            Member 2: [Type Name]
+          </div>
+        </div>
+        <div class="work-grid">
+          <ul class="work-list">
+            <li>
+              <strong>Express + Gemini Backend:</strong> Built Node/Express endpoints (<code>/api/health</code>, <code>/api/penny-chat</code>, <code>/api/penny-parse-expense</code>, <code>/api/scan-receipt</code>) using <code>@google/genai</code> with multi-key failover and timeouts.
+            </li>
+            <li>
+              <strong>Penny AI Co-Pilot (⌘K &amp; Studio):</strong> Designed the floating assistant and full Insights workspace with adaptive tone settings, voice input, and 1-click editable action cards (splits, carts, budgets, logs).
+            </li>
+            <li>
+              <strong>Local Smart Engine Fallback:</strong> Built deterministic browser-side Q&amp;A and expense parsing so Penny keeps answering and creating actions even offline or when the backend sleeps.
+            </li>
+            <li>
+              <strong>Receipt Scanner &amp; Fee Audit:</strong> Combined <code>tesseract.js</code> OCR with Gemini extraction to parse bills, flag hidden platform/surge/delivery fees, and import items into the ledger.
+            </li>
+          </ul>
+          <div class="modules-box">
+            <p class="modules-title">Owned Components &amp; Engines</p>
+            <ul class="code-list">
+              <li>server.ts (Express + Gemini API Proxy)</li>
+              <li>components/penny/PennyFloatingCompanion.tsx</li>
+              <li>components/penny/PennyChatCore.tsx</li>
+              <li>components/insights/PennyCopilotPanel.tsx</li>
+              <li>components/audit/* (Receipt Scanner)</li>
+              <li>utils/pennyEngine.ts &amp; pennyActions.ts</li>
+              <li>utils/auditEngine.ts &amp; aiReadiness.ts</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- MEMBER 3 -->
+      <article class="member-card">
+        <div class="member-header">
+          <div>
+            <span class="member-badge badge-amber">Member 3 · Track C (Analytics, Wellness, Cloud &amp; QA)</span>
+            <h3 class="member-title">Smart Radar, Financial Wellness, Firebase Sync &amp; Testing</h3>
+            <p class="member-focus">
+              Owned spending intelligence, behavioral guardrails, state persistence, security rules, and unit testing.
+            </p>
+          </div>
+          <div class="editable-name" contenteditable="true" aria-label="Member 3 Name">
+            Member 3: [Type Name]
+          </div>
+        </div>
+        <div class="work-grid">
+          <ul class="work-list">
+            <li>
+              <strong>Smart Radar &amp; Price Intelligence:</strong> Built cross-month velocity analytics, category anomaly detection, downloadable CSV/HTML reports, and historical item unit-price inflation tracking.
+            </li>
+            <li>
+              <strong>Financial Wellness (War Room):</strong> Implemented Broke Mode daily guardrails, daily/weekly/monthly category limits, repeated junk-leakage detection, smart alerts, Discipline Score, and streak check-ins.
+            </li>
+            <li>
+              <strong>State Store &amp; Firebase Cloud Sync:</strong> Engineered Zustand persisted state (<code>localStorage</code> + JSON backup/restore) plus optional Google Sign-In syncing scoped collections to Cloud Firestore with strict <code>firestore.rules</code>.
+            </li>
+            <li>
+              <strong>Automated QA Suite:</strong> Maintained 96 unit tests across 15 TypeScript test suites verifying financial math, split rounding, budget boundaries, Penny logic, and sync integrity.
+            </li>
+          </ul>
+          <div class="modules-box">
+            <p class="modules-title">Owned Components &amp; Engines</p>
+            <ul class="code-list">
+              <li>components/radar/* &amp; components/prices/*</li>
+              <li>components/warroom/* &amp; components/cloud/*</li>
+              <li>store/useStore.ts &amp; utils/storeHelpers.ts</li>
+              <li>firebase.ts &amp; firestore.rules</li>
+              <li>utils/radarEngine.ts &amp; reportGenerator.ts</li>
+              <li>utils/priceTrackerEngine.ts &amp; warRoomEngine.ts</li>
+              <li>utils/cloudSyncEngine.ts &amp; 15 *.test.ts suites</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <div class="page-break"></div>
+
+      <h2>2. Live Presentation Script (~6 Minutes Total)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 14%">Time</th>
+            <th style="width: 18%">Presenter</th>
+            <th style="width: 26%">Screen / Feature</th>
+            <th style="width: 42%">What to Demo &amp; Explain to Teacher</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>0:00 – 2:00</strong></td>
+            <td><strong>Member 1</strong></td>
+            <td>Overview, Shopping &amp; Expenses</td>
+            <td>
+              Explain the problem (hidden delivery/cart fees + scattered expense tracking). Click <strong>Try Sample Month</strong>, show the Spend vs. Budget progress bar, switch themes, add an item in <strong>Shopping</strong>, and demo a <strong>Split + UPI QR</strong> in <strong>Expenses</strong>.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>2:00 – 4:00</strong></td>
+            <td><strong>Member 2</strong></td>
+            <td>Receipt Scanner &amp; Penny AI</td>
+            <td>
+              Scan/paste a receipt to show automatic itemization and fee-leak detection. Press <strong>⌘K</strong> to open <strong>Penny</strong>, enter <em>"Split ₹600 dinner with Rahul"</em>, confirm the editable card, and explain the Express Gemini proxy + offline Local Engine fallback.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>4:00 – 6:00</strong></td>
+            <td><strong>Member 3</strong></td>
+            <td>Insights, Wellness &amp; Architecture</td>
+            <td>
+              Show <strong>Smart Radar</strong> (plus CSV/HTML export), <strong>Price Intelligence</strong>, and <strong>Financial Wellness</strong> (Broke Mode &amp; Discipline Score). Summarize data persistence (<code>localStorage</code> + Firebase Firestore rules) and the 96 unit tests.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Anticipated Faculty Q&amp;A Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 30%">Question</th>
+            <th style="width: 16%">Speaker</th>
+            <th style="width: 54%">Concise Technical Answer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>How is user data stored and kept private?</strong></td>
+            <td><strong>Member 3</strong></td>
+            <td>
+              Saved immediately in browser <code>localStorage</code> (<code>cartaudit-store</code>) for offline speed. Signed-in users sync across devices via Firebase Auth + Cloud Firestore scoped to <code>/users/{uid}/...</code> with strict <code>firestore.rules</code>.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>How are Gemini API keys secured?</strong></td>
+            <td><strong>Member 2</strong></td>
+            <td>
+              All Gemini SDK calls run server-side inside <code>server.ts</code> via <code>/api/*</code> endpoints; API keys never ship in client bundles. If the backend is unreachable, Penny falls back to the local TypeScript engine.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>How do you avoid floating-point errors in splits?</strong></td>
+            <td><strong>Member 1</strong></td>
+            <td>
+              <code>splitLedgerEngine.ts</code> normalizes currency to integer paise and distributes remainders deterministically so participant shares always equal the exact bill total.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>How did you verify the financial calculations?</strong></td>
+            <td><strong>Member 3</strong></td>
+            <td>
+              Core math is decoupled from React components into pure TypeScript engines tested by 96 automated unit tests across 15 test files, alongside TypeScript strict checks (<code>tsc --noEmit</code>).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>4. System Architecture Snapshot</h2>
+      <div class="stack-grid">
+        <div class="stack-card">
+          <h3>Frontend Presentation Layer</h3>
+          <p>
+            React 18, TypeScript, Tailwind CSS, Lucide Icons, Recharts visualizations, and CSS-variable multi-mood theming.
+          </p>
+        </div>
+        <div class="stack-card">
+          <h3>AI, Vision &amp; API Layer</h3>
+          <p>
+            Node.js + Express backend (<code>server.ts</code>), Google <code>@google/genai</code> SDK, client-side <code>tesseract.js</code> OCR, and deterministic fallback engine.
+          </p>
+        </div>
+        <div class="stack-card">
+          <h3>State, Cloud &amp; Quality</h3>
+          <p>
+            Zustand persisted store, Firebase Auth &amp; Firestore security rules, JSON import/export, and 96 <code>node:test</code> unit tests.
+          </p>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <span>CartAudit — Smart Budget Radar · Project Teamwork &amp; Architecture Summary</span>
+        <span>Prepared for Academic Presentation · November 2026</span>
+      </footer>
+    </main>
+  </body>
+</html>

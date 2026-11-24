@@ -91,9 +91,16 @@ async function runWithGeminiFallback<T>(
     } catch (err) {
       lastErr = err;
       const parsed = extractReadableError(err);
-      if (isAuthKeyError(parsed.status, parsed.message, parsed.code) && i < candidates.length - 1) {
+      const canTryAnotherKey =
+        i < candidates.length - 1 &&
+        (isAuthKeyError(parsed.status, parsed.message, parsed.code) ||
+          parsed.status === 400 ||
+          parsed.status === 404 ||
+          parsed.status === 429 ||
+          parsed.message.includes('RESOURCE_EXHAUSTED'));
+      if (canTryAnotherKey) {
         console.warn(
-          `[${operationName}] Key from ${candidate.source} was rejected (${parsed.status}: ${parsed.message}); falling back to ${candidates[i + 1].source}.`
+          `[${operationName}] Key from ${candidate.source} failed (${parsed.status}: ${parsed.message}); falling back to ${candidates[i + 1].source}.`
         );
         continue;
       }
@@ -141,6 +148,10 @@ function isTransientUpstreamError(status: number, message: string, code: string)
     upper.includes('UPSTREAM_TIMEOUT') ||
     upper.includes('OVERLOADED')
   );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function runReceiptVisionModel(
@@ -300,7 +311,7 @@ async function startServer() {
             normalizedMime,
             imageBase64,
             true,
-            10000
+            9000
           );
         } catch (primaryErr) {
           const parsedPrimary = extractReadableError(primaryErr);
@@ -316,6 +327,7 @@ async function startServer() {
           ) {
             throw primaryErr;
           }
+          await sleep(550);
           modelUsed = 'gemini-3.1-flash-lite';
           return await runReceiptVisionModel(
             ai,
@@ -323,7 +335,7 @@ async function startServer() {
             normalizedMime,
             imageBase64,
             false,
-            20000
+            15000
           );
         }
       });
@@ -650,7 +662,7 @@ async function startServer() {
 
       const response = await runWithGeminiFallback('penny-chat', async (ai) => {
         try {
-          return await runPennyChatModel(ai, 'gemini-4-hydrogen', true, 8000);
+          return await runPennyChatModel(ai, 'gemini-4-hydrogen', true, 6500);
         } catch (primaryErr) {
           const parsedPrimary = extractReadableError(primaryErr);
           if (
@@ -662,7 +674,8 @@ async function startServer() {
           ) {
             throw primaryErr;
           }
-          return await runPennyChatModel(ai, 'gemini-3.1-flash-lite', false, 15000);
+          await sleep(550);
+          return await runPennyChatModel(ai, 'gemini-3.1-flash-lite', false, 7500);
         }
       });
 
@@ -766,7 +779,7 @@ async function startServer() {
 
       const response = await runWithGeminiFallback('penny-parse-expense', async (ai) => {
         try {
-          return await runParseModel(ai, 'gemini-4-hydrogen', true, 8000);
+          return await runParseModel(ai, 'gemini-3.1-flash-lite', false, 6500);
         } catch (primaryErr) {
           const parsedPrimary = extractReadableError(primaryErr);
           if (
@@ -778,7 +791,8 @@ async function startServer() {
           ) {
             throw primaryErr;
           }
-          return await runParseModel(ai, 'gemini-3.1-flash-lite', false, 15000);
+          await sleep(550);
+          return await runParseModel(ai, 'gemini-4-hydrogen', true, 6500);
         }
       });
 

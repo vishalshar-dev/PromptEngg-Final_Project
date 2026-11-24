@@ -33,8 +33,11 @@ import { formatCurrency } from '../../utils/categoryStyles';
 import {
   fetchGeminiHealth,
   getCachedGeminiConfigured,
-  markGeminiConfigured,
 } from '../../utils/aiReadiness';
+import {
+  enqueueAiPost,
+  getLiveAiAvailability,
+} from '../../utils/aiClient';
 
 function fileToBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -268,8 +271,6 @@ export function ReceiptUploader() {
 
       setIsScanning(true);
       setScanStatus('Checking scanner mode & preparing image...');
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 35000);
       let scanFile: File = file;
       try {
         const prepared = await prepareReceiptImage(file);
@@ -280,36 +281,41 @@ export function ReceiptUploader() {
         setLastImageFile(scanFile);
 
         const aiReady = await ensureGeminiConfigured();
-        if (!aiReady) {
+        const avail = getLiveAiAvailability();
+        if (!aiReady || avail.mode !== 'live') {
           await runOfflineOcrOnFile(
             scanFile,
-            'Live AI Vision is temporarily unavailable — using offline browser OCR.'
+            avail.mode !== 'live'
+              ? 'Servers are temporarily busy — switched to offline browser OCR.'
+              : 'Live AI Vision is temporarily unavailable — using offline browser OCR.'
           );
           return;
         }
 
         setScanStatus('Scanning receipt with Gemini Vision...');
         const imageBase64 = await fileToBase64(prepared.blob);
-        const res = await fetch('/api/scan-receipt', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
+        const result = await enqueueAiPost<Record<string, unknown>>(
+          '/api/scan-receipt',
+          {
             imageBase64,
             mimeType: prepared.mimeType,
-          }),
-        });
+          },
+          { timeoutMs: 24_000 }
+        );
 
-        const data = (await res.json()) as { error?: string; code?: string } & Record<string, unknown>;
-        if (!res.ok) {
-          if (res.status === 503 && data.code === 'MISSING_API_KEY') {
+        if (!result.ok) {
+          if (result.transient || result.status === 403) {
             setGeminiConfigured(false);
-            markGeminiConfigured(false);
+            await runOfflineOcrOnFile(
+              scanFile,
+              'Servers are temporarily busy — switched to offline browser OCR.'
+            );
+            return;
           }
-          throw new Error(data.error || 'AI Vision is temporarily unavailable.');
+          throw new Error(result.error || 'AI Vision is temporarily unavailable.');
         }
 
-        const normalized = normalizeScannedReceipt(data);
+        const normalized = normalizeScannedReceipt(result.data);
         if (normalized.items.length === 0 && normalized.total === 0) {
           await runOfflineOcrOnFile(
             scanFile,
@@ -339,12 +345,11 @@ export function ReceiptUploader() {
           /high demand|unavailable|503|504|429|timeout|not set|failed to fetch/i.test(rawMsg);
 
         if (shouldAutoFallback) {
-          await runOfflineOcrOnFile(scanFile, 'AI Vision unavailable.');
+          await runOfflineOcrOnFile(scanFile, 'Servers are temporarily busy — using offline OCR.');
         } else {
           setScanError(rawMsg);
         }
       } finally {
-        window.clearTimeout(timeoutId);
         setIsScanning(false);
         setScanStatus('');
       }

@@ -166,3 +166,54 @@ export function computeBudgetCycleSummary(params: {
     utilizationPct,
   };
 }
+
+export interface CycleProgressMetrics {
+  spent: number;
+  budget: number;
+  remaining: number;
+  utilizationPct: number;
+  barWidthPct: number;
+  availablePct: number;
+  cycleElapsedPct: number;
+  tone: 'success' | 'warning' | 'danger';
+  isExceeded: boolean;
+}
+
+export function computeCycleProgressMetrics(
+  summary: BudgetCycleSummary
+): CycleProgressMetrics {
+  const spent = Math.max(0, summary.currentSpent);
+  const budget = Math.max(0, summary.effectiveBudget);
+  const remaining = summary.remainingBudget;
+  const rawPct =
+    budget > 0 ? (spent / budget) * 100 : spent > 0 ? 100 : 0;
+  const utilizationPct =
+    budget > 0 ? summary.utilizationPct : spent > 0 ? 100 : 0;
+  const barWidthPct = Math.max(0, Math.min(100, rawPct));
+  const availablePct = Math.max(0, Math.round((100 - utilizationPct) * 10) / 10);
+  const daysTotal = Math.max(1, summary.window.daysTotal);
+  const daysElapsed = Math.min(daysTotal, Math.max(1, summary.window.daysElapsed));
+  const cycleElapsedPct = Math.min(
+    100,
+    Math.max(0, Math.round((daysElapsed / daysTotal) * 100))
+  );
+  const isExceeded = budget > 0 ? remaining < 0 : spent > 0;
+  const tone: CycleProgressMetrics['tone'] = isExceeded
+    ? 'danger'
+    : utilizationPct >= 80
+      ? 'warning'
+      : 'success';
+
+  return {
+    spent,
+    budget,
+    remaining,
+    utilizationPct,
+    barWidthPct,
+    availablePct,
+    cycleElapsedPct,
+    tone,
+    isExceeded,
+  };
+}
+

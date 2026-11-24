@@ -380,4 +380,102 @@ test('parseQuickExpenseLocally parses amounts, inferred categories, and relative
   assert.equal(parseQuickExpenseLocally('just some text without numbers', cats, '2026-11-21'), null);
 });
 
+import { answerPennyLocally } from './pennyEngine';
+
+test('answerPennyLocally handles splits, cart building, budget commands, and safe daily spend offline', () => {
+  const cats = ['Groceries', 'Snacks & Beverages', 'Dairy & Bakery', 'Fuel & Transportation'];
+  const snapshot = buildPennyContextSnapshot({
+    items: sampleItems,
+    transactions,
+    purchaseHistory: [],
+    totalBudget: 5000,
+    categories: cats,
+    categoryCaps: {},
+    categoryLimits: [],
+    people,
+    sharedExpenses,
+    settlements: [],
+    basketTemplates: [],
+    priceObservations: [],
+    savedAudits: [],
+    isBrokeMode: false,
+    brokeModeConfig: {
+      enabled: false,
+      period: 'monthly',
+      dailyAllowance: 250,
+      weeklyAllowance: 1500,
+      monthlyAllowance: 4000,
+      maxNonEssentialSpend: 1200,
+      warningThresholdPct: 75,
+      durationDays: 14,
+      restrictedCategories: ['Junk'],
+      activatedAt: null,
+    },
+    disciplineCheckIns: [],
+    activeScreen: 'overview',
+    now: NOW,
+  });
+
+  const splitLookup = answerPennyLocally({
+    question: 'Who do I owe in Splits right now?',
+    context: snapshot,
+    items: sampleItems,
+    basketTemplates: [],
+    categories: cats,
+  });
+  assert.ok(splitLookup.answer.includes('Rahul'));
+  assert.equal(splitLookup.proposedActions[0]?.type, 'navigate');
+
+  const cartBuild = answerPennyLocally({
+    question: 'Build me a breakfast cart under ₹100',
+    context: snapshot,
+    items: sampleItems,
+    basketTemplates: [],
+    categories: cats,
+  });
+  assert.equal(cartBuild.proposedActions[0]?.type, 'build_cart');
+  assert.equal(cartBuild.proposedActions[0]?.cartItems?.[0]?.itemId, 'milk-1');
+
+  const addSplit = answerPennyLocally({
+    question: 'Split ₹600 dinner with Rahul',
+    context: snapshot,
+    items: sampleItems,
+    basketTemplates: [],
+    categories: cats,
+  });
+  assert.equal(addSplit.proposedActions[0]?.type, 'add_split');
+  assert.equal(addSplit.proposedActions[0]?.split?.totalAmount, 600);
+  assert.deepEqual(addSplit.proposedActions[0]?.split?.participantNames, ['Rahul']);
+
+  const dailySafe = answerPennyLocally({
+    question: 'How much can I safely spend per day?',
+    context: snapshot,
+    items: sampleItems,
+    basketTemplates: [],
+    categories: cats,
+  });
+  assert.ok(dailySafe.answer.includes('/day'));
+  assert.equal(dailySafe.highlights.length, 3);
+
+  const greeting = answerPennyLocally({
+    question: 'Hey Penny',
+    context: snapshot,
+    items: sampleItems,
+    basketTemplates: [],
+    categories: cats,
+  });
+  assert.ok(greeting.answer.includes("I'm Penny"));
+  assert.equal(greeting.followUpQuestions.length, 3);
+
+  const savingsCheckup = answerPennyLocally({
+    question: 'How am I doing and how can I save money?',
+    context: snapshot,
+    items: sampleItems,
+    basketTemplates: [],
+    categories: cats,
+  });
+  assert.ok(savingsCheckup.answer.includes('Monthly Checkup'));
+});
+
+
 

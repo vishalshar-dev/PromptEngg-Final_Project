@@ -583,6 +583,7 @@ export interface PennyChatMessage {
   followUpQuestions?: string[];
   timestamp: string;
   pageContext?: string;
+  isLocalFallback?: boolean;
 }
 
 

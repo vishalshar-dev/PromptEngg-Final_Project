@@ -40,7 +40,10 @@ import {
 } from '../../utils/categoryStyles';
 import { getChartThemeTokens } from '../../utils/settingsEngine';
 import { getEffectiveTransactionAmount } from '../../utils/martEngine';
-import { computeBudgetCycleSummary } from '../../utils/budgetCycle';
+import {
+  computeBudgetCycleSummary,
+  computeCycleProgressMetrics,
+} from '../../utils/budgetCycle';
 import {
   computeCategoryAnalytics,
   computeRadarBudgetMonitor,
@@ -122,6 +125,10 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
   const safeBudget = cycleSummary.effectiveBudget;
   const remaining = cycleSummary.remainingBudget;
   const utilizationPct = cycleSummary.utilizationPct;
+  const cycleProgress = useMemo(
+    () => computeCycleProgressMetrics(cycleSummary),
+    [cycleSummary]
+  );
 
   const budgetStatus =
     safeBudget > 0 && remaining < 0
@@ -498,21 +505,44 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
           </div>
         </div>
 
-        <div className="mt-5 space-y-2">
-          <ProgressBar
-            value={utilizationPct}
-            tone={budgetStatus.tone}
-            size="md"
-            label="Monthly budget utilization"
-          />
-          <div className="flex items-center justify-between text-[12px] text-[#697386]">
-            <span>
-              {utilizationPct <= 100
-                ? `${Math.max(0, Math.round((100 - utilizationPct) * 10) / 10)}% of budget available`
-                : `Exceeded by ₹${formatCurrencyExact(Math.abs(remaining))}`}
+        <div
+          className="mt-5 pt-4 border-t border-[#E7EAF0] space-y-2.5"
+          data-testid="overview-budget-progress"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-semibold text-[#151922]">
+                Spend vs. Budget Progress
+              </span>
+              <span className="text-[#929BAB]" aria-hidden="true">·</span>
+              <span
+                className={`font-mono font-semibold tabular-nums ${budgetStatus.statusTextClass}`}
+              >
+                {cycleProgress.utilizationPct}% used
+              </span>
+            </div>
+            <span className="font-mono text-[11.5px] text-[#697386] tabular-nums">
+              Day {cycleSummary.window.daysElapsed} of {cycleSummary.window.daysTotal} ({cycleProgress.cycleElapsedPct}% cycle)
             </span>
-            <span className="font-mono tabular-nums">
-              ₹{formatCurrencyExact(totalSpent)} / ₹{formatCurrency(safeBudget)}
+          </div>
+
+          <ProgressBar
+            value={cycleProgress.barWidthPct}
+            tone={cycleProgress.tone}
+            size="lg"
+            label="Current spend against total budget"
+            markerPct={cycleSummary.effectiveBudget > 0 ? cycleProgress.cycleElapsedPct : undefined}
+            markerLabel={`Cycle pace: ${cycleProgress.cycleElapsedPct}% elapsed (Day ${cycleSummary.window.daysElapsed} of ${cycleSummary.window.daysTotal})`}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#697386]">
+            <span>
+              {!cycleProgress.isExceeded
+                ? `${cycleProgress.availablePct}% of budget available (₹${formatCurrencyExact(Math.max(0, cycleProgress.remaining))} left)`
+                : `Exceeded by ₹${formatCurrencyExact(Math.abs(cycleProgress.remaining))}`}
+            </span>
+            <span className="font-mono font-semibold tabular-nums text-[#151922]">
+              ₹{formatCurrencyExact(cycleProgress.spent)} / ₹{formatCurrency(cycleProgress.budget)}
             </span>
           </div>
         </div>

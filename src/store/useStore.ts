@@ -249,6 +249,7 @@ export interface AppState {
   setPennyOpen: (open: boolean) => void;
   togglePennyOpen: () => void;
   appendPennyMessage: (msg: PennyChatMessage) => void;
+  replacePennyMessage: (messageId: string, nextMsg: PennyChatMessage) => void;
   recordUserInteractionForPenny: (userText: string) => PennyInteractionProfile;
   setPennyProposalStatus: (
     messageId: string,
@@ -570,6 +571,12 @@ export const useAppStore = create<AppState>()(
       appendPennyMessage: (msg) =>
         set((state) => ({
           pennyMessages: [...state.pennyMessages, msg].slice(-50),
+        })),
+      replacePennyMessage: (messageId, nextMsg) =>
+        set((state) => ({
+          pennyMessages: state.pennyMessages.map((m) =>
+            m.id === messageId ? nextMsg : m
+          ),
         })),
       recordUserInteractionForPenny: (userText) => {
         const current = get();
