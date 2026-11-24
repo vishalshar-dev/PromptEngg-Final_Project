@@ -3,6 +3,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Check,
+  ChevronDown,
   CircleSlash,
   Clock,
   Gauge,
@@ -21,6 +22,10 @@ import {
   type AetherHudStateKey,
   type AetherHudTone,
 } from './capsule/aetherHudModel';
+import {
+  deriveAetherIntelligence,
+  type AetherIntelligenceTone,
+} from './capsule/aetherIntelligence';
 import { useAnimatedNumber } from './capsule/useAnimatedNumber';
 
 function usePrefersReducedMotion(): boolean {
@@ -102,6 +107,13 @@ const TONE_CLASSES: Record<
   },
 };
 
+const INTEL_TONE_INK: Record<AetherIntelligenceTone, string> = {
+  success: 'text-[#0D5E43]',
+  warning: 'text-[#9E6614]',
+  danger: 'text-[#C23838]',
+  neutral: 'text-[#697386]',
+};
+
 function StatusIcon({ stateKey }: { stateKey: AetherHudStateKey }) {
   switch (stateKey) {
     case 'healthy':
@@ -129,6 +141,8 @@ export function AetherBudgetHud() {
   const setTotalBudget = useAppStore((s) => s.setTotalBudget);
   const budgetResetDay = useAppStore((s) => s.budgetResetDay);
   const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
+  const categoryLimits = useAppStore((s) => s.categoryLimits);
+  const categoryCaps = useAppStore((s) => s.categoryCaps);
 
   const isHydrated = useStoreHydrated();
   const reducedMotion = usePrefersReducedMotion();
@@ -138,6 +152,7 @@ export function AetherBudgetHud() {
     totalBudget > 0 ? String(totalBudget) : ''
   );
   const [budgetError, setBudgetError] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const budgetState = useMemo(
     () =>
@@ -155,11 +170,34 @@ export function AetherBudgetHud() {
     [budgetState, isHydrated]
   );
 
+  const intelligence = useMemo(
+    () =>
+      deriveAetherIntelligence({
+        budgetState,
+        transactions,
+        categoryLimits,
+        categoryCaps,
+      }),
+    [budgetState, transactions, categoryLimits, categoryCaps]
+  );
+
   const animatedPrimary = useAnimatedNumber(hud.primaryAmount, reducedMotion);
   const animatedSpent = useAnimatedNumber(hud.activeSpent, reducedMotion);
   const animatedOverspend = useAnimatedNumber(hud.overspendAmount, reducedMotion);
 
-  const toneStyle = TONE_CLASSES[hud.tone];
+  const effectiveStatusLabel =
+    hud.stateKey === 'healthy' && intelligence.pace?.status === 'ahead'
+      ? 'Early pace elevated'
+      : hud.statusLabel;
+  const effectiveStatusStateKey: AetherHudStateKey =
+    hud.stateKey === 'healthy' && intelligence.pace?.status === 'ahead'
+      ? 'caution'
+      : hud.stateKey;
+  const effectiveTone: AetherHudTone =
+    hud.stateKey === 'healthy' && intelligence.pace?.status === 'ahead'
+      ? 'warning'
+      : hud.tone;
+  const toneStyle = TONE_CLASSES[effectiveTone];
 
   const handleOpenEditBudget = () => {
     setBudgetDraft(
@@ -235,15 +273,15 @@ export function AetherBudgetHud() {
           role="status"
           aria-live="polite"
           data-testid="aether-hud-status"
-          className={`inline-flex items-center gap-1.5 text-[12.5px] font-semibold transition-opacity duration-200 ${toneStyle.statusText}`}
+          className={`inline-flex items-center gap-1.5 text-[12.5px] font-semibold transition-colors duration-300 ${toneStyle.statusText}`}
         >
-          <StatusIcon stateKey={hud.stateKey} />
-          <span>{hud.statusLabel}</span>
+          <StatusIcon stateKey={effectiveStatusStateKey} />
+          <span>{effectiveStatusLabel}</span>
         </div>
       </div>
 
       {/* Balanced Instrument Grid: Primary Balance + 3D Capsule Centerpiece + Spending Intelligence */}
-      <div className="mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-x-8 lg:gap-y-6 items-start">
+      <div className="mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-x-7 lg:gap-y-5 items-start">
         {/* Slot 1: Primary Financial Display */}
         <div className="lg:col-span-7 min-w-0 space-y-3.5 sm:space-y-4">
           {hud.stateKey === 'loading' ? (
@@ -343,7 +381,7 @@ export function AetherBudgetHud() {
                 <p
                   data-testid="overview-remaining-balance"
                   aria-label={`${hud.primaryLabel}: ₹${formatCurrencyExact(hud.primaryAmount)}`}
-                  className={`text-[36px] sm:text-[44px] xl:text-[48px] font-bold font-mono tabular-nums tracking-tight leading-none break-words ${
+                  className={`text-[34px] sm:text-[42px] xl:text-[48px] font-bold font-mono tabular-nums tracking-tight leading-none break-words transition-colors duration-300 ${
                     hud.stateKey === 'overspent' || hud.stateKey === 'depleted'
                       ? 'text-[#DE5252]'
                       : toneStyle.balanceText
@@ -366,14 +404,25 @@ export function AetherBudgetHud() {
                   {' '}
                   ·{' '}
                 </span>
-                <span>{hud.statusDescription}</span>
+                <span
+                  data-testid="aether-contextual-status"
+                  className={`transition-colors duration-300 ${
+                    intelligence.contextualTone === 'danger'
+                      ? 'text-[#C23838] font-medium'
+                      : intelligence.contextualTone === 'warning'
+                        ? 'text-[#9E6614] font-medium'
+                        : 'text-[#4B5565]'
+                  }`}
+                >
+                  {intelligence.contextualStatus}
+                </span>
               </p>
 
               {hud.stateKey === 'overspent' && (
                 <div
                   role="alert"
                   data-testid="aether-overspend-alert"
-                  className="mt-2 rounded-xl px-3.5 py-2.5 bg-[#FDECEC] border border-[#F6B8B8] flex flex-wrap items-center justify-between gap-2"
+                  className="mt-2 rounded-xl px-3.5 py-2.5 bg-[#FDECEC] border border-[#F6B8B8] flex flex-wrap items-center justify-between gap-2 transition-colors duration-300"
                 >
                   <div className="flex items-center gap-2 text-[#B93B3B] font-semibold text-[13px]">
                     <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -399,7 +448,7 @@ export function AetherBudgetHud() {
             embedded
             showStageHeader={false}
             budgetState={budgetState}
-            className="w-full h-[244px] sm:h-[305px] lg:h-[360px]"
+            className="w-full h-[268px] sm:h-[304px] md:h-[324px] lg:h-[364px] xl:h-[384px]"
           />
         </div>
 
@@ -439,7 +488,7 @@ export function AetherBudgetHud() {
                         type="button"
                         onClick={handleOpenEditBudget}
                         aria-label="Edit total budget"
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF] transition-colors shrink-0"
+                        className="inline-flex items-center justify-center w-9 h-9 sm:w-7 sm:h-7 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF] transition-colors shrink-0"
                       >
                         <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                       </button>
@@ -470,12 +519,12 @@ export function AetherBudgetHud() {
                           value={budgetDraft}
                           onChange={(e) => setBudgetDraft(e.target.value)}
                           autoFocus
-                          className="input-field w-24 sm:w-28 min-h-[38px] px-2.5 py-1.5 text-[14px] font-mono font-semibold tabular-nums"
+                          className="input-field w-24 sm:w-28 min-h-[40px] sm:min-h-[38px] px-2.5 py-1.5 text-[14px] font-mono font-semibold tabular-nums"
                         />
                         <button
                           type="submit"
                           aria-label="Save budget"
-                          className="w-9 h-9 rounded-lg bg-[#365FE8] hover:bg-[#294FCC] text-white flex items-center justify-center shrink-0"
+                          className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-[#365FE8] hover:bg-[#294FCC] text-white flex items-center justify-center shrink-0 transition-colors"
                         >
                           <Check className="w-4 h-4" aria-hidden="true" />
                         </button>
@@ -486,7 +535,7 @@ export function AetherBudgetHud() {
                             setEditingBudget(false);
                             setBudgetError(null);
                           }}
-                          className="w-9 h-9 rounded-lg bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] flex items-center justify-center shrink-0"
+                          className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] flex items-center justify-center shrink-0 transition-colors"
                         >
                           <X className="w-4 h-4" aria-hidden="true" />
                         </button>
@@ -537,6 +586,136 @@ export function AetherBudgetHud() {
                   markerLabel={`Cycle pace: ${hud.cycleElapsedPct}% elapsed (${hud.cyclePaceText})`}
                 />
               </div>
+
+              {/* Phase 8: Contextual Budget Intelligence */}
+              {intelligence.isAvailable && intelligence.hasAnyDetails && (
+                <div
+                  data-testid="aether-intelligence-panel"
+                  className="pt-3.5 border-t border-[#E7EAF0] space-y-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12px] font-medium text-[#697386]">
+                      Cycle insights
+                    </span>
+                    <button
+                      type="button"
+                      data-testid="aether-intelligence-toggle"
+                      aria-expanded={showDetails}
+                      aria-controls="aether-intelligence-details"
+                      onClick={() => setShowDetails((prev) => !prev)}
+                      className="inline-flex items-center gap-1 min-h-[40px] sm:min-h-[32px] px-2.5 -mr-2 rounded-lg text-[12px] font-semibold text-[#365FE8] hover:bg-[#EDF2FF] transition-colors whitespace-nowrap shrink-0"
+                    >
+                      <span>{showDetails ? 'Hide details' : 'How it’s calculated'}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                          showDetails ? 'rotate-180' : ''
+                        }`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
+
+                  <dl className="divide-y divide-[#E7EAF0]">
+                    {intelligence.pace && (
+                      <div
+                        data-testid="aether-insight-pace"
+                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0.5 last:pb-0 text-[13px]"
+                      >
+                        <dt className="text-[#151922] font-medium">
+                          {intelligence.pace.summary}
+                        </dt>
+                        <dd
+                          className={`font-mono text-[12px] font-semibold tabular-nums whitespace-nowrap ${
+                            INTEL_TONE_INK[intelligence.pace.tone]
+                          }`}
+                        >
+                          {intelligence.pace.metricText}
+                        </dd>
+                      </div>
+                    )}
+
+                    {intelligence.projection && (
+                      <div
+                        data-testid="aether-insight-projection"
+                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0.5 last:pb-0 text-[13px]"
+                      >
+                        <dt className="text-[#151922] font-medium">
+                          {intelligence.projection.label}{' '}
+                          <span className="text-[11.5px] font-normal text-[#697386]">
+                            (estimate)
+                          </span>
+                        </dt>
+                        <dd
+                          className={`font-mono text-[12px] font-semibold tabular-nums whitespace-nowrap ${
+                            INTEL_TONE_INK[intelligence.projection.tone]
+                          }`}
+                        >
+                          {intelligence.projection.valueText}
+                        </dd>
+                      </div>
+                    )}
+
+                    {intelligence.categoryAttention && (
+                      <div
+                        data-testid="aether-insight-category"
+                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0.5 last:pb-0 text-[13px]"
+                      >
+                        <dt className="text-[#151922] font-medium">
+                          {intelligence.categoryAttention.summary}
+                        </dt>
+                        <dd
+                          className={`font-mono text-[12px] font-semibold tabular-nums whitespace-nowrap ${
+                            INTEL_TONE_INK[intelligence.categoryAttention.tone]
+                          }`}
+                        >
+                          {intelligence.categoryAttention.metricText}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+
+                  {showDetails && (
+                    <div
+                      id="aether-intelligence-details"
+                      data-testid="aether-intelligence-details"
+                      className="aether-disclosure-panel rounded-xl bg-[#F8FAFF] px-3.5 py-2.5 space-y-1.5 text-[12px] leading-relaxed text-[#4B5565]"
+                    >
+                      {intelligence.pace && (
+                        <p>
+                          <span className="font-semibold text-[#151922]">Pace: </span>
+                          {intelligence.pace.explanation}
+                        </p>
+                      )}
+                      {intelligence.projection ? (
+                        <p>
+                          <span className="font-semibold text-[#151922]">
+                            Cycle-end estimate:{' '}
+                          </span>
+                          {intelligence.projection.assumption}
+                        </p>
+                      ) : (
+                        intelligence.omittedReasons.projection &&
+                        budgetState.status === 'active' && (
+                          <p>
+                            <span className="font-semibold text-[#151922]">
+                              Cycle-end estimate:{' '}
+                            </span>
+                            {intelligence.omittedReasons.projection}
+                          </p>
+                        )
+                      )}
+                      {intelligence.categoryAttention && (
+                        <p>
+                          <span className="font-semibold text-[#151922]">
+                            {intelligence.categoryAttention.category}:{' '}
+                          </span>
+                          {intelligence.categoryAttention.explanation}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-[#697386]">

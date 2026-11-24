@@ -35,14 +35,19 @@ interface CapsuleSceneProps {
   profile: QualityProfile;
   isSoftwareGl: boolean;
   isActive: boolean;
+  themeMode: 'light' | 'dark';
   fillRatio: number;
   visualState?: CapsuleVisualState;
   reducedMotion: boolean;
   controlsHandleRef?: MutableRefObject<CapsuleSceneControlsHandle | null>;
+  onOrbitedChange?: (orbited: boolean) => void;
 }
 
-const DEFAULT_CAMERA_DIRECTION = new THREE.Vector3(2.45, 1.44, 7.22).normalize();
+const DEFAULT_BASE_DISTANCE = 7.92;
+const DEFAULT_CAMERA_DIRECTION = new THREE.Vector3(2.38, 1.1, 7.05).normalize();
 const _offsetVec = new THREE.Vector3();
+const _targetPos = new THREE.Vector3();
+const _originVec = new THREE.Vector3(0, 0, 0);
 const _spherical = new THREE.Spherical();
 
 /**
@@ -53,18 +58,56 @@ function AetherEngineTick({
   animStateRef,
   isTransitioningRef,
   isActive,
+  orbitRef,
+  resetTargetActiveRef,
+  onSyncOrbited,
 }: {
   animStateRef: MutableRefObject<AetherRuntimeState>;
   isTransitioningRef: MutableRefObject<boolean>;
   isActive: boolean;
+  orbitRef: MutableRefObject<ComponentRef<typeof OrbitControls> | null>;
+  resetTargetActiveRef: MutableRefObject<boolean>;
+  onSyncOrbited: () => void;
 }) {
+  const { camera, invalidate } = useThree();
+
   useFrame(({ clock }, delta) => {
     if (!isActive) return;
+
     isTransitioningRef.current = stepAetherRuntimeState(
       animStateRef.current,
       delta,
       clock.getElapsedTime()
     );
+
+    if (resetTargetActiveRef.current) {
+      const controls = orbitRef.current;
+      if (!controls) {
+        resetTargetActiveRef.current = false;
+        return;
+      }
+
+      const dist = camera.position.distanceTo(controls.target) || DEFAULT_BASE_DISTANCE;
+      _targetPos.copy(DEFAULT_CAMERA_DIRECTION).multiplyScalar(dist);
+
+      const dt = Math.min(Math.max(delta, 0.001), 0.16);
+      const alpha = 1 - Math.exp(-10.5 * dt);
+
+      camera.position.lerp(_targetPos, alpha);
+      camera.position.setLength(dist);
+      controls.target.lerp(_originVec, alpha);
+
+      if (camera.position.distanceTo(_targetPos) < 0.015 && controls.target.length() < 0.01) {
+        camera.position.copy(_targetPos);
+        controls.target.set(0, 0, 0);
+        resetTargetActiveRef.current = false;
+      } else {
+        invalidate();
+      }
+
+      controls.update();
+      onSyncOrbited();
+    }
   });
   return null;
 }
@@ -186,9 +229,13 @@ function ResponsiveCamera() {
 
   useEffect(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    const baseDist = 7.75;
-    const targetDist = aspect < 1.05 ? baseDist / Math.max(aspect * 0.94, 0.64) : baseDist;
-    const currentDist = camera.position.length() || baseDist;
+    const baseDist =
+      size.height < 295 ? DEFAULT_BASE_DISTANCE * 1.08 : DEFAULT_BASE_DISTANCE;
+    const targetDist =
+      aspect < 1.05
+        ? baseDist / Math.max(aspect * 0.96, 0.72)
+        : baseDist;
+    const currentDist = camera.position.length() || DEFAULT_BASE_DISTANCE;
 
     if (Math.abs(currentDist - targetDist) > 0.05) {
       camera.position.setLength(targetDist);
@@ -204,10 +251,12 @@ export function CapsuleScene({
   profile,
   isSoftwareGl,
   isActive,
+  themeMode,
   fillRatio,
   visualState = 'normal',
   reducedMotion,
   controlsHandleRef,
+  onOrbitedChange,
 }: CapsuleSceneProps) {
   const { camera, gl, invalidate } = useThree();
   const orbitRef = useRef<ComponentRef<typeof OrbitControls>>(null);
@@ -216,6 +265,27 @@ export function CapsuleScene({
   );
   const animStateRef = useRef<AetherRuntimeState>(initialRuntime);
   const isTransitioningRef = useRef<boolean>(false);
+  const resetTargetActiveRef = useRef<boolean>(false);
+  const lastOrbitedRef = useRef<boolean>(false);
+  const onOrbitedChangeRef = useRef(onOrbitedChange);
+  onOrbitedChangeRef.current = onOrbitedChange;
+
+  // Updated ONLY on discrete OrbitControls onStart/onEnd transitions (zero per-frame state updates)
+  const [isInteracting, setIsInteracting] = useState(false);
+
+  const syncOrbitedState = useMemo(
+    () => () => {
+      const controls = orbitRef.current;
+      if (!controls) return;
+      _offsetVec.copy(camera.position).sub(controls.target).normalize();
+      const away = _offsetVec.angleTo(DEFAULT_CAMERA_DIRECTION) > 0.085;
+      if (away !== lastOrbitedRef.current) {
+        lastOrbitedRef.current = away;
+        onOrbitedChangeRef.current?.(away);
+      }
+    },
+    [camera]
+  );
 
   useEffect(() => {
     animStateRef.current.targetFill = clampFillRatio(fillRatio);
@@ -237,38 +307,58 @@ export function CapsuleScene({
       nudgeOrbit: (deltaAzimuth: number, deltaPolar: number) => {
         const controls = orbitRef.current;
         if (!controls) return;
+        resetTargetActiveRef.current = false;
         _offsetVec.copy(camera.position).sub(controls.target);
         _spherical.setFromVector3(_offsetVec);
         _spherical.theta += deltaAzimuth;
         _spherical.phi = THREE.MathUtils.clamp(
           _spherical.phi + deltaPolar,
-          Math.PI * 0.22,
-          Math.PI * 0.64
+          Math.PI * 0.24,
+          Math.PI * 0.62
         );
         _offsetVec.setFromSpherical(_spherical);
         camera.position.copy(controls.target).add(_offsetVec);
         controls.update();
+        syncOrbitedState();
         invalidate();
       },
       resetView: () => {
         const controls = orbitRef.current;
         if (!controls) return;
-        const dist = camera.position.length() || 7.75;
-        camera.position.copy(DEFAULT_CAMERA_DIRECTION).multiplyScalar(dist);
-        controls.target.set(0, 0, 0);
-        controls.update();
-        invalidate();
+        if (reducedMotion || isSoftwareGl) {
+          resetTargetActiveRef.current = false;
+          const dist = camera.position.length() || DEFAULT_BASE_DISTANCE;
+          camera.position.copy(DEFAULT_CAMERA_DIRECTION).multiplyScalar(dist);
+          controls.target.set(0, 0, 0);
+          controls.update();
+          syncOrbitedState();
+          invalidate();
+        } else {
+          resetTargetActiveRef.current = true;
+          invalidate();
+        }
       },
     };
     return () => {
       controlsHandleRef.current = null;
     };
-  }, [controlsHandleRef, camera, invalidate]);
+  }, [controlsHandleRef, camera, invalidate, reducedMotion, isSoftwareGl, syncOrbitedState]);
+
+  const maxAnisotropy = useMemo(
+    () => (isSoftwareGl ? 1 : Math.min(8, gl.capabilities.getMaxAnisotropy())),
+    [gl, isSoftwareGl]
+  );
 
   const materials = useMemo(
-    () => createAetherMaterials(profile, isSoftwareGl),
-    [profile, isSoftwareGl]
+    () => createAetherMaterials(profile, isSoftwareGl, maxAnisotropy, themeMode),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [profile, isSoftwareGl, maxAnisotropy]
   );
+
+  useEffect(() => {
+    materials.setThemeMode(themeMode);
+    invalidate();
+  }, [materials, themeMode, invalidate]);
 
   useEffect(() => {
     return () => {
@@ -289,20 +379,25 @@ export function CapsuleScene({
         animStateRef={animStateRef}
         isTransitioningRef={isTransitioningRef}
         isActive={isActive}
+        orbitRef={orbitRef}
+        resetTargetActiveRef={resetTargetActiveRef}
+        onSyncOrbited={syncOrbitedState}
       />
       <ResponsiveCamera />
       <CapsuleLighting
         profile={profile}
         isSoftwareGl={isSoftwareGl}
+        themeMode={themeMode}
+        isInteracting={isInteracting}
         animStateRef={animStateRef}
       />
 
       <Float
-        speed={reducedMotion || !isActive ? 0 : 1.2}
-        rotationIntensity={reducedMotion || !isActive ? 0 : 0.045}
-        floatIntensity={reducedMotion || !isActive ? 0 : 0.13}
+        speed={reducedMotion || !isActive ? 0 : 0.75}
+        rotationIntensity={reducedMotion || !isActive ? 0 : 0.015}
+        floatIntensity={reducedMotion || !isActive ? 0 : 0.045}
       >
-        <group position={[0, 0.1, 0]}>
+        <group position={[0, 0.14, 0]}>
           <CapsuleTitanium
             materials={materials}
             latheSegments={profile.latheSegments}
@@ -320,6 +415,7 @@ export function CapsuleScene({
           <CapsuleGlass
             materials={materials}
             radialSegments={profile.latheSegments}
+            themeMode={themeMode}
           />
         </group>
       </Float>
@@ -331,10 +427,24 @@ export function CapsuleScene({
         enablePan={false}
         enableRotate
         enableDamping={!isSoftwareGl && !reducedMotion}
-        dampingFactor={0.06}
-        rotateSpeed={0.65}
-        minPolarAngle={Math.PI * 0.22}
-        maxPolarAngle={Math.PI * 0.64}
+        dampingFactor={0.07}
+        rotateSpeed={0.68}
+        minPolarAngle={Math.PI * 0.24}
+        maxPolarAngle={Math.PI * 0.62}
+        onStart={() => {
+          resetTargetActiveRef.current = false;
+          setIsInteracting(true);
+          invalidate();
+        }}
+        onChange={() => {
+          syncOrbitedState();
+          invalidate();
+        }}
+        onEnd={() => {
+          setIsInteracting(false);
+          syncOrbitedState();
+          invalidate();
+        }}
       />
 
       <SoftwareGlPacer

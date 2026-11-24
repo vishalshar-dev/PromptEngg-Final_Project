@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 export function useAnimatedNumber(
   target: number,
   reducedMotion: boolean,
-  durationMs = 320
+  durationMs = 380
 ): number {
   const safeTarget = Number.isFinite(target) ? target : 0;
   const [displayValue, setDisplayValue] = useState<number>(safeTarget);

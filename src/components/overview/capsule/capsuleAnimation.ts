@@ -157,16 +157,17 @@ export function stepAetherRuntimeState(
   const mode = resolveVisualMode(state.currentFill, state.visualState);
   state.currentHealth = mode;
 
+  const targetModeFromGoal = resolveVisualMode(effectiveTarget, state.visualState);
   const targetColorMode: CapsuleVisualMode =
-    state.visualState === 'normal' &&
-    effectiveTarget <= 0.0001 &&
-    state.currentFill <= 0.012
-      ? 'depleted'
-      : mode;
+    state.visualState === 'normal' && effectiveTarget <= 0.0001
+      ? state.currentFill <= 0.06
+        ? 'depleted'
+        : 'critical'
+      : targetModeFromGoal;
 
   const targetPalette = ALL_VISUAL_PALETTES[targetColorMode];
   const targetColors = PALETTE_COLOR_CACHE[targetColorMode];
-  const colorDamp = state.reducedMotion ? 11.0 : 5.8;
+  const colorDamp = state.reducedMotion ? 12.0 : 6.4;
   const colorAlpha = 1 - Math.exp(-colorDamp * dt);
 
   state.mainColor.lerp(targetColors.main, colorAlpha);

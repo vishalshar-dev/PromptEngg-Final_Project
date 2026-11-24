@@ -168,14 +168,10 @@ function CapsuleFallback({
     <div
       data-testid="budget-capsule-fallback"
       role="status"
-      className={`w-full h-full flex flex-col items-center justify-center gap-4 px-5 py-5 transition-colors ${
+      className={`w-full h-full flex flex-col items-center justify-center gap-4 px-5 py-5 transition-colors duration-300 text-[var(--text-primary)] ${
         embedded
-          ? isDark
-            ? 'text-[#f3f6fc]'
-            : 'text-[#0f172a]'
-          : isDark
-            ? 'min-h-[340px] rounded-[18px] border bg-[#0b1019] border-[#22293b] text-[#f3f6fc]'
-            : 'min-h-[340px] rounded-[18px] border bg-[#edf2f8] border-[#d5dbe5] text-[#0f172a]'
+          ? ''
+          : 'min-h-[340px] rounded-[18px] border border-[var(--border-subtle)] bg-[var(--bg-well)]'
       }`}
     >
       <div className="relative flex flex-col items-center" aria-hidden="true">
@@ -205,13 +201,11 @@ function CapsuleFallback({
       </div>
 
       <div className="w-full max-w-[220px] space-y-1.5 text-center">
-        <p className="text-[11px] font-semibold tracking-wide uppercase opacity-80">
+        <p className="text-[11px] font-semibold tracking-wide uppercase text-[var(--text-tertiary)]">
           {statusHeadline}
         </p>
         <div
-          className={`w-full h-1.5 rounded-full overflow-hidden ${
-            isDark ? 'bg-[#171d2d]' : 'bg-[#dbe2ee]'
-          }`}
+          className="w-full h-1.5 rounded-full overflow-hidden bg-[var(--bg-subtle)]"
           aria-hidden="true"
         >
           <div
@@ -222,7 +216,7 @@ function CapsuleFallback({
             }}
           />
         </div>
-        <p className="text-[11px] opacity-70 leading-relaxed">{reason}</p>
+        <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">{reason}</p>
       </div>
     </div>
   );
@@ -236,20 +230,24 @@ function AetherCanvas({
   profile,
   isSoftwareGl,
   isActive,
+  themeMode,
   fillRatio,
   visualState,
   reducedMotion,
   controlsHandleRef,
+  onOrbitedChange,
   onSceneReady,
   onContextLost,
 }: {
   profile: QualityProfile;
   isSoftwareGl: boolean;
   isActive: boolean;
+  themeMode: 'light' | 'dark';
   fillRatio: number;
   visualState: CapsuleVisualState;
   reducedMotion: boolean;
   controlsHandleRef: MutableRefObject<CapsuleSceneControlsHandle | null>;
+  onOrbitedChange: (orbited: boolean) => void;
   onSceneReady: () => void;
   onContextLost: () => void;
 }) {
@@ -277,7 +275,7 @@ function AetherCanvas({
     <Canvas
       key={isSoftwareGl ? 'sw' : 'hw'}
       dpr={profile.dpr}
-      camera={{ position: [2.45, 1.44, 7.22], fov: 35 }}
+      camera={{ position: [2.51, 1.16, 7.42], fov: 33 }}
       gl={{
         antialias: profile.antialias,
         alpha: true,
@@ -286,7 +284,7 @@ function AetherCanvas({
       frameloop={demandMode ? 'demand' : 'always'}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
-        gl.toneMappingExposure = 1.1;
+        gl.toneMappingExposure = 1.08;
         gl.outputColorSpace = THREE.SRGBColorSpace;
 
         const canvasEl = gl.domElement;
@@ -308,10 +306,12 @@ function AetherCanvas({
         profile={profile}
         isSoftwareGl={isSoftwareGl}
         isActive={isActive}
+        themeMode={themeMode}
         fillRatio={fillRatio}
         visualState={visualState}
         reducedMotion={reducedMotion}
         controlsHandleRef={controlsHandleRef}
+        onOrbitedChange={onOrbitedChange}
       />
     </Canvas>
   );
@@ -346,6 +346,7 @@ export function BudgetCapsule3D({
 
   const [contextLost, setContextLost] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
+  const [isOrbited, setIsOrbited] = useState(false);
   const [isInView, setIsInView] = useState(true);
   const [isPageVisible, setIsPageVisible] = useState(() =>
     typeof document !== 'undefined' ? !document.hidden : true
@@ -411,10 +412,12 @@ export function BudgetCapsule3D({
   const clampedFill = visualState === 'normal' ? clampFillRatio(fillRatio) : 0;
   const healthState = resolveHealthState(clampedFill);
   const visualMode = resolveVisualMode(clampedFill, visualState);
+  const palette = ALL_VISUAL_PALETTES[visualMode];
   const profile = QUALITY_PROFILES[resolvedTier];
   const isDark = themeMode === 'dark';
   const showFallback = forceFallback || !supported || contextLost;
   const isActive = isInView && isPageVisible;
+  const pct = Math.round(clampedFill * 100);
 
   useEffect(() => {
     onQualityResolved?.({
@@ -483,20 +486,24 @@ export function BudgetCapsule3D({
     />
   );
 
+  // Theme-harmonized chamber stage anchored cleanly via global mood & light/dark CSS tokens
   const stageSurfaceClass = embedded
-    ? isDark
-      ? 'rounded-[16px] bg-[radial-gradient(ellipse_at_50%_46%,#182032_0%,#0f1420_66%,#0a0e17_100%)] ring-1 ring-inset ring-white/[0.06]'
-      : 'rounded-[16px] bg-[radial-gradient(ellipse_at_50%_46%,#f4f7fc_0%,#e7edf7_68%,#dde5f2_100%)] ring-1 ring-inset ring-black/[0.04]'
-    : isDark
-      ? 'min-h-[340px] rounded-[20px] border bg-[radial-gradient(ellipse_at_50%_42%,#212a3b_0%,#111622_58%,#090c14_100%)] border-[#232b3d]'
-      : 'min-h-[340px] rounded-[20px] border bg-[radial-gradient(ellipse_at_50%_42%,#f8fafd_0%,#e7edf7_64%,#d8e1f0_100%)] border-[#d5dbe5]';
+    ? 'rounded-[16px] bg-[var(--bg-well)] ring-1 ring-inset ring-[var(--border-subtle)] shadow-[var(--well-inset-shadow)]'
+    : 'min-h-[340px] rounded-[20px] border border-[var(--border-subtle)] bg-[var(--bg-well)] shadow-[var(--well-inset-shadow)]';
+
+  const ambientGlowOpacity =
+    visualState !== 'normal' || visualMode === 'depleted'
+      ? 0
+      : isDark
+        ? 0.14
+        : 0.085;
 
   const defaultAriaLabel =
     visualState === 'unconfigured'
       ? '3D budget capsule on standby: no monthly budget configured.'
       : visualState === 'invalid'
         ? '3D budget capsule on standby: financial data unavailable.'
-        : `3D budget capsule at ${Math.round(clampedFill * 100)}% fill (${ALL_VISUAL_PALETTES[visualMode].label}). Use arrow keys to rotate or R to reset view.`;
+        : `3D budget capsule at ${pct}% fill (${palette.label}). Drag, use arrow keys to rotate, or double-click / press R to reset view.`;
 
   return (
     <div
@@ -504,28 +511,49 @@ export function BudgetCapsule3D({
       data-testid="budget-capsule-container"
       data-webgl-supported={String(supported && !contextLost && !forceFallback)}
       data-quality-tier={profile.tier}
-      data-fill-pct={String(Math.round(clampedFill * 100))}
+      data-fill-pct={String(pct)}
       data-health-state={healthState}
       data-capsule-mode={visualMode}
       data-reduced-motion={String(effectiveReducedMotion)}
       data-scene-ready={String(sceneReady)}
+      data-orbited={String(isOrbited)}
       role={!showFallback ? 'img' : undefined}
       aria-roledescription={!showFallback ? 'Interactive 3D budget capsule' : undefined}
       aria-label={!showFallback ? ariaLabel ?? defaultAriaLabel : undefined}
       tabIndex={!showFallback ? 0 : undefined}
       onKeyDown={handleKeyDown}
+      onDoubleClick={() => {
+        if (!showFallback) {
+          controlsHandleRef.current?.resetView();
+        }
+      }}
       style={resolvedMinHeight !== undefined ? { minHeight: resolvedMinHeight } : undefined}
-      className={`relative w-full h-full overflow-hidden select-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#365FE8] focus-visible:ring-offset-1 ${stageSurfaceClass} ${className}`}
+      className={`relative w-full h-full overflow-hidden select-none transition-[background-color,border-color,box-shadow] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:ring-offset-1 ${
+        !showFallback ? 'cursor-grab active:cursor-grabbing' : ''
+      } ${stageSurfaceClass} ${className}`}
     >
+      {/* Clean Studio Depth Vignette & State-Aligned Chamber Luminescence */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+        style={{
+          background: isDark
+            ? 'radial-gradient(ellipse at 50% 42%, rgba(148,163,184,0.065) 0%, rgba(15,23,42,0) 58%, rgba(2,6,14,0.42) 100%)'
+            : 'radial-gradient(ellipse at 50% 42%, rgba(255,255,255,0.88) 0%, rgba(241,245,251,0.45) 62%, rgba(214,223,238,0.68) 100%)',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 transition-all duration-500"
+        style={{
+          opacity: ambientGlowOpacity,
+          background: `radial-gradient(circle at 50% 54%, ${palette.mainHex} 0%, transparent 64%)`,
+        }}
+      />
+
       {showStageHeader ? (
         <div className="pointer-events-none absolute inset-x-4 top-3.5 z-10 flex items-center justify-between">
-          <span
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide border ${
-              isDark
-                ? 'bg-[#111622]/85 border-[#29334a] text-[#cbd5e1]'
-                : 'bg-white/85 border-[#d5dbe5] text-[#475569]'
-            }`}
-          >
+          <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold tracking-wide border border-[var(--border-subtle)] bg-[var(--bg-surface-translucent)] text-[var(--text-tertiary)] transition-colors duration-300">
             {visualState === 'unconfigured'
               ? 'No Budget Set'
               : visualState === 'invalid'
@@ -533,42 +561,90 @@ export function BudgetCapsule3D({
                 : 'Aether Capsule'}
           </span>
           {!showFallback && (
-            <span
-              className={`px-2 py-1 rounded-lg text-[10.5px] font-medium ${
-                isDark ? 'text-[#8b96aa]' : 'text-[#64748b]'
-              }`}
-            >
-              Drag to orbit
-            </span>
+            <div className="pointer-events-auto flex items-center gap-2">
+              {isOrbited ? (
+                <button
+                  type="button"
+                  data-testid="capsule-reset-view-btn"
+                  aria-label="Reset capsule view"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    controlsHandleRef.current?.resetView();
+                  }}
+                  className="min-h-[28px] px-2.5 py-1 rounded-md text-[11px] font-semibold text-[var(--accent-ink)] bg-[var(--bg-surface-translucent)] border border-[var(--border-subtle)] hover:border-[var(--accent-border)] transition-colors"
+                >
+                  Reset view
+                </button>
+              ) : (
+                <span className="pointer-events-none px-2 py-1 rounded-lg text-[10.5px] font-medium text-[var(--text-secondary)]">
+                  Drag to orbit
+                </span>
+              )}
+            </div>
           )}
         </div>
       ) : (
         !showFallback && (
-          <div className="pointer-events-none absolute bottom-2.5 right-3 z-10">
-            <span
-              className={`text-[11px] font-medium ${
-                isDark ? 'text-[#94a3b8]' : 'text-[#526075]'
-              }`}
-            >
-              Drag to rotate
+          <div className="pointer-events-none absolute inset-x-3 bottom-2.5 z-10 flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium font-mono tabular-nums text-[var(--text-secondary)] opacity-85">
+              <span
+                className="w-1.5 h-1.5 rounded-full transition-colors duration-300"
+                style={{
+                  backgroundColor:
+                    visualState === 'normal' ? palette.mainHex : '#94a3b8',
+                }}
+                aria-hidden="true"
+              />
+              <span>
+                {visualState === 'unconfigured'
+                  ? 'Standby'
+                  : visualState === 'invalid'
+                    ? 'Unavailable'
+                    : `${pct}% reserve`}
+              </span>
             </span>
+
+            <div className="pointer-events-auto flex items-center">
+              {isOrbited ? (
+                <button
+                  type="button"
+                  data-testid="capsule-reset-view-btn"
+                  aria-label="Reset capsule view"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    controlsHandleRef.current?.resetView();
+                  }}
+                  className="min-h-[28px] px-2.5 py-0.5 rounded-md text-[11px] font-semibold text-[var(--accent-ink)] bg-[var(--bg-surface-translucent)] border border-[var(--border-subtle)] hover:border-[var(--accent-border)] transition-colors"
+                >
+                  Reset angle
+                </button>
+              ) : (
+                <span className="pointer-events-none text-[11px] font-medium text-[var(--text-secondary)] opacity-80">
+                  Drag to rotate
+                </span>
+              )}
+            </div>
           </div>
         )
       )}
 
-      {/* Subtle optical chamber silhouette shown only during initial WebGL context boot */}
+      {/* Calm optical chamber silhouette shown cleanly during initial WebGL context boot */}
       {!showFallback && !sceneReady && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"
         >
-          <div
-            className={`w-16 h-32 rounded-xl border ${
-              isDark
-                ? 'border-white/10 bg-white/[0.03]'
-                : 'border-slate-900/10 bg-slate-900/[0.03]'
-            }`}
-          />
+          <div className="w-12 h-2.5 rounded-t-md bg-[var(--border-strong)]/60" />
+          <div className="w-16 h-32 sm:h-36 border-x border-[var(--border-strong)]/50 bg-[var(--bg-surface)]/25 flex flex-col justify-end p-1.5">
+            <div
+              className="w-full rounded-sm opacity-35 transition-all duration-300"
+              style={{
+                height: `${Math.max(8, pct)}%`,
+                backgroundColor: palette.mainHex,
+              }}
+            />
+          </div>
+          <div className="w-14 h-2.5 rounded-b-md bg-[var(--border-strong)]/60" />
         </div>
       )}
 
@@ -598,10 +674,12 @@ export function BudgetCapsule3D({
                 profile={profile}
                 isSoftwareGl={isSoftwareGl}
                 isActive={isActive}
+                themeMode={themeMode}
                 fillRatio={clampedFill}
                 visualState={visualState}
                 reducedMotion={effectiveReducedMotion}
                 controlsHandleRef={controlsHandleRef}
+                onOrbitedChange={setIsOrbited}
                 onSceneReady={handleSceneReady}
                 onContextLost={handleContextLost}
               />

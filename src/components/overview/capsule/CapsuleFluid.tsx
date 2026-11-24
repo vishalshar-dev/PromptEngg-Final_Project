@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { AETHER_DIMS, computeLiquidHeight } from './capsuleConstants';
+import {
+  AETHER_DIMS,
+  computeLiquidHeight,
+  evalMeniscusRadius,
+} from './capsuleConstants';
 import type { AetherRuntimeState } from './capsuleAnimation';
 
 interface CapsuleFluidProps {
@@ -12,6 +16,8 @@ interface CapsuleFluidProps {
 
 interface FluidUniforms {
   uTime: THREE.IUniform<number>;
+  uLiquidBottomY: THREE.IUniform<number>;
+  uLiquidHeight: THREE.IUniform<number>;
   uEmissiveBoost: THREE.IUniform<number>;
   uRippleAmp: THREE.IUniform<number>;
   uLowQuality: THREE.IUniform<number>;
@@ -24,10 +30,13 @@ function createFluidUniforms(
   deepHex: string,
   midHex: string,
   glowHex: string,
-  isLowQuality: boolean
+  isLowQuality: boolean,
+  initialHeight: number
 ): FluidUniforms {
   return {
     uTime: { value: 0 },
+    uLiquidBottomY: { value: AETHER_DIMS.liquidBottomY },
+    uLiquidHeight: { value: initialHeight },
     uEmissiveBoost: { value: 1 },
     uRippleAmp: { value: 1 },
     uLowQuality: { value: isLowQuality ? 1 : 0 },
@@ -37,30 +46,43 @@ function createFluidUniforms(
   };
 }
 
+// Exact GLSL twin of evalFluidOuterRadius(y) in capsuleConstants.ts
+const GLSL_FLUID_CONTOUR_FN = `
+float evalContouredFluidR(float y) {
+  float lowerBelly = smoothstep(-1.20, -0.38, y);
+  float upperNeck = smoothstep(-0.32, 0.88, y);
+  float rOut = 0.89 + lowerBelly * 0.16 - upperNeck * 0.33;
+  return rOut - 0.100;
+}
+`;
+
 /**
- * Dynamic layered bioluminescent energy fluid system:
- * - Bottom-pivoted unit-height geometry scaled smoothly in useFrame (zero geometry rebuilds)
- * - Custom GLSL Beer-Lambert depth absorption, Fresnel rim luminance & gentle caustic waves
- * - Contoured capillary meniscus anchored dynamically to the live liquid top surface
+ * Contoured 3-layer bioluminescent electrolyte fluid system:
+ * - Dynamically conforms vertex-by-vertex to the sculpted amphora bore without frame allocations
+ * - Preserves Beer-Lambert depth absorption core + luminous curved-wall scattering
+ * - Dynamically scales concave capillary meniscus radius across belly & tapered neck elevations
  */
 export function CapsuleFluid({
   animStateRef,
   radialSegments,
   isLowQuality,
 }: CapsuleFluidProps) {
-  const columnGroupRef = useRef<THREE.Group>(null);
   const meniscusGroupRef = useRef<THREE.Group>(null);
+  const initialHeight = computeLiquidHeight(animStateRef.current.currentFill);
 
   const outerUniforms = useMemo(
-    () => createFluidUniforms('#01383c', '#00bfa5', '#34ffe3', isLowQuality),
+    () => createFluidUniforms('#022a30', '#009688', '#28f0d4', isLowQuality, initialHeight),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLowQuality]
   );
   const coreUniforms = useMemo(
-    () => createFluidUniforms('#012327', '#00887a', '#00f5d4', isLowQuality),
+    () => createFluidUniforms('#01191d', '#004d47', '#009682', isLowQuality, initialHeight),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLowQuality]
   );
   const meniscusUniforms = useMemo(
-    () => createFluidUniforms('#009f8c', '#19f5d8', '#a6fff1', isLowQuality),
+    () => createFluidUniforms('#006b5f', '#00b89f', '#7affec', isLowQuality, initialHeight),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLowQuality]
   );
 
@@ -74,38 +96,32 @@ export function CapsuleFluid({
     meniscusMat,
     meniscusRimMat,
   } = useMemo(() => {
-    const oGeo = new THREE.CylinderGeometry(
-      AETHER_DIMS.liquidRadius,
-      AETHER_DIMS.liquidRadius,
-      1,
-      radialSegments,
-      16,
-      false
-    );
+    // 48 height rings allow smooth conforming across the S-curve belly-to-neck transition
+    const oGeo = new THREE.CylinderGeometry(1, 1, 1, radialSegments, 48, false);
     oGeo.translate(0, 0.5, 0);
 
     const cGeo = new THREE.CylinderGeometry(
-      AETHER_DIMS.liquidCoreRadius,
-      AETHER_DIMS.liquidCoreRadius,
+      1,
+      1,
       1,
       Math.max(48, Math.floor(radialSegments * 0.75)),
-      12,
+      36,
       false
     );
     cGeo.translate(0, 0.5, 0);
 
-    const mr = AETHER_DIMS.meniscusRadius;
+    // Normalized unit-radius concave capillary wetting meniscus (scaled dynamically by evalMeniscusRadius(surfaceY))
     const mt = AETHER_DIMS.meniscusThickness;
     const meniscusProfile: THREE.Vector2[] = [
-      new THREE.Vector2(0, -mt * 0.58),
-      new THREE.Vector2(mr * 0.86, -mt * 0.54),
-      new THREE.Vector2(mr, -mt * 0.22),
-      new THREE.Vector2(mr, mt * 0.62),
-      new THREE.Vector2(mr * 0.94, mt * 0.38),
-      new THREE.Vector2(mr * 0.76, mt * 0.14),
-      new THREE.Vector2(mr * 0.48, mt * 0.16),
-      new THREE.Vector2(mr * 0.2, mt * 0.21),
-      new THREE.Vector2(0, mt * 0.22),
+      new THREE.Vector2(0, -mt * 0.55),
+      new THREE.Vector2(0.88, -mt * 0.5),
+      new THREE.Vector2(1.0, -mt * 0.14),
+      new THREE.Vector2(1.003, mt * 0.74),
+      new THREE.Vector2(0.96, mt * 0.34),
+      new THREE.Vector2(0.82, mt * 0.08),
+      new THREE.Vector2(0.56, mt * 0.04),
+      new THREE.Vector2(0.25, mt * 0.07),
+      new THREE.Vector2(0, mt * 0.08),
     ];
     const mGeo = new THREE.LatheGeometry(
       meniscusProfile,
@@ -114,27 +130,61 @@ export function CapsuleFluid({
       Math.PI * 2
     );
 
-    const rimGeo = new THREE.TorusGeometry(mr - 0.01, 0.011, 14, radialSegments);
+    // Unit-radius wet specular rim along wall adhesion contact
+    const rimGeo = new THREE.TorusGeometry(0.992, 0.0056, 12, radialSegments);
 
     const oMat = new THREE.MeshPhysicalMaterial({
-      color: '#00f5d4',
+      color: '#009688',
       metalness: 0,
-      roughness: 0.22,
-      emissive: new THREE.Color('#00b89c'),
-      emissiveIntensity: 0.85,
+      roughness: 0.14,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.08,
+      emissive: new THREE.Color('#009682'),
+      emissiveIntensity: 0.62,
       ior: 1.36,
+      envMapIntensity: 1.38,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.84,
       depthWrite: false,
     });
 
     oMat.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, outerUniforms);
 
-      shader.vertexShader = `varying vec3 vFluidLocalPos;\n` + shader.vertexShader;
+      shader.vertexShader =
+        `
+        uniform float uLiquidBottomY;
+        uniform float uLiquidHeight;
+        varying vec3 vFluidLocalPos;
+        varying vec3 vFluidWorldObjPos;
+        ${GLSL_FLUID_CONTOUR_FN}
+        ` + shader.vertexShader;
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <beginnormal_vertex>',
+        `
+        #include <beginnormal_vertex>
+        float normWorldY = uLiquidBottomY + position.y * uLiquidHeight;
+        if (abs(objectNormal.y) < 0.5) {
+          float nEps = 0.012;
+          float drdy = (evalContouredFluidR(normWorldY + nEps) - evalContouredFluidR(normWorldY - nEps)) / (2.0 * nEps);
+          objectNormal = normalize(vec3(objectNormal.x, -drdy, objectNormal.z));
+        }
+        `
+      );
+
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
-        `#include <begin_vertex>\nvFluidLocalPos = position;`
+        `
+        #include <begin_vertex>
+        float worldY = uLiquidBottomY + position.y * uLiquidHeight;
+        float rFluid = evalContouredFluidR(worldY);
+        transformed.x *= rFluid;
+        transformed.z *= rFluid;
+        transformed.y = worldY;
+        vFluidLocalPos = vec3(position.x * rFluid, position.y, position.z * rFluid);
+        vFluidWorldObjPos = transformed;
+        `
       );
 
       shader.fragmentShader =
@@ -146,6 +196,7 @@ export function CapsuleFluid({
         uniform vec3 uColorMid;
         uniform vec3 uColorGlow;
         varying vec3 vFluidLocalPos;
+        varying vec3 vFluidWorldObjPos;
         ` + shader.fragmentShader;
 
       shader.fragmentShader = shader.fragmentShader.replace(
@@ -153,48 +204,85 @@ export function CapsuleFluid({
         `
         #include <emissivemap_fragment>
         vec3 viewDir = normalize(vViewPosition);
-        float ndv = abs(dot(normalize(normal), viewDir));
-        float fresnel = pow(1.0 - ndv, 2.2);
+        float ndv = clamp(abs(dot(normalize(normal), viewDir)), 0.0, 1.0);
+        float radialRim = pow(1.0 - ndv, 2.35);
+        float crispWallEdge = pow(1.0 - ndv, 5.2);
         float hNorm = clamp(vFluidLocalPos.y, 0.0, 1.0);
+        float subSurfaceTop = smoothstep(0.72, 1.0, hNorm) * 0.28;
+
         float caustic = 0.0;
         if (uLowQuality < 0.5) {
           float angle = atan(vFluidLocalPos.z, vFluidLocalPos.x);
-          float waveA = sin(vFluidLocalPos.y * 9.5 - uTime * 0.9 + angle * 2.0);
-          float waveB = cos(vFluidLocalPos.y * 15.0 - uTime * 1.35 - angle * 3.0);
-          caustic = smoothstep(-0.3, 0.9, 0.5 * (waveA + waveB)) * 0.14;
+          float waveA = sin(vFluidWorldObjPos.y * 5.2 - uTime * 0.72 + angle * 2.0);
+          float waveB = cos(vFluidWorldObjPos.y * 8.4 - uTime * 1.1 - angle * 3.0);
+          caustic = smoothstep(-0.2, 0.92, 0.5 * (waveA + waveB)) * 0.12;
         } else {
-          caustic = smoothstep(-0.2, 0.9, sin(vFluidLocalPos.y * 8.0 - uTime * 0.85)) * 0.07;
+          caustic = smoothstep(-0.2, 0.9, sin(vFluidWorldObjPos.y * 4.6 - uTime * 0.72)) * 0.06;
         }
 
-        vec3 bodyTint = mix(uColorDeep, uColorMid, 0.35 + hNorm * 0.55);
-        bodyTint = mix(bodyTint, uColorGlow, fresnel * 0.52 + caustic);
+        vec3 baseAbsorption = mix(uColorDeep, uColorMid, 0.32 + hNorm * 0.44 + subSurfaceTop);
+        vec3 scattered = mix(baseAbsorption, uColorGlow, radialRim * 0.54 + caustic + subSurfaceTop * 0.32);
 
-        diffuseColor.rgb = bodyTint;
-        diffuseColor.a = clamp(0.64 + (1.0 - ndv) * 0.24 + hNorm * 0.06, 0.58, 0.90);
-        totalEmissiveRadiance = mix(uColorDeep * 0.45, uColorGlow, 0.28 + hNorm * 0.38 + fresnel * 0.30 + caustic) * uEmissiveBoost;
+        diffuseColor.rgb = scattered;
+        diffuseColor.a = clamp(0.68 + radialRim * 0.22 + crispWallEdge * 0.08 + hNorm * 0.04, 0.64, 0.95);
+
+        vec3 subtleGlow = mix(uColorDeep * 0.28, uColorGlow, 0.22 + radialRim * 0.42 + subSurfaceTop + caustic);
+        totalEmissiveRadiance = subtleGlow * uEmissiveBoost;
         `
       );
     };
-    oMat.customProgramCacheKey = () => 'aether-fluid-outer-v2';
+    oMat.customProgramCacheKey = () => 'aether-fluid-contoured-outer-v4';
 
+    // Deep saturated Beer-Lambert core column sculpted to follow the vessel waist
     const cMat = new THREE.MeshStandardMaterial({
-      color: '#033c40',
+      color: '#022a30',
       metalness: 0,
-      roughness: 0.42,
-      emissive: new THREE.Color('#00d4b8'),
-      emissiveIntensity: 0.92,
+      roughness: 0.48,
+      emissive: new THREE.Color('#006b5f'),
+      emissiveIntensity: 0.42,
       transparent: true,
-      opacity: 0.74,
+      opacity: 0.86,
       depthWrite: false,
     });
 
     cMat.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, coreUniforms);
 
-      shader.vertexShader = `varying vec3 vCoreLocalPos;\n` + shader.vertexShader;
+      shader.vertexShader =
+        `
+        uniform float uLiquidBottomY;
+        uniform float uLiquidHeight;
+        varying vec3 vCoreLocalPos;
+        varying vec3 vCoreWorldObjPos;
+        ${GLSL_FLUID_CONTOUR_FN}
+        ` + shader.vertexShader;
+
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <beginnormal_vertex>',
+        `
+        #include <beginnormal_vertex>
+        float coreHeight = uLiquidHeight * 0.985;
+        float normCoreY = uLiquidBottomY + position.y * coreHeight;
+        if (abs(objectNormal.y) < 0.5) {
+          float cEps = 0.012;
+          float cDrdy = ((evalContouredFluidR(normCoreY + cEps) - evalContouredFluidR(normCoreY - cEps)) / (2.0 * cEps)) * ${AETHER_DIMS.fluidCoreFraction.toFixed(2)};
+          objectNormal = normalize(vec3(objectNormal.x, -cDrdy, objectNormal.z));
+        }
+        `
+      );
+
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
-        `#include <begin_vertex>\nvCoreLocalPos = position;`
+        `
+        #include <begin_vertex>
+        float cWorldY = uLiquidBottomY + position.y * (uLiquidHeight * 0.985);
+        float rCore = evalContouredFluidR(cWorldY) * ${AETHER_DIMS.fluidCoreFraction.toFixed(2)};
+        transformed.x *= rCore;
+        transformed.z *= rCore;
+        transformed.y = cWorldY;
+        vCoreLocalPos = vec3(position.x * rCore, position.y, position.z * rCore);
+        vCoreWorldObjPos = transformed;
+        `
       );
 
       shader.fragmentShader =
@@ -205,6 +293,7 @@ export function CapsuleFluid({
         uniform vec3 uColorMid;
         uniform vec3 uColorGlow;
         varying vec3 vCoreLocalPos;
+        varying vec3 vCoreWorldObjPos;
         ` + shader.fragmentShader;
 
       shader.fragmentShader = shader.fragmentShader.replace(
@@ -212,27 +301,32 @@ export function CapsuleFluid({
         `
         #include <emissivemap_fragment>
         float hNorm = clamp(vCoreLocalPos.y, 0.0, 1.0);
-        float ribbon = 0.5 + 0.5 * sin(vCoreLocalPos.y * 11.0 - uTime * 1.1 + vCoreLocalPos.x * 3.0);
-        vec3 coreLum = mix(uColorDeep, uColorMid, 0.35 + hNorm * 0.55);
-        coreLum = mix(coreLum, uColorGlow, ribbon * 0.24 + pow(hNorm, 2.0) * 0.35);
-        diffuseColor.rgb = coreLum;
-        totalEmissiveRadiance = coreLum * (0.95 * uEmissiveBoost);
+        float ndv = clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
+        float radialFeather = pow(ndv, 1.55);
+        float ribbon = 0.5 + 0.5 * sin(vCoreWorldObjPos.y * 5.6 - uTime * 0.85 + vCoreLocalPos.x * 2.5);
+        vec3 deepCore = mix(uColorDeep * 0.72, uColorMid * 0.84, 0.22 + hNorm * 0.36);
+        deepCore = mix(deepCore, uColorGlow * 0.76, ribbon * 0.12 * (1.0 - ndv * 0.4));
+        diffuseColor.rgb = deepCore;
+        diffuseColor.a = clamp(radialFeather * 0.86, 0.0, 0.88);
+        totalEmissiveRadiance = deepCore * (0.42 * uEmissiveBoost * radialFeather);
         `
       );
     };
-    cMat.customProgramCacheKey = () => 'aether-fluid-core-v2';
+    cMat.customProgramCacheKey = () => 'aether-fluid-contoured-core-v4';
 
     const mMat = new THREE.MeshPhysicalMaterial({
-      color: '#00e6c6',
-      metalness: 0.04,
-      roughness: 0.07,
-      emissive: new THREE.Color('#00b89c'),
-      emissiveIntensity: 1.15,
+      color: '#00b89f',
+      metalness: 0.02,
+      roughness: 0.04,
+      emissive: new THREE.Color('#009682'),
+      emissiveIntensity: 0.7,
       clearcoat: 1,
-      clearcoatRoughness: 0.05,
+      clearcoatRoughness: 0.03,
       ior: 1.38,
+      reflectivity: 0.95,
+      envMapIntensity: 1.82,
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.93,
       depthWrite: false,
     });
 
@@ -247,8 +341,8 @@ export function CapsuleFluid({
         `
         #include <begin_vertex>
         float rDist = length(position.xz);
-        float edgeDamp = smoothstep(0.88, 0.2, rDist);
-        transformed.y += sin(rDist * 14.0 - uTime * 2.1) * 0.0032 * edgeDamp * uRippleAmp;
+        float edgeDamp = smoothstep(0.92, 0.18, rDist);
+        transformed.y += sin(rDist * 14.0 - uTime * 1.8) * 0.0022 * edgeDamp * uRippleAmp;
         vMeniscusPos = transformed;
         `
       );
@@ -266,24 +360,25 @@ export function CapsuleFluid({
         '#include <emissivemap_fragment>',
         `
         #include <emissivemap_fragment>
-        float rad = clamp(length(vMeniscusPos.xz) / ${AETHER_DIMS.meniscusRadius.toFixed(3)}, 0.0, 1.0);
-        vec3 surfColor = mix(uColorDeep, uColorMid, 0.4 + rad * 0.5);
-        surfColor = mix(surfColor, uColorGlow, smoothstep(0.72, 1.0, rad) * 0.7);
+        float rad = clamp(length(vMeniscusPos.xz), 0.0, 1.0);
+        vec3 surfColor = mix(uColorDeep * 0.92, uColorMid, 0.35 + pow(rad, 1.4) * 0.55);
+        surfColor = mix(surfColor, uColorGlow, smoothstep(0.80, 1.0, rad) * 0.62);
         diffuseColor.rgb = surfColor;
-        totalEmissiveRadiance = surfColor * ((0.9 + smoothstep(0.75, 1.0, rad) * 0.45) * uEmissiveBoost);
+        totalEmissiveRadiance = surfColor * ((0.52 + smoothstep(0.80, 1.0, rad) * 0.44) * uEmissiveBoost);
         `
       );
     };
-    mMat.customProgramCacheKey = () => 'aether-fluid-meniscus-v2';
+    mMat.customProgramCacheKey = () => 'aether-fluid-contoured-meniscus-v4';
 
-    const rimMat = new THREE.MeshStandardMaterial({
-      color: '#42ffe4',
-      emissive: new THREE.Color('#00b89c'),
-      emissiveIntensity: 1.35,
-      roughness: 0.12,
-      metalness: 0.05,
+    const rimMat = new THREE.MeshPhysicalMaterial({
+      color: '#7affec',
+      emissive: new THREE.Color('#009682'),
+      emissiveIntensity: 0.72,
+      roughness: 0.05,
+      clearcoat: 1,
+      metalness: 0.04,
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.76,
       depthWrite: false,
     });
 
@@ -324,89 +419,83 @@ export function CapsuleFluid({
   useFrame(() => {
     const s = animStateRef.current;
     const h = computeLiquidHeight(s.currentFill);
-
-    if (columnGroupRef.current) {
-      columnGroupRef.current.scale.set(1, h, 1);
-    }
+    const surfaceY = AETHER_DIMS.liquidBottomY + h;
+    const mRad = evalMeniscusRadius(surfaceY);
 
     if (meniscusGroupRef.current) {
-      meniscusGroupRef.current.position.y = AETHER_DIMS.liquidBottomY + h;
+      meniscusGroupRef.current.position.y = surfaceY;
       const meniscusYScale = Math.min(1, Math.max(0.45, h / 0.08));
-      meniscusGroupRef.current.scale.set(1, meniscusYScale, 1);
+      meniscusGroupRef.current.scale.set(mRad, meniscusYScale, mRad);
     }
 
     const boost = s.fluidEmissiveBoost * s.breathFactor;
     const rippleAmp = s.reducedMotion || s.currentFill <= 0.005 ? 0 : 1;
 
     outerUniforms.uTime.value = s.motionTime;
+    outerUniforms.uLiquidHeight.value = h;
     outerUniforms.uEmissiveBoost.value = boost;
     outerUniforms.uColorDeep.value.copy(s.deepColor);
     outerUniforms.uColorMid.value.copy(s.midColor);
     outerUniforms.uColorGlow.value.copy(s.glowColor);
 
     coreUniforms.uTime.value = s.motionTime;
+    coreUniforms.uLiquidHeight.value = h;
     coreUniforms.uEmissiveBoost.value = boost;
     coreUniforms.uColorDeep.value.copy(s.deepColor);
     coreUniforms.uColorMid.value.copy(s.midColor);
     coreUniforms.uColorGlow.value.copy(s.glowColor);
 
     meniscusUniforms.uTime.value = s.motionTime;
+    meniscusUniforms.uLiquidHeight.value = h;
     meniscusUniforms.uRippleAmp.value = rippleAmp;
     meniscusUniforms.uEmissiveBoost.value =
-      Math.max(0.14, s.meniscusEmissiveIntensity * 0.85) * s.breathFactor;
+      Math.max(0.12, s.meniscusEmissiveIntensity * 0.88) * s.breathFactor;
     meniscusUniforms.uColorDeep.value.copy(s.deepColor);
     meniscusUniforms.uColorMid.value.copy(s.meniscusSurfaceColor);
     meniscusUniforms.uColorGlow.value.copy(s.meniscusRimColor);
 
-    outerFluidMat.color.copy(s.mainColor);
+    outerFluidMat.color.copy(s.midColor);
     outerFluidMat.emissive.copy(s.emissiveColor);
     outerFluidMat.opacity = s.fluidOpacity;
 
     innerCoreMat.color.copy(s.deepColor);
     innerCoreMat.emissive.copy(s.emissiveColor);
-    innerCoreMat.opacity = Math.min(0.88, s.fluidOpacity + 0.05);
+    innerCoreMat.opacity = Math.min(0.92, s.fluidOpacity + 0.06);
 
     meniscusMat.color.copy(s.meniscusSurfaceColor);
     meniscusMat.emissive.copy(s.emissiveColor);
     meniscusMat.emissiveIntensity = s.meniscusEmissiveIntensity * s.breathFactor;
-    meniscusMat.opacity = s.currentFill <= 0.005 ? 0.94 : 0.92;
+    meniscusMat.opacity = s.currentFill <= 0.005 ? 0.94 : 0.93;
 
     meniscusRimMat.color.copy(s.meniscusRimColor);
     meniscusRimMat.emissive.copy(s.emissiveColor);
     meniscusRimMat.emissiveIntensity =
-      s.meniscusEmissiveIntensity * 1.18 * s.breathFactor;
-    meniscusRimMat.opacity = s.currentFill <= 0.005 ? 0.25 : 0.88;
+      s.meniscusEmissiveIntensity * 0.95 * s.breathFactor;
+    meniscusRimMat.opacity = s.currentFill <= 0.005 ? 0.22 : 0.72;
   });
 
-  const initialHeight = computeLiquidHeight(animStateRef.current.currentFill);
+  const initialSurfaceY = AETHER_DIMS.liquidBottomY + initialHeight;
+  const initialMeniscusR = evalMeniscusRadius(initialSurfaceY);
 
   return (
     <group>
-      {/* Bottom-pivoted fluid column scaled smoothly along Y */}
-      <group
-        ref={columnGroupRef}
-        position={[0, AETHER_DIMS.liquidBottomY, 0]}
-        scale={[1, initialHeight, 1]}
-      >
-        <mesh
-          geometry={innerCoreGeo}
-          material={innerCoreMat}
-          scale={[1, 0.985, 1]}
-          renderOrder={1}
-        />
+      {/* Contoured fluid column conformed analytically in object space */}
+      <group>
+        <mesh geometry={innerCoreGeo} material={innerCoreMat} renderOrder={1} />
         <mesh geometry={outerFluidGeo} material={outerFluidMat} renderOrder={2} />
       </group>
 
-      {/* Contoured capillary liquid meniscus anchored to live fluid surface */}
+      {/* Dynamic contoured capillary meniscus anchored to live fluid elevation & bore radius */}
       <group
         ref={meniscusGroupRef}
-        position={[0, AETHER_DIMS.liquidBottomY + initialHeight, 0]}
+        position={[0, initialSurfaceY, 0]}
+        scale={[initialMeniscusR, 1, initialMeniscusR]}
       >
         <mesh geometry={meniscusGeo} material={meniscusMat} renderOrder={3} />
         <mesh
           geometry={meniscusRimGeo}
           material={meniscusRimMat}
-          position={[0, AETHER_DIMS.meniscusThickness * 0.44, 0]}
+          position={[0, AETHER_DIMS.meniscusThickness * 0.56, 0]}
           rotation={[Math.PI / 2, 0, 0]}
           renderOrder={3}
         />

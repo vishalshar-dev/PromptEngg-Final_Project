@@ -46,9 +46,11 @@ export interface CapsuleBudgetState {
   daysRemaining: number;
   cycleElapsedPct: number;
   activeTransactionCount: number;
+  hasPreviousHistory: boolean;
+  previousCycleSpent: number;
 }
 
-function sanitizeTransactionForCapsule(raw: unknown): Transaction | null {
+export function sanitizeTransactionForCapsule(raw: unknown): Transaction | null {
   if (!raw || typeof raw !== 'object') return null;
   const record = raw as Partial<Transaction> & {
     status?: unknown;
@@ -145,6 +147,8 @@ export function deriveCapsuleBudgetState({
       daysRemaining: 0,
       cycleElapsedPct: 0,
       activeTransactionCount: 0,
+      hasPreviousHistory: false,
+      previousCycleSpent: 0,
     };
   }
 
@@ -174,6 +178,8 @@ export function deriveCapsuleBudgetState({
       daysRemaining: 0,
       cycleElapsedPct: 0,
       activeTransactionCount: 0,
+      hasPreviousHistory: false,
+      previousCycleSpent: 0,
     };
   }
 
@@ -255,5 +261,7 @@ export function deriveCapsuleBudgetState({
     daysRemaining: summary.window.daysRemaining,
     cycleElapsedPct,
     activeTransactionCount,
+    hasPreviousHistory: summary.hasPreviousHistory,
+    previousCycleSpent: summary.previousCycleSpent,
   };
 }

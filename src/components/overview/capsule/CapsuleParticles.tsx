@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
+  AETHER_DIMS,
   evaluateParticlePosition,
   generateParticleSeeds,
 } from './capsuleConstants';
@@ -24,12 +25,12 @@ export function CapsuleParticles({ count, animStateRef }: CapsuleParticlesProps)
     const geo = new THREE.SphereGeometry(1, 10, 10);
     const mat = new THREE.MeshStandardMaterial({
       color: '#c9fff6',
-      emissive: new THREE.Color('#00f5d4'),
-      emissiveIntensity: 1.45,
-      roughness: 0.16,
+      emissive: new THREE.Color('#00e6c8'),
+      emissiveIntensity: 0.85,
+      roughness: 0.14,
       metalness: 0,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.72,
       depthWrite: false,
     });
     return { sphereGeo: geo, particleMat: mat };
@@ -61,12 +62,10 @@ export function CapsuleParticles({ count, animStateRef }: CapsuleParticlesProps)
       _dummy.updateMatrix();
       mesh.setMatrixAt(i, _dummy.matrix);
 
-      // Subtle per-bubble brightness variation encoded once per seed setup
-      _instanceTint.setRGB(
-        seeds[i].brightness,
-        seeds[i].brightness,
-        seeds[i].brightness
-      );
+      // Simulate optical fluid depth attenuation: bubbles deeper near center read slightly dimmer
+      const radialFactor = Math.min(1, seeds[i].radialFraction / AETHER_DIMS.particleMaxFraction);
+      const depthShade = seeds[i].brightness * (0.58 + radialFactor * 0.42);
+      _instanceTint.setRGB(depthShade, depthShade, depthShade);
       mesh.setColorAt(i, _instanceTint);
     }
     mesh.instanceMatrix.needsUpdate = true;
@@ -87,8 +86,8 @@ export function CapsuleParticles({ count, animStateRef }: CapsuleParticlesProps)
     mesh.visible = true;
     particleMat.color.copy(s.particleColor);
     particleMat.emissive.copy(s.particleEmissiveColor);
-    particleMat.emissiveIntensity = 1.45 * s.breathFactor;
-    particleMat.opacity = s.particleOpacity;
+    particleMat.emissiveIntensity = 0.85 * s.breathFactor;
+    particleMat.opacity = s.particleOpacity * 0.88;
 
     for (let i = 0; i < seeds.length; i++) {
       const p = evaluateParticlePosition(
