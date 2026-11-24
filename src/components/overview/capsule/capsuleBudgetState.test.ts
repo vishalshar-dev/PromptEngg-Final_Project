@@ -236,3 +236,80 @@ test('11. budget cycle resetDay and rollover adjustments match authoritative cyc
   assert.equal(result.rawRemainingAmount, 4000);
   assert.ok(Math.abs(result.fillRatio - 4000 / 6000) < 1e-6);
 });
+
+test('12. slightly below/above budget boundaries preserve exact active vs exceeded status', () => {
+  const slightlyBelow = deriveCapsuleBudgetState({
+    transactions: [makeTx({ amount: 4999.5 })],
+    totalBudget: 5000,
+    now: NOW,
+  });
+  assert.equal(slightlyBelow.status, 'active');
+  assert.equal(slightlyBelow.healthState, 'critical');
+  assert.equal(slightlyBelow.rawRemainingAmount, 0.5);
+  assert.equal(slightlyBelow.overspendAmount, 0);
+  assert.ok(slightlyBelow.fillRatio > 0 && slightlyBelow.fillRatio < 0.001);
+
+  const slightlyAbove = deriveCapsuleBudgetState({
+    transactions: [makeTx({ amount: 5000.5 })],
+    totalBudget: 5000,
+    now: NOW,
+  });
+  assert.equal(slightlyAbove.status, 'exceeded');
+  assert.equal(slightlyAbove.healthState, 'depleted');
+  assert.equal(slightlyAbove.fillRatio, 0);
+  assert.equal(slightlyAbove.rawRemainingAmount, -0.5);
+  assert.equal(slightlyAbove.overspendAmount, 0.5);
+});
+
+test('13. very small and very large monetary values maintain numerical precision', () => {
+  const micro = deriveCapsuleBudgetState({
+    transactions: [makeTx({ amount: 0.5 })],
+    totalBudget: 1,
+    now: NOW,
+  });
+  assert.equal(micro.status, 'active');
+  assert.equal(micro.healthState, 'healthy');
+  assert.equal(micro.remainingPct, 50);
+  assert.equal(micro.rawRemainingAmount, 0.5);
+
+  const crore = deriveCapsuleBudgetState({
+    transactions: [makeTx({ amount: 2500000 })],
+    totalBudget: 10000000,
+    now: NOW,
+  });
+  assert.equal(crore.status, 'active');
+  assert.equal(crore.healthState, 'healthy');
+  assert.equal(crore.remainingPct, 75);
+  assert.equal(crore.rawRemainingAmount, 7500000);
+});
+
+test('14. cycle boundary timestamps and negative rollover zeroing handle transitions accurately', () => {
+  const cycleStartLocal = new Date(2026, 10, 1, 0, 0, 0, 0).toISOString();
+  const prevEndLocal = new Date(2026, 9, 31, 23, 59, 59, 999).toISOString();
+
+  const rolloverZeroWithSpend = deriveCapsuleBudgetState({
+    transactions: [
+      makeTx({ id: 'prev-over', amount: 12000, timestamp: prevEndLocal }),
+      makeTx({ id: 'curr-start', amount: 200, timestamp: cycleStartLocal }),
+    ],
+    totalBudget: 5000,
+    budgetRolloverEnabled: true,
+    now: NOW,
+  });
+  assert.equal(rolloverZeroWithSpend.effectiveBudget, 0);
+  assert.equal(rolloverZeroWithSpend.activeSpent, 200);
+  assert.equal(rolloverZeroWithSpend.status, 'exceeded');
+  assert.equal(rolloverZeroWithSpend.overspendAmount, 200);
+
+  const rolloverZeroNoSpend = deriveCapsuleBudgetState({
+    transactions: [
+      makeTx({ id: 'prev-over', amount: 12000, timestamp: prevEndLocal }),
+    ],
+    totalBudget: 5000,
+    budgetRolloverEnabled: true,
+    now: NOW,
+  });
+  assert.equal(rolloverZeroNoSpend.effectiveBudget, 0);
+  assert.equal(rolloverZeroNoSpend.activeSpent, 0);
+  assert.equal(rolloverZeroNoSpend.status, 'exhausted');
+});

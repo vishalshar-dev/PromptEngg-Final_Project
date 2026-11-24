@@ -517,7 +517,7 @@ export function BudgetCapsule3D({
       data-reduced-motion={String(effectiveReducedMotion)}
       data-scene-ready={String(sceneReady)}
       data-orbited={String(isOrbited)}
-      role={!showFallback ? 'img' : undefined}
+      role={!showFallback ? 'group' : undefined}
       aria-roledescription={!showFallback ? 'Interactive 3D budget capsule' : undefined}
       aria-label={!showFallback ? ariaLabel ?? defaultAriaLabel : undefined}
       tabIndex={!showFallback ? 0 : undefined}

@@ -504,7 +504,7 @@ export function CapsuleTitanium({
       cMesh.instanceMatrix.needsUpdate = true;
       cMesh.computeBoundingSphere();
     }
-  }, []);
+  }, [fastenerGeo, fastenerSocketGeo, flangeBoltGeo, bridgeClipGeo]);
 
   useFrame(() => {
     const s = animStateRef.current;

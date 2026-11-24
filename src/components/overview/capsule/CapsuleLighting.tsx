@@ -28,7 +28,7 @@ export function CapsuleLighting({
   isInteracting,
   animStateRef,
 }: CapsuleLightingProps) {
-  const { scene } = useThree();
+  const { scene, invalidate } = useThree();
   const hemiRef = useRef<THREE.HemisphereLight>(null);
   const keyDirRef = useRef<THREE.DirectionalLight>(null);
   const rimDirRef = useRef<THREE.DirectionalLight>(null);
@@ -63,12 +63,28 @@ export function CapsuleLighting({
 
     // Smoothly transition theme factor without rebuilding Environment PMREM cubemap
     const targetTheme = isDark ? 1 : 0;
-    themeFactorRef.current += (targetTheme - themeFactorRef.current) * alpha;
-    const tf = themeFactorRef.current;
-
-    // Restrained specular boost during active user inspection/rotation
     const targetInteract = isInteracting && !s.reducedMotion ? 1 : 0;
-    interactionBoostRef.current += (targetInteract - interactionBoostRef.current) * alpha;
+
+    if (s.reducedMotion) {
+      themeFactorRef.current = targetTheme;
+      interactionBoostRef.current = targetInteract;
+    } else {
+      if (Math.abs(targetTheme - themeFactorRef.current) < 0.005) {
+        themeFactorRef.current = targetTheme;
+      } else {
+        themeFactorRef.current += (targetTheme - themeFactorRef.current) * alpha;
+        invalidate();
+      }
+
+      if (Math.abs(targetInteract - interactionBoostRef.current) < 0.005) {
+        interactionBoostRef.current = targetInteract;
+      } else {
+        interactionBoostRef.current += (targetInteract - interactionBoostRef.current) * alpha;
+        invalidate();
+      }
+    }
+
+    const tf = themeFactorRef.current;
     const interactMul = 1 + interactionBoostRef.current * 0.12;
 
     if (hemiRef.current) {
