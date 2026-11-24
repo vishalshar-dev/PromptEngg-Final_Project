@@ -13,8 +13,11 @@
   "dependencies": {
     "@firebase/eslint-plugin-security-rules": "^0.0.2",
     "@google/genai": "^3.5.0",
+    "@react-three/drei": "^9.114.3",
+    "@react-three/fiber": "^8.17.10",
     "@types/express": "^5.0.6",
     "@types/qrcode": "^1.5.6",
+    "@types/three": "^0.169.0",
     "express": "^5.3.0",
     "firebase": "^13.4.0",
     "lucide-react": "^0.292.0",
@@ -23,6 +26,7 @@
     "react-dom": "^18.2.0",
     "recharts": "^3.11.0",
     "tesseract.js": "^7.0.0",
+    "three": "^0.169.0",
     "tsx": "^4.23.15",
     "zustand": "^4.4.6"
   },

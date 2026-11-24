@@ -3,8 +3,6 @@ import {
   Plus,
   ScanLine,
   LineChart as LineChartIcon,
-  Pencil,
-  Check,
   X,
   ArrowRight,
   Receipt,
@@ -27,20 +25,15 @@ import {
 import { useAppStore } from '../../store/useStore';
 import type { AppSection } from '../ui/AppShell';
 import { SectionHeader } from '../ui/SectionHeader';
-import { ProgressBar } from '../ui/ProgressBar';
 import { EmptyState } from '../ui/EmptyState';
 import { SplitExpenseModal } from '../splits/SplitExpenseModal';
+import { AetherBudgetHud } from './AetherBudgetHud';
 import {
-  formatCurrency,
   formatCurrencyExact,
   getCategoryStyle,
 } from '../../utils/categoryStyles';
 import { getChartThemeTokens } from '../../utils/settingsEngine';
 import { getEffectiveTransactionAmount } from '../../utils/martEngine';
-import {
-  computeBudgetCycleSummary,
-  computeCycleProgressMetrics,
-} from '../../utils/budgetCycle';
 import {
   computeCategoryAnalytics,
   computeRadarBudgetMonitor,
@@ -69,9 +62,6 @@ function getGreeting(hour: number): string {
 export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
-  const setTotalBudget = useAppStore((s) => s.setTotalBudget);
-  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
-  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const categories = useAppStore((s) => s.categories);
   const categoryCaps = useAppStore((s) => s.categoryCaps);
   const items = useAppStore((s) => s.items);
@@ -87,9 +77,6 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
     [theme, visualTheme.mood]
   );
 
-  const [editingBudget, setEditingBudget] = useState(false);
-  const [budgetDraft, setBudgetDraft] = useState(String(totalBudget));
-  const [budgetError, setBudgetError] = useState<string | null>(null);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [chartMode, setChartMode] = useState<'daily' | 'category'>('daily');
 
@@ -106,69 +93,6 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
     () => transactions.filter((tx) => tx.status !== 'cancelled'),
     [transactions]
   );
-
-  const cycleSummary = useMemo(
-    () =>
-      computeBudgetCycleSummary({
-        transactions,
-        totalBudget,
-        resetDay: budgetResetDay,
-        rolloverEnabled: budgetRolloverEnabled,
-      }),
-    [transactions, totalBudget, budgetResetDay, budgetRolloverEnabled]
-  );
-
-  const totalSpent = cycleSummary.currentSpent;
-  const safeBudget = cycleSummary.effectiveBudget;
-  const remaining = cycleSummary.remainingBudget;
-  const utilizationPct = cycleSummary.utilizationPct;
-  const cycleProgress = useMemo(
-    () => computeCycleProgressMetrics(cycleSummary),
-    [cycleSummary]
-  );
-
-  const budgetStatus =
-    safeBudget > 0 && remaining < 0
-      ? {
-          label: 'Budget exceeded',
-          tone: 'danger' as const,
-          statusTextClass: 'text-[#C23838]',
-          dotClass: 'bg-[#DE5252]',
-          balanceClass: 'text-[#DE5252]',
-        }
-      : utilizationPct >= 80
-        ? {
-            label: 'Approaching limit',
-            tone: 'warning' as const,
-            statusTextClass: 'text-[#9E6614]',
-            dotClass: 'bg-[#E5A23B]',
-            balanceClass: 'text-[#C7851F]',
-          }
-        : {
-            label: 'On track',
-            tone: 'success' as const,
-            statusTextClass: 'text-[#0D5E43]',
-            dotClass: 'bg-[#15966B]',
-            balanceClass: 'text-[#15966B]',
-          };
-
-  const handleOpenEditBudget = () => {
-    setBudgetDraft(String(totalBudget));
-    setBudgetError(null);
-    setEditingBudget(true);
-  };
-
-  const handleSaveBudget = (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsed = Number(budgetDraft);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      setBudgetError('Enter a valid amount greater than ₹0.');
-      return;
-    }
-    setTotalBudget(Math.round(parsed));
-    setBudgetError(null);
-    setEditingBudget(false);
-  };
 
   // Real data engines for Spending Overview & Smart Insights
   const monthWindow = useMemo(() => resolveRadarWindow('this_month'), []);
@@ -377,181 +301,8 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
         </div>
       </header>
 
-      {/* Section B: Main Budget Overview Card */}
-      <section aria-label="Budget overview" className="hero-deck p-5 sm:p-7">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap text-[12px]">
-              <span className="font-semibold text-[#697386]">
-                Remaining Balance
-              </span>
-              <span className="text-[#929BAB]" aria-hidden="true">·</span>
-              <span className={`inline-flex items-center gap-1.5 font-semibold ${budgetStatus.statusTextClass}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${budgetStatus.dotClass}`} aria-hidden="true" />
-                {budgetStatus.label}
-              </span>
-              <span className="text-[#929BAB]" aria-hidden="true">·</span>
-              <span
-                data-testid="overview-cycle-window"
-                className="font-mono font-medium text-[#697386] tabular-nums"
-              >
-                {cycleSummary.window.label}
-              </span>
-              {budgetRolloverEnabled && cycleSummary.rolloverDelta !== 0 && (
-                <>
-                  <span className="text-[#929BAB]" aria-hidden="true">·</span>
-                  <span
-                    data-testid="overview-rollover-badge"
-                    className={`font-mono font-semibold tabular-nums ${
-                      cycleSummary.rolloverDelta > 0
-                        ? 'text-[#0D5E43]'
-                        : 'text-[#9E6614]'
-                    }`}
-                  >
-                    {cycleSummary.rolloverDelta > 0 ? '+' : '-'}₹
-                    {formatCurrency(Math.abs(cycleSummary.rolloverDelta))} rollover
-                  </span>
-                </>
-              )}
-            </div>
-            <p
-              data-testid="overview-remaining-balance"
-              className={`text-[34px] sm:text-[42px] font-bold font-mono tabular-nums tracking-tight leading-none ${budgetStatus.balanceClass}`}
-            >
-              {remaining < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(remaining))}
-            </p>
-            <p className="text-[12.5px] text-[#697386] pt-0.5">
-              {activeTransactions.length === 0
-                ? 'No active expenses logged yet this cycle.'
-                : `${activeTransactions.length} active expense${
-                    activeTransactions.length === 1 ? '' : 's'
-                  } recorded · ${cycleSummary.window.daysRemaining}d left in cycle`}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 sm:gap-8 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-[#E7EAF0] lg:pl-8">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-[11px] sm:text-[12px] font-medium text-[#697386] whitespace-nowrap">
-                  Total Budget
-                </span>
-                {!editingBudget && (
-                  <button
-                    type="button"
-                    onClick={handleOpenEditBudget}
-                    aria-label="Edit total budget"
-                    className="p-0.5 sm:p-1 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF] transition-colors shrink-0"
-                  >
-                    <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  </button>
-                )}
-              </div>
-              {!editingBudget ? (
-                <p
-                  data-testid="overview-total-budget"
-                  className="text-[16px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 truncate"
-                >
-                  ₹{formatCurrency(safeBudget)}
-                </p>
-              ) : (
-                <form onSubmit={handleSaveBudget} className="mt-1 space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      aria-label="Monthly budget amount"
-                      value={budgetDraft}
-                      onChange={(e) => setBudgetDraft(e.target.value)}
-                      autoFocus
-                      className="input-field w-28 px-2.5 py-1.5 text-[14px] font-mono font-semibold tabular-nums"
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Save budget"
-                      className="w-8 h-8 rounded-lg bg-[#365FE8] hover:bg-[#294FCC] text-white flex items-center justify-center shrink-0"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Cancel budget edit"
-                      onClick={() => {
-                        setEditingBudget(false);
-                        setBudgetError(null);
-                      }}
-                      className="w-8 h-8 rounded-lg bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] flex items-center justify-center shrink-0"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {budgetError && (
-                    <p className="text-[11px] font-medium text-[#DE5252]">
-                      {budgetError}
-                    </p>
-                  )}
-                </form>
-              )}
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-[12px] font-medium text-[#697386] whitespace-nowrap">Spent</p>
-              <p
-                data-testid="overview-total-spent"
-                className="text-[16px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 truncate"
-              >
-                ₹{formatCurrencyExact(totalSpent)}
-              </p>
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-[12px] font-medium text-[#697386] whitespace-nowrap">
-                Utilization
-              </p>
-              <p
-                data-testid="overview-utilization"
-                className="text-[16px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 truncate"
-              >
-                {utilizationPct}%
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="mt-5 pt-4 border-t border-[#E7EAF0] space-y-2.5"
-          data-testid="overview-budget-progress"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
-            <span className="font-semibold text-[#151922]">
-              Spend vs. Budget Progress
-            </span>
-            <span className="font-mono text-[11.5px] text-[#697386] tabular-nums">
-              Day {cycleSummary.window.daysElapsed} of {cycleSummary.window.daysTotal} ({cycleProgress.cycleElapsedPct}% cycle)
-            </span>
-          </div>
-
-          <ProgressBar
-            value={cycleProgress.barWidthPct}
-            tone={cycleProgress.tone}
-            size="lg"
-            label="Current spend against total budget"
-            markerPct={cycleSummary.effectiveBudget > 0 ? cycleProgress.cycleElapsedPct : undefined}
-            markerLabel={`Cycle pace: ${cycleProgress.cycleElapsedPct}% elapsed (Day ${cycleSummary.window.daysElapsed} of ${cycleSummary.window.daysTotal})`}
-          />
-
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#697386]">
-            <span>
-              {!cycleProgress.isExceeded
-                ? `${cycleProgress.availablePct}% of cycle budget available`
-                : `Exceeded by ₹${formatCurrencyExact(Math.abs(cycleProgress.remaining))}`}
-            </span>
-            <span className="font-mono font-semibold tabular-nums text-[#151922]">
-              ₹{formatCurrencyExact(cycleProgress.spent)} / ₹{formatCurrency(cycleProgress.budget)}
-            </span>
-          </div>
-        </div>
-      </section>
+      {/* Section B: Project AETHER Financial HUD & 3D Energy Capsule */}
+      <AetherBudgetHud />
 
       {/* Sections D & E: Spending Overview + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

@@ -891,6 +891,10 @@ html[data-surface='frosted_glass'] .bg-\[\#FFFFFF\] {
   .qr-quiet-frame {
     background-color: #ffffff !important;
   }
+
+  [data-testid='budget-capsule-canvas-host'] canvas {
+    touch-action: pan-y !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
