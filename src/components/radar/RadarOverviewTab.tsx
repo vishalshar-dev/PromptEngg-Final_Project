@@ -99,9 +99,9 @@ export function RadarOverviewTab({
         </span>
       </div>
 
-      {/* Top KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-        <OverviewKpiCard
+      {/* Single Hairline KPI Strip (4 core window metrics; budget target ring sits below) */}
+      <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+        <OverviewKpiCell
           label="Total Expenditure"
           value={`₹${formatCurrencyExact(overview.totalSpent)}`}
           deltaPct={overview.spendDeltaPct}
@@ -114,7 +114,7 @@ export function RadarOverviewTab({
           icon={Wallet}
         />
 
-        <OverviewKpiCard
+        <OverviewKpiCell
           label="Average Daily Spend"
           value={`₹${formatCurrencyExact(overview.avgDailySpend)}`}
           deltaPct={overview.avgDailyDeltaPct}
@@ -123,7 +123,7 @@ export function RadarOverviewTab({
           icon={TrendingUp}
         />
 
-        <OverviewKpiCard
+        <OverviewKpiCell
           label="Transactions"
           value={String(overview.txCount)}
           deltaPct={overview.txCountDeltaPct}
@@ -135,7 +135,7 @@ export function RadarOverviewTab({
           icon={Activity}
         />
 
-        <div className="surface-card p-4 flex flex-col justify-between">
+        <div className="p-4 sm:p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
               Highest Category
@@ -162,71 +162,6 @@ export function RadarOverviewTab({
               <p className="text-xs text-[#929BAB] mt-0.5">Select a wider range or add expenses</p>
             </div>
           )}
-        </div>
-
-        <div className="surface-card p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
-              Monthly Budget Used
-            </span>
-            <span
-              className={`text-xs font-semibold ${
-                overview.isOverMonthlyBudget
-                  ? 'text-[#DE5252]'
-                  : isWarning
-                    ? 'text-[#9E6614]'
-                    : 'text-[#15966B]'
-              }`}
-            >
-              {overview.isOverMonthlyBudget
-                ? 'Over Budget'
-                : isWarning
-                  ? 'Approaching'
-                  : 'On Track'}
-            </span>
-          </div>
-          <div className="mt-2">
-            <p
-              className={`text-2xl font-bold font-mono tabular-nums ${
-                overview.isOverMonthlyBudget ? 'text-[#DE5252]' : 'text-[#151922]'
-              }`}
-            >
-              {overview.budgetUtilisationPct}%
-            </p>
-            <p className="text-xs text-[#697386] mt-1 font-mono tabular-nums">
-              ₹{formatCurrencyExact(overview.currentMonthSpent)} / ₹{formatCurrency(overview.monthlyBudget)}
-            </p>
-          </div>
-        </div>
-
-        <div className="surface-card p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
-              Remaining Budget
-            </span>
-            <button
-              type="button"
-              onClick={() => onNavigateSection('budgets')}
-              className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] transition-colors whitespace-nowrap shrink-0"
-            >
-              Monitor Caps
-            </button>
-          </div>
-          <div className="mt-2">
-            <p
-              className={`text-2xl font-bold font-mono tabular-nums ${
-                overview.isOverMonthlyBudget ? 'text-[#DE5252]' : 'text-[#15966B]'
-              }`}
-            >
-              {overview.remainingBudget < 0 ? '-' : ''}₹
-              {formatCurrencyExact(Math.abs(overview.remainingBudget))}
-            </p>
-            <p className="text-xs text-[#697386] mt-1">
-              {overview.isOverMonthlyBudget
-                ? 'Exceeded current monthly budget'
-                : 'Available for rest of month'}
-            </p>
-          </div>
         </div>
       </div>
 
@@ -289,14 +224,24 @@ export function RadarOverviewTab({
               )}
             </div>
             <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap shrink-0 ${
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 ${
                 overview.isOverMonthlyBudget
-                  ? 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
+                  ? 'text-[#DE5252]'
                   : isWarning
-                    ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
-                    : 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                    ? 'text-[#9E6614]'
+                    : 'text-[#15966B]'
               }`}
             >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  overview.isOverMonthlyBudget
+                    ? 'bg-[#DE5252]'
+                    : isWarning
+                      ? 'bg-[#E5A23B]'
+                      : 'bg-[#15966B]'
+                }`}
+                aria-hidden="true"
+              />
               {overview.isOverMonthlyBudget
                 ? 'Over Budget'
                 : isWarning
@@ -344,11 +289,32 @@ export function RadarOverviewTab({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#E7EAF0] flex items-center justify-between text-xs">
-            <span className="text-[#697386]">Month Spent vs Budget</span>
-            <span className="font-mono tabular-nums font-bold text-[#151922]">
-              ₹{formatCurrencyExact(overview.currentMonthSpent)} / ₹{formatCurrency(totalBudget)}
-            </span>
+          <div className="pt-3 border-t border-[#E7EAF0] space-y-2 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[#697386]">Spent vs Target</span>
+              <span className="font-mono tabular-nums font-bold text-[#151922]">
+                ₹{formatCurrencyExact(overview.currentMonthSpent)} / ₹{formatCurrency(totalBudget)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className={`font-mono tabular-nums font-semibold ${
+                  overview.isOverMonthlyBudget ? 'text-[#DE5252]' : 'text-[#15966B]'
+                }`}
+              >
+                {overview.remainingBudget < 0 ? '-' : ''}₹
+                {formatCurrencyExact(Math.abs(overview.remainingBudget))}{' '}
+                {overview.isOverMonthlyBudget ? 'over budget' : 'remaining'}
+              </span>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('budgets')}
+                className="font-semibold text-[#365FE8] hover:text-[#294FCC] inline-flex items-center gap-1 whitespace-nowrap"
+              >
+                Monitor Caps
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -424,8 +390,8 @@ export function RadarOverviewTab({
           </div>
 
           {/* Quick Anomaly & Insight Strip */}
-          <div className="mt-5 pt-4 border-t border-[#E7EAF0] grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="surface-subtle p-3">
+          <div className="mt-5 pt-4 border-t border-[#E7EAF0] grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+            <div className="pb-3 sm:pb-0 sm:pr-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 text-[#C7851F]" />
@@ -439,14 +405,14 @@ export function RadarOverviewTab({
                   Inspect ({anomalies.length})
                 </button>
               </div>
-              <p className="text-xs text-[#151922] mt-1.5 line-clamp-2">
+              <p className="text-xs text-[#151922] mt-1.5 line-clamp-2 leading-relaxed">
                 {anomalies.length > 0
                   ? anomalies[0].reason
                   : 'No statistical spending deviations detected for this window.'}
               </p>
             </div>
 
-            <div className="surface-subtle p-3">
+            <div className="pt-3 sm:pt-0 sm:pl-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5 text-[#365FE8]" />
@@ -460,7 +426,7 @@ export function RadarOverviewTab({
                   Reports
                 </button>
               </div>
-              <p className="text-xs text-[#151922] mt-1.5 line-clamp-2">
+              <p className="text-xs text-[#151922] mt-1.5 line-clamp-2 leading-relaxed">
                 {insights[0]?.description ?? 'Log transactions to surface automated Radar insights.'}
               </p>
             </div>
@@ -474,7 +440,7 @@ export function RadarOverviewTab({
   );
 }
 
-function OverviewKpiCard({
+function OverviewKpiCell({
   label,
   value,
   deltaPct,
@@ -502,7 +468,7 @@ function OverviewKpiCard({
   }
 
   return (
-    <div className="surface-card p-4 flex flex-col justify-between">
+    <div className="p-4 sm:p-5 flex flex-col justify-between">
       <div className="flex items-center justify-between gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
           {label}

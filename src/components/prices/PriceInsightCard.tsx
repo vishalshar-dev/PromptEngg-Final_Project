@@ -41,7 +41,7 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="border-t border-[#E7EAF0] divide-y divide-[#E7EAF0]">
         {insights.map((insight) => {
           const Icon =
             insight.kind === 'increase'
@@ -54,12 +54,19 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
               ? Award
               : Layers;
 
-          const toneClasses =
+          const toneText =
             insight.tone === 'warning'
-              ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+              ? 'text-[#DE5252]'
               : insight.tone === 'positive'
-              ? 'bg-[#E8F7F1] border-[#B7E4D3] text-[#15966B]'
-              : 'bg-[#EDF2FF] border-[#D4E0FF] text-[#365FE8]';
+              ? 'text-[#15966B]'
+              : 'text-[#365FE8]';
+
+          const iconSurface =
+            insight.tone === 'warning'
+              ? 'bg-[#FDECEC] text-[#DE5252]'
+              : insight.tone === 'positive'
+              ? 'bg-[#E8F7F1] text-[#15966B]'
+              : 'bg-[#EDF2FF] text-[#365FE8]';
 
           const clickable = Boolean(insight.productId && onSelectProduct);
 
@@ -69,25 +76,23 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
               type="button"
               disabled={!clickable}
               onClick={() => insight.productId && onSelectProduct?.(insight.productId)}
-              className={`text-left surface-subtle p-3.5 transition-all flex items-start gap-3 ${
-                clickable
-                  ? 'hover:border-[#D4E0FF] hover:bg-white cursor-pointer group'
-                  : 'cursor-default'
+              className={`w-full text-left py-3.5 first:pt-3.5 last:pb-1 flex items-start gap-3 transition-colors ${
+                clickable ? 'group cursor-pointer' : 'cursor-default'
               }`}
             >
               <div
-                className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 ${toneClasses}`}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${iconSurface}`}
               >
                 <Icon className="w-4 h-4" strokeWidth={2.2} />
               </div>
 
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold text-[#151922] truncate">
+                  <p className="text-[13px] font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">
                     {insight.title}
                   </p>
                   <span
-                    className={`text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap shrink-0 ${toneClasses}`}
+                    className={`text-xs font-mono font-bold tabular-nums whitespace-nowrap shrink-0 ${toneText}`}
                   >
                     {insight.metricBadge}
                   </span>
@@ -96,7 +101,7 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
                   {insight.description}
                 </p>
                 {clickable && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#365FE8] pt-0.5">
+                  <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#365FE8] pt-0.5">
                     View price chart <ArrowRight className="w-3 h-3" />
                   </span>
                 )}

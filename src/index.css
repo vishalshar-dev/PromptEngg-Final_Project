@@ -352,6 +352,7 @@ html[data-motion='rich_tactile'] {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-body);
+    word-spacing: 0.03em;
     transition: background-color 0.2s ease, color 0.18s ease;
   }
 

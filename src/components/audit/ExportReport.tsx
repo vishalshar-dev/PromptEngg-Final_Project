@@ -70,21 +70,21 @@ export function ExportReport() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="surface-subtle p-3">
+      {/* Hairline Quick Stats */}
+      <div className="grid grid-cols-2 divide-x divide-[#E7EAF0] border-y border-[#E7EAF0] py-2.5">
+        <div className="text-center px-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
             Cart Value
           </p>
-          <p className="text-base font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+          <p className="text-sm font-bold font-mono tabular-nums text-[#151922] mt-0.5">
             ₹{formatCurrency(cartTotal)}
           </p>
         </div>
-        <div className="surface-subtle p-3">
+        <div className="text-center px-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
             Est. Fee Exposure
           </p>
-          <p className="text-base font-bold font-mono tabular-nums text-[#15966B] mt-0.5">
+          <p className="text-sm font-bold font-mono tabular-nums text-[#15966B] mt-0.5">
             ₹{formatCurrency(totalFees)}
           </p>
         </div>

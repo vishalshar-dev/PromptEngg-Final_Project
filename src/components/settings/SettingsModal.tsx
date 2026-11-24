@@ -33,6 +33,7 @@ import { useCloudSync } from '../../contexts/CloudSyncContext';
 import { isValidUpiId, normalizeUpiId } from '../../utils/upiEngine';
 import { getActiveBudgetCycleWindow } from '../../utils/budgetCycle';
 import { downloadTextReport, generateReportText } from '../../utils/reportGenerator';
+import { buildWorkspaceBackupPayload, downloadWorkspaceBackup } from '../../utils/storeHelpers';
 import type {
   FeatureSettings,
   PennyTonePreference,
@@ -1200,55 +1201,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 type="button"
                 data-testid="settings-export-json"
                 onClick={() => {
-                  const st = useAppStore.getState();
-                  const payload = {
-                    version: 1,
-                    exportedAt: new Date().toISOString(),
-                    transactions: st.transactions,
-                    customItems: st.items,
-                    categories: st.categories,
-                    categoryConfigs: st.categoryConfigs,
-                    priceHistory: st.priceHistory,
-                    purchaseHistory: st.purchaseHistory,
-                    totalBudget: st.totalBudget,
-                    sessionBudget: st.sessionBudget,
-                    budgetResetDay: st.budgetResetDay,
-                    budgetRolloverEnabled: st.budgetRolloverEnabled,
-                    categoryCaps: st.categoryCaps,
-                    savedAudits: st.savedAudits,
-                    people: st.people,
-                    sharedExpenses: st.sharedExpenses,
-                    settlements: st.settlements,
-                    priceObservations: st.priceObservations,
-                    priceAlerts: st.priceAlerts,
-                    isBrokeMode: st.isBrokeMode,
-                    brokeModeConfig: st.brokeModeConfig,
-                    categoryLimits: st.categoryLimits,
-                    warRoomChallenges: st.warRoomChallenges,
-                    warRoomTargets: st.warRoomTargets,
-                    dismissedWarRoomAlerts: st.dismissedWarRoomAlerts,
-                    disciplineCheckIns: st.disciplineCheckIns,
-                    basketTemplates: st.basketTemplates,
-                    basketTemplatesSeeded: st.basketTemplatesSeeded,
-                    theme: st.theme,
-                    visualTheme: st.visualTheme,
-                    featureSettings: st.featureSettings,
-                    pennyMessages: st.pennyMessages,
-                    pennyProfile: st.pennyProfile,
-                    myUpiId: st.myUpiId,
-                    myUpiName: st.myUpiName,
-                  };
-                  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-                    type: 'application/json',
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `cartaudit-backup-${new Date().toISOString().slice(0, 10)}.json`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
+                  downloadWorkspaceBackup(
+                    buildWorkspaceBackupPayload(useAppStore.getState())
+                  );
                   setExportStatus('JSON backup downloaded');
                   setTimeout(() => setExportStatus(null), 2500);
                 }}

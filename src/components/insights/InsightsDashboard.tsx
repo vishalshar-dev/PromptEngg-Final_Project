@@ -49,7 +49,7 @@ export function InsightsDashboard({
     <div className="space-y-5">
       {/* Header + Integrated Underline Tab Strip */}
       <div className="border-b border-[#E7EAF0]">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4">
+        <div className="pb-4">
           <div className="min-w-0">
             <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
               Insights
@@ -58,16 +58,6 @@ export function InsightsDashboard({
               Ask Penny about your spending &amp; upcoming bills, track category velocity, and monitor product unit prices.
             </p>
           </div>
-          {activeTab !== 'penny' && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('penny')}
-              className="btn-primary px-3.5 py-2 text-xs whitespace-nowrap shrink-0 self-start sm:self-auto"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Ask Penny</span>
-            </button>
-          )}
         </div>
 
         <div

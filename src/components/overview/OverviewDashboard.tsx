@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  ShoppingBag,
   Plus,
   ScanLine,
   LineChart as LineChartIcon,
@@ -14,8 +13,6 @@ import {
   TrendingDown,
   AlertTriangle,
   Info,
-  ShieldCheck,
-  Scale,
 } from 'lucide-react';
 import {
   BarChart,
@@ -335,7 +332,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             {greeting}
           </h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2.5 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {transactions.length === 0 ? (
             <button
               type="button"
@@ -351,16 +348,32 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               type="button"
               onClick={clearWorkspaceData}
               data-testid="overview-clear-sample-btn"
-              className="btn-secondary px-3 py-1.5 text-[12px]"
+              className="btn-secondary px-3 py-2 text-[12px]"
             >
               <X className="w-3.5 h-3.5 text-[#DE5252]" />
               <span>Sample Month · Clear</span>
             </button>
-          ) : (
-            <p className="text-[13px] text-[#697386]">
-              Track your spending, compare baskets, and audit hidden fees in one view.
-            </p>
+          ) : null}
+
+          {featureSettings.showScanner && (
+            <button
+              type="button"
+              onClick={() => onNavigate('scanner')}
+              className="btn-secondary px-3.5 py-2 text-[12.5px]"
+            >
+              <ScanLine className="w-3.5 h-3.5 text-[#365FE8]" />
+              <span>Scan Receipt</span>
+            </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => setAddExpenseOpen(true)}
+            className="btn-primary px-3.5 py-2 text-[12.5px]"
+          >
+            <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+            <span>Add Expense</span>
+          </button>
         </div>
       </header>
 
@@ -510,17 +523,9 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
           data-testid="overview-budget-progress"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-semibold text-[#151922]">
-                Spend vs. Budget Progress
-              </span>
-              <span className="text-[#929BAB]" aria-hidden="true">·</span>
-              <span
-                className={`font-mono font-semibold tabular-nums ${budgetStatus.statusTextClass}`}
-              >
-                {cycleProgress.utilizationPct}% used
-              </span>
-            </div>
+            <span className="font-semibold text-[#151922]">
+              Spend vs. Budget Progress
+            </span>
             <span className="font-mono text-[11.5px] text-[#697386] tabular-nums">
               Day {cycleSummary.window.daysElapsed} of {cycleSummary.window.daysTotal} ({cycleProgress.cycleElapsedPct}% cycle)
             </span>
@@ -538,7 +543,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
           <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#697386]">
             <span>
               {!cycleProgress.isExceeded
-                ? `${cycleProgress.availablePct}% of budget available (₹${formatCurrencyExact(Math.max(0, cycleProgress.remaining))} left)`
+                ? `${cycleProgress.availablePct}% of cycle budget available`
                 : `Exceeded by ₹${formatCurrencyExact(Math.abs(cycleProgress.remaining))}`}
             </span>
             <span className="font-mono font-semibold tabular-nums text-[#151922]">
@@ -547,134 +552,6 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
           </div>
         </div>
       </section>
-
-      {/* Section C: Quick Actions */}
-      {(() => {
-        const quickActionCount =
-          3 +
-          (featureSettings.showScanner ? 1 : 0) +
-          (featureSettings.showInsights ? 1 : 0) +
-          (featureSettings.showWellness ? 1 : 0);
-
-        const gridColsClass =
-          quickActionCount === 6 || quickActionCount === 3
-            ? 'grid-cols-2 sm:grid-cols-3'
-            : quickActionCount === 5
-              ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
-              : 'grid-cols-2 lg:grid-cols-4';
-
-        return (
-          <section
-            aria-label="Quick actions"
-            className={`grid ${gridColsClass} gap-3`}
-          >
-            <button
-              type="button"
-              onClick={() => onNavigate('shopping')}
-              className="surface-card-interactive p-4 text-left group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
-                <ShoppingBag className="w-[18px] h-[18px]" strokeWidth={2} />
-              </div>
-              <p className="text-[14px] font-semibold text-[#151922]">
-                Start Shopping
-              </p>
-              <p className="text-[12px] text-[#697386] mt-0.5">
-                Build cart from quick catalog
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setAddExpenseOpen(true)}
-              className="surface-card-interactive p-4 text-left group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] text-[#15966B] flex items-center justify-center mb-3 group-hover:bg-[#15966B] group-hover:text-white transition-colors">
-                <Plus className="w-[18px] h-[18px]" strokeWidth={2.2} />
-              </div>
-              <p className="text-[14px] font-semibold text-[#151922]">
-                Add Expense
-              </p>
-              <p className="text-[12px] text-[#697386] mt-0.5">
-                Log a personal or split cost
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('expenses')}
-              data-testid="quick-action-ledger"
-              className="surface-card-interactive p-4 text-left group"
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] text-[#151922] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
-                <Receipt className="w-[18px] h-[18px]" strokeWidth={2} />
-              </div>
-              <p className="text-[14px] font-semibold text-[#151922]">
-                Expenses
-              </p>
-              <p className="text-[12px] text-[#697386] mt-0.5">
-                Transactions &amp; split bills
-              </p>
-            </button>
-
-            {featureSettings.showScanner && (
-              <button
-                type="button"
-                onClick={() => onNavigate('scanner')}
-                className="surface-card-interactive p-4 text-left group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] text-[#C7851F] flex items-center justify-center mb-3 group-hover:bg-[#E5A23B] group-hover:text-white transition-colors">
-                  <ScanLine className="w-[18px] h-[18px]" strokeWidth={2} />
-                </div>
-                <p className="text-[14px] font-semibold text-[#151922]">
-                  Scan Receipt
-                </p>
-                <p className="text-[12px] text-[#697386] mt-0.5">
-                  Extract items &amp; detect fees
-                </p>
-              </button>
-            )}
-
-            {featureSettings.showInsights && (
-              <button
-                type="button"
-                onClick={() => onNavigate('insights', 'radar')}
-                data-testid="quick-action-radar-room"
-                className="surface-card-interactive p-4 text-left group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center mb-3 group-hover:bg-[#365FE8] group-hover:text-white transition-colors">
-                  <LineChartIcon className="w-[18px] h-[18px]" strokeWidth={2} />
-                </div>
-                <p className="text-[14px] font-semibold text-[#151922]">
-                  Insights
-                </p>
-                <p className="text-[12px] text-[#697386] mt-0.5">
-                  Ask Penny AI &amp; explore trends
-                </p>
-              </button>
-            )}
-
-            {featureSettings.showWellness && (
-              <button
-                type="button"
-                onClick={() => onNavigate('wellness')}
-                data-testid="quick-action-war-room"
-                className="surface-card-interactive p-4 text-left group"
-              >
-                <div className="w-9 h-9 rounded-xl bg-[#FDECEC] text-[#DE5252] flex items-center justify-center mb-3 group-hover:bg-[#DE5252] group-hover:text-white transition-colors">
-                  <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2} />
-                </div>
-                <p className="text-[14px] font-semibold text-[#151922]">
-                  Financial Wellness
-                </p>
-                <p className="text-[12px] text-[#697386] mt-0.5">
-                  Broke Mode, limits &amp; score
-                </p>
-              </button>
-            )}
-          </section>
-        );
-      })()}
 
       {/* Sections D & E: Spending Overview + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -725,25 +602,13 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
               title="No spending activity yet"
               description="Log an expense, scan a receipt, or check out from Shopping to visualize your spending trends."
               action={
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAddExpenseOpen(true)}
-                    className="btn-primary px-4 py-2 text-[13px]"
-                  >
-                    Add First Expense
-                  </button>
-                  {transactions.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={loadSampleMonth}
-                      className="btn-secondary px-4 py-2 text-[13px]"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-[#365FE8]" />
-                      <span>Load Sample Month</span>
-                    </button>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setAddExpenseOpen(true)}
+                  className="btn-primary px-4 py-2 text-[13px]"
+                >
+                  Add First Expense
+                </button>
               }
             />
           ) : (
@@ -935,30 +800,20 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
             subtitle="Live signals derived directly from your spending and price history"
             action={
               featureSettings.showInsights ? (
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('insights', 'penny')}
-                    className="btn-primary px-3 py-1.5 text-xs whitespace-nowrap"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Ask Penny</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('insights', 'radar')}
-                    className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 transition-colors whitespace-nowrap"
-                  >
-                    Open Radar
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('insights', 'radar')}
+                  className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 transition-colors whitespace-nowrap"
+                >
+                  Open Radar
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               ) : undefined
             }
           />
 
           {smartInsights.length === 0 ? (
-            <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="pt-2 border-t border-[#E7EAF0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center shrink-0">
                   <Sparkles className="w-[18px] h-[18px]" />
@@ -972,40 +827,29 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {featureSettings.showScanner && (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('scanner')}
-                    className="btn-secondary px-3.5 py-2 text-[12.5px]"
-                  >
-                    Scan Receipt
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setAddExpenseOpen(true)}
-                  className="btn-primary px-3.5 py-2 text-[12.5px]"
-                >
-                  Add Expense
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setAddExpenseOpen(true)}
+                className="btn-primary px-3.5 py-2 text-[12.5px] shrink-0 self-start sm:self-auto"
+              >
+                Add Expense
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {smartInsights.map((insight) => {
+            <div className="border-t border-[#E7EAF0] grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#E7EAF0]">
+              {smartInsights.map((insight, idx) => {
                 const Icon =
                   insight.tone === 'positive'
                     ? TrendingDown
                     : insight.tone === 'warning'
                       ? AlertTriangle
                       : Info;
-                const badgeStyles =
+                const toneColor =
                   insight.tone === 'positive'
-                    ? 'bg-[#E8F7F1] text-[#0D5E43]'
+                    ? 'text-[#0D5E43]'
                     : insight.tone === 'warning'
-                      ? 'bg-[#FEF6E7] text-[#9E6614]'
-                      : 'bg-[#EDF2FF] text-[#365FE8]';
+                      ? 'text-[#9E6614]'
+                      : 'text-[#365FE8]';
 
                 return (
                   <button
@@ -1017,31 +861,42 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                         insight.targetSubTab
                       )
                     }
-                    className="surface-card-interactive text-left p-4 flex flex-col justify-between gap-3"
+                    className={`text-left py-4 md:py-4 flex flex-col justify-between gap-2.5 group transition-colors ${
+                      idx === 0
+                        ? 'md:pr-5'
+                        : idx === smartInsights.length - 1
+                          ? 'md:pl-5'
+                          : 'md:px-5'
+                    }`}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center ${badgeStyles}`}
-                        >
-                          <Icon className="w-4 h-4" />
+                        <span className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold ${toneColor}`}>
+                          <Icon className="w-3.5 h-3.5 shrink-0" />
+                          <span>
+                            {insight.tone === 'positive'
+                              ? 'Savings signal'
+                              : insight.tone === 'warning'
+                                ? 'Price / spend alert'
+                                : 'Spend signal'}
+                          </span>
                         </span>
                         {insight.badge && (
                           <span
-                            className={`text-[11px] font-semibold font-mono tabular-nums px-2 py-0.5 rounded-md ${badgeStyles}`}
+                            className={`text-[12px] font-bold font-mono tabular-nums ${toneColor}`}
                           >
                             {insight.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-[13.5px] font-semibold text-[#151922] leading-snug">
+                      <p className="text-[13.5px] font-semibold text-[#151922] group-hover:text-[#365FE8] transition-colors leading-snug">
                         {insight.title}
                       </p>
                       <p className="text-[12.5px] text-[#697386] leading-relaxed line-clamp-2">
                         {insight.description}
                       </p>
                     </div>
-                    <span className="text-[12px] font-semibold text-[#365FE8] flex items-center gap-1">
+                    <span className="text-[12px] font-semibold text-[#365FE8] inline-flex items-center gap-1 pt-0.5">
                       Explore details
                       <TrendingUp className="w-3.5 h-3.5" />
                     </span>

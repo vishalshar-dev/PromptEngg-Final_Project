@@ -482,20 +482,20 @@ export function PriceTrackerDashboard({
       {section === 'overview' && !selectedSummary && (
         <div className="space-y-4">
           {/* Summary KPI Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="surface-card p-4">
+          <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 [&>*:nth-child(odd)]:border-r [&>*:nth-child(-n+2)]:border-b lg:[&>*]:border-b-0 lg:[&>*:not(:last-child)]:border-r [&>*]:border-[#E7EAF0]">
+            <div className="p-4 sm:p-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                 Tracked Products
               </p>
               <p className="text-xl font-bold font-mono text-[#151922] mt-1 tabular-nums">
                 {totalTracked}
               </p>
-              <p className="text-xs text-[#697386] mt-0.5">
+              <p className="text-xs text-[#697386] mt-0.5 tabular-nums">
                 ₹{formatCurrencyExact(totalTrackedSpend)} tracked spend
               </p>
             </div>
 
-            <div className="surface-card p-4">
+            <div className="p-4 sm:p-5">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-[#DE5252]" />
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -508,7 +508,7 @@ export function PriceTrackerDashboard({
               <p className="text-xs text-[#697386] mt-0.5">Products trending higher</p>
             </div>
 
-            <div className="surface-card p-4">
+            <div className="p-4 sm:p-5">
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="w-3.5 h-3.5 text-[#15966B]" />
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -521,14 +521,14 @@ export function PriceTrackerDashboard({
               <p className="text-xs text-[#697386] mt-0.5">Products cheaper than start</p>
             </div>
 
-            <div className="surface-card p-4">
+            <div className="p-4 sm:p-5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
                 Latest Purchase
               </p>
               <p className="text-sm font-bold text-[#151922] mt-1.5 truncate">
                 {latestPurchaseSummary ? latestPurchaseSummary.productName : '—'}
               </p>
-              <p className="text-xs font-mono text-[#697386] mt-0.5">
+              <p className="text-xs font-mono text-[#697386] mt-0.5 tabular-nums">
                 {latestPurchaseSummary
                   ? `₹${formatCurrencyExact(latestPurchaseSummary.latestPrice)}/${
                       latestPurchaseSummary.unitOfMeasurement

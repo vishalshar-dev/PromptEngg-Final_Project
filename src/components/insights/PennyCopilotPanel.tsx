@@ -20,7 +20,6 @@ import {
   type PennyActionType,
 } from '../../utils/pennyEngine';
 import { PennyChatCore } from '../penny/PennyChatCore';
-import { PennyEmblem } from '../penny/PennyEmblem';
 import type { AppSection } from '../ui/AppShell';
 import type { InsightsTab } from './InsightsDashboard';
 
@@ -362,7 +361,7 @@ export function PennyCopilotPanel({
                       <p className={`text-[11px] font-bold uppercase tracking-wider ${bucket.badgeTone}`}>
                         {bucket.label} ({bucket.rows.length})
                       </p>
-                      <div className="divide-y divide-[#E7EAF0] border border-[#E7EAF0] rounded-xl px-3 bg-[#F7F8FA]">
+                      <div className="divide-y divide-[#E7EAF0] border-t border-[#E7EAF0]">
                         {bucket.rows.map((c) => (
                           <div
                             key={c.id}
@@ -426,20 +425,8 @@ export function PennyCopilotPanel({
         {/* Left: Penny AI Co-Pilot & Quick Expense Parser (Synced with Floating Window) */}
         <section
           aria-label="Penny AI co-pilot"
-          className="lg:col-span-7 surface-card p-5 flex flex-col gap-3 min-h-[560px] lg:h-[640px]"
+          className="lg:col-span-7 surface-card p-5 flex flex-col min-h-[540px] lg:h-[620px]"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <PennyEmblem size="md" />
-            <div className="min-w-0">
-              <h2 className="text-[15px] font-bold text-[#151922] leading-tight">
-                Penny — Your Money Co-Pilot
-              </h2>
-              <p className="text-xs text-[#697386] mt-0.5 truncate">
-                Synced with your global Penny companion · asks, adapts &amp; executes actions
-              </p>
-            </div>
-          </div>
-
           <div className="flex-1 min-h-0 flex flex-col">
             <PennyChatCore
               activeScreen="insights"

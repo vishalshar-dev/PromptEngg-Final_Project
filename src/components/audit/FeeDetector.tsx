@@ -127,7 +127,7 @@ export function FeeDetector() {
           </div>
         </div>
         {detectedFlags.length > 0 && (
-          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
+          <span className="text-xs font-bold font-mono tabular-nums text-[#9E6614] shrink-0">
             {detectedFlags.length} flag{detectedFlags.length > 1 ? 's' : ''}
           </span>
         )}
@@ -158,27 +158,27 @@ export function FeeDetector() {
         </button>
       )}
 
-      {/* Summary Stats */}
+      {/* Hairline Summary Stats */}
       {detectedFlags.length > 0 && (
-        <div className="grid grid-cols-3 gap-2.5">
-          <div className="surface-subtle p-3 text-center">
-            <p className="text-lg font-bold font-mono tabular-nums text-[#DE5252]">
+        <div className="grid grid-cols-3 divide-x divide-[#E7EAF0] border-y border-[#E7EAF0] py-2.5">
+          <div className="text-center px-2">
+            <p className="text-base font-bold font-mono tabular-nums text-[#DE5252]">
               {criticalCount}
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
               Critical
             </p>
           </div>
-          <div className="surface-subtle p-3 text-center">
-            <p className="text-lg font-bold font-mono tabular-nums text-[#9E6614]">
+          <div className="text-center px-2">
+            <p className="text-base font-bold font-mono tabular-nums text-[#9E6614]">
               {warningCount}
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
               Warning
             </p>
           </div>
-          <div className="surface-subtle p-3 text-center">
-            <p className="text-lg font-bold font-mono tabular-nums text-[#151922]">
+          <div className="text-center px-2">
+            <p className="text-base font-bold font-mono tabular-nums text-[#151922]">
               ₹{formatCurrency(totalEstimatedCost)}
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -190,51 +190,44 @@ export function FeeDetector() {
 
       {/* Flag List or Clean Result */}
       {detectedFlags.length > 0 ? (
-        <div className="space-y-2.5">
+        <div className="divide-y divide-[#E7EAF0]">
           {detectedFlags.map((flag) => {
             const sevStyle = FEE_SEVERITY_STYLES[flag.severity];
             return (
               <div
                 key={flag.id}
-                className={`rounded-xl p-3.5 border ${sevStyle.bg} ${sevStyle.border}`}
+                className="py-3 first:pt-1 last:pb-1 flex items-start gap-2.5"
               >
-                <div className="flex items-start gap-2.5">
-                  <div
-                    className={`w-7 h-7 rounded-lg bg-[#FFFFFF] ${sevStyle.border} border flex items-center justify-center shrink-0`}
-                  >
-                    {flag.severity === 'critical' ? (
-                      <AlertTriangle
-                        className={`w-3.5 h-3.5 ${sevStyle.text}`}
-                        strokeWidth={2.25}
-                      />
-                    ) : (
-                      <ShieldAlert
-                        className={`w-3.5 h-3.5 ${sevStyle.text}`}
-                        strokeWidth={2.25}
-                      />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FFFFFF] ${sevStyle.text} border ${sevStyle.border}`}
-                      >
-                        {FEE_TYPE_LABELS[flag.type]}
-                      </span>
-                      <span className={`text-[10px] font-bold uppercase ${sevStyle.text}`}>
-                        {flag.severity}
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold text-[#151922] mb-0.5">
+                <div
+                  className={`w-7 h-7 rounded-lg ${sevStyle.bg} flex items-center justify-center shrink-0 mt-0.5`}
+                >
+                  {flag.severity === 'critical' ? (
+                    <AlertTriangle
+                      className={`w-3.5 h-3.5 ${sevStyle.text}`}
+                      strokeWidth={2.25}
+                    />
+                  ) : (
+                    <ShieldAlert
+                      className={`w-3.5 h-3.5 ${sevStyle.text}`}
+                      strokeWidth={2.25}
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-bold text-[#151922] truncate">
                       {flag.itemName}
                     </p>
-                    <p className="text-xs text-[#4F5869] leading-relaxed">
-                      {flag.message}
-                    </p>
-                    <p className={`text-xs font-bold font-mono tabular-nums mt-1.5 ${sevStyle.text}`}>
-                      Est. cost: ₹{formatCurrency(flag.estimatedCost)}
-                    </p>
+                    <span className={`text-xs font-bold font-mono tabular-nums shrink-0 ${sevStyle.text}`}>
+                      ₹{formatCurrency(flag.estimatedCost)}
+                    </span>
                   </div>
+                  <p className={`text-[11px] font-semibold uppercase tracking-wide mt-0.5 ${sevStyle.text}`}>
+                    {FEE_TYPE_LABELS[flag.type]} · {flag.severity}
+                  </p>
+                  <p className="text-xs text-[#697386] leading-relaxed mt-0.5">
+                    {flag.message}
+                  </p>
                 </div>
               </div>
             );

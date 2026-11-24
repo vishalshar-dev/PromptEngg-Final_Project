@@ -31,7 +31,7 @@ import {
 import { executePennyProposal } from '../../utils/pennyActions';
 import {
   fetchGeminiHealth,
-  getCachedGeminiConfigured,
+  getCachedAiConfigured,
 } from '../../utils/aiReadiness';
 import {
   clearLiveAiCooldown,
@@ -244,10 +244,11 @@ export function PennyChatCore({
   const [chatError, setChatError] = useState<string | null>(null);
   const [actionBanner, setActionBanner] = useState<string | null>(null);
 
-  const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(() => {
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(() => {
     if (getLiveAiAvailability().mode !== 'live') return false;
-    return getCachedGeminiConfigured();
+    return getCachedAiConfigured();
   });
+  const [liveProvider, setLiveProvider] = useState<'groq' | 'gemini' | null>(null);
   const [cooldownSecs, setCooldownSecs] = useState<number>(() =>
     Math.ceil(getLiveAiAvailability().retryAfterMs / 1000)
   );
@@ -268,9 +269,24 @@ export function PennyChatCore({
       return true;
     }
     setCooldownSecs(Math.max(1, Math.ceil(avail.retryAfterMs / 1000)));
-    setGeminiConfigured(false);
+    setAiConfigured(false);
     return false;
   }, []);
+
+  const applyHealthStatus = useCallback(
+    (status: { aiConfigured: boolean; groqConfigured: boolean; geminiConfigured: boolean }) => {
+      setAiConfigured(status.aiConfigured);
+      if (status.groqConfigured) {
+        setLiveProvider((curr) => curr ?? 'groq');
+      } else if (status.geminiConfigured) {
+        setLiveProvider((curr) => curr ?? 'gemini');
+      }
+      if (status.aiConfigured) {
+        pruneOfflinePennyMessages();
+      }
+    },
+    [pruneOfflinePennyMessages]
+  );
 
   const refreshHealth = useCallback(async () => {
     setIsReconnecting(true);
@@ -278,14 +294,11 @@ export function PennyChatCore({
     setCooldownSecs(0);
     try {
       const status = await fetchGeminiHealth(true);
-      setGeminiConfigured(status.geminiConfigured);
-      if (status.geminiConfigured) {
-        pruneOfflinePennyMessages();
-      }
+      applyHealthStatus(status);
     } finally {
       setIsReconnecting(false);
     }
-  }, [pruneOfflinePennyMessages]);
+  }, [applyHealthStatus]);
 
   useEffect(() => {
     let active = true;
@@ -295,10 +308,7 @@ export function PennyChatCore({
         syncAvailabilityState();
         return;
       }
-      setGeminiConfigured(status.geminiConfigured);
-      if (status.geminiConfigured) {
-        pruneOfflinePennyMessages();
-      }
+      applyHealthStatus(status);
     });
 
     const onOnlineOrFocus = () => {
@@ -309,7 +319,7 @@ export function PennyChatCore({
         }
         void fetchGeminiHealth(true).then((status) => {
           if (!active) return;
-          setGeminiConfigured(status.geminiConfigured);
+          applyHealthStatus(status);
         });
       }
     };
@@ -321,23 +331,23 @@ export function PennyChatCore({
       window.removeEventListener('online', onOnlineOrFocus);
       window.removeEventListener('focus', onOnlineOrFocus);
     };
-  }, [pruneOfflinePennyMessages, syncAvailabilityState]);
+  }, [applyHealthStatus, syncAvailabilityState]);
 
   useEffect(() => {
-    if (geminiConfigured !== false) return;
+    if (aiConfigured !== false) return;
     const interval = window.setInterval(() => {
       const avail = getLiveAiAvailability();
       if (avail.mode === 'live') {
         setCooldownSecs(0);
         void fetchGeminiHealth(true).then((status) => {
-          setGeminiConfigured(status.geminiConfigured);
+          applyHealthStatus(status);
         });
       } else {
         setCooldownSecs(Math.max(1, Math.ceil(avail.retryAfterMs / 1000)));
       }
     }, 3000);
     return () => window.clearInterval(interval);
-  }, [geminiConfigured]);
+  }, [aiConfigured, applyHealthStatus]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -524,6 +534,7 @@ export function PennyChatCore({
         highlights?: Array<{ label: string; value: string }>;
         proposedActions?: unknown;
         followUpQuestions?: string[];
+        provider?: 'groq' | 'gemini';
       }>(
         '/api/penny-chat',
         {
@@ -542,8 +553,11 @@ export function PennyChatCore({
       }
 
       setCooldownSecs(0);
-      if (geminiConfigured !== true) {
-        setGeminiConfigured(true);
+      if (result.data.provider) {
+        setLiveProvider(result.data.provider);
+      }
+      if (aiConfigured !== true) {
+        setAiConfigured(true);
         pruneOfflinePennyMessages();
       }
 
@@ -604,6 +618,7 @@ export function PennyChatCore({
         highlights?: Array<{ label: string; value: string }>;
         proposedActions?: unknown;
         followUpQuestions?: string[];
+        provider?: 'groq' | 'gemini';
       }>(
         '/api/penny-chat',
         {
@@ -622,7 +637,10 @@ export function PennyChatCore({
       }
 
       setCooldownSecs(0);
-      setGeminiConfigured(true);
+      setAiConfigured(true);
+      if (result.data.provider) {
+        setLiveProvider(result.data.provider);
+      }
       const validatedProposals = normalizePennyProposals(result.data.proposedActions, {
         items,
         basketTemplates,
@@ -679,7 +697,9 @@ export function PennyChatCore({
     setIsParsingExpense(true);
 
     try {
-      const result = await enqueueAiPost<ParsedQuickExpense>(
+      const result = await enqueueAiPost<
+        ParsedQuickExpense & { provider?: 'groq' | 'gemini' }
+      >(
         '/api/penny-parse-expense',
         {
           text,
@@ -699,8 +719,11 @@ export function PennyChatCore({
       }
 
       setCooldownSecs(0);
-      if (geminiConfigured !== true) {
-        setGeminiConfigured(true);
+      if (result.data.provider) {
+        setLiveProvider(result.data.provider);
+      }
+      if (aiConfigured !== true) {
+        setAiConfigured(true);
         pruneOfflinePennyMessages();
       }
 
@@ -749,7 +772,9 @@ export function PennyChatCore({
     setParseError(null);
   };
 
-  const isLiveCloud = geminiConfigured === true;
+  const isLiveCloud = aiConfigured === true;
+  const activeProviderLabel =
+    liveProvider === 'groq' ? 'Live AI · Groq' : liveProvider === 'gemini' ? 'Live AI · Gemini' : 'Live AI';
   const activeVibeOption =
     VIBE_OPTIONS.find((opt) => opt.id === pennyProfile.tonePreference) ?? VIBE_OPTIONS[0];
 
@@ -758,12 +783,12 @@ export function PennyChatCore({
       {/* Unified Sleek Control Bar */}
       <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--border-subtle)] shrink-0">
         <div className="flex items-center gap-1.5 min-w-0 text-[11.5px]">
-          {geminiConfigured !== null && (
+          {aiConfigured !== null && (
             <span
               data-testid="penny-ai-status"
               title={
                 isLiveCloud
-                  ? 'Connected to Live Gemini AI'
+                  ? `Connected to ${activeProviderLabel}`
                   : cooldownSecs > 0
                     ? `Live AI servers busy — using Local Engine (auto-retrying in ${cooldownSecs}s)`
                     : 'Running Local Smart Engine (works offline and when AI Studio is closed)'
@@ -775,11 +800,11 @@ export function PennyChatCore({
                   isLiveCloud ? 'bg-[var(--accent-success)]' : 'bg-[var(--accent-warning)]'
                 }`}
               />
-              <span>{isLiveCloud ? 'Live AI' : 'Local Engine'}</span>
+              <span>{isLiveCloud ? activeProviderLabel : 'Local Engine'}</span>
             </span>
           )}
 
-          {geminiConfigured === false && (
+          {aiConfigured === false && (
             <button
               type="button"
               onClick={() => void refreshHealth()}
@@ -788,7 +813,7 @@ export function PennyChatCore({
               title={
                 cooldownSecs > 0
                   ? `Retry Live AI now (auto-resumes in ${cooldownSecs}s)`
-                  : 'Check if Live Gemini AI backend is reachable'
+                  : 'Check if Live AI backend is reachable'
               }
             >
               <RefreshCw className={`w-3 h-3 ${isReconnecting ? 'animate-spin' : ''}`} />
@@ -964,36 +989,38 @@ export function PennyChatCore({
                     </div>
                   </div>
 
-                  {/* Live Grounded Telemetry Strip */}
-                  <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)]/70 py-2.5">
-                    <div className="px-3 min-w-0">
-                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
-                        Remaining
-                      </p>
-                      <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
-                        {pennyContext.budgetOverview.rawRemainingBudget < 0 ? '-' : ''}₹
-                        {formatCurrencyExact(
-                          Math.abs(pennyContext.budgetOverview.rawRemainingBudget)
-                        )}
-                      </p>
+                  {/* Live Grounded Telemetry Strip (shown in floating drawer; full dashboard already displays Safe-to-Spend above) */}
+                  {compact && (
+                    <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)]/70 py-2.5">
+                      <div className="px-3 min-w-0">
+                        <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                          Remaining
+                        </p>
+                        <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
+                          {pennyContext.budgetOverview.rawRemainingBudget < 0 ? '-' : ''}₹
+                          {formatCurrencyExact(
+                            Math.abs(pennyContext.budgetOverview.rawRemainingBudget)
+                          )}
+                        </p>
+                      </div>
+                      <div className="px-3 min-w-0">
+                        <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                          Safe / Day
+                        </p>
+                        <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-0.5 truncate">
+                          ₹{formatCurrencyExact(pennyContext.futureCommitments.safeDailySpend)}
+                        </p>
+                      </div>
+                      <div className="px-3 min-w-0">
+                        <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                          Commitments
+                        </p>
+                        <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
+                          ₹{formatCurrencyExact(pennyContext.futureCommitments.committedUpcoming30d)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="px-3 min-w-0">
-                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
-                        Safe / Day
-                      </p>
-                      <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-0.5 truncate">
-                        ₹{formatCurrencyExact(pennyContext.futureCommitments.safeDailySpend)}
-                      </p>
-                    </div>
-                    <div className="px-3 min-w-0">
-                      <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
-                        Commitments
-                      </p>
-                      <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
-                        ₹{formatCurrencyExact(pennyContext.futureCommitments.committedUpcoming30d)}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Interactive 2x2 Prompt Cards */}

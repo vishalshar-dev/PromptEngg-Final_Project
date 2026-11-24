@@ -32,7 +32,7 @@ import {
 import { formatCurrency } from '../../utils/categoryStyles';
 import {
   fetchGeminiHealth,
-  getCachedGeminiConfigured,
+  getCachedAiConfigured,
 } from '../../utils/aiReadiness';
 import {
   enqueueAiPost,
@@ -154,27 +154,27 @@ export function ReceiptUploader() {
   const [receiptText, setReceiptText] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [lastImageFile, setLastImageFile] = useState<File | null>(null);
-  const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(() =>
-    getCachedGeminiConfigured()
+  const [aiVisionConfigured, setAiVisionConfigured] = useState<boolean | null>(() =>
+    getCachedAiConfigured()
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
     void fetchGeminiHealth(true).then((status) => {
-      if (active) setGeminiConfigured(status.geminiConfigured);
+      if (active) setAiVisionConfigured(status.visionConfigured);
     });
     return () => {
       active = false;
     };
   }, []);
 
-  const ensureGeminiConfigured = useCallback(async (): Promise<boolean> => {
-    if (geminiConfigured === true) return true;
+  const ensureVisionConfigured = useCallback(async (): Promise<boolean> => {
+    if (aiVisionConfigured === true) return true;
     const status = await fetchGeminiHealth(true);
-    setGeminiConfigured(status.geminiConfigured);
-    return status.geminiConfigured;
-  }, [geminiConfigured]);
+    setAiVisionConfigured(status.visionConfigured);
+    return status.visionConfigured;
+  }, [aiVisionConfigured]);
 
   const parseAndStoreText = useCallback(
     (rawText: string, sourceLabel?: string) => {
@@ -280,7 +280,7 @@ export function ReceiptUploader() {
             : new File([prepared.blob], 'receipt.jpg', { type: prepared.mimeType });
         setLastImageFile(scanFile);
 
-        const aiReady = await ensureGeminiConfigured();
+        const aiReady = await ensureVisionConfigured();
         const avail = getLiveAiAvailability();
         if (!aiReady || avail.mode !== 'live') {
           await runOfflineOcrOnFile(
@@ -292,7 +292,7 @@ export function ReceiptUploader() {
           return;
         }
 
-        setScanStatus('Scanning receipt with Gemini Vision...');
+        setScanStatus('Scanning receipt with AI Vision...');
         const imageBase64 = await fileToBase64(prepared.blob);
         const result = await enqueueAiPost<Record<string, unknown>>(
           '/api/scan-receipt',
@@ -300,12 +300,12 @@ export function ReceiptUploader() {
             imageBase64,
             mimeType: prepared.mimeType,
           },
-          { timeoutMs: 24_000 }
+          { timeoutMs: 28_000 }
         );
 
         if (!result.ok) {
           if (result.transient || result.status === 403) {
-            setGeminiConfigured(false);
+            setAiVisionConfigured(false);
             await runOfflineOcrOnFile(
               scanFile,
               'Servers are temporarily busy — switched to offline browser OCR.'
@@ -354,7 +354,7 @@ export function ReceiptUploader() {
         setScanStatus('');
       }
     },
-    [addParsedReceipt, ensureGeminiConfigured, parseAndStoreText, runOfflineOcrOnFile]
+    [addParsedReceipt, ensureVisionConfigured, parseAndStoreText, runOfflineOcrOnFile]
   );
 
   useEffect(() => {
@@ -692,7 +692,7 @@ export function ReceiptUploader() {
               Upload or paste (Ctrl+V) receipt screenshot
             </p>
             <p className="text-xs text-[#697386]" data-testid="scanner-ai-mode">
-              {geminiConfigured === false
+              {aiVisionConfigured === false
                 ? 'Offline Browser OCR + Text Parse ready'
                 : 'AI Vision extraction · PNG, JPG, WebP, or TXT'}
             </p>

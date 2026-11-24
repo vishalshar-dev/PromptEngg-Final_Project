@@ -11,7 +11,6 @@ import {
   ArrowUpDown,
   Pencil,
   Trash2,
-  CheckCircle2,
   Receipt,
   ChevronRight,
   History,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 import { SELF_PERSON_ID, type SharedExpense } from '../../types/models';
 import { useAppStore } from '../../store/useStore';
-import { formatCurrencyExact, getCategoryStyle } from '../../utils/categoryStyles';
+import { formatCurrencyExact } from '../../utils/categoryStyles';
 import {
   computeLedgerState,
   filterAndSortExpenses,
@@ -150,19 +149,11 @@ export function SplitLedgerDashboard() {
 
   return (
     <div className="space-y-5">
-      {/* Header + Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-[#365FE8]" strokeWidth={2.2} />
-          <div>
-            <h2 className="text-base font-bold tracking-tight text-[#151922]">
-              Shared Expense Splits
-            </h2>
-            <p className="text-xs text-[#697386]">
-              Multi-person balances, shared bills, and repayments
-            </p>
-          </div>
-        </div>
+      {/* Compact Actions Bar + Hairline Split KPI Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-medium text-[#697386]">
+          Track who owes whom, send UPI reminders, and record settlements.
+        </p>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -196,9 +187,9 @@ export function SplitLedgerDashboard() {
         </div>
       </div>
 
-      {/* 4 Split Dashboard Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="surface-card p-4">
+      {/* Single Hairline 4-Column Split Summary Strip */}
+      <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <ArrowUpRight className="w-4 h-4 text-[#DE5252]" strokeWidth={2.2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -214,7 +205,7 @@ export function SplitLedgerDashboard() {
           <p className="text-[11px] text-[#929BAB] mt-0.5">Payable to others</p>
         </div>
 
-        <div className="surface-card p-4">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <ArrowDownLeft className="w-4 h-4 text-[#15966B]" strokeWidth={2.2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -230,7 +221,7 @@ export function SplitLedgerDashboard() {
           <p className="text-[11px] text-[#929BAB] mt-0.5">Receivable from others</p>
         </div>
 
-        <div className="surface-card p-4">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Scale className="w-4 h-4 text-[#697386]" strokeWidth={2.2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -262,7 +253,7 @@ export function SplitLedgerDashboard() {
           </p>
         </div>
 
-        <div className="surface-card p-4">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Clock className="w-4 h-4 text-[#C7851F]" strokeWidth={2.2} />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
@@ -299,7 +290,7 @@ export function SplitLedgerDashboard() {
         </div>
 
         {people.length === 0 ? (
-          <div className="text-center py-6 bg-[#F7F8FA] rounded-xl border border-dashed border-[#D5DBE6]">
+          <div className="text-center py-6 border-t border-[#E7EAF0]">
             <p className="text-xs font-semibold text-[#151922]">
               No people added yet
             </p>
@@ -315,7 +306,7 @@ export function SplitLedgerDashboard() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="border-t border-[#E7EAF0] divide-y divide-[#E7EAF0]">
             {people.map((person) => {
               const summary = ledger.personSummaries[person.id];
               const net = summary?.netBalance ?? 0;
@@ -325,29 +316,29 @@ export function SplitLedgerDashboard() {
               return (
                 <div
                   key={person.id}
-                  className="bg-[#F7F8FA] hover:bg-white border border-[#E7EAF0] rounded-xl p-3.5 flex flex-col justify-between gap-2.5 transition-colors"
+                  className="py-3.5 first:pt-3.5 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
                 >
                   <button
                     type="button"
                     onClick={() => setSelectedPersonId(person.id)}
-                    className="text-left w-full group"
+                    className="text-left min-w-0 flex-1 group flex items-center justify-between gap-3"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">
-                          {person.name}
-                        </p>
-                        <p className="text-[11px] text-[#697386] truncate">
-                          {person.contact || `${summary?.transactions.length ?? 0} shared bills`}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-[#929BAB] group-hover:text-[#365FE8] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[13.5px] font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">
+                        {person.name}
+                      </p>
+                      <p className="text-xs text-[#697386] truncate">
+                        {person.contact || `${summary?.transactions.length ?? 0} shared bills`}
+                        {(owedToMe > 0 || iOwe > 0) && (
+                          <span className="font-mono tabular-nums">
+                            {' '}· In: ₹{formatCurrencyExact(owedToMe)} · Out: ₹{formatCurrencyExact(iOwe)}
+                          </span>
+                        )}
+                      </p>
                     </div>
-
-                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#E7EAF0] text-xs">
-                      <span className="text-[#697386] font-medium">Net</span>
+                    <div className="flex items-center gap-2 shrink-0">
                       <span
-                        className={`font-mono font-bold ${
+                        className={`text-xs font-mono font-bold tabular-nums ${
                           net > 0
                             ? 'text-[#15966B]'
                             : net < 0
@@ -361,43 +352,38 @@ export function SplitLedgerDashboard() {
                           ? `You owe ₹${formatCurrencyExact(Math.abs(net))}`
                           : 'Settled'}
                       </span>
+                      <ChevronRight className="w-4 h-4 text-[#929BAB] group-hover:text-[#365FE8]" />
                     </div>
                   </button>
 
                   {(owedToMe > 0 || iOwe > 0) && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                      <span className="text-[#697386] font-mono tabular-nums">
-                        In: ₹{formatCurrencyExact(owedToMe)} · Out: ₹
-                        {formatCurrencyExact(iOwe)}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openUpiRemind({
-                              personId: person.id,
-                              direction: owedToMe >= iOwe ? 'they_pay' : 'i_pay',
-                            })
-                          }
-                          aria-label={`UPI QR and reminder for ${person.name}`}
-                          className="font-semibold text-[#151922] hover:text-[#365FE8] bg-white border border-[#E7EAF0] hover:border-[#D4E0FF] px-2 py-1 rounded-lg inline-flex items-center gap-1 whitespace-nowrap"
-                        >
-                          <QrCode className="w-3 h-3 text-[#365FE8]" />
-                          <span>UPI / Remind</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openSettle({
-                              personId: person.id,
-                              direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
-                            })
-                          }
-                          className="font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] border border-[#D4E0FF] px-2.5 py-1 rounded-lg whitespace-nowrap"
-                        >
-                          Settle
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openUpiRemind({
+                            personId: person.id,
+                            direction: owedToMe >= iOwe ? 'they_pay' : 'i_pay',
+                          })
+                        }
+                        aria-label={`UPI QR and reminder for ${person.name}`}
+                        className="btn-secondary text-xs px-2.5 py-1 inline-flex items-center gap-1 whitespace-nowrap"
+                      >
+                        <QrCode className="w-3 h-3 text-[#365FE8]" />
+                        <span>UPI / Remind</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openSettle({
+                            personId: person.id,
+                            direction: iOwe >= owedToMe ? 'i_pay' : 'they_pay',
+                          })
+                        }
+                        className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] hover:bg-[#DFE8FF] px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors"
+                      >
+                        Settle
+                      </button>
                     </div>
                   )}
                 </div>
@@ -502,7 +488,7 @@ export function SplitLedgerDashboard() {
 
             {filteredExpenses.length === 0 ? (
               <div
-                className="text-center py-10 bg-[#F7F8FA] rounded-xl border border-dashed border-[#D5DBE6]"
+                className="text-center py-10 border-t border-[#E7EAF0]"
                 data-testid="shared-expenses-empty"
               >
                 <Receipt className="w-8 h-8 text-[#929BAB] mx-auto mb-2.5" />
@@ -518,10 +504,9 @@ export function SplitLedgerDashboard() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="border-t border-[#E7EAF0] divide-y divide-[#E7EAF0]">
                 {filteredExpenses.map((view) => {
                   const { expense } = view;
-                  const catStyle = getCategoryStyle(expense.category);
                   const isSettled = view.status === 'settled';
                   const isPartial = view.status === 'partial';
 
@@ -534,7 +519,7 @@ export function SplitLedgerDashboard() {
                   return (
                     <div
                       key={expense.id}
-                      className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-4 space-y-2.5"
+                      className="py-4 first:pt-4 last:pb-1 space-y-2.5"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -543,12 +528,15 @@ export function SplitLedgerDashboard() {
                               {expense.name}
                             </span>
                             <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}
+                              className={`text-[11px] font-semibold uppercase tracking-wide ${
+                                isSettled
+                                  ? 'text-[#15966B]'
+                                  : isPartial
+                                  ? 'text-[#9E6614]'
+                                  : 'text-[#DE5252]'
+                              }`}
                             >
-                              {expense.category}
-                            </span>
-                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md bg-white border border-[#E7EAF0] text-[#697386]">
-                              {expense.splitMethod}
+                              · {view.status}
                             </span>
                           </div>
                           <p className="text-xs text-[#697386] mt-0.5">
@@ -561,6 +549,10 @@ export function SplitLedgerDashboard() {
                             <span className="text-[#151922] font-semibold">
                               {view.paidByName}
                             </span>
+                            {' · '}
+                            {expense.category}
+                            {' · '}
+                            <span className="capitalize">{expense.splitMethod}</span>
                           </p>
                         </div>
 
@@ -568,67 +560,46 @@ export function SplitLedgerDashboard() {
                           <p className="text-sm font-bold font-mono text-[#151922] tabular-nums">
                             ₹{formatCurrencyExact(expense.totalAmount)}
                           </p>
-                          <span
-                            className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border mt-1 ${
-                              isSettled
-                                ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                                : isPartial
-                                ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
-                                : 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
-                            }`}
-                          >
-                            {isSettled ? (
-                              <CheckCircle2 className="w-3 h-3" />
+                          <div className="text-[11.5px] font-semibold mt-0.5">
+                            {view.remainingAmount === 0 ? (
+                              <span className="text-[#15966B]">
+                                Settled (₹{formatCurrencyExact(view.originalOwedAmount)})
+                              </span>
+                            ) : view.direction === 'owed_to_me' ? (
+                              <span className="text-[#15966B]">
+                                Owed to you: ₹{formatCurrencyExact(view.remainingAmount)}
+                              </span>
                             ) : (
-                              <Clock className="w-3 h-3" />
+                              <span className="text-[#DE5252]">
+                                You owe: ₹{formatCurrencyExact(view.remainingAmount)}
+                              </span>
                             )}
-                            {view.status}
-                          </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Participant Share Chips */}
-                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#E7EAF0]">
-                        {expense.participants.map((part) => {
-                          const pName =
-                            ledger.personNameMap[part.personId] ?? 'Unknown';
-                          const isSelf = part.personId === SELF_PERSON_ID;
-                          return isSelf ? (
-                            <span
-                              key={part.personId}
-                              className="text-xs font-medium bg-white border border-[#E7EAF0] text-[#697386] px-2.5 py-1 rounded-lg"
-                            >
-                              You: ₹{formatCurrencyExact(part.amount)}
-                            </span>
-                          ) : (
-                            <button
-                              key={part.personId}
-                              type="button"
-                              onClick={() => setSelectedPersonId(part.personId)}
-                              className="text-xs font-semibold bg-white hover:bg-[#EDF2FF] border border-[#E7EAF0] hover:border-[#D4E0FF] text-[#151922] hover:text-[#365FE8] px-2.5 py-1 rounded-lg transition-colors"
-                            >
-                              {pName}: ₹{formatCurrencyExact(part.amount)}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Footer Row: Owed Status + Actions */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5">
-                        <div className="text-xs font-semibold">
-                          {view.remainingAmount === 0 ? (
-                            <span className="text-[#15966B]">
-                              Fully settled (₹{formatCurrencyExact(view.originalOwedAmount)})
-                            </span>
-                          ) : view.direction === 'owed_to_me' ? (
-                            <span className="text-[#15966B]">
-                              Owed to you: ₹{formatCurrencyExact(view.remainingAmount)}
-                            </span>
-                          ) : (
-                            <span className="text-[#DE5252]">
-                              You owe: ₹{formatCurrencyExact(view.remainingAmount)}
-                            </span>
-                          )}
+                      {/* Participant Shares + Row Actions */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#697386]">
+                          {expense.participants.map((part) => {
+                            const pName =
+                              ledger.personNameMap[part.personId] ?? 'Unknown';
+                            const isSelf = part.personId === SELF_PERSON_ID;
+                            return isSelf ? (
+                              <span key={part.personId} className="font-mono tabular-nums">
+                                You: ₹{formatCurrencyExact(part.amount)}
+                              </span>
+                            ) : (
+                              <button
+                                key={part.personId}
+                                type="button"
+                                onClick={() => setSelectedPersonId(part.personId)}
+                                className="font-semibold text-[#151922] hover:text-[#365FE8] underline decoration-[#E7EAF0] underline-offset-2 font-mono tabular-nums transition-colors"
+                              >
+                                {pName}: ₹{formatCurrencyExact(part.amount)}
+                              </button>
+                            );
+                          })}
                         </div>
 
                         <div className="flex items-center gap-1.5">
@@ -643,9 +614,9 @@ export function SplitLedgerDashboard() {
                                       view.direction === 'i_owe' ? 'i_pay' : 'they_pay',
                                   })
                                 }
-                                className="text-xs font-semibold bg-white hover:bg-[#EDF2FF] text-[#151922] hover:text-[#365FE8] border border-[#E7EAF0] hover:border-[#D4E0FF] px-2.5 py-1 rounded-lg transition-colors inline-flex items-center gap-1 whitespace-nowrap"
+                                className="btn-secondary text-xs px-2.5 py-1 inline-flex items-center gap-1 whitespace-nowrap"
                               >
-                                <QrCode className="w-3 h-3" />
+                                <QrCode className="w-3 h-3 text-[#365FE8]" />
                                 <span>UPI / Remind</span>
                               </button>
                               <button
@@ -658,7 +629,7 @@ export function SplitLedgerDashboard() {
                                     expenseId: expense.id,
                                   })
                                 }
-                                className="text-xs font-semibold bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8] border border-[#D4E0FF] px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                                className="text-xs font-semibold bg-[#EDF2FF] hover:bg-[#DFE8FF] text-[#365FE8] px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
                               >
                                 Settle
                               </button>
@@ -671,7 +642,7 @@ export function SplitLedgerDashboard() {
                               setExpenseModalOpen(true);
                             }}
                             aria-label={`Edit shared expense ${expense.name}`}
-                            className="p-1.5 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-white transition-colors"
+                            className="p-1.5 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-[#F1F3F6] transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -715,7 +686,7 @@ export function SplitLedgerDashboard() {
             )}
           </>
         ) : sortedSettlements.length === 0 ? (
-          <div className="text-center py-10 bg-[#F7F8FA] rounded-xl border border-dashed border-[#D5DBE6]">
+          <div className="text-center py-10 border-t border-[#E7EAF0]">
             <History className="w-8 h-8 text-[#929BAB] mx-auto mb-2.5" />
             <p className="text-sm font-semibold text-[#151922]">No repayments recorded yet</p>
             <p className="text-xs text-[#697386] mt-1">
@@ -723,7 +694,7 @@ export function SplitLedgerDashboard() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="border-t border-[#E7EAF0] divide-y divide-[#E7EAF0]">
             {sortedSettlements.map((st) => {
               const fromName = ledger.personNameMap[st.fromPersonId] ?? 'Unknown';
               const toName = ledger.personNameMap[st.toPersonId] ?? 'Unknown';
@@ -734,7 +705,7 @@ export function SplitLedgerDashboard() {
               return (
                 <div
                   key={st.id}
-                  className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 flex items-center justify-between gap-2"
+                  className="py-3.5 first:pt-3.5 last:pb-1 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-[#151922]">

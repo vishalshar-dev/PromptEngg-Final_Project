@@ -2,42 +2,18 @@ import { useState, useRef } from 'react';
 import { Download, Upload, Database, Check, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency } from '../../utils/categoryStyles';
-import { normalizeBackupPayload } from '../../utils/storeHelpers';
+import {
+  buildWorkspaceBackupPayload,
+  downloadWorkspaceBackup,
+  normalizeBackupPayload,
+} from '../../utils/storeHelpers';
 
 type ToastState = { type: 'success' | 'error'; message: string } | null;
 
 export function DataBackup() {
-  const transactions = useAppStore((s) => s.transactions);
-  const items = useAppStore((s) => s.items);
-  const categories = useAppStore((s) => s.categories);
-  const categoryConfigs = useAppStore((s) => s.categoryConfigs);
-  const priceHistory = useAppStore((s) => s.priceHistory);
-  const purchaseHistory = useAppStore((s) => s.purchaseHistory);
-  const basketTemplates = useAppStore((s) => s.basketTemplates);
-  const basketTemplatesSeeded = useAppStore((s) => s.basketTemplatesSeeded);
+  const transactionsCount = useAppStore((s) => s.transactions.length);
+  const savedAuditsCount = useAppStore((s) => s.savedAudits.length);
   const totalBudget = useAppStore((s) => s.totalBudget);
-  const sessionBudget = useAppStore((s) => s.sessionBudget);
-  const categoryCaps = useAppStore((s) => s.categoryCaps);
-  const savedAudits = useAppStore((s) => s.savedAudits);
-  const people = useAppStore((s) => s.people);
-  const sharedExpenses = useAppStore((s) => s.sharedExpenses);
-  const settlements = useAppStore((s) => s.settlements);
-  const priceObservations = useAppStore((s) => s.priceObservations);
-  const priceAlerts = useAppStore((s) => s.priceAlerts);
-  const isBrokeMode = useAppStore((s) => s.isBrokeMode);
-  const brokeModeConfig = useAppStore((s) => s.brokeModeConfig);
-  const categoryLimits = useAppStore((s) => s.categoryLimits);
-  const warRoomChallenges = useAppStore((s) => s.warRoomChallenges);
-  const warRoomTargets = useAppStore((s) => s.warRoomTargets);
-  const dismissedWarRoomAlerts = useAppStore((s) => s.dismissedWarRoomAlerts);
-  const disciplineCheckIns = useAppStore((s) => s.disciplineCheckIns);
-  const theme = useAppStore((s) => s.theme);
-  const visualTheme = useAppStore((s) => s.visualTheme);
-  const budgetResetDay = useAppStore((s) => s.budgetResetDay);
-  const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
-  const featureSettings = useAppStore((s) => s.featureSettings);
-  const pennyMessages = useAppStore((s) => s.pennyMessages);
-  const pennyProfile = useAppStore((s) => s.pennyProfile);
   const importBackupData = useAppStore((s) => s.importBackupData);
 
   const [toast, setToast] = useState<ToastState>(null);
@@ -49,53 +25,8 @@ export function DataBackup() {
   };
 
   const handleExport = () => {
-    const customItems = items;
-    const backup = {
-      version: 1 as const,
-      exportedAt: new Date().toISOString(),
-      transactions,
-      customItems,
-      categories,
-      categoryConfigs,
-      priceHistory,
-      purchaseHistory,
-      basketTemplates,
-      basketTemplatesSeeded,
-      priceObservations,
-      priceAlerts,
-      totalBudget,
-      budgetResetDay,
-      budgetRolloverEnabled,
-      sessionBudget,
-      categoryCaps,
-      savedAudits,
-      people,
-      sharedExpenses,
-      settlements,
-      isBrokeMode,
-      brokeModeConfig,
-      categoryLimits,
-      warRoomChallenges,
-      warRoomTargets,
-      dismissedWarRoomAlerts,
-      disciplineCheckIns,
-      theme,
-      visualTheme,
-      featureSettings,
-      pennyMessages,
-      pennyProfile,
-    };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cartaudit-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const payload = buildWorkspaceBackupPayload(useAppStore.getState());
+    downloadWorkspaceBackup(payload);
     showToast('success', 'Backup exported successfully');
   };
 
@@ -149,25 +80,25 @@ export function DataBackup() {
         </div>
       </div>
 
-      {/* Backup Stats */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="surface-subtle p-2.5 text-center">
+      {/* Hairline Backup Summary */}
+      <div className="grid grid-cols-3 divide-x divide-[#E7EAF0] border-y border-[#E7EAF0] py-2.5">
+        <div className="text-center px-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
             Txns
           </p>
           <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
-            {transactions.length}
+            {transactionsCount}
           </p>
         </div>
-        <div className="surface-subtle p-2.5 text-center">
+        <div className="text-center px-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
             Audits
           </p>
           <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
-            {savedAudits.length}
+            {savedAuditsCount}
           </p>
         </div>
-        <div className="surface-subtle p-2.5 text-center">
+        <div className="text-center px-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
             Budget
           </p>

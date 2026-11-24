@@ -178,30 +178,6 @@ export function SurvivalSandbox({
       <PageHeader
         title="Financial Wellness"
         description="Track your spending discipline, Broke Mode guardrails, category caps, and behavioural insights."
-        actions={
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span
-              className={`text-xs font-bold px-2.5 py-1.5 rounded-lg border ${
-                brokeStatus.enabled
-                  ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
-                  : 'bg-[#F1F3F6] text-[#697386] border-[#E7EAF0]'
-              }`}
-            >
-              {brokeStatus.enabled ? 'Broke Mode Active' : 'Normal Oversight'}
-            </span>
-            <button
-              type="button"
-              onClick={toggleBrokeMode}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-colors whitespace-nowrap ${
-                brokeStatus.enabled
-                  ? 'bg-[#FDECEC] hover:bg-[#FADADA] text-[#DE5252] border-[#F6B8B8]'
-                  : 'btn-primary border-[#365FE8]'
-              }`}
-            >
-              {brokeStatus.enabled ? 'Deactivate Broke Mode' : 'Activate Broke Mode'}
-            </button>
-          </div>
-        }
       />
 
       {/* Sub-view Switcher */}

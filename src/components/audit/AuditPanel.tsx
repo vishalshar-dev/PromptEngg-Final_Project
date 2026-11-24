@@ -1,14 +1,15 @@
-import { useEffect, useRef } from 'react';
-import { PageHeader } from '../ui/PageHeader';
+import { useEffect, useRef, useState } from 'react';
+import { ScanLine, Scale, LineChart, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { ReceiptUploader } from './ReceiptUploader';
 import { FeeDetector } from './FeeDetector';
-import { PriceTrendTracker } from './PriceTrendTracker';
 import { ExportReport } from './ExportReport';
 import { BudgetGuardrail } from './BudgetGuardrail';
 import { AuditHistory } from './AuditHistory';
 import { DataBackup } from './DataBackup';
 import { CartComparator } from './CartComparator';
+
+export type ScannerTab = 'scan' | 'tools';
 
 export function AuditPanel({
   onOpenPriceTracker,
@@ -22,85 +23,150 @@ export function AuditPanel({
   const featureSettings = useAppStore((s) => s.featureSettings);
   const comparatorRef = useRef<HTMLDivElement>(null);
 
+  const hasToolsTab =
+    featureSettings.showAuditComparator || featureSettings.showAuditExportBackup;
+  const [activeTab, setActiveTab] = useState<ScannerTab>('scan');
+
+  useEffect(() => {
+    if (!hasToolsTab && activeTab === 'tools') {
+      setActiveTab('scan');
+    }
+  }, [hasToolsTab, activeTab]);
+
   useEffect(() => {
     if (focusTarget === 'comparator' && featureSettings.showAuditComparator) {
+      setActiveTab('tools');
       const timer = window.setTimeout(() => {
         comparatorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 80);
+      }, 100);
       return () => window.clearTimeout(timer);
     }
   }, [focusTarget, focusSignal, featureSettings.showAuditComparator]);
 
-  const showRightCol =
-    featureSettings.showAuditComparator ||
-    featureSettings.showPriceTracker ||
-    featureSettings.showAuditExportBackup;
+  const showRightScanCol =
+    featureSettings.showAuditFeeScanner || featureSettings.showAuditHistory;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Receipt Scanner"
-        description="Scan receipts with AI vision, detect hidden checkout fees, compare quick-commerce carts, and export backups."
-      />
+    <div className="space-y-5">
+      {/* Header + Integrated Underline Tab Strip */}
+      <div className="border-b border-[#E7EAF0]">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4">
+          <div className="min-w-0">
+            <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
+              Receipt Scanner
+            </h1>
+            <p className="text-[13.5px] text-[#697386] mt-1 max-w-2xl leading-relaxed">
+              Scan receipts with AI vision, detect hidden checkout fees, compare quick-commerce carts, and export backups.
+            </p>
+          </div>
+          {featureSettings.showPriceTracker &&
+            featureSettings.showInsights &&
+            onOpenPriceTracker && (
+              <button
+                type="button"
+                onClick={onOpenPriceTracker}
+                className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto"
+              >
+                <LineChart className="w-4 h-4" />
+                <span>Price Intelligence</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+        </div>
 
-      {/* Responsive 2-column grid on desktop */}
-      <div className={`grid grid-cols-1 ${showRightCol ? 'lg:grid-cols-2' : ''} gap-6 items-start`}>
-        <div className="space-y-6">
-          {/* Session Budget Guardrail */}
-          {featureSettings.showAuditGuardrail && <BudgetGuardrail />}
+        <div
+          role="tablist"
+          aria-label="Receipt scanner views"
+          className="flex items-center gap-6 -mb-px overflow-x-auto no-scrollbar"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'scan'}
+            onClick={() => setActiveTab('scan')}
+            className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'scan'
+                ? 'border-[#365FE8] text-[#365FE8]'
+                : 'border-transparent text-[#697386] hover:text-[#151922]'
+            }`}
+          >
+            <ScanLine className="w-4 h-4" />
+            Scan &amp; Audit
+          </button>
 
-          {/* Receipt OCR Scanner */}
-          <div className="surface-card p-5">
-            <ReceiptUploader />
+          {hasToolsTab && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'tools'}
+              onClick={() => setActiveTab('tools')}
+              className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'tools'
+                  ? 'border-[#365FE8] text-[#365FE8]'
+                  : 'border-transparent text-[#697386] hover:text-[#151922]'
+              }`}
+            >
+              <Scale className="w-4 h-4" />
+              Comparator &amp; Exports
+            </button>
+          )}
+        </div>
+      </div>
+
+      {activeTab === 'scan' ? (
+        <div
+          className={`grid grid-cols-1 ${showRightScanCol ? 'lg:grid-cols-12' : ''} gap-6 items-start`}
+        >
+          <div className={`${showRightScanCol ? 'lg:col-span-7' : ''} space-y-6`}>
+            {featureSettings.showAuditGuardrail && <BudgetGuardrail />}
+            <div className="surface-card p-5">
+              <ReceiptUploader />
+            </div>
           </div>
 
-          {/* Fee Detector */}
-          {featureSettings.showAuditFeeScanner && (
-            <div className="surface-card p-5">
-              <FeeDetector />
-            </div>
-          )}
-
-          {/* Saved Audit History */}
-          {featureSettings.showAuditHistory && (
-            <div className="surface-card p-5">
-              <AuditHistory />
+          {showRightScanCol && (
+            <div className="lg:col-span-5 space-y-6">
+              {featureSettings.showAuditFeeScanner && (
+                <div className="surface-card p-5">
+                  <FeeDetector />
+                </div>
+              )}
+              {featureSettings.showAuditHistory && (
+                <div className="surface-card p-5">
+                  <AuditHistory />
+                </div>
+              )}
             </div>
           )}
         </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {featureSettings.showAuditComparator && (
+            <div
+              id="cart-comparator"
+              ref={comparatorRef}
+              className={`${
+                featureSettings.showAuditExportBackup ? 'lg:col-span-7' : 'lg:col-span-12'
+              } surface-card p-5 scroll-mt-16`}
+            >
+              <CartComparator />
+            </div>
+          )}
 
-        {showRightCol && (
-          <div className="space-y-6">
-            {/* Multi-App Cart Comparator */}
-            {featureSettings.showAuditComparator && (
-              <div id="cart-comparator" ref={comparatorRef} className="surface-card p-5 scroll-mt-16">
-                <CartComparator />
+          {featureSettings.showAuditExportBackup && (
+            <div
+              className={`${
+                featureSettings.showAuditComparator ? 'lg:col-span-5' : 'lg:col-span-12'
+              } surface-card p-5 divide-y divide-[#E7EAF0] space-y-6`}
+            >
+              <ExportReport />
+              <div className="pt-6">
+                <DataBackup />
               </div>
-            )}
-
-            {/* Price Trends */}
-            {featureSettings.showPriceTracker && (
-              <div className="surface-card p-5">
-                <PriceTrendTracker onOpenPriceTracker={onOpenPriceTracker} />
-              </div>
-            )}
-
-            {/* Export Report */}
-            {featureSettings.showAuditExportBackup && (
-              <>
-                <div className="surface-card p-5">
-                  <ExportReport />
-                </div>
-
-                {/* Data Backup & Restore */}
-                <div className="surface-card p-5">
-                  <DataBackup />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,13 @@ import type { Request, Response } from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
+import {
+  chooseGroqModelCandidates,
+  normalizePennyChatPayload,
+  normalizePennyExpensePayload,
+  normalizeReceiptScanPayload,
+  parseJsonObjectFromLlm,
+} from './src/utils/aiPayloadNormalizer.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,23 +23,51 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/gif',
 ]);
 
-interface GeminiKeyCandidate {
+interface ApiKeyCandidate {
   key: string;
   source: string;
 }
 
-function getGeminiKeyCandidates(): GeminiKeyCandidate[] {
-  const rawCandidates: Array<[string, string | undefined]> = [
-    ['CartAudit_GEMINIAPI_KEY', process.env.CartAudit_GEMINIAPI_KEY],
-    ['CARTAUDIT_GEMINIAPI_KEY', process.env.CARTAUDIT_GEMINIAPI_KEY],
-    ['CartAudit_GEMINI_API_KEY', process.env.CartAudit_GEMINI_API_KEY],
-    ['CARTAUDIT_GEMINI_API_KEY', process.env.CARTAUDIT_GEMINI_API_KEY],
-    ['GEMINI_API_KEY', process.env.GEMINI_API_KEY],
-    ['GOOGLE_API_KEY', process.env.GOOGLE_API_KEY],
-    ['API_KEY', process.env.API_KEY],
-  ];
+const PROVIDER_COOLDOWN_MS = 35_000;
+const GROQ_CHAT_PREFERRED_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+const GROQ_QUICK_PREFERRED_MODELS = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+const GROQ_VISION_PREFERRED_MODELS = ['qwen/qwen3.8-27b'];
+
+const providerCooldownUntil: Record<'gemini' | 'groq', number> = {
+  gemini: 0,
+  groq: 0,
+};
+
+let groqModelsCache: { fetchedAt: number; ids: string[] } = {
+  fetchedAt: 0,
+  ids: [],
+};
+
+function isProviderInCooldown(provider: 'gemini' | 'groq'): boolean {
+  return providerCooldownUntil[provider] > Date.now();
+}
+
+function getProviderCooldownSecs(provider: 'gemini' | 'groq'): number {
+  const remaining = providerCooldownUntil[provider] - Date.now();
+  return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
+}
+
+function markProviderCooldown(
+  provider: 'gemini' | 'groq',
+  ms: number = PROVIDER_COOLDOWN_MS
+): void {
+  providerCooldownUntil[provider] = Date.now() + ms;
+}
+
+function clearProviderCooldown(provider: 'gemini' | 'groq'): void {
+  providerCooldownUntil[provider] = 0;
+}
+
+function collectKeyCandidates(
+  rawCandidates: Array<[string, string | undefined]>
+): ApiKeyCandidate[] {
   const seen = new Set<string>();
-  const result: GeminiKeyCandidate[] = [];
+  const result: ApiKeyCandidate[] = [];
   for (const [source, raw] of rawCandidates) {
     if (!raw) continue;
     const cleaned = raw.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
@@ -43,8 +78,35 @@ function getGeminiKeyCandidates(): GeminiKeyCandidate[] {
   return result;
 }
 
-function resolveGeminiKeyInfo(): GeminiKeyCandidate | undefined {
+function getGeminiKeyCandidates(): ApiKeyCandidate[] {
+  return collectKeyCandidates([
+    ['CartAudit_GEMINIAPI_KEY', process.env.CartAudit_GEMINIAPI_KEY],
+    ['CARTAUDIT_GEMINIAPI_KEY', process.env.CARTAUDIT_GEMINIAPI_KEY],
+    ['CartAudit_GEMINI_API_KEY', process.env.CartAudit_GEMINI_API_KEY],
+    ['CARTAUDIT_GEMINI_API_KEY', process.env.CARTAUDIT_GEMINI_API_KEY],
+    ['GEMINI_API_KEY', process.env.GEMINI_API_KEY],
+    ['GOOGLE_API_KEY', process.env.GOOGLE_API_KEY],
+    ['API_KEY', process.env.API_KEY],
+  ]);
+}
+
+function getGroqKeyCandidates(): ApiKeyCandidate[] {
+  return collectKeyCandidates([
+    ['CartAudit_GROQAPI_KEY', process.env.CartAudit_GROQAPI_KEY],
+    ['CARTAUDIT_GROQAPI_KEY', process.env.CARTAUDIT_GROQAPI_KEY],
+    ['CartAudit_GROQ_API_KEY', process.env.CartAudit_GROQ_API_KEY],
+    ['CARTAUDIT_GROQ_API_KEY', process.env.CARTAUDIT_GROQ_API_KEY],
+    ['GROQ_API_KEY', process.env.GROQ_API_KEY],
+    ['GROQ_KEY', process.env.GROQ_KEY],
+  ]);
+}
+
+function resolveGeminiKeyInfo(): ApiKeyCandidate | undefined {
   return getGeminiKeyCandidates()[0];
+}
+
+function resolveGroqKeyInfo(): ApiKeyCandidate | undefined {
+  return getGroqKeyCandidates()[0];
 }
 
 function createGeminiClient(apiKey: string): GoogleGenAI {
@@ -154,6 +216,206 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function isModelUnavailableError(status: number, message: string, code: string): boolean {
+  const lower = `${code} ${message}`.toLowerCase();
+  return (
+    status === 404 ||
+    lower.includes('model_not_found') ||
+    lower.includes('model_decommissioned') ||
+    lower.includes('does not exist') ||
+    lower.includes('decommissioned')
+  );
+}
+
+async function fetchGroqModelCatalog(apiKey: string, forceRefresh = false): Promise<string[]> {
+  if (!forceRefresh && groqModelsCache.ids.length > 0 && Date.now() - groqModelsCache.fetchedAt < 5 * 60_000) {
+    return groqModelsCache.ids;
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: controller.signal,
+    });
+    if (!res.ok) return groqModelsCache.ids;
+    const json = (await res.json()) as { data?: Array<{ id?: string }> };
+    const ids = Array.isArray(json.data)
+      ? json.data.map((m) => m.id).filter((id): id is string => typeof id === 'string' && id.length > 0)
+      : [];
+    if (ids.length > 0) {
+      groqModelsCache = { fetchedAt: Date.now(), ids };
+    }
+    return ids;
+  } catch {
+    return groqModelsCache.ids;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function callGroqChatCompletion(params: {
+  apiKey: string;
+  model: string;
+  messages: Array<{ role: 'system' | 'user'; content: unknown }>;
+  timeoutMs: number;
+  maxCompletionTokens?: number;
+}): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), params.timeoutMs);
+
+  try {
+    const payload: Record<string, unknown> = {
+      model: params.model,
+      messages: params.messages,
+      temperature: 0.2,
+      max_completion_tokens: params.maxCompletionTokens ?? 4096,
+      response_format: { type: 'json_object' },
+    };
+
+    if (params.model.includes('gpt-oss')) {
+      payload.reasoning_effort = 'low';
+    }
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${params.apiKey}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    const rawBody = await res.text();
+    let parsedBody: {
+      error?: { message?: string; code?: string; type?: string };
+      choices?: Array<{ message?: { content?: string | null } }>;
+    } | null = null;
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      parsedBody = null;
+    }
+
+    if (!res.ok) {
+      const errMsg = parsedBody?.error?.message || `Groq request failed (${res.status}).`;
+      const err = new Error(errMsg) as Error & { status?: number; code?: string };
+      err.status = res.status;
+      err.code = parsedBody?.error?.code || parsedBody?.error?.type || `GROQ_${res.status}`;
+      throw err;
+    }
+
+    const content = parsedBody?.choices?.[0]?.message?.content;
+    if (typeof content !== 'string' || !content.trim()) {
+      const err = new Error(`Groq (${params.model}) returned an empty response.`) as Error & {
+        status?: number;
+        code?: string;
+      };
+      err.status = 502;
+      err.code = 'EMPTY_RESPONSE';
+      throw err;
+    }
+
+    return content;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      const timeoutErr = new Error(
+        `Groq (${params.model}) timed out after ${Math.round(params.timeoutMs / 1000)}s.`
+      ) as Error & { status?: number; code?: string };
+      timeoutErr.status = 504;
+      timeoutErr.code = 'UPSTREAM_TIMEOUT';
+      throw timeoutErr;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function runWithGroqFallback(params: {
+  operationName: string;
+  preferredModels: string[];
+  kind: 'chat' | 'vision';
+  messages: Array<{ role: 'system' | 'user'; content: unknown }>;
+  timeoutMs: number;
+  maxCompletionTokens?: number;
+}): Promise<{ text: string; model: string }> {
+  const candidates = getGroqKeyCandidates();
+  if (candidates.length === 0) {
+    const err = new Error('No Groq API key is configured on the server.') as Error & {
+      code?: string;
+      status?: number;
+    };
+    err.code = 'MISSING_GROQ_KEY';
+    err.status = 503;
+    throw err;
+  }
+
+  let lastErr: unknown;
+  for (const keyCandidate of candidates) {
+    let modelsToTry = chooseGroqModelCandidates(
+      params.preferredModels,
+      groqModelsCache.ids,
+      params.kind
+    );
+    let refreshedCatalog = false;
+
+    for (let mIdx = 0; mIdx < modelsToTry.length; mIdx++) {
+      const model = modelsToTry[mIdx];
+      try {
+        const text = await callGroqChatCompletion({
+          apiKey: keyCandidate.key,
+          model,
+          messages: params.messages,
+          timeoutMs: params.timeoutMs,
+          maxCompletionTokens: params.maxCompletionTokens,
+        });
+        clearProviderCooldown('groq');
+        return { text, model };
+      } catch (err) {
+        lastErr = err;
+        const parsed = extractReadableError(err);
+        console.warn(
+          `[${params.operationName}] Groq (${model}) failed (${parsed.status}): ${parsed.message}`
+        );
+
+        if (isModelUnavailableError(parsed.status, parsed.message, parsed.code) && !refreshedCatalog) {
+          refreshedCatalog = true;
+          const liveIds = await fetchGroqModelCatalog(keyCandidate.key, true);
+          const refreshed = chooseGroqModelCandidates(params.preferredModels, liveIds, params.kind).filter(
+            (id) => id !== model
+          );
+          if (refreshed.length > 0) {
+            modelsToTry = [model, ...refreshed];
+            continue;
+          }
+        }
+
+        if (
+          isTransientUpstreamError(parsed.status, parsed.message, parsed.code) ||
+          isModelUnavailableError(parsed.status, parsed.message, parsed.code)
+        ) {
+          if (mIdx < modelsToTry.length - 1) {
+            await sleep(300);
+            continue;
+          }
+          if (isTransientUpstreamError(parsed.status, parsed.message, parsed.code)) {
+            markProviderCooldown('groq');
+          }
+        }
+
+        if (isAuthKeyError(parsed.status, parsed.message, parsed.code)) {
+          break; // try next Groq key candidate if any
+        }
+        throw err;
+      }
+    }
+  }
+
+  throw lastErr;
+}
+
 async function runReceiptVisionModel(
   ai: GoogleGenAI,
   model: string,
@@ -256,12 +518,7 @@ async function runReceiptVisionModel(
 }
 
 function parseJsonResponse(rawText: string): unknown {
-  const cleaned = rawText
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
-  return JSON.parse(cleaned || '{}');
+  return parseJsonObjectFromLlm(rawText);
 }
 
 async function startServer() {
@@ -270,12 +527,25 @@ async function startServer() {
 
   app.get('/api/health', (_req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    const info = resolveGeminiKeyInfo();
+    const geminiInfo = resolveGeminiKeyInfo();
+    const groqInfo = resolveGroqKeyInfo();
+    const geminiConfigured = Boolean(geminiInfo);
+    const groqConfigured = Boolean(groqInfo);
+    const aiConfigured = geminiConfigured || groqConfigured;
     res.json({
       ok: true,
-      geminiConfigured: Boolean(info),
-      keySource: info?.source ?? null,
+      geminiConfigured,
+      groqConfigured,
+      aiConfigured,
+      visionConfigured: aiConfigured,
+      pennyConfigured: aiConfigured,
+      keySource: geminiInfo?.source ?? null,
+      groqKeySource: groqInfo?.source ?? null,
       model: 'gemini-4-hydrogen',
+      pennyModel: groqConfigured ? GROQ_CHAT_PREFERRED_MODELS[0] : 'gemini-4-hydrogen',
+      visionFallbackModel: groqConfigured ? GROQ_VISION_PREFERRED_MODELS[0] : 'tesseract-ocr',
+      geminiCooldownSecs: getProviderCooldownSecs('gemini'),
+      groqCooldownSecs: getProviderCooldownSecs('groq'),
     });
   });
 
@@ -299,52 +569,144 @@ async function startServer() {
         return;
       }
 
+      const safeMime = normalizedMime === 'image/jpg' ? 'image/jpeg' : normalizedMime;
       const startedAt = Date.now();
-      let modelUsed = 'gemini-4-hydrogen';
+      const geminiConfigured = Boolean(resolveGeminiKeyInfo());
+      const groqConfigured = Boolean(resolveGroqKeyInfo());
+      const skipGeminiDueToCooldown = isProviderInCooldown('gemini') && groqConfigured;
 
-      const response = await runWithGeminiFallback('scan-receipt', async (ai) => {
+      let lastErr: unknown = null;
+
+      // 1. Primary Vision: Gemini (skipped briefly if Gemini is in cooldown and Groq is ready)
+      if (geminiConfigured && !skipGeminiDueToCooldown) {
         try {
-          modelUsed = 'gemini-4-hydrogen';
-          return await runReceiptVisionModel(
-            ai,
-            'gemini-4-hydrogen',
-            normalizedMime,
-            imageBase64,
-            true,
-            9000
+          let modelUsed = 'gemini-4-hydrogen';
+          const response = await runWithGeminiFallback('scan-receipt', async (ai) => {
+            try {
+              modelUsed = 'gemini-4-hydrogen';
+              return await runReceiptVisionModel(
+                ai,
+                'gemini-4-hydrogen',
+                normalizedMime,
+                imageBase64,
+                true,
+                9000
+              );
+            } catch (primaryErr) {
+              const parsedPrimary = extractReadableError(primaryErr);
+              console.warn(
+                `[scan-receipt] Gemini primary (${modelUsed}) error (${parsedPrimary.status}): ${parsedPrimary.message}`
+              );
+              if (
+                !isTransientUpstreamError(
+                  parsedPrimary.status,
+                  parsedPrimary.message,
+                  parsedPrimary.code
+                )
+              ) {
+                throw primaryErr;
+              }
+              await sleep(450);
+              modelUsed = 'gemini-3.1-flash-lite';
+              return await runReceiptVisionModel(
+                ai,
+                modelUsed,
+                normalizedMime,
+                imageBase64,
+                false,
+                14000
+              );
+            }
+          });
+
+          clearProviderCooldown('gemini');
+          console.info(
+            `[scan-receipt] Gemini (${modelUsed}) succeeded in ${Date.now() - startedAt}ms`
           );
-        } catch (primaryErr) {
-          const parsedPrimary = extractReadableError(primaryErr);
-          console.warn(
-            `[scan-receipt] Primary model (${modelUsed}) error (${parsedPrimary.status}): ${parsedPrimary.message}`
+          const normalized = normalizeReceiptScanPayload(
+            parseJsonResponse(response.text ?? '{}')
           );
-          if (
-            !isTransientUpstreamError(
-              parsedPrimary.status,
-              parsedPrimary.message,
-              parsedPrimary.code
-            )
-          ) {
-            throw primaryErr;
+          res.json({
+            ...normalized,
+            provider: 'gemini',
+            model: modelUsed,
+          });
+          return;
+        } catch (geminiErr) {
+          lastErr = geminiErr;
+          const parsed = extractReadableError(geminiErr);
+          if (isTransientUpstreamError(parsed.status, parsed.message, parsed.code)) {
+            markProviderCooldown('gemini');
           }
-          await sleep(550);
-          modelUsed = 'gemini-3.1-flash-lite';
-          return await runReceiptVisionModel(
-            ai,
-            modelUsed,
-            normalizedMime,
-            imageBase64,
-            false,
-            15000
+          if (!groqConfigured) {
+            throw geminiErr;
+          }
+          console.warn(
+            `[scan-receipt] Gemini Vision unavailable (${parsed.status}: ${parsed.message}); failing over to Groq Vision.`
           );
         }
-      });
+      }
 
-      console.info(
-        `[scan-receipt] ${modelUsed} succeeded in ${Date.now() - startedAt}ms`
-      );
-      const parsed = parseJsonResponse(response.text ?? '{}');
-      res.json(parsed);
+      // 2. Secondary Vision Fallback: Groq Vision (qwen/qwen3.8-27b)
+      if (groqConfigured && !isProviderInCooldown('groq')) {
+        const visionPrompt =
+          'You are a precise receipt and grocery-app checkout parser for Indian quick-commerce platforms (Blinkit, Zepto, Swiggy Instamart, BigBasket, Amazon Fresh, JioMart) and retail/pharmacy receipts. ' +
+          'ONLY extract visibly readable items, merchant names, prices, taxes, and fees. Never invent or fabricate items if the image is blank or unreadable. ' +
+          'Ignore strikethrough MRP prices and use the actual charged price per item in INR. ' +
+          'Return a single valid JSON object with keys: ' +
+          '{"merchant": string, "date": string (ISO 8601 or ""), "items": [{"name": string, "price": number, "category": string, "unit": string, "brand": string}], "subtotal": number, "taxTotal": number, "deliveryFee": number, "total": number}. ' +
+          'Valid categories: Groceries, Fruits & Vegetables, Dairy & Bakery, Snacks & Beverages, Meat & Eggs, Personal Care, Household Essentials, Cleaning Supplies, Electronics, Clothing & Accessories, Medicines & Healthcare, Stationery, Mobile & Internet Bills, Electricity & Utilities, Fuel & Transportation, Entertainment, Other Expenses.';
+
+        const groqResult = await runWithGroqFallback({
+          operationName: 'scan-receipt',
+          preferredModels: GROQ_VISION_PREFERRED_MODELS,
+          kind: 'vision',
+          timeoutMs: 14000,
+          maxCompletionTokens: 3000,
+          messages: [
+            { role: 'system', content: visionPrompt },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Extract all visible purchased items, fees, taxes, and totals from this receipt as JSON.',
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${safeMime};base64,${imageBase64}`,
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        console.info(
+          `[scan-receipt] Groq (${groqResult.model}) succeeded in ${Date.now() - startedAt}ms`
+        );
+        const normalized = normalizeReceiptScanPayload(
+          parseJsonResponse(groqResult.text)
+        );
+        res.json({
+          ...normalized,
+          provider: 'groq',
+          model: groqResult.model,
+        });
+        return;
+      }
+
+      if (lastErr) {
+        throw lastErr;
+      }
+
+      const unavailableErr = new Error(
+        'Cloud AI Vision providers are currently busy or unconfigured.'
+      ) as Error & { status?: number; code?: string };
+      unavailableErr.status = 503;
+      unavailableErr.code = 'UNAVAILABLE';
+      throw unavailableErr;
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[scan-receipt] Error (${status}): ${message}`);
@@ -358,7 +720,7 @@ async function startServer() {
 
       if (status === 429 || message.includes('RESOURCE_EXHAUSTED')) {
         res.status(429).json({
-          error: 'Gemini API rate limit or quota reached. Please wait a moment and try again.',
+          error: 'AI Vision rate limit reached. Switching to offline browser OCR.',
           code: 'RESOURCE_EXHAUSTED',
         });
         return;
@@ -660,27 +1022,131 @@ async function startServer() {
         ]);
       };
 
-      const response = await runWithGeminiFallback('penny-chat', async (ai) => {
-        try {
-          return await runPennyChatModel(ai, 'gemini-4-hydrogen', true, 6500);
-        } catch (primaryErr) {
-          const parsedPrimary = extractReadableError(primaryErr);
-          if (
-            !isTransientUpstreamError(
-              parsedPrimary.status,
-              parsedPrimary.message,
-              parsedPrimary.code
-            )
-          ) {
-            throw primaryErr;
-          }
-          await sleep(550);
-          return await runPennyChatModel(ai, 'gemini-3.1-flash-lite', false, 7500);
-        }
-      });
+      const geminiConfigured = Boolean(resolveGeminiKeyInfo());
+      const groqConfigured = Boolean(resolveGroqKeyInfo());
+      const systemInstructionText =
+        'You are Penny, a full-fledged, conversational AI companion inside CartAudit (an Indian INR ₹ spending, Quick Mart grocery & bills cart, split-ledger, receipt scanner, price tracker, and budget guardrail app). ' +
+        `Current screen: "${activeScreen}". User personality profile (${resolvedSummary}, primary focus: ${topFocus}). ` +
+        `${styleDirectives.join(' ')} ` +
+        'CAPABILITIES: Answer ANY question the user asks naturally — personal spending history, upcoming bills/refills, split balances, cart affordability, Indian grocery/meal planning on a budget, savings strategies, or general everyday conversation. ' +
+        'GROUNDING RULE: Whenever referencing the user’s CartAudit numbers, past transactions, splits, people, upcoming recurring items, baskets, or Quick Mart catalog items/prices, ONLY cite facts present in the provided JSON context. Never invent fake user transactions, balances, or catalog IDs. General cooking/budgeting/life advice is welcome as long as you distinguish general suggestions from the user’s real CartAudit records. ' +
+        'ACTION PROPOSALS: Whenever the user asks you to DO something (or an immediate helpful action fits their question), include 1–2 structured entries in `proposedActions` so the user can confirm & execute in one click! Never claim an action is already done — phrase it as ready to confirm. ' +
+        'Supported `proposedActions[].type` values and required nested fields:\n' +
+        '- `log_expense`: fill `expense` { name, amount (>0), category (strictly from context.availableCategories), date (YYYY-MM-DD optional) }\n' +
+        '- `add_split`: fill `split` { name, totalAmount (>0), category, paidBy ("self" or person name), participantNames (non-empty string array of other people), includeSelf (boolean) }\n' +
+        '- `settle_split`: fill `settlement` { personName, direction ("i_pay" | "they_pay"), amount (>0), note }\n' +
+        '- `build_cart`: fill `cartItems` [{ itemId (EXACT id from context.catalogItems), itemName, quantity (>=1) }] — ONLY use items that exist in context.catalogItems!\n' +
+        '- `load_basket`: set `basketId` to EXACT id from context.savedBaskets\n' +
+        '- `add_due_recurring`: queues overdue/due-today recurring items into cart\n' +
+        '- `set_budget`: set `totalBudget` (>0 number)\n' +
+        '- `set_category_limit`: fill `categoryLimit` { category (from context.availableCategories), limitAmount (>0), period ("daily"|"weekly"|"monthly") }\n' +
+        '- `toggle_broke_mode`: set `brokeModeEnabled` (boolean)\n' +
+        '- `set_recurrence`: fill `recurrence` { itemId (from context.catalogItems), itemName, frequency ("daily"|"weekly"|"monthly"|"custom"), intervalDays }\n' +
+        '- `add_price_alert`: fill `priceAlert` { productId, productName, unitOfMeasurement, targetUnitPrice OR increaseThresholdPct }\n' +
+        '- `navigate`: fill `destination` { section ("overview"|"shopping"|"insights"|"expenses"|"scanner"|"wellness"), subTab }\n' +
+        'If no in-app action is relevant (pure Q&A/chat), return `proposedActions: []`. Always set `title` and `summary` on every proposedAction.';
 
-      const parsed = parseJsonResponse(response.text ?? '{}');
-      res.json(parsed);
+      const userPromptPayload =
+        `USER LIVE CONTEXT & CATALOG (JSON):\n${contextJson}\n\n` +
+        `RECENT CONVERSATION:\n${historyBlock}\n\n` +
+        `CURRENT USER MESSAGE:\n${trimmedQuestion}`;
+
+      let pennyLastErr: unknown = null;
+
+      // 1. Primary for Penny Chat: Groq (fast, bypasses Gemini 503 spikes)
+      if (groqConfigured && !isProviderInCooldown('groq')) {
+        try {
+          const groqSchemaInstruction =
+            `${systemInstructionText}\n\n` +
+            'RESPONSE FORMAT: Return ONLY a single valid JSON object with exact keys: ' +
+            '{"answer": string, "highlights": [{"label": string, "value": string}] (max 3), "proposedActions": [{"type": string, "title": string, "summary": string, ...optional action payload}], "followUpQuestions": [string] (2-3 short follow-ups)}.';
+
+          const groqResult = await runWithGroqFallback({
+            operationName: 'penny-chat',
+            preferredModels: GROQ_CHAT_PREFERRED_MODELS,
+            kind: 'chat',
+            timeoutMs: 9500,
+            maxCompletionTokens: 3200,
+            messages: [
+              { role: 'system', content: groqSchemaInstruction },
+              { role: 'user', content: userPromptPayload },
+            ],
+          });
+
+          const normalized = normalizePennyChatPayload(parseJsonResponse(groqResult.text));
+          if (normalized.answer) {
+            res.json({
+              ...normalized,
+              provider: 'groq',
+              model: groqResult.model,
+            });
+            return;
+          }
+        } catch (groqErr) {
+          pennyLastErr = groqErr;
+          const parsedGroq = extractReadableError(groqErr);
+          console.warn(
+            `[penny-chat] Groq primary failed (${parsedGroq.status}): ${parsedGroq.message}`
+          );
+        }
+      }
+
+      // 2. Conditional Backup: Gemini (skipped immediately if Gemini is in 35s cooldown)
+      if (geminiConfigured && !isProviderInCooldown('gemini')) {
+        try {
+          let geminiModelUsed = 'gemini-3.1-flash-lite';
+          const response = await runWithGeminiFallback('penny-chat', async (ai) => {
+            try {
+              geminiModelUsed = 'gemini-3.1-flash-lite';
+              return await runPennyChatModel(ai, geminiModelUsed, false, 6500);
+            } catch (primaryErr) {
+              const parsedPrimary = extractReadableError(primaryErr);
+              if (
+                !isTransientUpstreamError(
+                  parsedPrimary.status,
+                  parsedPrimary.message,
+                  parsedPrimary.code
+                )
+              ) {
+                throw primaryErr;
+              }
+              await sleep(450);
+              geminiModelUsed = 'gemini-4-hydrogen';
+              return await runPennyChatModel(ai, geminiModelUsed, true, 6500);
+            }
+          });
+
+          clearProviderCooldown('gemini');
+          const normalized = normalizePennyChatPayload(
+            parseJsonResponse(response.text ?? '{}')
+          );
+          if (normalized.answer) {
+            res.json({
+              ...normalized,
+              provider: 'gemini',
+              model: geminiModelUsed,
+            });
+            return;
+          }
+        } catch (geminiErr) {
+          pennyLastErr = geminiErr;
+          const parsedGemini = extractReadableError(geminiErr);
+          if (isTransientUpstreamError(parsedGemini.status, parsedGemini.message, parsedGemini.code)) {
+            markProviderCooldown('gemini');
+          }
+        }
+      }
+
+      if (pennyLastErr) {
+        throw pennyLastErr;
+      }
+
+      const unavailableErr = new Error(
+        'Cloud AI providers are temporarily busy or unconfigured.'
+      ) as Error & { status?: number; code?: string };
+      unavailableErr.status = 503;
+      unavailableErr.code = 'UNAVAILABLE';
+      throw unavailableErr;
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[penny-chat] Error (${status}): ${message}`);
@@ -777,27 +1243,110 @@ async function startServer() {
         ]);
       };
 
-      const response = await runWithGeminiFallback('penny-parse-expense', async (ai) => {
-        try {
-          return await runParseModel(ai, 'gemini-3.1-flash-lite', false, 6500);
-        } catch (primaryErr) {
-          const parsedPrimary = extractReadableError(primaryErr);
-          if (
-            !isTransientUpstreamError(
-              parsedPrimary.status,
-              parsedPrimary.message,
-              parsedPrimary.code
-            )
-          ) {
-            throw primaryErr;
-          }
-          await sleep(550);
-          return await runParseModel(ai, 'gemini-4-hydrogen', true, 6500);
-        }
-      });
+      const geminiConfigured = Boolean(resolveGeminiKeyInfo());
+      const groqConfigured = Boolean(resolveGroqKeyInfo());
+      const cleanInputText = text.trim().slice(0, 300);
+      let parseLastErr: unknown = null;
 
-      const parsed = parseJsonResponse(response.text ?? '{}');
-      res.json(parsed);
+      // 1. Primary for Quick Log: Groq (ultra-fast ~0.3-1s JSON extraction)
+      if (groqConfigured && !isProviderInCooldown('groq')) {
+        try {
+          const groqParsePrompt =
+            `Extract a single structured expense entry from the user's natural-language text. Today is ${safeToday}. ` +
+            `Choose category strictly from: ${allowedCategories.join(', ')}. ` +
+            `If no amount is explicitly stated, return amount 0. If the user mentions splitting with someone, set isSplitHint true and put the person name in splitPersonHint. ` +
+            `Return ONLY a valid JSON object: {"name": string, "amount": number, "category": string, "date": "YYYY-MM-DD", "isSplitHint": boolean, "splitPersonHint": string}.`;
+
+          const groqResult = await runWithGroqFallback({
+            operationName: 'penny-parse-expense',
+            preferredModels: GROQ_QUICK_PREFERRED_MODELS,
+            kind: 'chat',
+            timeoutMs: 6500,
+            maxCompletionTokens: 1200,
+            messages: [
+              { role: 'system', content: groqParsePrompt },
+              { role: 'user', content: cleanInputText },
+            ],
+          });
+
+          const normalized = normalizePennyExpensePayload(
+            parseJsonResponse(groqResult.text),
+            allowedCategories,
+            safeToday,
+            cleanInputText
+          );
+          res.json({
+            ...normalized,
+            provider: 'groq',
+            model: groqResult.model,
+          });
+          return;
+        } catch (groqErr) {
+          parseLastErr = groqErr;
+          const parsedGroq = extractReadableError(groqErr);
+          console.warn(
+            `[penny-parse-expense] Groq primary failed (${parsedGroq.status}): ${parsedGroq.message}`
+          );
+        }
+      }
+
+      // 2. Conditional Backup: Gemini (skipped immediately if in 35s cooldown)
+      if (geminiConfigured && !isProviderInCooldown('gemini')) {
+        try {
+          let geminiModelUsed = 'gemini-3.1-flash-lite';
+          const response = await runWithGeminiFallback('penny-parse-expense', async (ai) => {
+            try {
+              geminiModelUsed = 'gemini-3.1-flash-lite';
+              return await runParseModel(ai, geminiModelUsed, false, 6000);
+            } catch (primaryErr) {
+              const parsedPrimary = extractReadableError(primaryErr);
+              if (
+                !isTransientUpstreamError(
+                  parsedPrimary.status,
+                  parsedPrimary.message,
+                  parsedPrimary.code
+                )
+              ) {
+                throw primaryErr;
+              }
+              await sleep(450);
+              geminiModelUsed = 'gemini-4-hydrogen';
+              return await runParseModel(ai, geminiModelUsed, true, 6000);
+            }
+          });
+
+          clearProviderCooldown('gemini');
+          const normalized = normalizePennyExpensePayload(
+            parseJsonResponse(response.text ?? '{}'),
+            allowedCategories,
+            safeToday,
+            cleanInputText
+          );
+          res.json({
+            ...normalized,
+            provider: 'gemini',
+            model: geminiModelUsed,
+          });
+          return;
+        } catch (geminiErr) {
+          parseLastErr = geminiErr;
+          const parsedGemini = extractReadableError(geminiErr);
+          if (isTransientUpstreamError(parsedGemini.status, parsedGemini.message, parsedGemini.code)) {
+            markProviderCooldown('gemini');
+          }
+        }
+      }
+
+      if (parseLastErr) {
+        throw parseLastErr;
+      }
+
+      const unavailableErr = new Error(
+        'Cloud AI expense parser is temporarily busy or unconfigured.'
+      ) as Error & { status?: number; code?: string };
+      unavailableErr.status = 503;
+      unavailableErr.code = 'UNAVAILABLE';
+      throw unavailableErr;
     } catch (err) {
       const { status, message, code } = extractReadableError(err);
       console.error(`[penny-parse-expense] Error (${status}): ${message}`);

@@ -156,3 +156,96 @@ export function normalizeBackupPayload(raw: unknown): BackupData {
   };
 }
 
+export interface WorkspaceBackupSource {
+  transactions: BackupData['transactions'];
+  items: BackupData['customItems'];
+  categories?: BackupData['categories'];
+  categoryConfigs?: BackupData['categoryConfigs'];
+  priceHistory?: BackupData['priceHistory'];
+  purchaseHistory?: BackupData['purchaseHistory'];
+  totalBudget: BackupData['totalBudget'];
+  sessionBudget: BackupData['sessionBudget'];
+  budgetResetDay?: BackupData['budgetResetDay'];
+  budgetRolloverEnabled?: BackupData['budgetRolloverEnabled'];
+  categoryCaps: BackupData['categoryCaps'];
+  savedAudits: BackupData['savedAudits'];
+  people?: BackupData['people'];
+  sharedExpenses?: BackupData['sharedExpenses'];
+  settlements?: BackupData['settlements'];
+  priceObservations?: BackupData['priceObservations'];
+  priceAlerts?: BackupData['priceAlerts'];
+  isBrokeMode?: BackupData['isBrokeMode'];
+  brokeModeConfig?: BackupData['brokeModeConfig'];
+  categoryLimits?: BackupData['categoryLimits'];
+  warRoomChallenges?: BackupData['warRoomChallenges'];
+  warRoomTargets?: BackupData['warRoomTargets'];
+  dismissedWarRoomAlerts?: BackupData['dismissedWarRoomAlerts'];
+  disciplineCheckIns?: BackupData['disciplineCheckIns'];
+  basketTemplates?: BackupData['basketTemplates'];
+  basketTemplatesSeeded?: BackupData['basketTemplatesSeeded'];
+  theme?: BackupData['theme'];
+  visualTheme?: BackupData['visualTheme'];
+  featureSettings?: BackupData['featureSettings'];
+  pennyMessages?: BackupData['pennyMessages'];
+  pennyProfile?: BackupData['pennyProfile'];
+  myUpiId?: BackupData['myUpiId'];
+  myUpiName?: BackupData['myUpiName'];
+}
+
+export function buildWorkspaceBackupPayload(
+  source: WorkspaceBackupSource,
+  exportedAt: string = new Date().toISOString()
+): BackupData {
+  return {
+    version: 1,
+    exportedAt,
+    transactions: source.transactions,
+    customItems: source.items,
+    categories: source.categories,
+    categoryConfigs: source.categoryConfigs,
+    priceHistory: source.priceHistory,
+    purchaseHistory: source.purchaseHistory,
+    totalBudget: source.totalBudget,
+    sessionBudget: source.sessionBudget,
+    budgetResetDay: source.budgetResetDay,
+    budgetRolloverEnabled: source.budgetRolloverEnabled,
+    categoryCaps: source.categoryCaps,
+    savedAudits: source.savedAudits,
+    people: source.people,
+    sharedExpenses: source.sharedExpenses,
+    settlements: source.settlements,
+    priceObservations: source.priceObservations,
+    priceAlerts: source.priceAlerts,
+    isBrokeMode: source.isBrokeMode,
+    brokeModeConfig: source.brokeModeConfig,
+    categoryLimits: source.categoryLimits,
+    warRoomChallenges: source.warRoomChallenges,
+    warRoomTargets: source.warRoomTargets,
+    dismissedWarRoomAlerts: source.dismissedWarRoomAlerts,
+    disciplineCheckIns: source.disciplineCheckIns,
+    basketTemplates: source.basketTemplates,
+    basketTemplatesSeeded: source.basketTemplatesSeeded,
+    theme: source.theme,
+    visualTheme: source.visualTheme,
+    featureSettings: source.featureSettings,
+    pennyMessages: source.pennyMessages,
+    pennyProfile: source.pennyProfile,
+    myUpiId: source.myUpiId,
+    myUpiName: source.myUpiName,
+  };
+}
+
+export function downloadWorkspaceBackup(payload: BackupData): void {
+  if (typeof document === 'undefined' || typeof URL === 'undefined') return;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: 'application/json',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cartaudit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

@@ -4,7 +4,6 @@ import {
   Inbox,
   Plus,
   Trash2,
-  ArrowRight,
   Split,
   Ban,
   RotateCcw,
@@ -12,9 +11,7 @@ import {
 } from 'lucide-react';
 import { useAppStore, type Transaction } from '../../store/useStore';
 import type { SpendingClassification } from '../../types/models';
-import { formatCurrencyExact } from '../../utils/categoryStyles';
 import { getEffectiveTransactionAmount } from '../../utils/martEngine';
-import { computeLedgerState } from '../../utils/splitLedgerEngine';
 import { classifyTransaction } from '../../utils/warRoomEngine';
 import { TransactionRow } from '../ui/TransactionRow';
 import { EmptyState } from '../ui/EmptyState';
@@ -34,21 +31,13 @@ export function Ledger({
   const updateTransactionClassification = useAppStore(
     (s) => s.updateTransactionClassification
   );
-  const people = useAppStore((s) => s.people);
   const sharedExpenses = useAppStore((s) => s.sharedExpenses);
-  const settlements = useAppStore((s) => s.settlements);
 
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [convertTx, setConvertTx] = useState<Transaction | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sourceStatusFilter, setSourceStatusFilter] = useState('all');
-
-  const ledgerState = useMemo(
-    () => computeLedgerState(people, sharedExpenses, settlements),
-    [people, sharedExpenses, settlements]
-  );
-  const totalOwedToMe = ledgerState.dashboard.totalOwedToMe;
 
   const availableCategories = useMemo(() => {
     const set = new Set<string>(categories);
@@ -166,18 +155,6 @@ export function Ledger({
         </div>
 
         <div className="flex items-center gap-3 self-start lg:self-auto shrink-0">
-          {onOpenSplitLedger && totalOwedToMe > 0 && (
-            <button
-              type="button"
-              onClick={onOpenSplitLedger}
-              className="text-[12px] font-semibold text-[#365FE8] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
-            >
-              <span className="font-mono tabular-nums">
-                ₹{formatCurrencyExact(totalOwedToMe)} owed to you
-              </span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}

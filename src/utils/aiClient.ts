@@ -1,4 +1,4 @@
-import { markGeminiConfigured } from './aiReadiness';
+import { markAiConfigured } from './aiReadiness';
 
 export const LIVE_AI_COOLDOWN_MS = 60_000;
 
@@ -74,7 +74,7 @@ export function getLiveAiAvailability(nowMs: number = Date.now()): LiveAiAvailab
 export function markLiveAiSuccess(): void {
   cooldownUntilMs = 0;
   lastFailureReason = null;
-  markGeminiConfigured(true);
+  markAiConfigured(true);
 }
 
 export function markLiveAiBusy(
@@ -85,7 +85,7 @@ export function markLiveAiBusy(
   lastFailureMode = 'cooldown';
   lastFailureReason = reason;
   cooldownUntilMs = nowMs + Math.max(1000, cooldownMs);
-  markGeminiConfigured(false);
+  markAiConfigured(false);
 }
 
 export function markBackendOffline(
@@ -96,7 +96,7 @@ export function markBackendOffline(
   lastFailureMode = 'offline';
   lastFailureReason = reason;
   cooldownUntilMs = nowMs + Math.max(1000, cooldownMs);
-  markGeminiConfigured(false);
+  markAiConfigured(false);
 }
 
 export function clearLiveAiCooldown(): void {

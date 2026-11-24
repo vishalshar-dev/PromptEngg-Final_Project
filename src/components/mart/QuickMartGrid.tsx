@@ -118,6 +118,7 @@ export function QuickMartGrid({
   const [dueAddedFlash, setDueAddedFlash] = useState<number | null>(null);
   const [reorderedFlashKey, setReorderedFlashKey] = useState<string | null>(null);
   const [basketLoadedFlashId, setBasketLoadedFlashId] = useState<string | null>(null);
+  const [reorderTab, setReorderTab] = useState<'recent' | 'frequent'>('recent');
 
   useEffect(() => {
     if (
@@ -439,49 +440,49 @@ export function QuickMartGrid({
         }
       />
 
-      {/* Compact Shopping Summary Strip */}
+      {/* Compact Single-Elevation Hairline Shopping Summary Strip */}
       {featureSettings.showShopSummaryMetrics && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5">
-          <div className="surface-card px-3 py-2.5 sm:p-4">
+        <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+          <div className="px-4 py-3 sm:py-3.5">
             <p className="text-[11px] font-medium text-[#697386]">Cart Value</p>
-            <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#365FE8] mt-0.5">
+            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[#365FE8] mt-0.5">
               ₹{formatCurrencyExact(cartSummary.totalAmount)}
             </p>
-            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
               {cartSummary.lineCount} {cartSummary.lineCount === 1 ? 'line' : 'lines'} active
             </p>
           </div>
 
-          <div className="surface-card px-3 py-2.5 sm:p-4">
+          <div className="px-4 py-3 sm:py-3.5">
             <p className="text-[11px] font-medium text-[#697386]">Cart Quantity</p>
-            <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[#151922] mt-0.5">
               {formatQuantity(cartSummary.totalUnits)}
             </p>
-            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
               Total units selected
             </p>
           </div>
 
-          <div className="surface-card px-3 py-2.5 sm:p-4">
+          <div className="px-4 py-3 sm:py-3.5">
             <p className="text-[11px] font-medium text-[#697386]">Month Spend</p>
-            <p className="text-base sm:text-xl font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[#151922] mt-0.5">
               ₹{formatCurrencyExact(monthlySpend)}
             </p>
-            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
               Logged this month
             </p>
           </div>
 
-          <div className="surface-card px-3 py-2.5 sm:p-4">
+          <div className="px-4 py-3 sm:py-3.5">
             <p className="text-[11px] font-medium text-[#697386]">Budget Left</p>
             <p
-              className={`text-base sm:text-xl font-bold font-mono tabular-nums mt-0.5 ${
+              className={`text-base sm:text-lg font-bold font-mono tabular-nums mt-0.5 ${
                 remainingMonthlyBudget >= 0 ? 'text-[#15966B]' : 'text-[#DE5252]'
               }`}
             >
               ₹{formatCurrencyExact(remainingMonthlyBudget)}
             </p>
-            <p className="hidden sm:block text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
               {remainingMonthlyBudget >= 0 ? 'Remaining allowance' : 'Over monthly budget'}
             </p>
           </div>
@@ -924,43 +925,66 @@ export function QuickMartGrid({
             </div>
           ) : (
             <>
-              {/* Personalized Real Purchase History Sections */}
-              {featureSettings.showShopHistory && (frequentInsights.length > 0 || recentInsights.length > 0) && (
-                <div className="space-y-5">
-                  {recentInsights.length > 0 && (
+              {/* Consolidated Quick Reorder (Recent | Most Bought) */}
+              {featureSettings.showShopHistory &&
+                (frequentInsights.length > 0 || recentInsights.length > 0) && (() => {
+                  const activeMode: 'recent' | 'frequent' =
+                    reorderTab === 'recent' && recentInsights.length > 0
+                      ? 'recent'
+                      : frequentInsights.length > 0
+                        ? 'frequent'
+                        : 'recent';
+                  const list = activeMode === 'recent' ? recentInsights : frequentInsights;
+
+                  return (
                     <section className="space-y-3">
                       <SectionHeader
-                        title="Buy Again"
-                        subtitle="Based on your recently completed checkouts"
+                        title="Quick Reorder"
+                        subtitle="One-tap restock with live price comparison"
                         action={
-                          <button
-                            type="button"
-                            onClick={() => setSection('history')}
-                            className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-0.5"
-                          >
-                            Orders <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-3">
+                            {recentInsights.length > 0 && frequentInsights.length > 0 && (
+                              <div className="inline-flex items-center p-0.5 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] tactile-well">
+                                <button
+                                  type="button"
+                                  onClick={() => setReorderTab('recent')}
+                                  className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold transition-colors ${
+                                    activeMode === 'recent'
+                                      ? 'bg-white text-[#151922] shadow-xs'
+                                      : 'text-[#697386] hover:text-[#151922]'
+                                  }`}
+                                >
+                                  Recent
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setReorderTab('frequent')}
+                                  className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold transition-colors ${
+                                    activeMode === 'frequent'
+                                      ? 'bg-white text-[#151922] shadow-xs'
+                                      : 'text-[#697386] hover:text-[#151922]'
+                                  }`}
+                                >
+                                  Most Bought
+                                </button>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setSection('history')}
+                              className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-0.5 whitespace-nowrap"
+                            >
+                              Orders <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         }
                       />
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {recentInsights.map((ins) => renderReorderCard(ins, 'recent'))}
+                        {list.map((ins) => renderReorderCard(ins, activeMode))}
                       </div>
                     </section>
-                  )}
-
-                  {frequentInsights.length > 0 && (
-                    <section className="space-y-3">
-                      <SectionHeader
-                        title="Frequently Purchased"
-                        subtitle="One-tap reorder with live price comparison"
-                      />
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {frequentInsights.map((ins) => renderReorderCard(ins, 'frequent'))}
-                      </div>
-                    </section>
-                  )}
-                </div>
-              )}
+                  );
+                })()}
 
               {/* Saved Baskets Shelf */}
               {featureSettings.showShopBaskets && evaluatedHomeBaskets.length > 0 && (
@@ -1091,15 +1115,11 @@ export function QuickMartGrid({
                     onOpenDetails={(item) => setDetailProduct(item)}
                   />
                 ) : (
-                  <div className="bg-white rounded-2xl p-4 border border-dashed border-[#D5DBE5] flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-[#FDECEC] border border-[#F6B8B8] text-[#DE5252] flex items-center justify-center shrink-0">
-                        <Heart className="w-4 h-4" strokeWidth={2.2} />
-                      </div>
-                      <p className="text-xs text-[#697386]">
-                        No favourites pinned yet. Tap the heart icon on any product below to add your own favourites.
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-2.5 py-2.5 border-t border-[#E7EAF0] text-xs text-[#697386]">
+                    <Heart className="w-3.5 h-3.5 text-[#DE5252] shrink-0" strokeWidth={2.2} />
+                    <p>
+                      No favourites pinned yet. Tap the heart icon on any product below to pin quick picks.
+                    </p>
                   </div>
                 )}
               </section>
@@ -1228,18 +1248,18 @@ export function QuickMartGrid({
                       Manage
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  <div className="border-t border-[#E7EAF0] pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
                     {billItems.map((bill) => (
                       <div
                         key={bill.id}
-                        className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl px-3 py-2.5 flex items-center justify-between gap-2"
+                        className="py-2 flex items-center justify-between gap-2 border-b border-[#E7EAF0]/70"
                       >
                         <button
                           type="button"
                           onClick={() => setDetailProduct(bill)}
-                          className="min-w-0 text-left flex-1"
+                          className="min-w-0 text-left flex-1 group"
                         >
-                          <p className="text-xs font-bold text-[#151922] truncate">{bill.name}</p>
+                          <p className="text-xs font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">{bill.name}</p>
                           <p className="text-[11px] font-mono text-[#697386] tabular-nums">
                             ₹{formatCurrencyExact(bill.price)} ·{' '}
                             {bill.recurrence?.frequency ?? 'on-demand'}
@@ -1249,7 +1269,7 @@ export function QuickMartGrid({
                           type="button"
                           onClick={() => addToCart(bill, 1)}
                           aria-label={`Add bill ${bill.name} to cart`}
-                          className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#365FE8] border border-[#E7EAF0] hover:border-[#365FE8] text-[#365FE8] hover:text-white text-xs font-semibold whitespace-nowrap transition-colors"
+                          className="px-2.5 py-1.5 rounded-lg bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white text-xs font-semibold whitespace-nowrap transition-colors shrink-0"
                         >
                           {bill.quantity > 0 ? `${formatQuantity(bill.quantity)} in Cart` : '+ Add Bill'}
                         </button>

@@ -19,7 +19,7 @@ import {
   sanitizeThemeMode,
   sanitizeVisualTheme,
 } from './settingsEngine';
-import { normalizeBackupPayload } from './storeHelpers';
+import { buildWorkspaceBackupPayload, normalizeBackupPayload } from './storeHelpers';
 
 test('getPresetSettings returns clean presets with accurate enabled counts', () => {
   const simple = getPresetSettings('simple');
@@ -160,3 +160,42 @@ test('getChartThemeTokens adapts colors to theme mode and mood cleanly', () => {
   assert.notEqual(lightIndigo.tooltipStyle.backgroundColor, darkMint.tooltipStyle.backgroundColor);
   assert.ok(darkMint.secondarySeries.length >= 5);
 });
+
+test('buildWorkspaceBackupPayload builds a complete v1 payload accepted by normalizeBackupPayload', () => {
+  const payload = buildWorkspaceBackupPayload(
+    {
+      transactions: [],
+      items: [],
+      categories: ['Groceries'],
+      totalBudget: 12000,
+      sessionBudget: 1500,
+      budgetResetDay: 5,
+      budgetRolloverEnabled: true,
+      categoryCaps: { Groceries: 5000 },
+      savedAudits: [],
+      people: [],
+      sharedExpenses: [],
+      settlements: [],
+      isBrokeMode: false,
+      theme: 'dark',
+      featureSettings: getPresetSettings('standard'),
+      myUpiId: '  Alex@UPI  ',
+      myUpiName: '  Alex  ',
+    },
+    '2026-11-24T10:00:00.000Z'
+  );
+
+  assert.equal(payload.version, 1);
+  assert.equal(payload.exportedAt, '2026-11-24T10:00:00.000Z');
+  assert.equal(payload.totalBudget, 12000);
+
+  const normalized = normalizeBackupPayload(payload);
+  assert.equal(normalized.totalBudget, 12000);
+  assert.equal(normalized.budgetResetDay, 5);
+  assert.equal(normalized.budgetRolloverEnabled, true);
+  assert.equal(normalized.theme, 'dark');
+  assert.equal(normalized.featureSettings?.preset, 'standard');
+  assert.equal(normalized.myUpiId, 'alex@upi');
+  assert.equal(normalized.myUpiName, 'Alex');
+});
+

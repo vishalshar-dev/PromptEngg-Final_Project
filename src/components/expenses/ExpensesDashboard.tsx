@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Receipt, Users, Wallet, TrendingDown } from 'lucide-react';
-import { MetricCard } from '../ui/MetricCard';
 import { Ledger } from '../ledgers/Ledger';
 import { SplitLedgerDashboard } from '../splits/SplitLedgerDashboard';
 import { useAppStore } from '../../store/useStore';
@@ -101,36 +100,78 @@ export function ExpensesDashboard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <MetricCard
-          label="Cycle Spent"
-          value={`₹${formatCurrencyExact(cycleSpent)}`}
-          sublabel={`${cycleSummary.window.label} · ${activeCount} logged`}
-          icon={TrendingDown}
-          tone="default"
-        />
-        <MetricCard
-          label="Budget Remaining"
-          value={`${remaining < 0 ? '-' : ''}₹${formatCurrencyExact(Math.abs(remaining))}`}
-          sublabel={`of ₹${formatCurrencyExact(effectiveBudget)}`}
-          icon={Wallet}
-          tone={remaining < 0 ? 'danger' : 'success'}
-        />
-        <MetricCard
-          label="Owed to You"
-          value={`₹${formatCurrencyExact(ledgerState.dashboard.totalOwedToMe)}`}
-          sublabel={`${people.length} tracked contacts`}
-          icon={Users}
-          tone="brand"
-        />
-        <MetricCard
-          label="Net Split Position"
-          value={`${netSplit >= 0 ? '+' : '-'}₹${formatCurrencyExact(Math.abs(netSplit))}`}
-          sublabel={netSplit >= 0 ? 'Net receivable' : 'Net payable'}
-          icon={Receipt}
-          tone={netSplit >= 0 ? 'success' : 'warning'}
-        />
-      </div>
+      {/* Single hairline summary strip shown only on Transactions; Shared Splits shows its own split balance strip */}
+      {activeTab === 'transactions' && (
+        <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                Cycle Spent
+              </span>
+              <TrendingDown className="w-4 h-4 text-[#929BAB]" />
+            </div>
+            <p className="text-xl font-bold font-mono tabular-nums text-[#151922] mt-1.5">
+              ₹{formatCurrencyExact(cycleSpent)}
+            </p>
+            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+              {cycleSummary.window.label} · {activeCount} logged
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                Budget Remaining
+              </span>
+              <Wallet className="w-4 h-4 text-[#929BAB]" />
+            </div>
+            <p
+              className={`text-xl font-bold font-mono tabular-nums mt-1.5 ${
+                remaining < 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
+              }`}
+            >
+              {remaining < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(remaining))}
+            </p>
+            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+              of ₹{formatCurrencyExact(effectiveBudget)}
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                Owed to You
+              </span>
+              <Users className="w-4 h-4 text-[#929BAB]" />
+            </div>
+            <p className="text-xl font-bold font-mono tabular-nums text-[#365FE8] mt-1.5">
+              ₹{formatCurrencyExact(ledgerState.dashboard.totalOwedToMe)}
+            </p>
+            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+              {people.length} tracked contacts
+            </p>
+          </div>
+
+          <div className="p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                Net Split Position
+              </span>
+              <Receipt className="w-4 h-4 text-[#929BAB]" />
+            </div>
+            <p
+              className={`text-xl font-bold font-mono tabular-nums mt-1.5 ${
+                netSplit >= 0 ? 'text-[#15966B]' : 'text-[#9E6614]'
+              }`}
+            >
+              {netSplit >= 0 ? '+' : '-'}₹{formatCurrencyExact(Math.abs(netSplit))}
+            </p>
+            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+              {netSplit >= 0 ? 'Net receivable' : 'Net payable'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'transactions' ? (
         <Ledger onOpenSplitLedger={() => setActiveTab('splits')} />
