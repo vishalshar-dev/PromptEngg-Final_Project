@@ -28,11 +28,11 @@ export function CategoryCard({
       aria-pressed={selected}
       className={`group relative text-left rounded-2xl border p-3 transition-all flex flex-col gap-2.5 ${
         selected
-          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20 shadow-card'
+          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)] shadow-card'
           : 'surface-card-interactive'
       }`}
     >
-      <div className="relative w-full h-20 rounded-xl overflow-hidden">
+      <div className="relative w-full h-22 sm:h-24 rounded-xl overflow-hidden">
         {resolvedImageUrl ? (
           <ProductVisual
             name={category.name}
@@ -42,13 +42,13 @@ export function CategoryCard({
             accent={category.accent}
             size="md"
             preferCategoryPhoto
-            className="!h-20"
+            className="!h-22 sm:!h-24"
           />
         ) : (
           <div
             className={`w-full h-full rounded-xl bg-gradient-to-br ${style.gradient} border ${style.border} flex items-center justify-center`}
           >
-            <div className={`w-10 h-10 rounded-xl bg-white border border-[#E7EAF0] shadow-xs flex items-center justify-center ${style.text}`}>
+            <div className={`w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs flex items-center justify-center ${style.text}`}>
               <CategoryIcon iconKey={category.iconKey} className="w-5 h-5" strokeWidth={2} />
             </div>
           </div>
@@ -56,10 +56,10 @@ export function CategoryCard({
       </div>
 
       <div className="min-w-0 px-0.5">
-        <p className="text-xs font-bold text-[#151922] leading-snug line-clamp-2 min-h-[2rem]">
+        <p className="text-[13px] font-bold text-[var(--text-primary)] leading-snug line-clamp-2 min-h-[2.25rem]">
           {category.name}
         </p>
-        <p className="text-[11px] font-mono text-[#697386] mt-0.5 truncate tabular-nums">
+        <p className="text-[12px] font-mono text-[var(--text-secondary)] mt-0.5 truncate tabular-nums">
           {itemCount} {itemCount === 1 ? 'item' : 'items'}
           {subCount > 0 ? ` · ${subCount} sub` : ''}
         </p>

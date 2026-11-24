@@ -370,7 +370,7 @@ export const ALL_VISUAL_PALETTES: Record<CapsuleVisualMode, CapsuleHealthPalette
 
 export function resolveHealthState(fillRatio: number): CapsuleHealthState {
   const clamped = clampFillRatio(fillRatio);
-  if (clamped <= 0.0001) return 'depleted';
+  if (clamped < 0.0001) return 'depleted';
   if (clamped < 0.2) return 'critical';
   if (clamped < 0.5) return 'caution';
   return 'healthy';

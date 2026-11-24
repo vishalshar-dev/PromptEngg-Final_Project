@@ -169,20 +169,20 @@ export function RadarExplorerReportsTab({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
           <div>
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#365FE8]" />
-              <h3 className="text-sm font-bold text-[#151922]">
+              <FileText className="w-4 h-4 text-[var(--accent-ink)]" />
+              <h3 className="text-sm font-bold text-[var(--text-primary)]">
                 Structured Financial Reports
               </h3>
             </div>
-            <p className="text-xs text-[#697386] mt-0.5">
-              Period: <strong className="text-[#151922]">{report.periodLabel}</strong> · Baseline:{' '}
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Period: <strong className="text-[var(--text-primary)]">{report.periodLabel}</strong> · Baseline:{' '}
               {report.comparisonLabel}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <div
-              className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+              className="tactile-well inline-flex items-center bg-[var(--bg-subtle)] border border-[var(--border-subtle)] rounded-xl p-0.5"
               role="group"
               aria-label="Report period preset"
             >
@@ -200,8 +200,8 @@ export function RadarExplorerReportsTab({
                   onClick={() => setReportPreset(id)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                     reportPreset === id
-                      ? 'bg-[#365FE8] text-white shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {label}
@@ -237,81 +237,81 @@ export function RadarExplorerReportsTab({
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-          <div className="surface-subtle px-3.5 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+          <div className="surface-well px-3.5 py-2.5">
+            <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
               Period Expenditure
             </p>
-            <p className="text-base font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
               ₹{formatCurrencyExact(report.totalExpenditure)}
             </p>
-            <p className="text-[11px] text-[#929BAB] mt-0.5 font-mono tabular-nums">
+            <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5 font-mono tabular-nums">
               {report.expenditureChangePct !== null
                 ? `${report.expenditureChangePct > 0 ? '+' : ''}${report.expenditureChangePct}% vs prior`
                 : 'No prior baseline'}
             </p>
           </div>
-          <div className="surface-subtle px-3.5 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+          <div className="surface-well px-3.5 py-2.5">
+            <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
               Avg Daily Spending
             </p>
-            <p className="text-base font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
               ₹{formatCurrencyExact(report.avgDailySpending)}
             </p>
-            <p className="text-[11px] text-[#929BAB] mt-0.5">{report.transactionCount} transactions</p>
+            <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5">{report.transactionCount} transactions</p>
           </div>
-          <div className="surface-subtle px-3.5 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+          <div className="surface-well px-3.5 py-2.5">
+            <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
               Budget Performance
             </p>
-            <p className="text-base font-bold font-mono tabular-nums text-[#15966B] mt-0.5">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-0.5">
               {report.monthlyBudgetUtilisationPct}%
             </p>
-            <p className="text-[11px] text-[#929BAB] mt-0.5 font-mono tabular-nums">
+            <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5 font-mono tabular-nums">
               Remaining ₹{formatCurrencyExact(report.monthlyBudgetRemaining)}
             </p>
           </div>
-          <div className="surface-subtle px-3.5 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+          <div className="surface-well px-3.5 py-2.5">
+            <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
               Top Expense
             </p>
-            <p className="text-base font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
               {report.largestTransactions[0]
                 ? `₹${formatCurrencyExact(report.largestTransactions[0].amount)}`
                 : '—'}
             </p>
-            <p className="text-[11px] text-[#929BAB] mt-0.5 truncate">
+            <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5 truncate">
               {report.largestTransactions[0]?.name ?? 'No expenses in range'}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
-          <div className="surface-subtle p-3.5">
-            <p className="font-semibold uppercase tracking-wider text-[#697386] text-[11px] mb-2">
+          <div className="surface-well p-3.5">
+            <p className="font-semibold text-[var(--text-secondary)] text-[12px] mb-2">
               Report Highlights &amp; Trend Summary
             </p>
-            <p className="text-[#151922] mb-2">{report.trendSummary}</p>
-            <ul className="space-y-1 text-[#697386] list-disc pl-4">
+            <p className="text-[var(--text-primary)] mb-2">{report.trendSummary}</p>
+            <ul className="space-y-1 text-[var(--text-secondary)] list-disc pl-4">
               {report.keyInsights.slice(0, 4).map((ins, i) => (
                 <li key={i}>{ins}</li>
               ))}
             </ul>
           </div>
 
-          <div className="surface-subtle p-3.5">
-            <p className="font-semibold uppercase tracking-wider text-[#697386] text-[11px] mb-2">
+          <div className="surface-well p-3.5">
+            <p className="font-semibold text-[var(--text-secondary)] text-[12px] mb-2">
               Largest Transactions in Report
             </p>
             {report.largestTransactions.length === 0 ? (
-              <p className="text-[#697386]">No transactions recorded during {report.periodLabel}.</p>
+              <p className="text-[var(--text-secondary)]">No transactions recorded during {report.periodLabel}.</p>
             ) : (
-              <div className="divide-y divide-[#E7EAF0]">
+              <div className="divide-y divide-[var(--border-subtle)]">
                 {report.largestTransactions.map((t) => (
                   <div key={t.id} className="py-1.5 flex items-center justify-between gap-2">
-                    <span className="truncate text-[#151922] font-medium">
-                      {t.name} <span className="text-[#697386]">· {t.category}</span>
+                    <span className="truncate text-[var(--text-primary)] font-medium">
+                      {t.name} <span className="text-[var(--text-secondary)]">· {t.category}</span>
                     </span>
-                    <span className="font-mono tabular-nums font-bold text-[#151922] shrink-0">
+                    <span className="font-mono tabular-nums font-bold text-[var(--text-primary)] shrink-0">
                       ₹{formatCurrencyExact(t.amount)}
                     </span>
                   </div>
@@ -326,10 +326,10 @@ export function RadarExplorerReportsTab({
       <section className="surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-sm font-bold text-[#151922]">
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
               Transaction-Level Explorer ({txQueryResult.items.length})
             </h3>
-            <p className="text-xs text-[#697386] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Reads &amp; updates your centralized transaction ledger directly
             </p>
           </div>
@@ -337,7 +337,7 @@ export function RadarExplorerReportsTab({
             <button
               type="button"
               onClick={onOpenLedger}
-              className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] inline-flex items-center gap-1 whitespace-nowrap"
+              className="text-xs font-semibold text-[var(--accent-ink)] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
             >
               Open Full Expenses Ledger
               <ExternalLink className="w-3.5 h-3.5" />
@@ -348,7 +348,7 @@ export function RadarExplorerReportsTab({
         {/* Search & Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 mb-4">
           <div className="lg:col-span-2 relative">
-            <Search className="w-3.5 h-3.5 text-[#929BAB] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="search"
               aria-label="Search transactions"
@@ -407,37 +407,37 @@ export function RadarExplorerReportsTab({
               aria-label="Explorer start date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="input-field w-1/2 px-2 py-2 text-[11px]"
+              className="input-field w-1/2 px-2 py-2 text-[11.5px]"
             />
             <input
               type="date"
               aria-label="Explorer end date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="input-field w-1/2 px-2 py-2 text-[11px]"
+              className="input-field w-1/2 px-2 py-2 text-[11.5px]"
             />
           </div>
         </div>
 
         {/* Highlights Strip */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 text-xs">
-          <div className="surface-subtle px-3 py-2.5">
-            <span className="text-[#697386]">Filtered Spend: </span>
-            <strong className="font-mono tabular-nums text-[#151922]">
+          <div className="surface-well px-3 py-2.5">
+            <span className="text-[var(--text-secondary)]">Filtered Spend: </span>
+            <strong className="font-mono tabular-nums text-[var(--text-primary)]">
               ₹{formatCurrencyExact(txQueryResult.totalEffectiveSpend)}
             </strong>
           </div>
-          <div className="surface-subtle px-3 py-2.5 truncate">
-            <span className="text-[#697386]">Highest Value: </span>
-            <strong className="text-[#151922]">
+          <div className="surface-well px-3 py-2.5 truncate">
+            <span className="text-[var(--text-secondary)]">Highest Value: </span>
+            <strong className="text-[var(--text-primary)]">
               {txQueryResult.highestTransactions[0]
                 ? `${txQueryResult.highestTransactions[0].tx.name} (₹${formatCurrencyExact(txQueryResult.highestTransactions[0].effectiveAmount)})`
                 : '—'}
             </strong>
           </div>
-          <div className="surface-subtle px-3 py-2.5 truncate">
-            <span className="text-[#697386]">Most Frequent: </span>
-            <strong className="text-[#151922]">
+          <div className="surface-well px-3 py-2.5 truncate">
+            <span className="text-[var(--text-secondary)]">Most Frequent: </span>
+            <strong className="text-[var(--text-primary)]">
               {txQueryResult.mostFrequentCategories[0]
                 ? `${txQueryResult.mostFrequentCategories[0].category} (${txQueryResult.mostFrequentCategories[0].count}x)`
                 : '—'}
@@ -447,16 +447,16 @@ export function RadarExplorerReportsTab({
 
         {/* Inline Edit Drawer if editingTx */}
         {editingTx && (
-          <div className="mb-4 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] p-4">
+          <div className="mb-4 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] p-4">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <p className="text-xs font-bold text-[#151922]">
+              <p className="text-xs font-bold text-[var(--text-primary)]">
                 Edit Centralized Transaction
               </p>
               <button
                 type="button"
                 onClick={() => setEditingTx(null)}
                 aria-label="Close transaction editor"
-                className="text-[#697386] hover:text-[#151922]"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -519,9 +519,9 @@ export function RadarExplorerReportsTab({
 
         {/* Transactions Table */}
         {txQueryResult.items.length === 0 ? (
-          <div className="py-10 text-center border border-dashed border-[#D5DBE6] bg-[#F7F8FA] rounded-xl">
-            <p className="text-sm font-semibold text-[#151922]">No matching transactions</p>
-            <p className="text-xs text-[#697386] mt-1">
+          <div className="py-10 text-center border border-dashed border-[var(--border-strong)] bg-[var(--bg-subtle)] rounded-xl">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">No matching transactions</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">
               Clear your search or date filters to view all recorded expenses.
             </p>
           </div>
@@ -529,7 +529,7 @@ export function RadarExplorerReportsTab({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[640px]">
               <thead>
-                <tr className="border-b border-[#E7EAF0] text-[11px] uppercase tracking-wider text-[#697386]">
+                <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--text-secondary)]">
                   <th className="py-2 pr-3 font-semibold">Description</th>
                   <th className="py-2 px-3 font-semibold">Category</th>
                   <th className="py-2 px-3 font-semibold">Date</th>
@@ -538,17 +538,17 @@ export function RadarExplorerReportsTab({
                   <th className="py-2 pl-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E7EAF0] text-xs">
+              <tbody className="divide-y divide-[var(--border-subtle)] text-xs">
                 {txQueryResult.items.map(({ tx, effectiveAmount }) => {
                   const inactive = tx.status === 'cancelled' || tx.status === 'refunded';
                   return (
-                    <tr key={tx.id} className="hover:bg-[#F7F8FA]">
+                    <tr key={tx.id} className="hover:bg-[var(--bg-hover)]">
                       <td className="py-2.5 pr-3">
-                        <p className="font-semibold text-[#151922]">{tx.name}</p>
-                        <p className="text-[11px] text-[#929BAB]">{tx.source ?? 'manual'}</p>
+                        <p className="font-semibold text-[var(--text-primary)]">{tx.name}</p>
+                        <p className="text-[11.5px] text-[var(--text-muted)]">{tx.source ?? 'manual'}</p>
                       </td>
-                      <td className="py-2.5 px-3 text-[#697386]">{tx.category}</td>
-                      <td className="py-2.5 px-3 text-[#697386] font-mono tabular-nums">
+                      <td className="py-2.5 px-3 text-[var(--text-secondary)]">{tx.category}</td>
+                      <td className="py-2.5 px-3 text-[var(--text-secondary)] font-mono tabular-nums">
                         {new Date(tx.timestamp).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
@@ -559,10 +559,10 @@ export function RadarExplorerReportsTab({
                         <span
                           className={`font-semibold ${
                             tx.status === 'cancelled'
-                              ? 'text-[#DE5252]'
+                              ? 'text-[var(--accent-danger-ink)]'
                               : tx.status === 'refunded'
-                                ? 'text-[#9E6614]'
-                                : 'text-[#15966B]'
+                                ? 'text-[var(--accent-warning-ink)]'
+                                : 'text-[var(--accent-success-ink)]'
                           }`}
                         >
                           {tx.status === 'cancelled'
@@ -572,7 +572,7 @@ export function RadarExplorerReportsTab({
                               : 'Active'}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-[#151922]">
+                      <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-[var(--text-primary)]">
                         ₹{formatCurrencyExact(inactive ? tx.amount : effectiveAmount)}
                       </td>
                       <td className="py-2.5 pl-3 text-right">
@@ -581,7 +581,7 @@ export function RadarExplorerReportsTab({
                             type="button"
                             onClick={() => openEditor(tx)}
                             aria-label={`Edit transaction ${tx.name}`}
-                            className="p-1.5 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF]"
+                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-ink)] hover:bg-[var(--accent-primary-soft)]"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -591,7 +591,7 @@ export function RadarExplorerReportsTab({
                                 type="button"
                                 onClick={() => refundTransaction(tx.id)}
                                 aria-label={`Refund transaction ${tx.name}`}
-                                className="p-1.5 rounded-lg text-[#697386] hover:text-[#9E6614] hover:bg-[#FEF6E7]"
+                                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-warning-ink)] hover:bg-[var(--accent-warning-soft)]"
                               >
                                 <RotateCcw className="w-3.5 h-3.5" />
                               </button>
@@ -599,7 +599,7 @@ export function RadarExplorerReportsTab({
                                 type="button"
                                 onClick={() => cancelTransaction(tx.id)}
                                 aria-label={`Cancel transaction ${tx.name}`}
-                                className="p-1.5 rounded-lg text-[#697386] hover:text-[#9E6614] hover:bg-[#FEF6E7]"
+                                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-warning-ink)] hover:bg-[var(--accent-warning-soft)]"
                               >
                                 <Ban className="w-3.5 h-3.5" />
                               </button>
@@ -609,7 +609,7 @@ export function RadarExplorerReportsTab({
                             type="button"
                             onClick={() => removeTransaction(tx.id)}
                             aria-label={`Delete transaction ${tx.name}`}
-                            className="p-1.5 rounded-lg text-[#697386] hover:text-[#DE5252] hover:bg-[#FDECEC]"
+                            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] hover:bg-[var(--accent-danger-soft)]"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

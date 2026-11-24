@@ -14,24 +14,24 @@ const toneClasses: Record<
   { value: string; iconWrap: string }
 > = {
   default: {
-    value: 'text-[#151922]',
-    iconWrap: 'bg-[#F1F3F6] text-[#697386]',
+    value: 'text-[var(--text-primary)]',
+    iconWrap: 'bg-[var(--bg-subtle)] text-[var(--text-secondary)] border-[var(--border-subtle)]',
   },
   brand: {
-    value: 'text-[#365FE8]',
-    iconWrap: 'bg-[#EDF2FF] text-[#365FE8]',
+    value: 'text-[var(--accent-ink)]',
+    iconWrap: 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-border)]',
   },
   success: {
-    value: 'text-[#15966B]',
-    iconWrap: 'bg-[#E8F7F1] text-[#15966B]',
+    value: 'text-[var(--accent-success-ink)]',
+    iconWrap: 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]',
   },
   warning: {
-    value: 'text-[#C7851F]',
-    iconWrap: 'bg-[#FEF6E7] text-[#C7851F]',
+    value: 'text-[var(--accent-warning-ink)]',
+    iconWrap: 'bg-[var(--accent-warning-soft)] text-[var(--accent-warning-ink)] border-[var(--accent-warning-border)]',
   },
   danger: {
-    value: 'text-[#DE5252]',
-    iconWrap: 'bg-[#FDECEC] text-[#DE5252]',
+    value: 'text-[var(--accent-danger-ink)]',
+    iconWrap: 'bg-[var(--accent-danger-soft)] text-[var(--accent-danger-ink)] border-[var(--accent-danger-border)]',
   },
 };
 
@@ -48,21 +48,21 @@ export function MetricCard({
     <div className={`surface-card p-4 sm:p-5 ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[12px] font-medium text-[#697386]">{label}</p>
+          <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">{label}</p>
           <p
-            className={`text-[20px] sm:text-[22px] font-bold font-mono tabular-nums tracking-tight mt-1 ${styles.value}`}
+            className={`text-[21px] sm:text-[23px] font-bold font-mono tabular-nums tracking-tight mt-1 ${styles.value}`}
           >
             {value}
           </p>
           {sublabel && (
-            <p className="text-[12px] text-[#697386] mt-1 truncate">{sublabel}</p>
+            <p className="text-[12px] text-[var(--text-secondary)] mt-1 truncate">{sublabel}</p>
           )}
         </div>
         {Icon && (
           <div
-            className={`w-9 h-9 rounded-xl border border-[#E7EAF0] flex items-center justify-center shrink-0 ${styles.iconWrap}`}
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${styles.iconWrap}`}
           >
-            <Icon className="w-[18px] h-[18px]" strokeWidth={2} />
+            <Icon className="w-[18px] h-[18px]" strokeWidth={1.9} />
           </div>
         )}
       </div>

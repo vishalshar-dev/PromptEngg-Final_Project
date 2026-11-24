@@ -50,32 +50,32 @@ function PriceChartTooltip({ active, payload }: CustomTooltipProps) {
   if (!d) return null;
 
   return (
-    <div className="bg-white rounded-xl px-3.5 py-2.5 shadow-lg border border-[#E7EAF0] min-w-[200px] space-y-1.5">
+    <div className="modal-panel rounded-xl px-3.5 py-2.5 min-w-[200px] space-y-1.5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-bold text-[#151922]">{d.fullDate}</span>
-        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-[#F1F3F6] text-[#697386]">
+        <span className="text-[12.5px] font-bold text-[var(--text-primary)]">{d.fullDate}</span>
+        <span className="text-[12px] font-medium text-[var(--text-secondary)]">
           {d.sourceLabel}
         </span>
       </div>
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[11px] text-[#697386]">Unit Price</span>
-        <span className="text-sm font-bold font-mono text-[#365FE8] tabular-nums">
+        <span className="text-[12px] text-[var(--text-secondary)]">Unit Price</span>
+        <span className="text-sm font-bold font-mono text-[var(--accent-ink)] tabular-nums">
           ₹{formatCurrencyExact(d.unitPrice)}/{d.unitOfMeasurement}
         </span>
       </div>
-      <div className="flex items-baseline justify-between gap-4 text-[11px]">
-        <span className="text-[#697386]">Paid</span>
-        <span className="font-mono font-semibold text-[#151922] tabular-nums">
+      <div className="flex items-baseline justify-between gap-4 text-[12px]">
+        <span className="text-[var(--text-secondary)]">Paid</span>
+        <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
           ₹{formatCurrencyExact(d.totalPrice)} ({d.quantity} × {d.packageSize})
         </span>
       </div>
       {d.brand && (
-        <div className="flex items-baseline justify-between gap-4 text-[11px]">
-          <span className="text-[#697386]">Brand</span>
-          <span className="font-semibold text-[#151922]">{d.brand}</span>
+        <div className="flex items-baseline justify-between gap-4 text-[12px]">
+          <span className="text-[var(--text-secondary)]">Brand</span>
+          <span className="font-semibold text-[var(--text-primary)]">{d.brand}</span>
         </div>
       )}
-      <div className="pt-1 border-t border-[#E7EAF0] text-[10px] text-[#929BAB]">
+      <div className="pt-1 border-t border-[var(--border-subtle)] text-[11.5px] text-[var(--text-muted)]">
         {d.entryKindLabel}
       </div>
     </div>
@@ -158,12 +158,12 @@ export function PriceHistoryChart({
     <div className="surface-card p-5 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <LineChartIcon className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+          <LineChartIcon className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
           <div>
-            <h4 className="text-sm font-bold text-[#151922]">
+            <h4 className="font-display text-sm font-bold text-[var(--text-primary)]">
               Recorded Unit Price History (₹/{unitOfMeasurement})
             </h4>
-            <p className="text-xs text-[#697386]">
+            <p className="text-[12.5px] text-[var(--text-secondary)]">
               {chartData.length} actual recorded point{chartData.length === 1 ? '' : 's'} in range
             </p>
           </div>
@@ -171,7 +171,7 @@ export function PriceHistoryChart({
 
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex items-center bg-[var(--bg-well)] border border-[var(--border-subtle)] rounded-xl p-0.5"
             role="group"
             aria-label="Chart timeframe"
           >
@@ -183,10 +183,10 @@ export function PriceHistoryChart({
                   type="button"
                   onClick={() => setTimeframe(tf.id)}
                   aria-pressed={active}
-                  className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors whitespace-nowrap ${
                     active
-                      ? 'bg-[#365FE8] text-white shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {tf.label}
@@ -199,10 +199,10 @@ export function PriceHistoryChart({
             type="button"
             onClick={() => setShowAverageLine((v) => !v)}
             aria-pressed={showAverageLine}
-            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition-colors ${
+            className={`px-3 py-1.5 rounded-xl text-[12px] font-semibold border flex items-center gap-1.5 transition-colors whitespace-nowrap ${
               showAverageLine
-                ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8]'
-                : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
+                ? 'bg-[var(--accent-warning-soft)] text-[var(--accent-warning-ink)] border-[var(--accent-warning-border)]'
+                : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
             }`}
           >
             {showAverageLine ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -212,19 +212,19 @@ export function PriceHistoryChart({
       </div>
 
       {chartData.length === 0 ? (
-        <div className="h-56 rounded-xl bg-[#F7F8FA] border border-dashed border-[#D5DBE6] flex flex-col items-center justify-center text-center px-4">
-          <Calendar className="w-5 h-5 text-[#929BAB] mb-2" />
-          <p className="text-xs font-semibold text-[#151922]">
+        <div className="h-56 surface-well border border-dashed border-[var(--border-strong)] flex flex-col items-center justify-center text-center px-4">
+          <Calendar className="w-5 h-5 text-[var(--text-muted)] mb-2" />
+          <p className="text-[13px] font-semibold text-[var(--text-primary)]">
             No recorded purchases in the selected timeframe
           </p>
-          <p className="text-xs text-[#697386] mt-1">
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1">
             Switch timeframe to All to inspect earlier observations.
           </p>
         </div>
       ) : (
         <div className="h-60 sm:h-64 w-full" data-testid="product-price-history-chart">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 14, right: 26, left: -4, bottom: 4 }}>
+            <LineChart data={chartData} margin={{ top: 14, right: 20, left: 0, bottom: 4 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={chartTokens.gridStroke}
@@ -252,7 +252,7 @@ export function PriceHistoryChart({
                 }}
                 axisLine={false}
                 tickLine={false}
-                width={54}
+                width={58}
               />
               <Tooltip
                 cursor={{
@@ -271,7 +271,7 @@ export function PriceHistoryChart({
                     value: `Avg ₹${formatCurrencyExact(averagePrice)}`,
                     position: 'insideTopRight',
                     fill: chartTokens.warning,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontFamily: 'JetBrains Mono, monospace',
                   }}
                 />
@@ -301,7 +301,7 @@ export function PriceHistoryChart({
       )}
 
       {chartData.length === 1 && (
-        <p className="text-xs text-[#697386]">
+        <p className="text-[12.5px] text-[var(--text-secondary)]">
           Only 1 recorded point so far. Record another purchase to draw a multi-point price curve.
         </p>
       )}

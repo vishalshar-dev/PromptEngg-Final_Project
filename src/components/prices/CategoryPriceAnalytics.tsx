@@ -20,9 +20,9 @@ export function CategoryPriceAnalytics({
   if (rows.length === 0) {
     return (
       <div className="surface-card p-8 text-center">
-        <Layers className="w-7 h-7 text-[#929BAB] mx-auto mb-2" />
-        <p className="text-sm font-semibold text-[#151922]">No category price data yet</p>
-        <p className="text-xs text-[#697386] mt-1">
+        <Layers className="w-7 h-7 text-[var(--text-muted)] mx-auto mb-2" />
+        <p className="text-sm font-semibold text-[var(--text-primary)]">No category price data yet</p>
+        <p className="text-[12.5px] text-[var(--text-secondary)] mt-1">
           Tracked purchases from Shopping, Receipt Scanner, or Manual Entry will populate category price analytics.
         </p>
       </div>
@@ -33,10 +33,12 @@ export function CategoryPriceAnalytics({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
-          <h3 className="text-sm font-bold text-[#151922]">Category-Wise Price Trends</h3>
+          <Layers className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
+          <h3 className="font-display text-sm font-bold text-[var(--text-primary)]">
+            Category-Wise Price Trends
+          </h3>
         </div>
-        <span className="text-xs text-[#697386]">
+        <span className="text-[12px] text-[var(--text-secondary)]">
           Average % change calculated per product
         </span>
       </div>
@@ -66,10 +68,10 @@ export function CategoryPriceAnalytics({
                     <CategoryIcon iconKey={cfg?.iconKey} className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#151922] truncate group-hover:text-[#365FE8]">
+                    <p className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--accent-ink)]">
                       {row.category}
                     </p>
-                    <p className="text-xs text-[#697386]">
+                    <p className="text-[12px] text-[var(--text-secondary)]">
                       {row.trackedProducts} product{row.trackedProducts === 1 ? '' : 's'} ·{' '}
                       {row.totalPurchases} buy{row.totalPurchases === 1 ? '' : 's'}
                     </p>
@@ -79,12 +81,12 @@ export function CategoryPriceAnalytics({
                 <div className="text-right flex-shrink-0">
                   {avgPct !== null ? (
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-mono font-semibold ${
+                      className={`inline-flex items-center gap-1 text-[12.5px] font-mono font-bold tabular-nums ${
                         isUp
-                          ? 'bg-[#FDECEC] text-[#DE5252] border-[#F6B8B8]'
+                          ? 'text-[var(--accent-danger-ink)]'
                           : isDown
-                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                          : 'bg-[#F1F3F6] text-[#697386] border-[#E7EAF0]'
+                          ? 'text-[var(--accent-success-ink)]'
+                          : 'text-[var(--text-secondary)]'
                       }`}
                     >
                       {isUp ? (
@@ -96,49 +98,51 @@ export function CategoryPriceAnalytics({
                       {avgPct.toFixed(1)}%
                     </span>
                   ) : (
-                    <span className="text-xs font-medium text-[#697386]">
+                    <span className="text-[12px] font-medium text-[var(--text-secondary)]">
                       Single-buy baseline
                     </span>
                   )}
-                  <p className="text-xs font-mono text-[#697386] mt-1">
+                  <p className="text-[12px] font-mono text-[var(--text-secondary)] mt-0.5 tabular-nums">
                     ₹{formatCurrencyExact(row.totalSpend)} spend
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="surface-subtle p-2">
-                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Increasing</p>
-                  <p className="text-sm font-bold font-mono text-[#DE5252] mt-0.5">
+                <div className="surface-well p-2.5">
+                  <p className="text-[12px] font-medium text-[var(--text-secondary)]">Increasing</p>
+                  <p className="text-sm font-bold font-mono text-[var(--accent-danger-ink)] mt-0.5 tabular-nums">
                     {row.increasingCount}
                   </p>
                 </div>
-                <div className="surface-subtle p-2">
-                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Decreasing</p>
-                  <p className="text-sm font-bold font-mono text-[#15966B] mt-0.5">
+                <div className="surface-well p-2.5">
+                  <p className="text-[12px] font-medium text-[var(--text-secondary)]">Decreasing</p>
+                  <p className="text-sm font-bold font-mono text-[var(--accent-success-ink)] mt-0.5 tabular-nums">
                     {row.decreasingCount}
                   </p>
                 </div>
-                <div className="surface-subtle p-2">
-                  <p className="text-[10px] font-semibold uppercase text-[#697386]">Stable / 1× Buy</p>
-                  <p className="text-sm font-bold font-mono text-[#151922] mt-0.5">
+                <div className="surface-well p-2.5">
+                  <p className="text-[12px] font-medium text-[var(--text-secondary)]">Stable / 1× Buy</p>
+                  <p className="text-sm font-bold font-mono text-[var(--text-primary)] mt-0.5 tabular-nums">
                     {row.stableOrSingleCount}
                   </p>
                 </div>
               </div>
 
               {row.topMover && row.topMover.overallChangePct !== null && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#E7EAF0] text-xs">
-                  <span className="text-[#697386]">Top mover:</span>
+                <div className="flex items-center justify-between pt-2.5 border-t border-[var(--border-subtle)] text-[12.5px]">
+                  <span className="text-[var(--text-secondary)]">Top mover:</span>
                   <button
                     type="button"
                     onClick={() => onSelectProduct?.(row.topMover!.productId)}
-                    className="font-semibold text-[#151922] hover:text-[#365FE8] transition-colors"
+                    className="font-semibold text-[var(--text-primary)] hover:text-[var(--accent-ink)] transition-colors"
                   >
                     {row.topMover.productName}{' '}
                     <span
-                      className={`font-mono ${
-                        row.topMover.overallChangePct > 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
+                      className={`font-mono tabular-nums ${
+                        row.topMover.overallChangePct > 0
+                          ? 'text-[var(--accent-danger-ink)]'
+                          : 'text-[var(--accent-success-ink)]'
                       }`}
                     >
                       ({row.topMover.overallChangePct > 0 ? '+' : ''}

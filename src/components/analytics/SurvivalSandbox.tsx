@@ -184,7 +184,7 @@ export function SurvivalSandbox({
       <div
         role="tablist"
         aria-label="Financial Wellness sections"
-        className="tactile-well flex items-center gap-1 bg-[#F1F3F6] border border-[#E7EAF0] p-1 rounded-xl overflow-x-auto no-scrollbar"
+        className="tactile-well flex items-center gap-1 bg-[var(--bg-well)] border border-[var(--border-subtle)] p-1 rounded-xl overflow-x-auto no-scrollbar"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -196,20 +196,20 @@ export function SurvivalSandbox({
               role="tab"
               aria-selected={active}
               onClick={() => setSection(item.id)}
-              className={`flex-1 min-w-fit py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
+              className={`flex-1 min-w-fit py-2 px-3 rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-all ${
                 active
-                  ? 'bg-white text-[#151922] shadow-xs'
-                  : 'text-[#697386] hover:text-[#151922]'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2.25} />
               <span>{item.label}</span>
               {item.badge !== undefined && item.badge > 0 && (
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  className={`px-1.5 py-0.5 rounded-md text-[12px] font-mono tabular-nums font-semibold ${
                     active
-                      ? 'bg-[#EDF2FF] text-[#365FE8]'
-                      : 'bg-[#FEF6E7] text-[#9E6614]'
+                      ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)]'
+                      : 'bg-[var(--accent-warning-soft)] text-[var(--accent-warning-ink)]'
                   }`}
                 >
                   {item.badge}

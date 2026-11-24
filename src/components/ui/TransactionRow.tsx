@@ -25,14 +25,14 @@ export function TransactionRow({
   secondaryRow,
 }: TransactionRowProps) {
   const toneClass = inactive
-    ? 'line-through text-[#929BAB]'
+    ? 'line-through text-[var(--text-muted)]'
     : amountTone === 'positive'
-      ? 'text-[#15966B]'
+      ? 'text-[var(--accent-success-ink)]'
       : amountTone === 'negative'
-        ? 'text-[#DE5252]'
+        ? 'text-[var(--accent-danger-ink)]'
         : amountTone === 'muted'
-          ? 'text-[#697386]'
-          : 'text-[#151922]';
+          ? 'text-[var(--text-secondary)]'
+          : 'text-[var(--text-primary)]';
 
   return (
     <div className={`py-3.5 transition-colors ${inactive ? 'opacity-65' : ''}`}>
@@ -41,18 +41,18 @@ export function TransactionRow({
           <div className="flex items-center gap-2 flex-wrap">
             <p
               className={`text-[14px] font-medium truncate ${
-                inactive ? 'line-through text-[#697386]' : 'text-[#151922]'
+                inactive ? 'line-through text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'
               }`}
             >
               {title}
             </p>
             {statusText && (
-              <span className="text-[11px] font-medium text-[#C7851F]">
+              <span className="text-[12px] font-medium text-[var(--accent-warning-ink)]">
                 · {statusText}
               </span>
             )}
           </div>
-          <p className="text-[12.5px] text-[#697386] mt-0.5 truncate">
+          <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5 truncate">
             {metadata}
           </p>
         </div>

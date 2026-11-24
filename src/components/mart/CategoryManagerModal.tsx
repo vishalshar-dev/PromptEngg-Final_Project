@@ -112,21 +112,21 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-xl max-h-[90vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-xl max-h-[90vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7EAF0]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] flex items-center justify-center">
               <SlidersHorizontal className="w-4 h-4" strokeWidth={2.2} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#151922]">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">
                 Manage Categories &amp; Subcategories
               </h3>
-              <p className="text-xs text-[#697386]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 Add categories, edit subcategories, customize icons, reorder, or safely reassign
               </p>
             </div>
@@ -135,7 +135,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
             type="button"
             onClick={onClose}
             aria-label="Close category manager"
-            className="w-8 h-8 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+            className="w-9 h-9 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -146,9 +146,9 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
           {/* Create Category Form */}
           <form
             onSubmit={handleAdd}
-            className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-2xl p-4 space-y-3"
+            className="surface-well rounded-2xl p-4 space-y-3"
           >
-            <p className="text-xs font-bold text-[#151922]">
+            <p className="text-xs font-bold text-[var(--text-primary)]">
               Add New Category
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -182,7 +182,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-[#697386]">Select Icon</p>
+              <p className="text-xs font-medium text-[var(--text-secondary)]">Select Icon</p>
               <div className="flex flex-wrap gap-1.5">
                 {AVAILABLE_ICON_KEYS.slice(0, 14).map((key) => (
                   <button
@@ -192,8 +192,8 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                     onClick={() => setNewIconKey(key)}
                     className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors border ${
                       newIconKey === key
-                        ? 'bg-[#EDF2FF] text-[#365FE8] border-[#365FE8]'
-                        : 'bg-white text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
+                        ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-primary)]'
+                        : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     <CategoryIcon iconKey={key} className="w-4 h-4" />
@@ -204,7 +204,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
 
             <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-medium text-[#697386] mr-1">Accent:</span>
+                <span className="text-xs font-medium text-[var(--text-secondary)] mr-1">Accent:</span>
                 {ACCENT_OPTIONS.slice(0, 8).map((acc) => {
                   const st = getCategoryStyle('', acc);
                   return (
@@ -214,7 +214,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                       aria-label={`Accent ${acc}`}
                       onClick={() => setNewAccent(acc)}
                       className={`w-5 h-5 rounded-full ${st.dot} transition-transform ${
-                        newAccent === acc ? 'ring-2 ring-offset-2 ring-[#365FE8] scale-110' : 'opacity-70 hover:opacity-100'
+                        newAccent === acc ? 'ring-2 ring-offset-2 ring-[var(--accent-primary)] scale-110' : 'opacity-70 hover:opacity-100'
                       }`}
                     />
                   );
@@ -223,7 +223,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
               <button
                 type="submit"
                 disabled={!newName.trim()}
-                className="btn-primary py-2 px-4 text-xs disabled:bg-[#E7EAF0] disabled:text-[#929BAB]"
+                className="btn-primary py-2 px-4 text-xs disabled:bg-[var(--bg-well)] disabled:text-[var(--text-muted)]"
               >
                 <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
                 Add Category
@@ -233,7 +233,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
 
           {/* Existing Categories List */}
           <div className="space-y-2.5">
-            <p className="text-xs font-semibold text-[#697386]">
+            <p className="text-xs font-semibold text-[var(--text-secondary)]">
               Configured Categories ({categoryConfigs.length})
             </p>
             {categoryConfigs.map((cat, idx) => {
@@ -245,7 +245,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
               return (
                 <div
                   key={cat.id}
-                  className="bg-white border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5 shadow-xs"
+                  className="bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-3.5 space-y-2.5 shadow-xs"
                 >
                   {isEditing ? (
                     <div className="space-y-2.5">
@@ -281,8 +281,8 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             onClick={() => setEditIconKey(key)}
                             className={`w-7 h-7 rounded-md flex items-center justify-center border ${
                               editIconKey === key
-                                ? 'bg-[#EDF2FF] text-[#365FE8] border-[#365FE8]'
-                                : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
+                                ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-primary)]'
+                                : 'bg-[var(--bg-subtle)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
                             }`}
                           >
                             <CategoryIcon iconKey={key} className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                                 type="button"
                                 onClick={() => setEditAccent(acc)}
                                 className={`w-4 h-4 rounded-full ${st.dot} ${
-                                  editAccent === acc ? 'ring-2 ring-offset-1 ring-[#365FE8]' : 'opacity-65'
+                                  editAccent === acc ? 'ring-2 ring-offset-1 ring-[var(--accent-primary)]' : 'opacity-65'
                                 }`}
                               />
                             );
@@ -335,14 +335,14 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-bold text-[#151922] truncate">{cat.name}</p>
+                              <p className="text-sm font-bold text-[var(--text-primary)] truncate">{cat.name}</p>
                               {cat.isCustom && (
-                                <span className="text-xs font-medium text-[#365FE8]">
+                                <span className="text-xs font-medium text-[var(--accent-ink)]">
                                   · Custom
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-[#697386] font-mono truncate tabular-nums">
+                            <p className="text-xs text-[var(--text-secondary)] font-mono truncate tabular-nums">
                               {count} {count === 1 ? 'product' : 'products'}
                               {cat.subcategories && cat.subcategories.length > 0
                                 ? ` · ${cat.subcategories.length} subcategories`
@@ -357,7 +357,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             disabled={idx === 0}
                             onClick={() => reorderCategories(idx, idx - 1)}
                             aria-label={`Move ${cat.name} up`}
-                            className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] disabled:opacity-30 border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+                            className="w-7 h-7 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] disabled:opacity-30 border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
                           </button>
@@ -366,7 +366,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             disabled={idx === categoryConfigs.length - 1}
                             onClick={() => reorderCategories(idx, idx + 1)}
                             aria-label={`Move ${cat.name} down`}
-                            className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] disabled:opacity-30 border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+                            className="w-7 h-7 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] disabled:opacity-30 border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
                           </button>
@@ -374,7 +374,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             type="button"
                             onClick={() => startEdit(cat)}
                             aria-label={`Edit ${cat.name}`}
-                            className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#EDF2FF] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#365FE8]"
+                            className="w-7 h-7 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-ink)]"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -383,7 +383,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                               type="button"
                               onClick={() => startDelete(cat)}
                               aria-label={`Delete ${cat.name}`}
-                              className="w-7 h-7 rounded-lg bg-[#F7F8FA] hover:bg-[#FDECEC] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#DE5252]"
+                              className="w-7 h-7 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--accent-danger-soft)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent-danger)]"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -392,10 +392,10 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                       </div>
 
                       {isDeleting && (
-                        <div className="bg-[#FDECEC] border border-[#F6B8B8] rounded-lg p-3 space-y-2.5 animate-fade-in">
+                        <div className="bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] rounded-lg p-3 space-y-2.5 animate-fade-in">
                           <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-[#DE5252] flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-[#151922] leading-relaxed">
+                            <AlertTriangle className="w-4 h-4 text-[var(--accent-danger)] flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-[var(--text-primary)] leading-relaxed">
                               Delete <strong>{cat.name}</strong>? Historical transactions stay intact.
                               {count > 0 && ` Reassign its ${count} product${count === 1 ? '' : 's'} to:`}
                             </p>
@@ -427,7 +427,7 @@ export function CategoryManagerModal({ isOpen, onClose }: CategoryManagerModalPr
                             <button
                               type="button"
                               onClick={() => confirmDelete(cat)}
-                              className="px-3 py-1 rounded-lg bg-[#DE5252] text-xs font-semibold text-white"
+                              className="px-3 py-1 rounded-lg bg-[var(--accent-danger)] text-xs font-semibold text-white"
                             >
                               Confirm Delete
                             </button>

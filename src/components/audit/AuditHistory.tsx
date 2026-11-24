@@ -27,14 +27,14 @@ export function AuditHistory() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
             <History className="w-4 h-4" strokeWidth={2.25} />
           </div>
           <div>
-            <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+            <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
               Saved Audit History
             </h3>
-            <p className="text-xs text-[#697386]">
+            <p className="text-[12px] text-[var(--text-secondary)]">
               Review archived receipt &amp; cart fee audits
             </p>
           </div>
@@ -43,7 +43,7 @@ export function AuditHistory() {
           <button
             type="button"
             onClick={clearSavedAudits}
-            className="text-xs font-semibold text-[#697386] hover:text-[#DE5252] transition-colors flex items-center gap-1"
+            className="text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] transition-colors flex items-center gap-1"
           >
             <Trash2 className="w-3.5 h-3.5" strokeWidth={2.25} />
             Clear All
@@ -53,19 +53,19 @@ export function AuditHistory() {
 
       {savedAudits.length > 0 && (
         <div className="grid grid-cols-2 gap-2.5">
-          <div className="surface-subtle p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <div className="surface-well p-3">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
               Audits Saved
             </p>
-            <p className="text-base font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
               {savedAudits.length}
             </p>
           </div>
-          <div className="surface-subtle p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <div className="surface-well p-3">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
               Extra Fees Spotted
             </p>
-            <p className="text-base font-bold font-mono tabular-nums text-[#9E6614] mt-0.5">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--accent-warning-ink)] mt-0.5">
               ₹{formatCurrency(totalExtraFees)}
             </p>
           </div>
@@ -74,11 +74,11 @@ export function AuditHistory() {
 
       {savedAudits.length === 0 ? (
         <div className="py-5 text-center">
-          <div className="w-10 h-10 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] flex items-center justify-center mx-auto mb-2.5">
-            <History className="w-4 h-4 text-[#697386]" strokeWidth={2} />
+          <div className="w-10 h-10 rounded-xl bg-[var(--bg-well)] border border-[var(--border-subtle)] flex items-center justify-center mx-auto mb-2.5">
+            <History className="w-4 h-4 text-[var(--text-secondary)]" strokeWidth={2} />
           </div>
-          <p className="text-sm font-semibold text-[#151922]">No saved audits yet</p>
-          <p className="text-xs text-[#697386] mt-1">
+          <p className="text-sm font-semibold text-[var(--text-primary)]">No saved audits yet</p>
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1">
             Scan a receipt or run a cart audit, then save it here
           </p>
         </div>
@@ -92,19 +92,19 @@ export function AuditHistory() {
             return (
               <div
                 key={audit.id}
-                className="rounded-xl border border-[#E7EAF0] bg-[#F7F8FA] overflow-hidden"
+                className="surface-well overflow-hidden border border-[var(--border-subtle)]"
               >
                 <button
                   type="button"
                   onClick={() => toggleExpand(audit.id)}
-                  className="w-full flex items-center justify-between p-3.5 hover:bg-[#F1F3F6] transition-colors"
+                  className="w-full flex items-center justify-between p-3.5 hover:bg-[var(--bg-hover)] transition-colors"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                         isReceiptAudit
-                          ? 'bg-[#EDF2FF] border-[#D4E0FF] text-[#365FE8]'
-                          : 'bg-[#FEF6E7] border-[#F3D8A8] text-[#9E6614]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                          : 'bg-[var(--accent-warning-soft)] border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)]'
                       }`}
                     >
                       {isReceiptAudit ? (
@@ -114,10 +114,10 @@ export function AuditHistory() {
                       )}
                     </div>
                     <div className="text-left min-w-0">
-                      <p className="text-sm font-bold text-[#151922] truncate">
+                      <p className="text-sm font-bold text-[var(--text-primary)] truncate">
                         {audit.source}
                       </p>
-                      <p className="text-[11px] text-[#697386] font-medium">
+                      <p className="text-[12px] text-[var(--text-secondary)] font-medium">
                         {new Date(audit.timestamp).toLocaleDateString('en-IN', {
                           month: 'short',
                           day: 'numeric',
@@ -130,59 +130,59 @@ export function AuditHistory() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
-                      <p className="text-sm font-bold text-[#151922] font-mono tabular-nums">
+                      <p className="text-sm font-bold text-[var(--text-primary)] font-mono tabular-nums">
                         ₹{formatCurrency(audit.total)}
                       </p>
                       {audit.extraFees > 0 && (
-                        <p className="text-[11px] font-semibold text-[#9E6614] font-mono tabular-nums">
+                        <p className="text-[12px] font-semibold text-[var(--accent-warning-ink)] font-mono tabular-nums">
                           +₹{formatCurrency(audit.extraFees)} fees
                         </p>
                       )}
                     </div>
                     {isExpanded ? (
-                      <ChevronUp className="w-4 h-4 text-[#697386]" strokeWidth={2.25} />
+                      <ChevronUp className="w-4 h-4 text-[var(--text-secondary)]" strokeWidth={2.25} />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-[#697386]" strokeWidth={2.25} />
+                      <ChevronDown className="w-4 h-4 text-[var(--text-secondary)]" strokeWidth={2.25} />
                     )}
                   </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="px-3.5 pb-3.5 pt-3 bg-[#FFFFFF] border-t border-[#E7EAF0] space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="surface-subtle p-2 text-center">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+                  <div className="px-3.5 pb-3.5 pt-3 border-t border-[var(--border-subtle)] space-y-3">
+                    <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] py-1">
+                      <div className="px-2 text-center">
+                        <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                           Subtotal
                         </p>
-                        <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+                        <p className="text-xs font-bold text-[var(--text-primary)] font-mono tabular-nums mt-0.5">
                           ₹{formatCurrency(audit.subtotal)}
                         </p>
                       </div>
-                      <div className="surface-subtle p-2 text-center">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+                      <div className="px-2 text-center">
+                        <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                           Extra Fees
                         </p>
                         <p
                           className={`text-xs font-bold font-mono tabular-nums mt-0.5 ${
-                            audit.extraFees > 0 ? 'text-[#9E6614]' : 'text-[#697386]'
+                            audit.extraFees > 0 ? 'text-[var(--accent-warning-ink)]' : 'text-[var(--text-secondary)]'
                           }`}
                         >
                           ₹{formatCurrency(audit.extraFees)}
                         </p>
                       </div>
-                      <div className="surface-subtle p-2 text-center">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+                      <div className="px-2 text-center">
+                        <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                           Total
                         </p>
-                        <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+                        <p className="text-xs font-bold text-[var(--text-primary)] font-mono tabular-nums mt-0.5">
                           ₹{formatCurrency(audit.total)}
                         </p>
                       </div>
                     </div>
 
                     {hasFlags ? (
-                      <div className="space-y-1.5">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                      <div className="space-y-1.5 pt-2 border-t border-[var(--border-subtle)]">
+                        <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
                           Flagged Warnings
                         </p>
                         {audit.flags.map((flag, fi) => (
@@ -190,34 +190,34 @@ export function AuditHistory() {
                             key={fi}
                             className={`rounded-lg p-2.5 border flex items-start gap-2 ${
                               flag.severity === 'critical'
-                                ? 'bg-[#FDECEC] border-[#F6B8B8]'
-                                : 'bg-[#FEF6E7] border-[#F3D8A8]'
+                                ? 'bg-[var(--accent-danger-soft)] border-[var(--accent-danger-border)]'
+                                : 'bg-[var(--accent-warning-soft)] border-[var(--accent-warning-border)]'
                             }`}
                           >
                             <AlertOctagon
                               className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
                                 flag.severity === 'critical'
-                                  ? 'text-[#DE5252]'
-                                  : 'text-[#9E6614]'
+                                  ? 'text-[var(--accent-danger-ink)]'
+                                  : 'text-[var(--accent-warning-ink)]'
                               }`}
                               strokeWidth={2.25}
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 mb-0.5">
                                 <span
-                                  className={`text-[10px] font-bold uppercase tracking-wider ${
+                                  className={`text-[12px] font-bold ${
                                     flag.severity === 'critical'
-                                      ? 'text-[#DE5252]'
-                                      : 'text-[#9E6614]'
+                                      ? 'text-[var(--accent-danger-ink)]'
+                                      : 'text-[var(--accent-warning-ink)]'
                                   }`}
                                 >
                                   {flag.type}
                                 </span>
-                                <span className="text-[10px] font-semibold text-[#697386] font-mono">
-                                  ₹{formatCurrency(flag.estimatedCost)}
+                                <span className="text-[12px] font-semibold text-[var(--text-secondary)] font-mono tabular-nums">
+                                  · ₹{formatCurrency(flag.estimatedCost)}
                                 </span>
                               </div>
-                              <p className="text-xs text-[#4F5869] leading-relaxed">
+                              <p className="text-[12px] text-[var(--text-tertiary)] leading-relaxed">
                                 {flag.message}
                               </p>
                             </div>
@@ -225,7 +225,7 @@ export function AuditHistory() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-[#697386] text-center py-1">
+                      <p className="text-[12px] text-[var(--text-secondary)] text-center py-1">
                         No flags — clean audit
                       </p>
                     )}
@@ -233,7 +233,7 @@ export function AuditHistory() {
                     <button
                       type="button"
                       onClick={() => removeSavedAudit(audit.id)}
-                      className="w-full text-xs font-semibold text-[#697386] hover:text-[#DE5252] transition-colors flex items-center justify-center gap-1.5 py-1.5"
+                      className="w-full text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] transition-colors flex items-center justify-center gap-1.5 py-1.5"
                     >
                       <Trash2 className="w-3.5 h-3.5" strokeWidth={2.25} />
                       Delete this audit

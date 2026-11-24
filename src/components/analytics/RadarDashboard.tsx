@@ -157,7 +157,7 @@ export function RadarDashboard({
       <div className="flex flex-col gap-2.5">
         {/* Row 1: Radar Room Navigation Tabs */}
         <div
-          className="flex flex-wrap items-center gap-1.5"
+          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5"
           role="tablist"
           aria-label="Radar Room analytics sections"
         >
@@ -184,16 +184,16 @@ export function RadarDashboard({
                 role="tab"
                 aria-selected={active}
                 onClick={() => setSection(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors border ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-xl text-[12.5px] font-semibold whitespace-nowrap shrink-0 transition-colors border ${
                   active
-                    ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
-                    : 'bg-white text-[#697386] hover:text-[#151922] border-[#E7EAF0]'
+                    ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-border)]'
+                    : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-subtle)]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" strokeWidth={2.2} />
                 <span>{tab.label}</span>
                 {'badge' in tab && tab.badge !== undefined && (
-                  <span className="ml-0.5 font-mono tabular-nums text-[11px] px-1.5 rounded bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
+                  <span className="ml-0.5 font-mono tabular-nums text-[11px] px-1.5 rounded bg-[var(--accent-warning-soft)] text-[var(--accent-warning-ink)] border border-[var(--accent-warning-border)]">
                     {tab.badge}
                   </span>
                 )}
@@ -205,7 +205,7 @@ export function RadarDashboard({
         {/* Row 2: Timeframe Filter Bar */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div
-            className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-1 max-w-full"
+            className="tactile-well flex items-center gap-1 overflow-x-auto no-scrollbar bg-[var(--bg-subtle)] border border-[var(--border-subtle)] rounded-xl p-1 max-w-full"
             role="group"
             aria-label="Radar Room timeframe selector"
           >
@@ -217,10 +217,10 @@ export function RadarDashboard({
                   type="button"
                   onClick={() => setTimeframe(opt.id)}
                   aria-pressed={active}
-                  className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold whitespace-nowrap shrink-0 transition-colors ${
+                  className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold whitespace-nowrap shrink-0 transition-colors ${
                     active
-                      ? 'bg-white text-[#151922] shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {opt.label}
@@ -231,8 +231,8 @@ export function RadarDashboard({
         </div>
 
         {timeframe === 'custom' && (
-          <div className="flex flex-wrap items-center gap-3 text-xs bg-white border border-[#E7EAF0] rounded-xl px-3.5 py-2.5 w-fit">
-            <label className="flex items-center gap-2 text-[#697386] font-medium">
+          <div className="flex flex-wrap items-center gap-3 text-xs bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl px-3.5 py-2.5 w-fit">
+            <label className="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
               <span>From</span>
               <input
                 type="date"
@@ -242,7 +242,7 @@ export function RadarDashboard({
                 className="input-field px-2.5 py-1 text-xs"
               />
             </label>
-            <label className="flex items-center gap-2 text-[#697386] font-medium">
+            <label className="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
               <span>To</span>
               <input
                 type="date"

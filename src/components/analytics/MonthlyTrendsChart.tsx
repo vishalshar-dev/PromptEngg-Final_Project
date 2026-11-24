@@ -38,16 +38,16 @@ function CustomTrendsTooltip({ active, payload }: CustomTooltipProps) {
   const diff = Math.abs(point.remaining);
 
   return (
-    <div className="bg-white rounded-xl px-3.5 py-2.5 shadow-lg border border-[#E7EAF0] min-w-[188px]">
+    <div className="bg-[var(--bg-surface)] rounded-xl px-3.5 py-2.5 shadow-lg border border-[var(--border-subtle)] min-w-[188px]">
       <div className="flex items-center justify-between gap-3 mb-1.5">
-        <span className="text-xs font-bold text-[#151922]">{point.fullLabel}</span>
+        <span className="text-xs font-bold text-[var(--text-primary)]">{point.fullLabel}</span>
         <span
           className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-md ${
             point.txCount === 0
-              ? 'bg-[#F1F3F6] text-[#697386]'
+              ? 'bg-[var(--bg-subtle)] text-[var(--text-secondary)]'
               : isOver
-              ? 'bg-[#FDECEC] text-[#DE5252]'
-              : 'bg-[#E8F7F1] text-[#15966B]'
+              ? 'bg-[var(--accent-danger-soft)] text-[var(--accent-danger-ink)]'
+              : 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)]'
           }`}
         >
           {point.txCount === 0
@@ -60,20 +60,20 @@ function CustomTrendsTooltip({ active, payload }: CustomTooltipProps) {
 
       <div className="space-y-1 text-xs">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-[#697386] font-medium">Spent</span>
-          <span className="font-mono font-bold text-[#151922] tabular-nums">
+          <span className="text-[var(--text-secondary)] font-medium">Spent</span>
+          <span className="font-mono font-bold text-[var(--text-primary)] tabular-nums">
             ₹{formatCurrency(point.spent)}
           </span>
         </div>
 
         {point.budget > 0 && (
           <div className="flex items-center justify-between gap-4">
-            <span className="text-[#697386] font-medium">
+            <span className="text-[var(--text-secondary)] font-medium">
               {isOver ? 'Over by' : 'Remaining'}
             </span>
             <span
               className={`font-mono font-semibold tabular-nums ${
-                isOver ? 'text-[#DE5252]' : 'text-[#15966B]'
+                isOver ? 'text-[var(--accent-danger-ink)]' : 'text-[var(--accent-success-ink)]'
               }`}
             >
               ₹{formatCurrency(diff)}
@@ -81,12 +81,12 @@ function CustomTrendsTooltip({ active, payload }: CustomTooltipProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-4 pt-1 border-t border-[#E7EAF0] text-[11px]">
-          <span className="text-[#929BAB]">
+        <div className="flex items-center justify-between gap-4 pt-1 border-t border-[var(--border-subtle)] text-[11px]">
+          <span className="text-[var(--text-muted)]">
             {point.txCount} {point.txCount === 1 ? 'txn' : 'txns'}
           </span>
           {point.topCategory && (
-            <span className="text-[#697386] font-semibold truncate max-w-[100px]">
+            <span className="text-[var(--text-secondary)] font-semibold truncate max-w-[100px]">
               Top: {point.topCategory}
             </span>
           )}
@@ -134,14 +134,14 @@ export function MonthlyTrendsChart() {
       {/* Header + Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-start gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center shrink-0 mt-0.5">
-            <TrendingUp className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+          <div className="w-8 h-8 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center shrink-0 mt-0.5">
+            <TrendingUp className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
           </div>
           <div>
-            <h3 className="text-sm font-bold tracking-tight text-[#151922]">
+            <h3 className="text-sm font-bold tracking-tight text-[var(--text-primary)]">
               Monthly Spending Trends
             </h3>
-            <p className="text-xs text-[#697386] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Spend history vs ₹{formatCurrency(totalBudget)} budget across last{' '}
               {range} months
             </p>
@@ -151,7 +151,7 @@ export function MonthlyTrendsChart() {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {/* Range Selector */}
           <div
-            className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex items-center bg-[var(--bg-subtle)] border border-[var(--border-subtle)] rounded-xl p-0.5"
             role="group"
             aria-label="Month range"
           >
@@ -165,8 +165,8 @@ export function MonthlyTrendsChart() {
                   aria-pressed={active}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                     active
-                      ? 'bg-[#365FE8] text-white shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {opt}M
@@ -177,7 +177,7 @@ export function MonthlyTrendsChart() {
 
           {/* Chart Type Toggle */}
           <div
-            className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+            className="tactile-well inline-flex items-center bg-[var(--bg-subtle)] border border-[var(--border-subtle)] rounded-xl p-0.5"
             role="group"
             aria-label="Chart style"
           >
@@ -188,8 +188,8 @@ export function MonthlyTrendsChart() {
               aria-label="Area chart"
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                 chartMode === 'area'
-                  ? 'bg-white text-[#365FE8] shadow-xs border border-[#E7EAF0]'
-                  : 'text-[#697386] hover:text-[#151922] border border-transparent'
+                  ? 'bg-[var(--bg-surface)] text-[var(--accent-ink)] shadow-sm border border-[var(--border-subtle)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
               }`}
             >
               <Activity className="w-3.5 h-3.5" strokeWidth={2.2} />
@@ -202,8 +202,8 @@ export function MonthlyTrendsChart() {
               aria-label="Bar chart"
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                 chartMode === 'bar'
-                  ? 'bg-white text-[#365FE8] shadow-xs border border-[#E7EAF0]'
-                  : 'text-[#697386] hover:text-[#151922] border border-transparent'
+                  ? 'bg-[var(--bg-surface)] text-[var(--accent-ink)] shadow-sm border border-[var(--border-subtle)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-transparent'
               }`}
             >
               <BarChart3 className="w-3.5 h-3.5" strokeWidth={2.2} />
@@ -215,16 +215,16 @@ export function MonthlyTrendsChart() {
 
       {/* Summary Metrics Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
-        <div className="surface-subtle px-3.5 py-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+        <div className="surface-well px-3.5 py-2.5">
+          <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
             Avg / Month
           </p>
-          <p className="text-sm font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+          <p className="text-sm font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
             {summary.hasAnyTransactions
               ? `₹${formatCurrency(summary.avgMonthlySpend)}`
               : '—'}
           </p>
-          <p className="text-[11px] text-[#929BAB] mt-0.5 truncate">
+          <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5 truncate">
             {summary.activeMonthsCount > 0
               ? `${summary.activeMonthsCount} active ${
                   summary.activeMonthsCount === 1 ? 'mo' : 'mos'
@@ -233,42 +233,44 @@ export function MonthlyTrendsChart() {
           </p>
         </div>
 
-        <div className="surface-subtle px-3.5 py-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+        <div className="surface-well px-3.5 py-2.5">
+          <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
             Peak Month
           </p>
           <p
             className={`text-sm font-bold font-mono tabular-nums mt-0.5 ${
-              summary.peakMonth?.isOverBudget ? 'text-[#DE5252]' : 'text-[#151922]'
+              summary.peakMonth?.isOverBudget
+                ? 'text-[var(--accent-danger-ink)]'
+                : 'text-[var(--text-primary)]'
             }`}
           >
             {summary.peakMonth
               ? `₹${formatCurrency(summary.peakMonth.spent)}`
               : '—'}
           </p>
-          <p className="text-[11px] text-[#929BAB] mt-0.5 truncate">
+          <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5 truncate">
             {summary.peakMonth ? summary.peakMonth.fullLabel : 'Waiting for data'}
           </p>
         </div>
 
-        <div className="surface-subtle px-3.5 py-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+        <div className="surface-well px-3.5 py-2.5">
+          <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
             On Budget
           </p>
           <p
             className={`text-sm font-bold font-mono tabular-nums mt-0.5 ${
               !summary.hasAnyTransactions
-                ? 'text-[#697386]'
+                ? 'text-[var(--text-secondary)]'
                 : summary.overBudgetCount > 0
-                ? 'text-[#9E6614]'
-                : 'text-[#15966B]'
+                ? 'text-[var(--accent-warning-ink)]'
+                : 'text-[var(--accent-success-ink)]'
             }`}
           >
             {summary.hasAnyTransactions
               ? `${summary.underBudgetCount}/${summary.activeMonthsCount} mos`
               : '—'}
           </p>
-          <p className="text-[11px] text-[#929BAB] mt-0.5 truncate">
+          <p className="text-[11.5px] text-[var(--text-muted)] mt-0.5 truncate">
             {momDisplay ?? 'Track month over month'}
           </p>
         </div>
@@ -277,16 +279,16 @@ export function MonthlyTrendsChart() {
       {/* Chart or Empty State */}
       {!summary.hasAnyTransactions ? (
         <div
-          className="h-56 rounded-xl bg-[#F7F8FA] border border-dashed border-[#D5DBE6] flex flex-col items-center justify-center text-center px-6"
+          className="h-56 rounded-xl bg-[var(--bg-subtle)] border border-dashed border-[var(--border-strong)] flex flex-col items-center justify-center text-center px-6"
           data-testid="monthly-trends-empty"
         >
-          <div className="w-10 h-10 rounded-xl bg-white border border-[#E7EAF0] flex items-center justify-center mb-3">
-            <TrendingUp className="w-5 h-5 text-[#929BAB]" strokeWidth={2} />
+          <div className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex items-center justify-center mb-3">
+            <TrendingUp className="w-5 h-5 text-[var(--text-muted)]" strokeWidth={2} />
           </div>
-          <p className="text-sm font-semibold text-[#151922]">
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
             No monthly spending history yet
           </p>
-          <p className="text-xs text-[#697386] mt-1 max-w-xs">
+          <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs">
             Check out items from Shopping or save a scanned receipt in Receipt Scanner to chart
             your monthly spend against your budget.
           </p>
@@ -298,7 +300,7 @@ export function MonthlyTrendsChart() {
               {chartMode === 'area' ? (
                 <AreaChart
                   data={summary.points}
-                  margin={{ top: 18, right: 12, left: -10, bottom: 2 }}
+                  margin={{ top: 18, right: 12, left: 0, bottom: 2 }}
                 >
                   <defs>
                     <linearGradient id="monthlySpendGrad" x1="0" y1="0" x2="0" y2="1">
@@ -334,7 +336,7 @@ export function MonthlyTrendsChart() {
                     }}
                     axisLine={false}
                     tickLine={false}
-                    width={54}
+                    width={58}
                   />
                   <Tooltip
                     cursor={{
@@ -382,7 +384,7 @@ export function MonthlyTrendsChart() {
               ) : (
                 <BarChart
                   data={summary.points}
-                  margin={{ top: 18, right: 12, left: -10, bottom: 2 }}
+                  margin={{ top: 18, right: 12, left: 0, bottom: 2 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -412,7 +414,7 @@ export function MonthlyTrendsChart() {
                     }}
                     axisLine={false}
                     tickLine={false}
-                    width={54}
+                    width={58}
                   />
                   <Tooltip
                     cursor={{ fill: chartTokens.cursorFill }}
@@ -453,27 +455,36 @@ export function MonthlyTrendsChart() {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-[#E7EAF0] text-xs text-[#697386]">
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
             <div className="flex flex-wrap items-center gap-4">
               <span className="inline-flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#365FE8] inline-block" />
+                <span
+                  className="w-2.5 h-2.5 rounded-full inline-block"
+                  style={{ backgroundColor: chartTokens.accent }}
+                />
                 <span>Monthly Spend</span>
               </span>
               {chartMode === 'bar' && (
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#DE5252] inline-block" />
+                  <span
+                    className="w-2.5 h-2.5 rounded-full inline-block"
+                    style={{ backgroundColor: chartTokens.danger }}
+                  />
                   <span>Over Budget</span>
                 </span>
               )}
               {totalBudget > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-4 border-t-2 border-dashed border-[#E5A23B] inline-block" />
+                  <span
+                    className="w-4 border-t-2 border-dashed inline-block"
+                    style={{ borderColor: chartTokens.warning }}
+                  />
                   <span>Budget Cap (₹{formatCurrency(totalBudget)})</span>
                 </span>
               )}
             </div>
             {summary.overBudgetCount > 0 && (
-              <span className="text-[#DE5252] font-semibold">
+              <span className="text-[var(--accent-danger-ink)] font-semibold">
                 {summary.overBudgetCount}{' '}
                 {summary.overBudgetCount === 1 ? 'month' : 'months'} over budget
               </span>

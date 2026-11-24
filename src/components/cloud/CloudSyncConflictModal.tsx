@@ -15,43 +15,43 @@ export function CloudSyncConflictModal() {
       aria-modal="true"
       aria-labelledby="cloud-conflict-title"
     >
-      <div className="fixed inset-0 bg-[#151922]/55 backdrop-blur-[2px] animate-fade-in" />
+      <div className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] animate-fade-in" />
 
-      <div className="relative z-10 w-full max-w-lg bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal p-5 space-y-4 animate-slide-up">
+      <div className="relative z-10 w-full max-w-lg modal-panel rounded-t-3xl sm:rounded-2xl p-5 space-y-4 animate-slide-up">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center shrink-0">
             <Cloud className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <h2
               id="cloud-conflict-title"
-              className="text-base font-bold text-[#151922] tracking-tight"
+              className="text-base font-bold font-display text-[var(--text-primary)] tracking-tight"
             >
               Sync Data Found on Both Devices
             </h2>
-            <p className="text-xs text-[#697386] mt-0.5 leading-relaxed">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
               This browser has unsynced activity and your Google account already has a cloud workspace. Choose how to combine them:
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div className="surface-subtle p-3 space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#151922]">
-              <Smartphone className="w-3.5 h-3.5 text-[#365FE8]" />
+          <div className="surface-well border border-[var(--border-subtle)] p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+              <Smartphone className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
               <span>This Device</span>
             </div>
-            <p className="text-[11.5px] text-[#697386] font-mono tabular-nums">
+            <p className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
               {pendingConflict.localTransactionCount} expenses · {pendingConflict.localSplitsCount} splits · {pendingConflict.localPennyCount} chats
             </p>
           </div>
 
-          <div className="surface-subtle p-3 space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#151922]">
-              <Laptop className="w-3.5 h-3.5 text-[#15966B]" />
+          <div className="surface-well border border-[var(--border-subtle)] p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
+              <Laptop className="w-3.5 h-3.5 text-[var(--accent-success-ink)]" />
               <span className="truncate">{pendingConflict.cloudDeviceName}</span>
             </div>
-            <p className="text-[11.5px] text-[#697386] font-mono tabular-nums">
+            <p className="text-xs text-[var(--text-secondary)] font-mono tabular-nums">
               {pendingConflict.cloudTransactionCount} expenses · {pendingConflict.cloudSplitsCount} splits · {pendingConflict.cloudPennyCount} chats
             </p>
           </div>
@@ -68,7 +68,7 @@ export function CloudSyncConflictModal() {
               <GitMerge className="w-4 h-4" />
               <span>Smart Merge Both Devices (Recommended)</span>
             </span>
-            <span className="text-[11px] opacity-85">Keep all records</span>
+            <span className="text-xs opacity-85">Keep all records</span>
           </button>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

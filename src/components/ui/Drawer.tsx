@@ -41,26 +41,26 @@ export function Drawer({
       aria-label={title}
     >
       <div
-        className="fixed inset-0 bg-[#151922]/35 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
 
       <div
-        className={`relative z-10 w-full ${maxWidthClass} modal-panel border-t lg:border-t-0 lg:border-l border-[#E7EAF0] rounded-t-2xl lg:rounded-none flex flex-col max-h-[88vh] lg:max-h-screen lg:h-full animate-slide-up lg:animate-fade-in`}
+        className={`relative z-10 w-full ${maxWidthClass} modal-panel border-t lg:border-t-0 lg:border-l border-[var(--border-subtle)] rounded-t-2xl lg:rounded-none flex flex-col max-h-[88vh] lg:max-h-screen lg:h-full animate-slide-up lg:animate-fade-in`}
       >
         {/* Mobile sheet drag handle */}
         <div className="lg:hidden flex justify-center pt-2.5 pb-1">
-          <span className="w-9 h-1 rounded-full bg-[#D5DBE5]" aria-hidden="true" />
+          <span className="w-9 h-1 rounded-full bg-[var(--border-strong)]" aria-hidden="true" />
         </div>
 
         {/* Drawer Header */}
-        <div className="px-5 py-4 border-b border-[#E7EAF0] flex items-start justify-between gap-3 shrink-0">
+        <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex items-start justify-between gap-3 shrink-0">
           <div className="min-w-0">
-            <h2 className="text-[17px] font-semibold tracking-tight text-[#151922] truncate">
+            <h2 className="text-[17px] font-semibold font-display tracking-tight text-[var(--text-primary)] truncate">
               {title}
             </h2>
             {subtitle && (
-              <p className="text-[12.5px] text-[#697386] mt-0.5 truncate">
+              <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5 truncate">
                 {subtitle}
               </p>
             )}
@@ -71,7 +71,7 @@ export function Drawer({
               type="button"
               onClick={onClose}
               aria-label={`Close ${title}`}
-              className="w-8 h-8 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-[#F1F3F6] flex items-center justify-center transition-colors"
+              className="w-9 h-9 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center justify-center transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -85,7 +85,7 @@ export function Drawer({
 
         {/* Sticky Footer */}
         {footer && (
-          <div className="px-5 py-4 border-t border-[#E7EAF0] bg-[#FFFFFF] shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="px-5 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {footer}
           </div>
         )}

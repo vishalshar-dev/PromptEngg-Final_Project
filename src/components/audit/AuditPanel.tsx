@@ -49,13 +49,13 @@ export function AuditPanel({
   return (
     <div className="space-y-5">
       {/* Header + Integrated Underline Tab Strip */}
-      <div className="border-b border-[#E7EAF0]">
+      <div className="border-b border-[var(--border-subtle)]">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4">
           <div className="min-w-0">
-            <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
+            <h1 className="font-display text-[22px] sm:text-[26px] font-bold tracking-tight text-[var(--text-primary)] leading-tight">
               Receipt Scanner
             </h1>
-            <p className="text-[13.5px] text-[#697386] mt-1 max-w-2xl leading-relaxed">
+            <p className="text-[13.5px] text-[var(--text-secondary)] mt-1 max-w-2xl leading-relaxed">
               Scan receipts with AI vision, detect hidden checkout fees, compare quick-commerce carts, and export backups.
             </p>
           </div>
@@ -65,7 +65,7 @@ export function AuditPanel({
               <button
                 type="button"
                 onClick={onOpenPriceTracker}
-                className="text-[12.5px] font-semibold text-[#365FE8] hover:text-[#294FCC] inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto"
+                className="text-[12.5px] font-semibold text-[var(--accent-ink)] hover:opacity-80 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start sm:self-auto"
               >
                 <LineChart className="w-4 h-4" />
                 <span>Price Intelligence</span>
@@ -86,8 +86,8 @@ export function AuditPanel({
             onClick={() => setActiveTab('scan')}
             className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'scan'
-                ? 'border-[#365FE8] text-[#365FE8]'
-                : 'border-transparent text-[#697386] hover:text-[#151922]'
+                ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <ScanLine className="w-4 h-4" />
@@ -102,8 +102,8 @@ export function AuditPanel({
               onClick={() => setActiveTab('tools')}
               className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === 'tools'
-                  ? 'border-[#365FE8] text-[#365FE8]'
-                  : 'border-transparent text-[#697386] hover:text-[#151922]'
+                  ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <Scale className="w-4 h-4" />
@@ -157,7 +157,7 @@ export function AuditPanel({
             <div
               className={`${
                 featureSettings.showAuditComparator ? 'lg:col-span-5' : 'lg:col-span-12'
-              } surface-card p-5 divide-y divide-[#E7EAF0] space-y-6`}
+              } surface-card p-5 divide-y divide-[var(--border-subtle)] space-y-6`}
             >
               <ExportReport />
               <div className="pt-6">

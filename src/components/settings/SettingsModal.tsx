@@ -154,10 +154,10 @@ function SwitchRow({
   onToggle: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2.5 border-b border-[#E7EAF0] last:border-b-0">
+    <div className="flex items-center justify-between gap-3 py-2.5 border-b border-[var(--border-subtle)] last:border-b-0">
       <div className="min-w-0">
-        <p className="text-[13px] font-semibold text-[#151922] leading-snug">{label}</p>
-        <p className="text-[11.5px] text-[#697386] mt-0.5 leading-snug">{description}</p>
+        <p className="text-[13px] font-semibold text-[var(--text-primary)] leading-snug">{label}</p>
+        <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-snug">{description}</p>
       </div>
       <button
         type="button"
@@ -167,8 +167,8 @@ function SwitchRow({
         onClick={onToggle}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors ${
           checked
-            ? 'bg-[#365FE8] border-[#365FE8]'
-            : 'bg-[#F1F3F6] border-[#D5DBE5]'
+            ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)]'
+            : 'bg-[var(--bg-well)] border-[var(--border-strong)]'
         }`}
       >
         <span
@@ -262,25 +262,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       aria-labelledby="settings-modal-title"
     >
       <div
-        className="fixed inset-0 bg-[#151922]/50 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
 
       <div className="relative z-10 w-full max-w-2xl max-h-[90vh] flex flex-col modal-panel rounded-t-3xl sm:rounded-2xl animate-slide-up overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#E7EAF0] flex items-center justify-between gap-3">
+        <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center shrink-0">
               <SlidersHorizontal className="w-4 h-4" strokeWidth={2.2} />
             </div>
             <div className="min-w-0">
               <h2
                 id="settings-modal-title"
-                className="text-base font-bold text-[#151922] tracking-tight"
+                className="text-base font-bold font-display text-[var(--text-primary)] tracking-tight"
               >
                 Workspace Settings &amp; Theme
               </h2>
-              <p className="text-xs text-[#697386] truncate">
+              <p className="text-xs text-[var(--text-secondary)] truncate">
                 Switch between Light &amp; Dark themes, budget cycles, or module visibility.
               </p>
             </div>
@@ -290,7 +290,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             type="button"
             onClick={onClose}
             aria-label="Close settings"
-            className="w-8 h-8 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] hover:text-[#151922] flex items-center justify-center shrink-0 transition-colors"
+            className="w-8 h-8 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center shrink-0 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -299,27 +299,27 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* Body */}
         <div className="p-5 space-y-6 overflow-y-auto scrollbar-thin">
           {/* 0. Multi-Device Cloud Sync & Account */}
-          <section className="surface-subtle p-4 space-y-3" aria-label="Account and cloud sync">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-3" aria-label="Account and cloud sync">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 {syncStatus === 'offline' ? (
-                  <CloudOff className="w-4 h-4 text-[#C7851F] shrink-0" />
+                  <CloudOff className="w-4 h-4 text-[var(--accent-warning-ink)] shrink-0" />
                 ) : (
-                  <Cloud className="w-4 h-4 text-[#365FE8] shrink-0" />
+                  <Cloud className="w-4 h-4 text-[var(--accent-ink)] shrink-0" />
                 )}
-                <h3 className="text-xs font-bold text-[#151922]">
+                <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                   Account &amp; Multi-Device Cloud Sync
                 </h3>
               </div>
               <span
-                className={`text-[11px] font-mono font-semibold ${
+                className={`text-xs font-mono font-semibold ${
                   syncStatus === 'synced'
-                    ? 'text-[#15966B]'
+                    ? 'text-[var(--accent-success-ink)]'
                     : syncStatus === 'error'
-                      ? 'text-[#DE5252]'
+                      ? 'text-[var(--accent-danger-ink)]'
                       : syncStatus === 'offline'
-                        ? 'text-[#C7851F]'
-                        : 'text-[#697386]'
+                        ? 'text-[var(--accent-warning-ink)]'
+                        : 'text-[var(--text-secondary)]'
                 }`}
               >
                 {syncStatus === 'synced'
@@ -338,29 +338,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {user ? (
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-[#E7EAF0] rounded-xl p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl p-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {user.photoURL ? (
                       <img
                         src={user.photoURL}
                         alt=""
                         referrerPolicy="no-referrer"
-                        className="w-9 h-9 rounded-xl object-cover shrink-0 border border-[#E7EAF0]"
+                        className="w-9 h-9 rounded-xl object-cover shrink-0 border border-[var(--border-subtle)]"
                       />
                     ) : (
-                      <div className="w-9 h-9 rounded-xl bg-[#365FE8] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)] text-white text-sm font-bold flex items-center justify-center shrink-0">
                         {(user.displayName || user.email || 'U').trim().charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-[#151922] truncate">
+                      <p className="text-[13px] font-bold text-[var(--text-primary)] truncate">
                         {user.displayName || 'CartAudit Account'}
                       </p>
-                      <p className="text-[11px] text-[#697386] truncate">
+                      <p className="text-xs text-[var(--text-secondary)] truncate">
                         {user.email} · {deviceLabel}
                       </p>
                       {lastSyncedAt && (
-                        <p className="text-[10.5px] text-[#929BAB] font-mono tabular-nums mt-0.5">
+                        <p className="text-xs text-[var(--text-muted)] font-mono tabular-nums mt-0.5">
                           Last synced: {new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       )}
@@ -382,7 +382,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <button
                       type="button"
                       onClick={() => void signOutAccount()}
-                      className="btn-secondary px-3 py-1.5 text-xs text-[#DE5252] whitespace-nowrap"
+                      className="btn-secondary px-3 py-1.5 text-xs text-[var(--accent-danger-ink)] whitespace-nowrap"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Sign Out</span>
@@ -392,7 +392,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
             ) : (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p className="text-[11.5px] text-[#697386] leading-relaxed">
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                   Sign in with Google to automatically sync your expenses, splits, catalog, and Penny history across your phone and laptop.
                 </p>
                 <button
@@ -411,7 +411,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {syncError && (
               <div
                 role="alert"
-                className="rounded-xl px-3 py-2 bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B] text-xs flex items-start gap-2"
+                className="rounded-xl px-3 py-2 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-xs flex items-start gap-2"
               >
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 <div className="space-y-1">
@@ -435,12 +435,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <section className="space-y-4" aria-label="Appearance and tactile studio">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Palette className="w-4 h-4 text-[#365FE8] shrink-0" />
+                <Palette className="w-4 h-4 text-[var(--accent-ink)] shrink-0" />
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#697386]">
+                  <h3 className="text-sm font-bold font-display text-[var(--text-primary)]">
                     Appearance &amp; Tactile Studio
                   </h3>
-                  <p className="text-[11px] text-[#697386]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Customize color mood, surface material, typography, and motion feel.
                   </p>
                 </div>
@@ -450,7 +450,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="button"
                   onClick={resetVisualTheme}
                   data-testid="settings-reset-visual-theme"
-                  className="text-[11px] font-semibold text-[#697386] hover:text-[#151922] inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>Reset Visual Studio</span>
@@ -467,8 +467,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 data-testid="settings-theme-light"
                 className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 ${
                   theme === 'light'
-                    ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                    : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                    ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                    : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                 }`}
               >
                 <div
@@ -483,12 +483,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-[#151922]">Light Mode</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)]">Light Mode</span>
                     {theme === 'light' && (
-                      <Check className="w-4 h-4 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                      <Check className="w-4 h-4 text-[var(--accent-ink)] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
-                  <p className="text-[11.5px] text-[#697386] mt-0.5">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                     Porcelain daylight surfaces &amp; crisp slate contrast.
                   </p>
                 </div>
@@ -501,8 +501,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 data-testid="settings-theme-dark"
                 className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 ${
                   theme === 'dark'
-                    ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                    : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                    ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                    : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                 }`}
               >
                 <div
@@ -517,12 +517,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-bold text-[#151922]">Dark Mode</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)]">Dark Mode</span>
                     {theme === 'dark' && (
-                      <Check className="w-4 h-4 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                      <Check className="w-4 h-4 text-[var(--accent-ink)] shrink-0" strokeWidth={2.5} />
                     )}
                   </div>
-                  <p className="text-[11.5px] text-[#697386] mt-0.5">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                     Low-glare obsidian atmosphere &amp; luminous accents.
                   </p>
                 </div>
@@ -530,15 +530,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             {/* One-Tap Curated Aesthetic Bundles */}
-            <div className="surface-subtle p-3.5 space-y-2.5">
+            <div className="surface-well border border-[var(--border-subtle)] p-3.5 space-y-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
-                  <Wand2 className="w-3.5 h-3.5 text-[#365FE8]" />
-                  <span className="text-[11.5px] font-bold text-[#151922]">
+                  <Wand2 className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
+                  <span className="text-xs font-bold text-[var(--text-primary)]">
                     Curated Aesthetic Bundles
                   </span>
                 </div>
-                <span className="text-[11px] font-mono text-[#697386]">One-tap styles</span>
+                <span className="text-xs font-mono text-[var(--text-secondary)]">One-tap styles</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -553,18 +553,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       data-testid={`settings-bundle-${bundle.id}`}
                       className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
                         active
-                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                          : 'bg-white border-[#E7EAF0] hover:border-[#D5DBE5]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                          : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                       }`}
                     >
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#151922] truncate">{bundle.label}</p>
-                        <p className="text-[10.5px] text-[#697386] truncate mt-0.5">
+                        <p className="text-xs font-bold text-[var(--text-primary)] truncate">{bundle.label}</p>
+                        <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
                           {bundle.tagline}
                         </p>
                       </div>
                       {active && (
-                        <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                        <Check className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" strokeWidth={2.5} />
                       )}
                     </button>
                   );
@@ -575,8 +575,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {/* 4 Color Moods with Protected Inline Live Swatches */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11.5px] font-bold text-[#151922]">Color Mood</span>
-                <span className="text-[11px] font-mono text-[#365FE8]">
+                <span className="text-xs font-bold text-[var(--text-primary)]">Color Mood</span>
+                <span className="text-xs font-mono text-[var(--accent-ink)]">
                   {THEME_MOOD_OPTIONS.find((m) => m.id === visualTheme.mood)?.inspiredBy}
                 </span>
               </div>
@@ -593,8 +593,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       data-testid={`settings-mood-${opt.id}`}
                       className={`p-3 rounded-2xl border text-left transition-all flex items-start gap-3 ${
                         active
-                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                          : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                          : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                       }`}
                     >
                       {/* Miniature live UI preview using protected inline colors */}
@@ -636,14 +636,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-xs font-bold text-[#151922] truncate">
+                          <span className="text-xs font-bold text-[var(--text-primary)] truncate">
                             {opt.label}
                           </span>
                           {active && (
-                            <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                            <Check className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" strokeWidth={2.5} />
                           )}
                         </div>
-                        <p className="text-[11px] text-[#697386] mt-0.5 leading-snug line-clamp-2">
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-snug line-clamp-2">
                           {opt.subtitle}
                         </p>
                       </div>
@@ -656,8 +656,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {/* 3 Tactile Surface Finishes */}
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#365FE8]" />
-                <span className="text-[11.5px] font-bold text-[#151922]">
+                <Layers className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
+                <span className="text-xs font-bold text-[var(--text-primary)]">
                   Tactile Surface Finish
                 </span>
               </div>
@@ -673,17 +673,17 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       data-testid={`settings-surface-${opt.id}`}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         active
-                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                          : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                          : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1.5">
-                        <span className="text-xs font-bold text-[#151922]">{opt.label}</span>
+                        <span className="text-xs font-bold text-[var(--text-primary)]">{opt.label}</span>
                         {active && (
-                          <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                          <Check className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" strokeWidth={2.5} />
                         )}
                       </div>
-                      <p className="text-[10.5px] text-[#697386] mt-0.5 leading-snug">
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-snug">
                         {opt.description}
                       </p>
                     </button>
@@ -696,8 +696,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <Type className="w-3.5 h-3.5 text-[#365FE8]" />
-                  <span className="text-[11.5px] font-bold text-[#151922]">
+                  <Type className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
+                  <span className="text-xs font-bold text-[var(--text-primary)]">
                     Typography Pairing
                   </span>
                 </div>
@@ -713,16 +713,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         data-testid={`settings-font-${opt.id}`}
                         className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
                           active
-                            ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                            : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                            ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                            : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                         }`}
                       >
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-[#151922]">{opt.label}</p>
-                          <p className="text-[10.5px] text-[#697386] truncate">{opt.description}</p>
+                          <p className="text-xs font-bold text-[var(--text-primary)]">{opt.label}</p>
+                          <p className="text-xs text-[var(--text-secondary)] truncate">{opt.description}</p>
                         </div>
                         <span
-                          className="text-xs font-bold text-[#365FE8] tabular-nums shrink-0"
+                          className="text-xs font-bold text-[var(--accent-ink)] tabular-nums shrink-0"
                           style={{ fontFamily: opt.specimenFont }}
                         >
                           ₹12,480
@@ -735,8 +735,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-[#365FE8]" />
-                  <span className="text-[11.5px] font-bold text-[#151922]">
+                  <Zap className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
+                  <span className="text-xs font-bold text-[var(--text-primary)]">
                     Motion Profile
                   </span>
                 </div>
@@ -752,16 +752,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         data-testid={`settings-motion-${opt.id}`}
                         className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
                           active
-                            ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                            : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                            ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                            : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                         }`}
                       >
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-[#151922]">{opt.label}</p>
-                          <p className="text-[10.5px] text-[#697386] truncate">{opt.description}</p>
+                          <p className="text-xs font-bold text-[var(--text-primary)]">{opt.label}</p>
+                          <p className="text-xs text-[var(--text-secondary)] truncate">{opt.description}</p>
                         </div>
                         {active && (
-                          <Check className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.5} />
+                          <Check className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" strokeWidth={2.5} />
                         )}
                       </button>
                     );
@@ -772,26 +772,26 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 1.5 Budget Cycle & Rollover */}
-          <section className="surface-subtle p-4 space-y-3" aria-label="Budget cycle settings">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-3" aria-label="Budget cycle settings">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[#365FE8] shrink-0" />
+                <Calendar className="w-4 h-4 text-[var(--accent-ink)] shrink-0" />
                 <div>
-                  <h3 className="text-xs font-bold text-[#151922]">
+                  <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                     Monthly Budget Cycle &amp; Rollover
                   </h3>
-                  <p className="text-[11px] text-[#697386]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Match your salary date so budget balances reset when you get paid.
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-mono font-semibold text-[#365FE8]">
+              <span className="text-xs font-mono font-semibold text-[var(--accent-ink)]">
                 {getActiveBudgetCycleWindow(budgetResetDay).label}
               </span>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-[#E7EAF0]">
-              <label htmlFor="budget-reset-day-select" className="text-[12.5px] font-semibold text-[#151922]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 border-b border-[var(--border-subtle)]">
+              <label htmlFor="budget-reset-day-select" className="text-[12.5px] font-semibold text-[var(--text-primary)]">
                 Cycle Reset Day
               </label>
               <select
@@ -831,10 +831,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* 2. Quick Layout Simplicity Presets */}
           <section className="space-y-2.5" aria-label="Workspace layout presets">
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#697386]">
+              <h3 className="text-sm font-bold font-display text-[var(--text-primary)]">
                 Workspace Focus Mode
               </h3>
-              <span className="text-[11px] font-semibold text-[#697386]">
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">
                 {featureSettings.preset === 'custom'
                   ? `Custom (${enabledCount}/${TOTAL_FEATURE_TOGGLES_COUNT} tools)`
                   : `${PRESET_DEFINITIONS[featureSettings.preset].label} (${enabledCount}/${TOTAL_FEATURE_TOGGLES_COUNT} tools)`}
@@ -855,19 +855,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       data-testid={`settings-preset-${presetKey}`}
                       className={`p-3 rounded-xl border text-left transition-all ${
                         active
-                          ? 'bg-[#EDF2FF] border-[#365FE8] ring-1 ring-[#365FE8]/20'
-                          : 'bg-[#F7F8FA] border-[#E7EAF0] hover:border-[#D5DBE5]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] ring-1 ring-[var(--accent-ring)]'
+                          : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-1.5">
-                        <span className="text-[13px] font-bold text-[#151922]">
+                        <span className="text-[13px] font-bold text-[var(--text-primary)]">
                           {def.label}
                         </span>
                         {active && (
-                          <Check className="w-3.5 h-3.5 text-[#365FE8]" strokeWidth={2.5} />
+                          <Check className="w-3.5 h-3.5 text-[var(--accent-ink)]" strokeWidth={2.5} />
                         )}
                       </div>
-                      <p className="text-[11px] text-[#697386] mt-1 leading-snug">
+                      <p className="text-xs text-[var(--text-secondary)] mt-1 leading-snug">
                         {def.subtitle}
                       </p>
                     </button>
@@ -878,20 +878,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 3. Penny AI Companion */}
-          <section className="surface-subtle p-4 space-y-3" aria-label="Penny AI companion controls">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-3" aria-label="Penny AI companion controls">
             <div className="space-y-1 pb-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#365FE8] shrink-0" />
-                  <h3 className="text-xs font-bold text-[#151922]">
+                  <Sparkles className="w-4 h-4 text-[var(--accent-ink)] shrink-0" />
+                  <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                     Penny AI Companion
                   </h3>
                 </div>
-                <span className="text-[11px] font-mono font-semibold text-[#365FE8] truncate max-w-full">
+                <span className="text-xs font-mono font-semibold text-[var(--accent-ink)] truncate max-w-full">
                   {pennyProfile.resolvedSummary}
                 </span>
               </div>
-              <p className="text-[11px] text-[#697386] pl-6">
+              <p className="text-xs text-[var(--text-secondary)] pl-6">
                 Global floating chat assistant that learns your style and executes confirmed actions.
               </p>
             </div>
@@ -905,7 +905,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             <div className="pt-1 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[11.5px] font-semibold text-[#697386]">
+                <span className="text-xs font-semibold text-[var(--text-secondary)]">
                   Personality Mode ({pennyProfile.messageCount}{' '}
                   {pennyProfile.messageCount === 1 ? 'chat' : 'chats'} learned)
                 </span>
@@ -913,7 +913,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <button
                     type="button"
                     onClick={resetPennyProfile}
-                    className="text-[11px] font-semibold text-[#697386] hover:text-[#151922] inline-flex items-center gap-1"
+                    className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Reset Style
@@ -922,7 +922,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     <button
                       type="button"
                       onClick={clearPennyMessages}
-                      className="text-[11px] font-semibold text-[#DE5252] hover:underline inline-flex items-center gap-1"
+                      className="text-xs font-semibold text-[var(--accent-danger-ink)] hover:underline inline-flex items-center gap-1"
                     >
                       <Trash2 className="w-3 h-3" />
                       Clear Chat ({pennyMessages.length})
@@ -949,12 +949,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       aria-pressed={active}
                       className={`p-2 rounded-xl border text-left transition-colors ${
                         active
-                          ? 'bg-[#EDF2FF] border-[#365FE8] text-[#151922]'
-                          : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-primary)] text-[var(--text-primary)]'
+                          : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                       }`}
                     >
                       <p className="text-xs font-bold leading-tight">{modeOpt.label}</p>
-                      <p className="text-[10.5px] opacity-80 mt-0.5 leading-tight">{modeOpt.hint}</p>
+                      <p className="text-xs opacity-80 mt-0.5 leading-tight">{modeOpt.hint}</p>
                     </button>
                   );
                 })}
@@ -963,21 +963,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 3.5 UPI Profile for Split Settlements */}
-          <section className="surface-subtle p-4 space-y-3" aria-label="UPI profile settings">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-3" aria-label="UPI profile settings">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-[#365FE8]" />
+                <QrCode className="w-4 h-4 text-[var(--accent-ink)]" />
                 <div>
-                  <h3 className="text-xs font-bold text-[#151922]">
+                  <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                     UPI Profile for Split Settlements
                   </h3>
-                  <p className="text-[11px] text-[#697386]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Used to generate scannable QR codes when friends owe you money.
                   </p>
                 </div>
               </div>
               {myUpiId && (
-                <span className="text-[11px] font-mono font-semibold text-[#15966B]">
+                <span className="text-xs font-mono font-semibold text-[var(--accent-success-ink)]">
                   Saved
                 </span>
               )}
@@ -985,7 +985,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <label className="block space-y-1">
-                <span className="text-[11px] font-medium text-[#697386]">Your UPI ID</span>
+                <span className="text-xs font-medium text-[var(--text-secondary)]">Your UPI ID</span>
                 <input
                   type="text"
                   value={upiIdDraft}
@@ -1000,7 +1000,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 />
               </label>
               <label className="block space-y-1">
-                <span className="text-[11px] font-medium text-[#697386]">Display Name (optional)</span>
+                <span className="text-xs font-medium text-[var(--text-secondary)]">Display Name (optional)</span>
                 <input
                   type="text"
                   value={upiNameDraft}
@@ -1015,10 +1015,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             {upiValidationError && (
-              <p className="text-[11.5px] font-medium text-[#DE5252]">{upiValidationError}</p>
+              <p className="text-xs font-medium text-[var(--accent-danger-ink)]">{upiValidationError}</p>
             )}
             {upiSavedStatus && (
-              <p className="text-[11.5px] font-semibold text-[#15966B]">{upiSavedStatus}</p>
+              <p className="text-xs font-semibold text-[var(--accent-success-ink)]">{upiSavedStatus}</p>
             )}
 
             <div className="flex justify-end">
@@ -1044,14 +1044,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 4. Navigation Tabs */}
-          <section className="surface-subtle p-4 space-y-2" aria-label="Navigation modules">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-2" aria-label="Navigation modules">
             <div className="flex items-center gap-2 pb-1">
-              <LayoutGrid className="w-4 h-4 text-[#365FE8]" />
+              <LayoutGrid className="w-4 h-4 text-[var(--accent-ink)]" />
               <div>
-                <h3 className="text-xs font-bold text-[#151922]">
+                <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                   Navigation Sections
                 </h3>
-                <p className="text-[11px] text-[#697386]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Overview, Shopping, and Expenses always remain available as core essentials.
                 </p>
               </div>
@@ -1070,14 +1070,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 5. Overview & Shopping Widgets */}
-          <section className="surface-subtle p-4 space-y-2" aria-label="Overview and Shopping controls">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-2" aria-label="Overview and Shopping controls">
             <div className="flex items-center gap-2 pb-1">
-              <ShoppingBag className="w-4 h-4 text-[#15966B]" />
+              <ShoppingBag className="w-4 h-4 text-[var(--accent-success-ink)]" />
               <div>
-                <h3 className="text-xs font-bold text-[#151922]">
+                <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                   Overview &amp; Shopping Clutter Control
                 </h3>
-                <p className="text-[11px] text-[#697386]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Turn off secondary shelves or summary strips when you only want to browse &amp; buy.
                 </p>
               </div>
@@ -1096,18 +1096,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 6. Insights & Receipt Scanner Widgets */}
-          <section className="surface-subtle p-4 space-y-2" aria-label="Insights and Scanner controls">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-2" aria-label="Insights and Scanner controls">
             <div className="flex items-center gap-2 pb-1">
               {featureSettings.showScanner ? (
-                <ScanLine className="w-4 h-4 text-[#C7851F]" />
+                <ScanLine className="w-4 h-4 text-[var(--accent-warning-ink)]" />
               ) : (
-                <LineChart className="w-4 h-4 text-[#365FE8]" />
+                <LineChart className="w-4 h-4 text-[var(--accent-ink)]" />
               )}
               <div>
-                <h3 className="text-xs font-bold text-[#151922]">
+                <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                   Insights &amp; Receipt Scanner Modules
                 </h3>
-                <p className="text-[11px] text-[#697386]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Show only the analysis and auditing cards you actively use.
                 </p>
               </div>
@@ -1126,21 +1126,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </section>
 
           {/* 7. Workspace Data, Backup & Export */}
-          <section className="surface-subtle p-4 space-y-3" aria-label="Workspace data, export and backup">
+          <section className="surface-well border border-[var(--border-subtle)] p-4 space-y-3" aria-label="Workspace data, export and backup">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <FileJson className="w-4 h-4 text-[#365FE8]" />
+                <FileJson className="w-4 h-4 text-[var(--accent-ink)]" />
                 <div>
-                  <h3 className="text-xs font-bold text-[#151922]">
+                  <h3 className="text-[13px] font-bold font-display text-[var(--text-primary)]">
                     Workspace Data, Backup &amp; Export
                   </h3>
-                  <p className="text-[11px] text-[#697386]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Explore with a realistic Indian budget month, clear your workspace, or export backups.
                   </p>
                 </div>
               </div>
               {exportStatus && (
-                <span className="text-[11px] font-semibold text-[#15966B]">{exportStatus}</span>
+                <span className="text-xs font-semibold text-[var(--accent-success-ink)]">{exportStatus}</span>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -1155,7 +1155,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 }}
                 className="btn-secondary px-3.5 py-2 text-xs"
               >
-                <Sparkles className="w-3.5 h-3.5 text-[#365FE8]" />
+                <Sparkles className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
                 <span>{isSampleDataLoaded ? 'Reload Sample Month' : 'Load Sample Month'}</span>
               </button>
 
@@ -1164,14 +1164,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="button"
                   data-testid="settings-clear-data"
                   onClick={() => setConfirmClearData(true)}
-                  className="btn-secondary px-3.5 py-2 text-xs text-[#C23838]"
+                  className="btn-secondary px-3.5 py-2 text-xs text-[var(--accent-danger-ink)]"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-[#DE5252]" />
+                  <Trash2 className="w-3.5 h-3.5 text-[var(--accent-danger-ink)]" />
                   <span>Clear Workspace Data</span>
                 </button>
               ) : (
-                <div className="inline-flex items-center gap-1.5 rounded-xl border border-[#FAD4D4] bg-[#FDECEC] px-2.5 py-1">
-                  <span className="text-[11px] font-semibold text-[#B93B3B]">
+                <div className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--accent-danger-border)] bg-[var(--accent-danger-soft)] px-2.5 py-1">
+                  <span className="text-xs font-semibold text-[var(--accent-danger-ink)]">
                     Reset all entries?
                   </span>
                   <button
@@ -1183,14 +1183,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       setExportStatus('Workspace cleared');
                       setTimeout(() => setExportStatus(null), 2500);
                     }}
-                    className="px-2 py-0.5 rounded-lg bg-[#DE5252] text-white text-[11px] font-semibold hover:bg-[#C23838]"
+                    className="px-2 py-0.5 rounded-lg bg-[var(--accent-danger)] text-white text-xs font-semibold hover:opacity-90"
                   >
                     Confirm
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmClearData(false)}
-                    className="px-2 py-0.5 rounded-lg bg-white text-[#697386] text-[11px] font-semibold border border-[#E7EAF0]"
+                    className="px-2 py-0.5 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] text-xs font-semibold border border-[var(--border-subtle)]"
                   >
                     Cancel
                   </button>
@@ -1209,7 +1209,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 }}
                 className="btn-secondary px-3.5 py-2 text-xs"
               >
-                <FileJson className="w-3.5 h-3.5 text-[#365FE8]" />
+                <FileJson className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
                 <span>Download JSON Backup</span>
               </button>
               <button
@@ -1231,7 +1231,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 }}
                 className="btn-secondary px-3.5 py-2 text-xs"
               >
-                <Download className="w-3.5 h-3.5 text-[#15966B]" />
+                <Download className="w-3.5 h-3.5 text-[var(--accent-success-ink)]" />
                 <span>Export Budget Report (.TXT)</span>
               </button>
             </div>
@@ -1239,7 +1239,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3.5 border-t border-[#E7EAF0] bg-[#F7F8FA] flex items-center justify-between gap-3">
+        <div className="px-5 py-3.5 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={resetFeatureSettings}

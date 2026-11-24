@@ -98,7 +98,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
       {loadToast && (
         <div
           role="status"
-          className="rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] px-3.5 py-2.5 flex items-center gap-2 text-xs font-semibold text-[#15966B] animate-fade-in"
+          className="rounded-xl bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] px-3.5 py-2.5 flex items-center gap-2 text-xs font-semibold text-[var(--accent-success-ink)] animate-fade-in"
         >
           <Check className="w-4 h-4 shrink-0" strokeWidth={2.5} />
           <span>{loadToast}</span>
@@ -107,22 +107,22 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
       {/* Save Current Cart Card */}
       <form
         onSubmit={handleSaveCurrentCart}
-        className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3"
+        className="surface-card rounded-2xl p-5 space-y-3"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold text-[#151922] flex items-center gap-2">
-              <BookmarkPlus className="w-4 h-4 text-[#365FE8]" />
+            <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <BookmarkPlus className="w-4 h-4 text-[var(--accent-ink)]" />
               Save Current Cart as Basket
             </h3>
-            <p className="text-xs text-[#697386] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               {cartSummary.lineCount > 0
                 ? `${cartSummary.lineCount} ${cartSummary.lineCount === 1 ? 'line' : 'lines'} · ${formatQuantity(cartSummary.totalUnits)} qty · ₹${formatCurrencyExact(cartSummary.totalAmount)} ready to save`
                 : 'Add items to your cart first to save them as a reusable shopping basket.'}
             </p>
           </div>
           {saveSuccessFlash && (
-            <span className="text-xs font-semibold text-[#15966B] flex items-center gap-1 whitespace-nowrap">
+            <span className="text-xs font-semibold text-[var(--accent-success-ink)] flex items-center gap-1 whitespace-nowrap">
               <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
               Saved “{saveSuccessFlash}”
             </span>
@@ -164,8 +164,8 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
             disabled={cartSummary.lineCount === 0}
             className={`sm:w-auto w-full shrink-0 py-2 px-4 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
               cartSummary.lineCount > 0
-                ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
-                : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'
+                ? 'bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white'
+                : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'
             }`}
           >
             Save Basket
@@ -173,7 +173,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
         </div>
 
         {saveError && (
-          <p role="alert" className="text-xs font-medium text-[#C7851F]">
+          <p role="alert" className="text-xs font-medium text-[var(--accent-warning-ink)]">
             {saveError}
           </p>
         )}
@@ -203,7 +203,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
             return (
               <div
                 key={basket.id}
-                className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3.5"
+                className="surface-card rounded-2xl p-5 space-y-3.5"
               >
                 {isEditing ? (
                   <div className="space-y-2.5">
@@ -248,19 +248,19 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-sm font-bold text-[#151922] truncate">
+                        <h4 className="text-sm font-bold text-[var(--text-primary)] truncate">
                           {basket.name}
                         </h4>
                         {basket.isPreset && (
-                          <span className="text-xs font-medium text-[#697386]">
+                          <span className="text-xs font-medium text-[var(--text-secondary)]">
                             · Starter preset
                           </span>
                         )}
                       </div>
                       {basket.description && (
-                        <p className="text-xs text-[#697386] mt-0.5">{basket.description}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{basket.description}</p>
                       )}
-                      <div className="flex items-center gap-1.5 text-xs text-[#697386] font-mono tabular-nums mt-1 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] font-mono tabular-nums mt-1 flex-wrap">
                         <span>
                           {lineCount} {lineCount === 1 ? 'item' : 'items'}
                         </span>
@@ -272,13 +272,13 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <p className="text-base font-bold font-mono text-[#151922] tabular-nums">
+                      <p className="text-base font-bold font-mono text-[var(--text-primary)] tabular-nums">
                         ₹{formatCurrencyExact(currentTotal)}
                       </p>
                       {hasPriceShift ? (
                         <p
                           className={`text-xs font-mono font-semibold flex items-center justify-end gap-1 tabular-nums ${
-                            priceDiff > 0 ? 'text-[#C7851F]' : 'text-[#15966B]'
+                            priceDiff > 0 ? 'text-[var(--accent-warning-ink)]' : 'text-[var(--accent-success-ink)]'
                           }`}
                         >
                           {priceDiff > 0 ? (
@@ -291,7 +291,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                             : `-₹${formatCurrencyExact(Math.abs(priceDiff))} cheaper`}
                         </p>
                       ) : (
-                        <p className="text-[11px] font-mono text-[#929BAB] tabular-nums">
+                        <p className="text-[12px] font-mono text-[var(--text-muted)] tabular-nums">
                           Saved ₹{formatCurrencyExact(savedTotal)}
                         </p>
                       )}
@@ -309,10 +309,10 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                       disabled={lineCount === 0}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                         loadedFlashId === `${basket.id}:merge`
-                          ? 'bg-[#15966B] text-white'
+                          ? 'bg-[var(--accent-success)] text-white'
                           : lineCount > 0
-                          ? 'bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white border border-[#365FE8]/25'
-                          : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'
+                          ? 'bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary)] text-[var(--accent-ink)] hover:text-white border border-[var(--accent-border)]'
+                          : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'
                       }`}
                     >
                       {loadedFlashId === `${basket.id}:merge` ? (
@@ -362,7 +362,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         type="button"
                         onClick={() => refreshBasketBaselinePrices(basket.id)}
                         title="Update saved baseline prices to match current catalog prices"
-                        className="px-2.5 py-1.5 rounded-lg bg-[#FEF6E7] hover:bg-[#FDEBC7] border border-[#F3D8A8] text-[#9E6614] text-xs font-semibold flex items-center gap-1 whitespace-nowrap"
+                        className="px-2.5 py-1.5 rounded-lg bg-[var(--accent-warning-soft)] hover:opacity-90 border border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)] text-xs font-semibold flex items-center gap-1 whitespace-nowrap"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Sync Price
@@ -375,7 +375,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         onClick={() => updateBasketFromCart(basket.id)}
                         aria-label={`Overwrite ${basket.name} with current cart`}
                         title="Overwrite basket items with current cart"
-                        className="px-2.5 py-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#EDF2FF] border border-[#E7EAF0] text-[#4B5565] hover:text-[#365FE8] text-xs font-semibold whitespace-nowrap"
+                        className="px-2.5 py-1.5 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] border border-[var(--border-subtle)] text-[var(--text-tertiary)] hover:text-[var(--accent-ink)] text-xs font-semibold whitespace-nowrap"
                       >
                         Update from Cart
                       </button>
@@ -390,7 +390,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                           setEditDesc(basket.description ?? '');
                         }}
                         aria-label={`Rename ${basket.name}`}
-                        className="p-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-[#697386] hover:text-[#151922]"
+                        className="p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
@@ -405,14 +405,14 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                             setConfirmDeleteId(null);
                           }}
                           aria-label={`Confirm delete ${basket.name}`}
-                          className="px-2.5 py-1 rounded-lg bg-[#DE5252] text-white text-xs font-semibold whitespace-nowrap"
+                          className="px-2.5 py-1.5 rounded-lg bg-[var(--accent-danger)] text-white text-xs font-semibold whitespace-nowrap"
                         >
                           Delete
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2.5 py-1 rounded-lg bg-[#F1F3F6] text-[#4B5565] text-xs font-semibold"
+                          className="px-2.5 py-1.5 rounded-lg bg-[var(--bg-subtle)] text-[var(--text-tertiary)] text-xs font-semibold"
                         >
                           Keep
                         </button>
@@ -422,7 +422,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                         type="button"
                         onClick={() => setConfirmDeleteId(basket.id)}
                         aria-label={`Delete ${basket.name}`}
-                        className="p-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#FDECEC] border border-[#E7EAF0] text-[#697386] hover:text-[#DE5252]"
+                        className="p-2 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--accent-danger-soft)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--accent-danger)]"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -430,27 +430,27 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                   </div>
                 </div>
 
-                {/* Expanded Line Breakdown */}
+                {/* Expanded Line Breakdown (Flat hairline rows — zero box-within-box) */}
                 {isExpanded && (
-                  <div className="bg-[#F7F8FA] rounded-xl p-3 space-y-2 border border-[#E7EAF0]">
+                  <div className="border-t border-[var(--border-subtle)] pt-3 divide-y divide-[var(--border-subtle)]/60">
                     {lines.length === 0 ? (
-                      <p className="text-xs text-[#697386] text-center py-2">
+                      <p className="text-xs text-[var(--text-secondary)] text-center py-2">
                         All items were removed from this basket.
                       </p>
                     ) : (
                       lines.map((line, idx) => (
                         <div
                           key={`${basket.id}-${line.templateItem.itemId}-${line.templateItem.variantId ?? idx}`}
-                          className="flex items-center justify-between gap-2 text-xs py-1"
+                          className="flex items-center justify-between gap-2 text-xs py-2"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-[#151922] font-semibold truncate">
+                            <p className="text-[var(--text-primary)] font-semibold truncate">
                               {line.templateItem.name}
                               {line.templateItem.variantLabel
                                 ? ` · ${line.templateItem.variantLabel}`
                                 : ''}
                             </p>
-                            <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#697386] tabular-nums">
+                            <div className="flex items-center gap-1.5 text-[12px] font-mono text-[var(--text-secondary)] tabular-nums">
                               <span>
                                 {formatQuantity(line.templateItem.quantity)} × ₹
                                 {formatCurrencyExact(line.currentPrice)}
@@ -458,20 +458,20 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                               {Math.abs(line.unitPriceDiff) >= 0.5 && (
                                 <span
                                   className={
-                                    line.unitPriceDiff > 0 ? 'text-[#C7851F]' : 'text-[#15966B]'
+                                    line.unitPriceDiff > 0 ? 'text-[var(--accent-warning-ink)]' : 'text-[var(--accent-success-ink)]'
                                   }
                                 >
                                   · was ₹{formatCurrencyExact(line.savedPrice)}
                                 </span>
                               )}
                               {line.isMissingFromCatalog && (
-                                <span className="text-[#929BAB]">· custom/restorable</span>
+                                <span className="text-[var(--text-muted)]">· custom/restorable</span>
                               )}
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="font-mono font-bold text-[#151922] tabular-nums">
+                            <span className="font-mono font-bold text-[var(--text-primary)] tabular-nums">
                               ₹{formatCurrencyExact(line.currentSubtotal)}
                             </span>
                             <button
@@ -484,7 +484,7 @@ export function BasketTemplatesPanel({ onLoadedToCart }: BasketTemplatesPanelPro
                                 )
                               }
                               aria-label={`Remove ${line.templateItem.name} from ${basket.name}`}
-                              className="text-[#929BAB] hover:text-[#DE5252] p-1"
+                              className="text-[var(--text-muted)] hover:text-[var(--accent-danger)] p-1"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>

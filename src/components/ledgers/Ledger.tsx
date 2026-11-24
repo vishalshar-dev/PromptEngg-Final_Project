@@ -103,17 +103,17 @@ export function Ledger({
   return (
     <div className="space-y-4">
       {/* Filter Toolbar + Primary CTA */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-3 border-y border-[#E7EAF0]">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-3 border-y border-[var(--border-subtle)]">
         <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
           <div className="relative flex-1 min-w-[190px] sm:max-w-[260px]">
-            <Search className="w-3.5 h-3.5 text-[#929BAB] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search expenses…"
               aria-label="Search expenses"
-              className="input-field w-full pl-8 pr-3 py-1.5 text-[12.5px]"
+              className="input-field w-full pl-9 pr-3 py-2 text-[13px] min-h-[38px]"
             />
           </div>
 
@@ -121,7 +121,7 @@ export function Ledger({
             aria-label="Filter expenses by category"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="input-field px-2.5 py-1.5 text-[12.5px] font-medium max-w-[180px]"
+            className="input-field px-3 py-2 text-[13px] font-medium max-w-[190px] min-h-[38px]"
           >
             <option value="all">All Categories</option>
             {availableCategories.map((cat) => (
@@ -135,7 +135,7 @@ export function Ledger({
             aria-label="Filter expenses by status or source"
             value={sourceStatusFilter}
             onChange={(e) => setSourceStatusFilter(e.target.value)}
-            className="input-field px-2.5 py-1.5 text-[12.5px] font-medium"
+            className="input-field px-3 py-2 text-[13px] font-medium min-h-[38px]"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active Only</option>
@@ -146,7 +146,7 @@ export function Ledger({
           </select>
 
           {sortedTx.length > 0 && (
-            <span className="text-[11.5px] font-medium text-[#697386] whitespace-nowrap">
+            <span className="text-[12px] font-medium text-[var(--text-secondary)] whitespace-nowrap tabular-nums">
               {hasActiveFilters
                 ? `${filteredTx.length} of ${sortedTx.length} shown`
                 : `${sortedTx.length} ${sortedTx.length === 1 ? 'entry' : 'entries'}`}
@@ -158,7 +158,7 @@ export function Ledger({
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}
-            className="btn-primary px-3.5 py-2 text-[13px] whitespace-nowrap"
+            className="btn-primary px-4 py-2 text-[13px] min-h-[40px] whitespace-nowrap"
           >
             <Plus className="w-4 h-4" strokeWidth={2.2} />
             <span>Add Expense</span>
@@ -167,7 +167,7 @@ export function Ledger({
       </div>
 
       {/* Hairline-Divided List-First Ledger */}
-      <div className="bg-white border border-[#E7EAF0] rounded-2xl px-5">
+      <div className="surface-card px-5">
         {sortedTx.length === 0 ? (
           <EmptyState
             icon={Inbox}
@@ -200,7 +200,7 @@ export function Ledger({
             }
           />
         ) : (
-          <div className="divide-y divide-[#E7EAF0]">
+          <div className="divide-y divide-[var(--border-subtle)]">
             {filteredTx.map((tx) => {
               const linkedShared = tx.linkedSharedExpenseId
                 ? sharedExpenses.find((e) => e.id === tx.linkedSharedExpenseId)
@@ -248,7 +248,7 @@ export function Ledger({
                             onClick={() => refundTransaction(tx.id)}
                             aria-label={`Mark transaction ${tx.name} refunded`}
                             title="Mark refunded (excludes from budget & price trends)"
-                            className="text-[#929BAB] hover:text-[#C7851F] transition-colors p-1.5 rounded-lg hover:bg-[#FEF6E7]"
+                            className="text-[var(--text-muted)] hover:text-[var(--accent-warning-ink)] transition-colors p-1.5 rounded-lg hover:bg-[var(--accent-warning-soft)]"
                           >
                             <RotateCcw className="w-3.5 h-3.5" strokeWidth={2} />
                           </button>
@@ -257,7 +257,7 @@ export function Ledger({
                             onClick={() => cancelTransaction(tx.id)}
                             aria-label={`Cancel transaction ${tx.name}`}
                             title="Cancel transaction"
-                            className="text-[#929BAB] hover:text-[#C7851F] transition-colors p-1.5 rounded-lg hover:bg-[#FEF6E7]"
+                            className="text-[var(--text-muted)] hover:text-[var(--accent-warning-ink)] transition-colors p-1.5 rounded-lg hover:bg-[var(--accent-warning-soft)]"
                           >
                             <Ban className="w-3.5 h-3.5" strokeWidth={2} />
                           </button>
@@ -268,7 +268,7 @@ export function Ledger({
                         onClick={() => removeTransaction(tx.id)}
                         aria-label={`Delete transaction ${tx.name}`}
                         title="Delete transaction"
-                        className="text-[#929BAB] hover:text-[#DE5252] transition-colors p-1.5 rounded-lg hover:bg-[#FDECEC]"
+                        className="text-[var(--text-muted)] hover:text-[var(--accent-danger-ink)] transition-colors p-1.5 rounded-lg hover:bg-[var(--accent-danger-soft)]"
                       >
                         <Trash2 className="w-3.5 h-3.5" strokeWidth={2} />
                       </button>
@@ -291,12 +291,12 @@ export function Ledger({
                               ? 'User confirmed'
                               : 'Auto-predicted'
                           })`}
-                          className={`text-[11.5px] font-medium px-2 py-1 rounded-lg border bg-[#F7F8FA] outline-none cursor-pointer ${
+                          className={`text-[12px] font-medium px-2.5 py-1 rounded-lg border bg-[var(--bg-well)] outline-none cursor-pointer ${
                             classifiedInfo.classification === 'essential'
-                              ? 'text-[#15966B] border-[#B7E4D3]'
+                              ? 'text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
                               : classifiedInfo.classification === 'impulsive'
-                                ? 'text-[#DE5252] border-[#F6B8B8]'
-                                : 'text-[#9E6614] border-[#F3D8A8]'
+                                ? 'text-[var(--accent-danger-ink)] border-[var(--accent-danger-border)]'
+                                : 'text-[var(--accent-warning-ink)] border-[var(--accent-warning-border)]'
                           }`}
                         >
                           <option value="essential">
@@ -322,7 +322,7 @@ export function Ledger({
                           </option>
                         </select>
                       ) : (
-                        <span className="text-[11.5px] text-[#929BAB]">
+                        <span className="text-[12px] text-[var(--text-muted)]">
                           Excluded from budget &amp; trends
                         </span>
                       )}
@@ -331,7 +331,7 @@ export function Ledger({
                         <button
                           type="button"
                           onClick={onOpenSplitLedger}
-                          className="text-[12px] font-medium text-[#365FE8] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
+                          className="text-[12.5px] font-medium text-[var(--accent-ink)] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
                         >
                           <Split className="w-3.5 h-3.5" />
                           <span>Split ({linkedShared.participants.length} ppl)</span>
@@ -341,7 +341,7 @@ export function Ledger({
                           <button
                             type="button"
                             onClick={() => setConvertTx(tx)}
-                            className="text-[12px] font-medium text-[#697386] hover:text-[#365FE8] inline-flex items-center gap-1 whitespace-nowrap transition-colors"
+                            className="text-[12.5px] font-medium text-[var(--text-secondary)] hover:text-[var(--accent-ink)] inline-flex items-center gap-1 whitespace-nowrap transition-colors"
                           >
                             <Users className="w-3.5 h-3.5" />
                             <span>Split bill</span>

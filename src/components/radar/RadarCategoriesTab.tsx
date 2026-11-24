@@ -52,7 +52,7 @@ export function RadarCategoriesTab({
   const comparisonBarData = useMemo(
     () =>
       activeCategories.slice(0, 8).map((c) => ({
-        name: c.category.length > 15 ? `${c.category.slice(0, 14)}…` : c.category,
+        name: c.category.length > 10 ? `${c.category.slice(0, 9)}…` : c.category,
         fullName: c.category,
         Current: c.totalSpent,
         Previous: c.prevSpent,
@@ -66,7 +66,7 @@ export function RadarCategoriesTab({
         .filter((c) => c.totalSpent > 0)
         .slice(0, 8)
         .map((c) => ({
-          name: c.category.length > 18 ? `${c.category.slice(0, 17)}…` : c.category,
+          name: c.category.length > 16 ? `${c.category.slice(0, 15)}…` : c.category,
           fullName: c.category,
           Spent: c.totalSpent,
           Share: c.sharePct,
@@ -88,16 +88,16 @@ export function RadarCategoriesTab({
       {categoriesResult.categoryInsights.length > 0 && (
         <div className="surface-card p-4">
           <div className="flex items-center gap-2 mb-2.5">
-            <Info className="w-4 h-4 text-[#365FE8]" />
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#697386]">
+            <Info className="w-4 h-4 text-[var(--accent-ink)]" />
+            <h3 className="text-[12.5px] font-semibold text-[var(--text-secondary)]">
               Category Intelligence Observations ({window.label})
             </h3>
           </div>
-          <ul className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs text-[#151922]">
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs text-[var(--text-primary)]">
             {categoriesResult.categoryInsights.map((obs, idx) => (
               <li
                 key={idx}
-                className="surface-subtle px-3 py-2.5 leading-relaxed"
+                className="surface-well px-3 py-2.5 leading-relaxed"
               >
                 {obs}
               </li>
@@ -109,11 +109,11 @@ export function RadarCategoriesTab({
       {/* Charts Row: Donut + Bar/Ranking */}
       {activeCategories.length === 0 ? (
         <div className="surface-card p-10 text-center">
-          <Layers className="w-8 h-8 text-[#929BAB] mx-auto mb-2.5" />
-          <p className="text-sm font-semibold text-[#151922]">
+          <Layers className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-2.5" />
+          <p className="text-sm font-semibold text-[var(--text-primary)]">
             No category transactions in {window.label}
           </p>
-          <p className="text-xs text-[#697386] mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Switch the timeframe filter above or record purchases in Shopping or Expenses.
           </p>
         </div>
@@ -121,13 +121,13 @@ export function RadarCategoriesTab({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
           {/* Expense Distribution Donut Chart */}
           <div className="lg:col-span-5 surface-card p-5 flex flex-col">
-            <h3 className="text-sm font-bold text-[#151922]">Expense Distribution</h3>
-            <p className="text-xs text-[#697386] mt-0.5 mb-3">
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">Expense Distribution</h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5 mb-3">
               Share of ₹{formatCurrencyExact(categoriesResult.totalSpent)} in {window.label}
             </p>
 
             {categoriesResult.donutData.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center py-10 text-xs text-[#697386]">
+              <div className="flex-1 flex items-center justify-center py-10 text-xs text-[var(--text-secondary)]">
                 No spend in current period (prior period activity exists).
               </div>
             ) : (
@@ -166,17 +166,17 @@ export function RadarCategoriesTab({
                   </ResponsiveContainer>
                 </div>
 
-                <div className="space-y-1.5 mt-2 pt-3 border-t border-[#E7EAF0]">
+                <div className="space-y-1.5 mt-2 pt-3 border-t border-[var(--border-subtle)]">
                   {categoriesResult.donutData.map((d, idx) => (
                     <div key={d.name} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-2 text-[#697386] truncate">
+                      <span className="flex items-center gap-2 text-[var(--text-secondary)] truncate">
                         <span
                           className="w-2.5 h-2.5 rounded-sm shrink-0"
                           style={{ backgroundColor: donutColors[idx % donutColors.length] }}
                         />
-                        <span className="truncate text-[#151922] font-medium">{d.name}</span>
+                        <span className="truncate text-[var(--text-primary)] font-medium">{d.name}</span>
                       </span>
-                      <span className="font-mono tabular-nums font-semibold text-[#151922] shrink-0">
+                      <span className="font-mono tabular-nums font-semibold text-[var(--text-primary)] shrink-0">
                         {d.sharePct}% · ₹{formatCurrencyExact(d.value)}
                       </span>
                     </div>
@@ -190,19 +190,19 @@ export function RadarCategoriesTab({
           <div className="lg:col-span-7 surface-card p-5 flex flex-col">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div>
-                <h3 className="text-sm font-bold text-[#151922]">
+                <h3 className="text-sm font-bold text-[var(--text-primary)]">
                   {barMode === 'comparison'
                     ? 'Category Period Comparison'
                     : 'Highest-Spending Categories Ranking'}
                 </h3>
-                <p className="text-xs text-[#697386] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {barMode === 'comparison'
                     ? `${window.label} vs ${window.comparisonLabel}`
                     : `Top categories ranked by expenditure in ${window.label}`}
                 </p>
               </div>
               <div
-                className="tactile-well inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] rounded-xl p-0.5"
+                className="tactile-well inline-flex items-center bg-[var(--bg-subtle)] border border-[var(--border-subtle)] rounded-xl p-0.5"
                 role="group"
                 aria-label="Category chart view"
               >
@@ -211,8 +211,8 @@ export function RadarCategoriesTab({
                   onClick={() => setBarMode('comparison')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                     barMode === 'comparison'
-                      ? 'bg-[#365FE8] text-white shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   vs Prior
@@ -222,8 +222,8 @@ export function RadarCategoriesTab({
                   onClick={() => setBarMode('ranking')}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                     barMode === 'ranking'
-                      ? 'bg-[#365FE8] text-white shadow-xs'
-                      : 'text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   Ranking
@@ -236,7 +236,7 @@ export function RadarCategoriesTab({
                 {barMode === 'comparison' ? (
                   <BarChart
                     data={comparisonBarData}
-                    margin={{ top: 10, right: 12, left: -10, bottom: 20 }}
+                    margin={{ top: 10, right: 12, left: 0, bottom: 8 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                     <XAxis
@@ -244,20 +244,21 @@ export function RadarCategoriesTab({
                       tick={{ fill: tickColor, fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
-                      interval={0}
-                      angle={-15}
-                      textAnchor="end"
+                      minTickGap={8}
                     />
                     <YAxis
                       tickFormatter={(v: number) => (v === 0 ? '₹0' : `₹${formatCompact(v)}`)}
                       tick={{ fill: tickColor, fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
                       axisLine={false}
                       tickLine={false}
-                      width={52}
+                      width={58}
                     />
                     <Tooltip
                       cursor={{ fill: chartTokens.cursorFill }}
                       formatter={(v: unknown) => `₹${formatCurrencyExact(Number(v ?? 0))}`}
+                      labelFormatter={(_, payload) =>
+                        String(payload?.[0]?.payload?.fullName ?? '')
+                      }
                       contentStyle={tooltipStyle}
                     />
                     <Bar dataKey="Previous" fill={chartTokens.mutedBarFill} radius={[5, 5, 0, 0]} maxBarSize={24} isAnimationActive={false} />
@@ -267,7 +268,7 @@ export function RadarCategoriesTab({
                   <BarChart
                     data={rankingBarData}
                     layout="vertical"
-                    margin={{ top: 8, right: 20, left: 10, bottom: 8 }}
+                    margin={{ top: 8, right: 20, left: 6, bottom: 8 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />
                     <XAxis
@@ -280,14 +281,17 @@ export function RadarCategoriesTab({
                     <YAxis
                       type="category"
                       dataKey="name"
-                      width={118}
-                      tick={{ fill: chartTokens.tooltipStyle.color, fontSize: 11 }}
+                      width={116}
+                      tick={{ fill: tickColor, fontSize: 11 }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <Tooltip
                       cursor={{ fill: chartTokens.cursorFill }}
                       formatter={(v: unknown) => [`₹${formatCurrencyExact(Number(v ?? 0))}`, 'Spent']}
+                      labelFormatter={(_, payload) =>
+                        String(payload?.[0]?.payload?.fullName ?? '')
+                      }
                       contentStyle={tooltipStyle}
                     />
                     <Bar dataKey="Spent" fill={chartTokens.accent} radius={[0, 6, 6, 0]} maxBarSize={22} isAnimationActive={false} />
@@ -303,8 +307,8 @@ export function RadarCategoriesTab({
       <div className="surface-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-sm font-bold text-[#151922]">Category Breakdown Matrix</h3>
-            <p className="text-xs text-[#697386] mt-0.5">
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">Category Breakdown Matrix</h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Select a category row to inspect its underlying transactions
             </p>
           </div>
@@ -312,7 +316,7 @@ export function RadarCategoriesTab({
             <button
               type="button"
               onClick={() => onSelectCategory(null)}
-              className="text-xs font-semibold text-[#697386] hover:text-[#151922] flex items-center gap-1"
+              className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1"
             >
               <X className="w-3.5 h-3.5" />
               Close Drill-Down
@@ -323,7 +327,7 @@ export function RadarCategoriesTab({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[680px]">
             <thead>
-              <tr className="border-b border-[#E7EAF0] text-[11px] uppercase tracking-wider text-[#697386]">
+              <tr className="border-b border-[var(--border-subtle)] text-[12px] text-[var(--text-secondary)]">
                 <th className="py-2.5 pr-3 font-semibold">Category</th>
                 <th className="py-2.5 px-3 font-semibold text-right">Spent</th>
                 <th className="py-2.5 px-3 font-semibold text-right">Share</th>
@@ -334,7 +338,7 @@ export function RadarCategoriesTab({
                 <th className="py-2.5 pl-3 font-semibold text-right">Drill-Down</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E7EAF0] text-xs">
+            <tbody className="divide-y divide-[var(--border-subtle)] text-xs">
               {categoriesResult.categories.map((cat) => {
                 const isSelected = selectedCategory === cat.category;
                 const trendLabel =
@@ -349,31 +353,31 @@ export function RadarCategoriesTab({
                           : 'No Activity';
                 const trendClass =
                   cat.trend === 'increasing'
-                    ? 'text-[#9E6614]'
+                    ? 'text-[var(--accent-warning-ink)]'
                     : cat.trend === 'decreasing'
-                      ? 'text-[#15966B]'
+                      ? 'text-[var(--accent-success-ink)]'
                       : cat.trend === 'new'
-                        ? 'text-[#365FE8]'
-                        : 'text-[#697386]';
+                        ? 'text-[var(--accent-ink)]'
+                        : 'text-[var(--text-secondary)]';
 
                 return (
                   <tr
                     key={cat.category}
                     className={`transition-colors ${
-                      isSelected ? 'bg-[#EDF2FF]' : 'hover:bg-[#F7F8FA]'
+                      isSelected ? 'bg-[var(--accent-primary-soft)]' : 'hover:bg-[var(--bg-hover)]'
                     }`}
                   >
-                    <td className="py-3 pr-3 font-semibold text-[#151922]">{cat.category}</td>
-                    <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-[#151922]">
+                    <td className="py-3 pr-3 font-semibold text-[var(--text-primary)]">{cat.category}</td>
+                    <td className="py-3 px-3 text-right font-mono tabular-nums font-bold text-[var(--text-primary)]">
                       ₹{formatCurrencyExact(cat.totalSpent)}
                     </td>
-                    <td className="py-3 px-3 text-right font-mono tabular-nums text-[#697386]">
+                    <td className="py-3 px-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {cat.sharePct}%
                     </td>
-                    <td className="py-3 px-3 text-right font-mono tabular-nums text-[#697386]">
+                    <td className="py-3 px-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       {cat.txCount}
                     </td>
-                    <td className="py-3 px-3 text-right font-mono tabular-nums text-[#697386]">
+                    <td className="py-3 px-3 text-right font-mono tabular-nums text-[var(--text-secondary)]">
                       ₹{formatCurrencyExact(cat.avgTxValue)}
                     </td>
                     <td className="py-3 px-3 text-right font-mono tabular-nums">
@@ -381,17 +385,17 @@ export function RadarCategoriesTab({
                         <span
                           className={
                             cat.deltaPct > 0
-                              ? 'text-[#9E6614] font-semibold'
+                              ? 'text-[var(--accent-warning-ink)] font-semibold'
                               : cat.deltaPct < 0
-                                ? 'text-[#15966B] font-semibold'
-                                : 'text-[#697386]'
+                                ? 'text-[var(--accent-success-ink)] font-semibold'
+                                : 'text-[var(--text-secondary)]'
                           }
                         >
                           {cat.deltaPct > 0 ? '+' : ''}
                           {cat.deltaPct}%
                         </span>
                       ) : (
-                        <span className="text-[#929BAB]">—</span>
+                        <span className="text-[var(--text-muted)]">—</span>
                       )}
                     </td>
                     <td className={`py-3 px-3 font-semibold ${trendClass}`}>{trendLabel}</td>
@@ -403,8 +407,8 @@ export function RadarCategoriesTab({
                         }
                         className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                           isSelected
-                            ? 'bg-[#365FE8] text-white'
-                            : 'bg-[#F1F3F6] hover:bg-[#EDF2FF] text-[#151922] hover:text-[#365FE8]'
+                            ? 'bg-[var(--accent-primary)] text-white'
+                            : 'bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] text-[var(--text-primary)] hover:text-[var(--accent-ink)]'
                         }`}
                       >
                         {isSelected ? 'Hide' : `Inspect (${cat.txCount})`}
@@ -419,13 +423,13 @@ export function RadarCategoriesTab({
 
         {/* Interactive Category Transaction Drill-Down */}
         {selectedDetail && (
-          <div className="mt-5 pt-4 border-t border-[#E7EAF0]">
+          <div className="mt-5 pt-4 border-t border-[var(--border-subtle)]">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <div>
-                <h4 className="text-sm font-bold text-[#151922]">
+                <h4 className="text-sm font-bold text-[var(--text-primary)]">
                   {selectedDetail.category} — Transactions in {window.label}
                 </h4>
-                <p className="text-xs text-[#697386] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   {selectedDetail.txCount} transactions · Total ₹
                   {formatCurrencyExact(selectedDetail.totalSpent)}
                 </p>
@@ -433,7 +437,7 @@ export function RadarCategoriesTab({
               <button
                 type="button"
                 onClick={() => onOpenTxInExplorer(selectedDetail.category)}
-                className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 whitespace-nowrap"
+                className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1 whitespace-nowrap"
               >
                 Open in Explorer
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -441,19 +445,19 @@ export function RadarCategoriesTab({
             </div>
 
             {selectedDetail.transactions.length === 0 ? (
-              <p className="text-xs text-[#697386] py-4">
+              <p className="text-xs text-[var(--text-secondary)] py-4">
                 No active transactions in {selectedDetail.category} during {window.label} (previous period had ₹{formatCurrencyExact(selectedDetail.prevSpent)}).
               </p>
             ) : (
-              <div className="divide-y divide-[#E7EAF0] rounded-xl bg-[#F7F8FA] border border-[#E7EAF0]">
+              <div className="divide-y divide-[var(--border-subtle)] rounded-xl bg-[var(--bg-well)]">
                 {selectedDetail.transactions.map((slice) => (
                   <div
                     key={slice.tx.id}
                     className="flex items-center justify-between gap-3 px-3.5 py-2.5 text-xs"
                   >
                     <div className="min-w-0">
-                      <p className="font-semibold text-[#151922] truncate">{slice.tx.name}</p>
-                      <p className="text-[#697386] mt-0.5">
+                      <p className="font-semibold text-[var(--text-primary)] truncate">{slice.tx.name}</p>
+                      <p className="text-[var(--text-secondary)] mt-0.5">
                         {new Date(slice.tx.timestamp).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
@@ -463,7 +467,7 @@ export function RadarCategoriesTab({
                         {slice.tx.status === 'refunded' ? ' · Partial Refund Adjusted' : ''}
                       </p>
                     </div>
-                    <span className="font-mono tabular-nums font-bold text-[#151922] shrink-0">
+                    <span className="font-mono tabular-nums font-bold text-[var(--text-primary)] shrink-0">
                       ₹{formatCurrencyExact(slice.effectiveAmount)}
                     </span>
                   </div>

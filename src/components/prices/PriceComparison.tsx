@@ -33,19 +33,19 @@ function ComparisonTile({
   const isDown = (diff ?? 0) < -0.01;
 
   return (
-    <div className="surface-subtle p-3.5 space-y-1.5">
+    <div className="surface-well p-3.5 space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+        <span className="text-[12px] font-medium text-[var(--text-secondary)]">
           {label}
         </span>
         {hasComparison && (
           <span
-            className={`inline-flex items-center gap-1 text-[11px] font-bold font-mono px-1.5 py-0.5 rounded-md ${
+            className={`inline-flex items-center gap-1 text-[12px] font-bold font-mono tabular-nums ${
               isUp
-                ? 'bg-[#FDECEC] text-[#DE5252]'
+                ? 'text-[var(--accent-danger-ink)]'
                 : isDown
-                ? 'bg-[#E8F7F1] text-[#15966B]'
-                : 'bg-white text-[#697386]'
+                ? 'text-[var(--accent-success-ink)]'
+                : 'text-[var(--text-secondary)]'
             }`}
           >
             {isUp ? (
@@ -65,23 +65,27 @@ function ComparisonTile({
         <>
           <p
             className={`text-base font-bold font-mono tabular-nums ${
-              isUp ? 'text-[#DE5252]' : isDown ? 'text-[#15966B]' : 'text-[#151922]'
+              isUp
+                ? 'text-[var(--accent-danger-ink)]'
+                : isDown
+                ? 'text-[var(--accent-success-ink)]'
+                : 'text-[var(--text-primary)]'
             }`}
           >
             {diff! > 0 ? '+' : diff! < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(diff!))}/
             {unit}
           </p>
-          <p className="text-[11px] text-[#697386]">
+          <p className="text-[12px] text-[var(--text-secondary)]">
             {baselineLabel}:{' '}
-            <span className="font-mono font-semibold text-[#151922]">
+            <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
               ₹{formatCurrencyExact(baselinePrice!)}/{unit}
             </span>
           </p>
         </>
       ) : (
         <>
-          <p className="text-sm font-semibold text-[#929BAB]">—</p>
-          <p className="text-[11px] text-[#929BAB]">{emptyHint}</p>
+          <p className="text-sm font-semibold text-[var(--text-muted)]">—</p>
+          <p className="text-[12px] text-[var(--text-muted)]">{emptyHint}</p>
         </>
       )}
     </div>
@@ -93,13 +97,18 @@ export function PriceComparison({ summary }: { summary: ProductPriceSummary }) {
 
   return (
     <div className="surface-card p-5 space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Scale className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
-          <h4 className="text-sm font-bold text-[#151922]">Price Comparison</h4>
+          <Scale className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
+          <h4 className="font-display text-sm font-bold text-[var(--text-primary)]">
+            Price Comparison
+          </h4>
         </div>
-        <span className="text-xs font-mono text-[#697386]">
-          Latest: <strong className="text-[#151922]">₹{formatCurrencyExact(summary.latestPrice)}/{u}</strong>
+        <span className="text-[12.5px] font-mono text-[var(--text-secondary)] tabular-nums">
+          Latest:{' '}
+          <strong className="text-[var(--text-primary)]">
+            ₹{formatCurrencyExact(summary.latestPrice)}/{u}
+          </strong>
         </span>
       </div>
 

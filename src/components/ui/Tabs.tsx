@@ -27,7 +27,7 @@ export function Tabs<T extends string = string>({
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className="inline-flex items-center p-1 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] tactile-well overflow-x-auto no-scrollbar max-w-full"
+        className="inline-flex items-center p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] tactile-well overflow-x-auto no-scrollbar max-w-full"
       >
         {items.map((item) => {
           const Icon = item.icon;
@@ -39,16 +39,16 @@ export function Tabs<T extends string = string>({
               role="tab"
               aria-selected={active}
               onClick={() => onChange(item.id)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-medium whitespace-nowrap shrink-0 transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium whitespace-nowrap shrink-0 transition-colors ${
                 active
-                  ? 'bg-white text-[#151922] font-semibold shadow-card'
-                  : 'text-[#697386] hover:text-[#151922]'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-semibold shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {Icon && <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2} />}
               <span>{item.label}</span>
               {item.count !== undefined && (
-                <span className="font-mono tabular-nums text-[11px] text-[#697386]">
+                <span className="font-mono tabular-nums text-[12px] text-[var(--text-secondary)]">
                   {item.count}
                 </span>
               )}
@@ -63,7 +63,7 @@ export function Tabs<T extends string = string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="flex items-center gap-6 border-b border-[#E7EAF0] overflow-x-auto no-scrollbar"
+      className="flex items-center gap-6 border-b border-[var(--border-subtle)] overflow-x-auto no-scrollbar"
     >
       {items.map((item) => {
         const Icon = item.icon;
@@ -75,23 +75,23 @@ export function Tabs<T extends string = string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(item.id)}
-            className={`relative inline-flex items-center gap-2 pb-3 text-[13.5px] whitespace-nowrap shrink-0 transition-colors ${
+            className={`relative inline-flex items-center gap-2 pb-3 pt-1 text-[13.5px] whitespace-nowrap shrink-0 transition-colors ${
               active
-                ? 'text-[#151922] font-semibold'
-                : 'text-[#697386] font-medium hover:text-[#151922]'
+                ? 'text-[var(--text-primary)] font-semibold'
+                : 'text-[var(--text-secondary)] font-medium hover:text-[var(--text-primary)]'
             }`}
           >
             {Icon && <Icon className="w-4 h-4 shrink-0" strokeWidth={active ? 2.2 : 1.8} />}
             <span>{item.label}</span>
             {item.count !== undefined && item.count > 0 && (
-              <span className="font-mono tabular-nums text-[11px] text-[#697386]">
+              <span className="font-mono tabular-nums text-[12px] text-[var(--text-secondary)]">
                 {item.count}
               </span>
             )}
             {active && (
               <span
                 aria-hidden="true"
-                className="absolute inset-x-0 bottom-0 h-[2px] bg-[#365FE8] rounded-full"
+                className="absolute inset-x-0 bottom-0 h-[2px] bg-[var(--accent-primary)] rounded-full"
               />
             )}
           </button>

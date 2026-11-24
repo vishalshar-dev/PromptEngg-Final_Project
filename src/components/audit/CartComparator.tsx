@@ -148,14 +148,14 @@ export function CartComparator() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
           <Scale className="w-4 h-4" strokeWidth={2.25} />
         </div>
         <div>
-          <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+          <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
             Multi-App Cart Comparator
           </h3>
-          <p className="text-xs text-[#697386]">
+          <p className="text-[12px] text-[var(--text-secondary)]">
             Compare effective checkout totals across quick-commerce platforms
           </p>
         </div>
@@ -187,40 +187,40 @@ export function CartComparator() {
 
       {/* Winner Banner */}
       {hasData && !isTie && (
-        <div className="rounded-2xl border border-[#B7E4D3] bg-[#E8F7F1] p-4">
+        <div className="rounded-2xl border border-[var(--accent-success-border)] bg-[var(--accent-success-soft)] p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#B7E4D3] flex items-center justify-center text-[#15966B]">
+              <div className="w-9 h-9 rounded-xl bg-[var(--bg-surface)] border border-[var(--accent-success-border)] flex items-center justify-center text-[var(--accent-success-ink)]">
                 <Award className="w-5 h-5" strokeWidth={2.25} />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#15966B]">
+                <p className="text-[12px] font-semibold text-[var(--accent-success-ink)]">
                   Best Deal
                 </p>
-                <p className="text-sm font-bold text-[#151922]">
+                <p className="text-sm font-bold text-[var(--text-primary)]">
                   {winnerCart.platform}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 You Save
               </p>
-              <p className="text-lg font-bold font-mono tabular-nums text-[#15966B]">
+              <p className="text-lg font-bold font-mono tabular-nums text-[var(--accent-success-ink)]">
                 ₹{formatCurrency(savings)}
               </p>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-[#B7E4D3] flex items-center justify-between text-xs">
-            <span className="text-[#697386] font-medium">
+          <div className="mt-3 pt-3 border-t border-[var(--accent-success-border)] flex items-center justify-between text-[12px]">
+            <span className="text-[var(--text-secondary)] font-medium">
               {winnerCart.platform}:{' '}
-              <span className="font-mono font-bold text-[#151922]">
+              <span className="font-mono tabular-nums font-bold text-[var(--text-primary)]">
                 ₹{formatCurrency(winnerResult.total)}
               </span>
             </span>
-            <span className="text-[#697386] font-medium">
+            <span className="text-[var(--text-secondary)] font-medium">
               {(winner === 'A' ? cartB : cartA).platform}:{' '}
-              <span className="font-mono font-semibold text-[#697386]">
+              <span className="font-mono tabular-nums font-semibold text-[var(--text-secondary)]">
                 ₹{formatCurrency(loserResult.total)}
               </span>
             </span>
@@ -229,11 +229,11 @@ export function CartComparator() {
       )}
 
       {hasData && isTie && (
-        <div className="surface-subtle p-3.5 text-center">
-          <p className="text-sm font-bold text-[#151922]">
+        <div className="surface-well p-3.5 text-center">
+          <p className="text-sm font-bold text-[var(--text-primary)]">
             Both apps cost the same
           </p>
-          <p className="text-xs text-[#697386] mt-0.5">
+          <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 tabular-nums">
             ₹{formatCurrency(resultA.total)} each — pick either one
           </p>
         </div>
@@ -243,9 +243,9 @@ export function CartComparator() {
         <button
           type="button"
           onClick={handleLog}
-          className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
+          className={`w-full py-2.5 px-4 rounded-xl text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
             loggedFlash
-              ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+              ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
               : 'btn-secondary'
           }`}
         >
@@ -295,19 +295,19 @@ function CartColumn({
     <div
       className={`rounded-xl border p-3.5 space-y-2.5 transition-colors ${
         isWinner
-          ? 'border-[#B7E4D3] bg-[#E8F7F1]/50'
+          ? 'border-[var(--accent-success-border)] bg-[var(--accent-success-soft)]'
           : isLoser
-          ? 'border-[#F6B8B8] bg-[#FDECEC]/40'
-          : 'border-[#E7EAF0] bg-[#F7F8FA]'
+          ? 'border-[var(--accent-danger-border)] bg-[var(--accent-danger-soft)]'
+          : 'surface-well border-[var(--border-subtle)]'
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[#697386]">
+        <span className="text-[12px] font-semibold text-[var(--text-secondary)]">
           {label}
         </span>
         {isWinner && (
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#E8F7F1] text-[#15966B] border border-[#B7E4D3] flex items-center gap-1">
-            <Award className="w-3 h-3" strokeWidth={2.25} />
+          <span className="text-[12px] font-semibold text-[var(--accent-success-ink)] flex items-center gap-1">
+            <Award className="w-3.5 h-3.5" strokeWidth={2.25} />
             Best
           </span>
         )}
@@ -317,7 +317,7 @@ function CartColumn({
         aria-label={`${label} platform`}
         value={cart.platform}
         onChange={(e) => onUpdate('platform', e.target.value)}
-        className="input-field w-full px-2.5 py-2 text-xs font-semibold"
+        className="input-field w-full px-2.5 py-2 text-[12.5px] font-semibold"
       >
         {PLATFORMS.map((p) => (
           <option key={p} value={p}>
@@ -327,24 +327,24 @@ function CartColumn({
       </select>
 
       <div>
-        <label className="text-[10px] font-semibold uppercase tracking-wider text-[#697386] block mb-1">
+        <label className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1">
           Base Item Total
         </label>
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#697386]">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--text-secondary)]">
             ₹
           </span>
           <input
             aria-label={`${label} base item total`}
             {...numField('baseTotal', '0')}
-            className="input-field w-full pl-7 pr-2 py-2 text-xs font-mono tabular-nums"
+            className="input-field w-full pl-7 pr-2 py-2 text-[12.5px] font-mono tabular-nums"
           />
         </div>
         {cartTotal > 0 && (
           <button
             type="button"
             onClick={onLoadCart}
-            className="w-full mt-1.5 text-[11px] font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] hover:bg-[#DFE8FF] py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1 border border-[#D4E0FF]"
+            className="w-full mt-1.5 text-[12px] font-semibold text-[var(--accent-ink)] bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1 border border-[var(--accent-border)]"
           >
             <ShoppingBag className="w-3 h-3" strokeWidth={2.25} />
             Load Cart (₹{formatCurrency(cartTotal)})
@@ -372,38 +372,38 @@ function CartColumn({
       />
 
       <div>
-        <label className="text-[10px] font-semibold uppercase tracking-wider text-[#15966B] block mb-1">
+        <label className="text-[12px] font-medium text-[var(--accent-success-ink)] block mb-1">
           Coupon / Wallet Discount
         </label>
         <div className="relative">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#15966B]">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--accent-success-ink)]">
             −₹
           </span>
           <input
             aria-label={`${label} discount`}
             {...numField('discount', '0')}
-            className="input-field w-full pl-9 pr-2 py-2 text-xs font-mono tabular-nums border-[#B7E4D3]"
+            className="input-field w-full pl-9 pr-2 py-2 text-[12.5px] font-mono tabular-nums border-[var(--accent-success-border)]"
           />
         </div>
       </div>
 
       <div
         className={`pt-2.5 border-t ${
-          isWinner ? 'border-[#B7E4D3]' : 'border-[#E7EAF0]'
+          isWinner ? 'border-[var(--accent-success-border)]' : 'border-[var(--border-subtle)]'
         }`}
       >
         <div className="flex items-baseline justify-between mb-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <span className="text-[12px] font-medium text-[var(--text-secondary)]">
             Effective Total
           </span>
           {result.overheadPct > 0 && (
             <span
-              className={`text-[10px] font-bold font-mono flex items-center gap-0.5 ${
+              className={`text-[12px] font-bold font-mono tabular-nums flex items-center gap-0.5 ${
                 result.overheadPct > 15
-                  ? 'text-[#DE5252]'
+                  ? 'text-[var(--accent-danger-ink)]'
                   : result.overheadPct > 5
-                  ? 'text-[#C7851F]'
-                  : 'text-[#697386]'
+                  ? 'text-[var(--accent-warning-ink)]'
+                  : 'text-[var(--text-secondary)]'
               }`}
             >
               <TrendingDown className="w-3 h-3" strokeWidth={2.25} />
@@ -413,13 +413,13 @@ function CartColumn({
         </div>
         <p
           className={`text-lg font-bold font-mono tabular-nums ${
-            isWinner ? 'text-[#15966B]' : 'text-[#151922]'
+            isWinner ? 'text-[var(--accent-success-ink)]' : 'text-[var(--text-primary)]'
           }`}
         >
           ₹{formatCurrency(result.total)}
         </p>
         {result.extraFees > 0 && (
-          <p className="text-[11px] text-[#C7851F] font-mono mt-0.5">
+          <p className="text-[12px] text-[var(--accent-warning-ink)] font-mono tabular-nums mt-0.5">
             +₹{formatCurrency(result.extraFees)} in fees
           </p>
         )}
@@ -444,18 +444,18 @@ function FeeInput({
 }) {
   return (
     <div>
-      <label className="text-[10px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1 mb-1">
-        <Icon className="w-3 h-3 text-[#929BAB]" strokeWidth={2.25} />
+      <label className="text-[12px] font-medium text-[var(--text-secondary)] flex items-center gap-1 mb-1">
+        <Icon className="w-3 h-3 text-[var(--text-muted)]" strokeWidth={2.25} />
         {label}
       </label>
       <div className="relative">
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#697386]">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--text-secondary)]">
           ₹
         </span>
         <input
           aria-label={ariaLabel}
           {...inputProps}
-          className="input-field w-full pl-7 pr-2 py-2 text-xs font-mono tabular-nums"
+          className="input-field w-full pl-7 pr-2 py-2 text-[12.5px] font-mono tabular-nums"
         />
       </div>
     </div>

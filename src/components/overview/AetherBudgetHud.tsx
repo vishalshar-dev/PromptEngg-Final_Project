@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
+  ArrowRight,
   Check,
   ChevronDown,
   CircleSlash,
@@ -10,10 +11,13 @@ import {
   Pencil,
   ShieldCheck,
   SlidersHorizontal,
+  Users,
   X,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
+import { computeLedgerState } from '../../utils/splitLedgerEngine';
+import type { AppSection } from '../ui/AppShell';
 import { ProgressBar } from '../ui/ProgressBar';
 import { ConnectedBudgetCapsule } from './ConnectedBudgetCapsule';
 import { deriveCapsuleBudgetState } from './capsule/capsuleBudgetState';
@@ -27,6 +31,10 @@ import {
   type AetherIntelligenceTone,
 } from './capsule/aetherIntelligence';
 import { useAnimatedNumber } from './capsule/useAnimatedNumber';
+
+interface AetherBudgetHudProps {
+  onNavigate?: (section: AppSection, subTab?: string) => void;
+}
 
 function usePrefersReducedMotion(): boolean {
   const [prefersReduced, setPrefersReduced] = useState(() => {
@@ -86,32 +94,32 @@ const TONE_CLASSES: Record<
   }
 > = {
   success: {
-    statusText: 'text-[#0D5E43]',
-    balanceText: 'text-[#0D5E43]',
+    statusText: 'text-[var(--accent-success-ink)]',
+    balanceText: 'text-[var(--accent-success-ink)]',
     progressTone: 'success',
   },
   warning: {
-    statusText: 'text-[#9E6614]',
-    balanceText: 'text-[#C7851F]',
+    statusText: 'text-[var(--accent-warning-ink)]',
+    balanceText: 'text-[var(--accent-warning-ink)]',
     progressTone: 'warning',
   },
   danger: {
-    statusText: 'text-[#C23838]',
-    balanceText: 'text-[#DE5252]',
+    statusText: 'text-[var(--accent-danger-ink)]',
+    balanceText: 'text-[var(--accent-danger-ink)]',
     progressTone: 'danger',
   },
   neutral: {
-    statusText: 'text-[#697386]',
-    balanceText: 'text-[#151922]',
+    statusText: 'text-[var(--text-secondary)]',
+    balanceText: 'text-[var(--text-primary)]',
     progressTone: 'brand',
   },
 };
 
 const INTEL_TONE_INK: Record<AetherIntelligenceTone, string> = {
-  success: 'text-[#0D5E43]',
-  warning: 'text-[#9E6614]',
-  danger: 'text-[#C23838]',
-  neutral: 'text-[#697386]',
+  success: 'text-[var(--accent-success-ink)]',
+  warning: 'text-[var(--accent-warning-ink)]',
+  danger: 'text-[var(--accent-danger-ink)]',
+  neutral: 'text-[var(--text-secondary)]',
 };
 
 function StatusIcon({ stateKey }: { stateKey: AetherHudStateKey }) {
@@ -135,7 +143,7 @@ function StatusIcon({ stateKey }: { stateKey: AetherHudStateKey }) {
   }
 }
 
-export function AetherBudgetHud() {
+export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const setTotalBudget = useAppStore((s) => s.setTotalBudget);
@@ -143,6 +151,9 @@ export function AetherBudgetHud() {
   const budgetRolloverEnabled = useAppStore((s) => s.budgetRolloverEnabled);
   const categoryLimits = useAppStore((s) => s.categoryLimits);
   const categoryCaps = useAppStore((s) => s.categoryCaps);
+  const people = useAppStore((s) => s.people);
+  const sharedExpenses = useAppStore((s) => s.sharedExpenses);
+  const settlements = useAppStore((s) => s.settlements);
 
   const isHydrated = useStoreHydrated();
   const reducedMotion = usePrefersReducedMotion();
@@ -179,6 +190,11 @@ export function AetherBudgetHud() {
         categoryCaps,
       }),
     [budgetState, transactions, categoryLimits, categoryCaps]
+  );
+
+  const ledgerDashboard = useMemo(
+    () => computeLedgerState(people, sharedExpenses, settlements).dashboard,
+    [people, sharedExpenses, settlements]
   );
 
   const animatedPrimary = useAnimatedNumber(hud.primaryAmount, reducedMotion);
@@ -224,514 +240,716 @@ export function AetherBudgetHud() {
       ? '<1'
       : String(Math.round(hud.remainingPct));
 
+  const aetherStatusLine =
+    hud.stateKey === 'unconfigured'
+      ? 'No monthly budget set'
+      : hud.stateKey === 'invalid'
+        ? 'Financial data unavailable'
+        : hud.stateKey === 'loading'
+          ? 'Synchronizing balance…'
+          : effectiveStatusLabel;
+
+  const hasSharedBalances =
+    ledgerDashboard.totalSharedCount > 0 &&
+    (ledgerDashboard.totalIOwe > 0 || ledgerDashboard.totalOwedToMe > 0);
+
+  const intelCount =
+    (intelligence.pace ? 1 : 0) +
+    (intelligence.projection ? 1 : 0) +
+    (intelligence.categoryAttention ? 1 : 0);
+  const intelGridClass =
+    intelCount >= 3
+      ? 'md:grid-cols-3'
+      : intelCount === 2
+        ? 'md:grid-cols-2'
+        : 'md:grid-cols-1';
+
+  const burnBarRatioPct = useMemo(() => {
+    if (!intelligence.pace || intelligence.pace.dailyBudgetAllowance <= 0) return 0;
+    return Math.min(
+      140,
+      Math.round(
+        (intelligence.pace.actualDailyAverage /
+          intelligence.pace.dailyBudgetAllowance) *
+          100
+      )
+    );
+  }, [intelligence.pace]);
+
   return (
-    <section
-      aria-label="Budget overview"
-      data-testid="aether-budget-hud"
-      data-hud-state={hud.stateKey}
-      className="hero-deck p-5 sm:p-7"
-    >
-      {/* Instrument Identity & Live Status Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#E7EAF0]">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px]">
-          <span className="font-semibold text-[#151922] tracking-tight">
-            Aether Budget Intelligence
-          </span>
-          {hud.showCycleMetadata && hud.cyclePeriodText && (
-            <>
-              <span className="text-[#929BAB]" aria-hidden="true">
-                ·
-              </span>
-              <span
-                data-testid="overview-cycle-window"
-                className="font-mono font-medium text-[#697386] tabular-nums"
-              >
-                {hud.cyclePeriodText}
-              </span>
-            </>
-          )}
-          {hud.showCycleMetadata && hud.rolloverText && (
-            <>
-              <span className="text-[#929BAB]" aria-hidden="true">
-                ·
-              </span>
-              <span
-                data-testid="overview-rollover-badge"
-                className={`font-mono font-semibold tabular-nums ${
-                  budgetState.rolloverDelta > 0
-                    ? 'text-[#0D5E43]'
-                    : 'text-[#9E6614]'
-                }`}
-              >
-                {hud.rolloverText}
-              </span>
-            </>
-          )}
-        </div>
-
+    <div className="space-y-5">
+      {/* 1. FLAGSHIP FINANCIAL HERO */}
+      <section
+        aria-label="Budget overview"
+        data-testid="aether-budget-hud"
+        data-hud-state={hud.stateKey}
+        className="hero-deck p-5 sm:p-7 flex flex-col gap-5 overflow-hidden"
+      >
+        {/* Subtle atmospheric accent glow */}
         <div
-          role="status"
-          aria-live="polite"
-          data-testid="aether-hud-status"
-          className={`inline-flex items-center gap-1.5 text-[12.5px] font-semibold transition-colors duration-300 ${toneStyle.statusText}`}
-        >
-          <StatusIcon stateKey={effectiveStatusStateKey} />
-          <span>{effectiveStatusLabel}</span>
-        </div>
-      </div>
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 -right-24 w-80 h-80 rounded-full opacity-50 blur-3xl"
+          style={{ background: 'var(--accent-primary-soft)' }}
+        />
 
-      {/* Balanced Instrument Grid: Primary Balance + 3D Capsule Centerpiece + Spending Intelligence */}
-      <div className="mt-4 sm:mt-6 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-x-7 lg:gap-y-5 items-start">
-        {/* Slot 1: Primary Financial Display */}
-        <div className="lg:col-span-7 min-w-0 space-y-3.5 sm:space-y-4">
-          {hud.stateKey === 'loading' ? (
-            <div className="space-y-3" aria-busy="true">
-              <div className="h-3.5 w-28 rounded bg-[#E7EAF0]" />
-              <div className="h-11 w-48 rounded-lg bg-[#E7EAF0]" />
-              <div className="h-4 w-56 rounded bg-[#E7EAF0]" />
-            </div>
-          ) : hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid' ? (
-            <div className="space-y-3.5">
-              <p className="text-[12.5px] font-medium text-[#697386]">
-                {hud.stateKey === 'invalid' ? 'Budget reserve status' : 'Monthly budget setup'}
-              </p>
-              <h2 className="text-[24px] sm:text-[28px] font-bold tracking-tight text-[#151922] leading-tight text-balance">
-                {hud.stateKey === 'invalid'
-                  ? 'Financial data unavailable'
-                  : 'No monthly budget configured'}
-              </h2>
-              <p className="text-[13.5px] text-[#697386] leading-relaxed max-w-xl">
-                {hud.statusDescription}
-              </p>
-
-              {!editingBudget ? (
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleOpenEditBudget}
-                    data-testid="aether-setup-budget-btn"
-                    className="btn-primary px-4 py-2.5 text-[13px] min-h-[44px] whitespace-nowrap"
-                  >
-                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>
-                      {hud.stateKey === 'invalid'
-                        ? 'Restore monthly budget'
-                        : 'Set monthly budget'}
-                    </span>
-                  </button>
-                </div>
-              ) : (
-                <form
-                  onSubmit={handleSaveBudget}
-                  className="pt-1 max-w-sm space-y-2"
-                >
-                  <label
-                    htmlFor="aether-setup-budget-input"
-                    className="block text-[12px] font-semibold text-[#697386]"
-                  >
-                    Monthly budget (₹)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="aether-setup-budget-input"
-                      type="number"
-                      min="1"
-                      step="1"
-                      placeholder="e.g. 25000"
-                      aria-label="Monthly budget amount"
-                      value={budgetDraft}
-                      onChange={(e) => setBudgetDraft(e.target.value)}
-                      autoFocus
-                      className="input-field flex-1 min-w-0 min-h-[44px] px-3 py-2 text-[15px] font-mono font-semibold tabular-nums"
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Save budget"
-                      className="btn-primary min-h-[44px] px-4 py-2 text-[13px] whitespace-nowrap shrink-0"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Cancel budget edit"
-                      onClick={() => {
-                        setEditingBudget(false);
-                        setBudgetError(null);
-                      }}
-                      className="btn-secondary min-h-[44px] px-3 py-2 text-[13px] shrink-0"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  {budgetError && (
-                    <p className="text-[12px] font-medium text-[#DE5252]">
-                      {budgetError}
-                    </p>
-                  )}
-                </form>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              <p className="text-[12.5px] font-medium text-[#697386]">
-                {hud.primaryLabel}
-              </p>
-
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <p
-                  data-testid="overview-remaining-balance"
-                  aria-label={`${hud.primaryLabel}: ₹${formatCurrencyExact(hud.primaryAmount)}`}
-                  className={`text-[34px] sm:text-[42px] xl:text-[48px] font-bold font-mono tabular-nums tracking-tight leading-none break-words transition-colors duration-300 ${
-                    hud.stateKey === 'overspent' || hud.stateKey === 'depleted'
-                      ? 'text-[#DE5252]'
-                      : toneStyle.balanceText
-                  }`}
-                >
-                  ₹{formatAnimatedCurrency(animatedPrimary, hud.primaryAmount)}
-                </p>
-                <span className="text-[13.5px] font-mono font-semibold tabular-nums text-[#697386]">
-                  {remainingPctDisplay}% remaining
-                </span>
-              </div>
-
-              <p className="text-[13.5px] text-[#697386] leading-snug">
-                of{' '}
-                <span className="font-mono font-semibold text-[#151922] tabular-nums">
-                  ₹{formatCurrency(hud.effectiveBudget)}
-                </span>{' '}
-                {budgetState.rolloverDelta !== 0 ? 'effective cycle budget' : 'monthly budget'}
-                <span className="text-[#929BAB]" aria-hidden="true">
-                  {' '}
-                  ·{' '}
+        {/* Top Metadata & Live Health Status */}
+        <div className="relative flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[var(--border-subtle)]">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12.5px]">
+            <span className="font-semibold text-[var(--text-primary)] tracking-tight">
+              Budget Snapshot
+            </span>
+            {hud.showCycleMetadata && hud.cyclePeriodText && (
+              <>
+                <span className="text-[var(--text-muted)]" aria-hidden="true">
+                  ·
                 </span>
                 <span
-                  data-testid="aether-contextual-status"
-                  className={`transition-colors duration-300 ${
-                    intelligence.contextualTone === 'danger'
-                      ? 'text-[#C23838] font-medium'
-                      : intelligence.contextualTone === 'warning'
-                        ? 'text-[#9E6614] font-medium'
-                        : 'text-[#4B5565]'
+                  data-testid="overview-cycle-window"
+                  className="font-mono font-medium text-[var(--text-secondary)] tabular-nums"
+                >
+                  {hud.cyclePeriodText}
+                </span>
+              </>
+            )}
+            {hud.showCycleMetadata && hud.rolloverText && (
+              <>
+                <span className="text-[var(--text-muted)]" aria-hidden="true">
+                  ·
+                </span>
+                <span
+                  data-testid="overview-rollover-badge"
+                  className={`font-mono font-semibold tabular-nums ${
+                    budgetState.rolloverDelta > 0
+                      ? 'text-[var(--accent-success-ink)]'
+                      : 'text-[var(--accent-warning-ink)]'
                   }`}
                 >
-                  {intelligence.contextualStatus}
+                  {hud.rolloverText}
                 </span>
-              </p>
+              </>
+            )}
+          </div>
 
-              {hud.stateKey === 'overspent' && (
-                <div
-                  role="alert"
-                  data-testid="aether-overspend-alert"
-                  className="mt-2 rounded-xl px-3.5 py-2.5 bg-[#FDECEC] border border-[#F6B8B8] flex flex-wrap items-center justify-between gap-2 transition-colors duration-300"
-                >
-                  <div className="flex items-center gap-2 text-[#B93B3B] font-semibold text-[13px]">
-                    <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>
-                      Over budget by{' '}
-                      <span className="font-mono tabular-nums">
-                        ₹{formatAnimatedCurrency(animatedOverspend, hud.overspendAmount)}
-                      </span>
-                    </span>
-                  </div>
-                  <span className="text-[12px] font-mono font-semibold tabular-nums text-[#B93B3B]">
-                    Net balance -₹{formatCurrencyExact(hud.overspendAmount)}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+          <div
+            role="status"
+            aria-live="polite"
+            data-testid="aether-hud-status"
+            className={`inline-flex items-center gap-1.5 text-[12.5px] font-semibold transition-colors duration-200 ${toneStyle.statusText}`}
+          >
+            <StatusIcon stateKey={effectiveStatusStateKey} />
+            <span>{effectiveStatusLabel}</span>
+          </div>
         </div>
 
-        {/* Slot 2: 3D Bioluminescent Energy Capsule Centerpiece */}
-        <div className="lg:col-span-5 lg:row-span-2 lg:self-center w-full">
+        {/* Hero Main Content: Primary Balance (Left) + Supporting Metrics & Dual Progress (Right) */}
+        <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left: Primary Balance & Contextual Status */}
+          <div className="lg:col-span-6 min-w-0 space-y-3">
+            {hud.stateKey === 'loading' ? (
+              <div className="space-y-3" aria-busy="true">
+                <div className="h-3.5 w-28 rounded bg-[var(--bg-subtle)]" />
+                <div className="h-12 w-52 rounded-lg bg-[var(--bg-subtle)]" />
+                <div className="h-4 w-64 rounded bg-[var(--bg-subtle)]" />
+              </div>
+            ) : hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid' ? (
+              <div className="space-y-3">
+                <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">
+                  {hud.stateKey === 'invalid'
+                    ? 'Budget reserve status'
+                    : 'Monthly budget setup'}
+                </p>
+                <h2 className="text-[26px] sm:text-[30px] font-bold font-display tracking-tight text-[var(--text-primary)] leading-tight text-balance">
+                  {hud.stateKey === 'invalid'
+                    ? 'Financial data unavailable'
+                    : 'No monthly budget configured'}
+                </h2>
+                <p className="text-[13.5px] text-[var(--text-secondary)] leading-relaxed max-w-xl">
+                  {hud.statusDescription}
+                </p>
+
+                {!editingBudget ? (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={handleOpenEditBudget}
+                      data-testid="aether-setup-budget-btn"
+                      className="btn-primary px-4 py-2.5 text-[13px] min-h-[44px]"
+                    >
+                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>
+                        {hud.stateKey === 'invalid'
+                          ? 'Restore monthly budget'
+                          : 'Set monthly budget'}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={handleSaveBudget}
+                    className="pt-1 max-w-sm space-y-2"
+                  >
+                    <label
+                      htmlFor="aether-setup-budget-input"
+                      className="block text-[12px] font-semibold text-[var(--text-secondary)]"
+                    >
+                      Monthly budget (₹)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="aether-setup-budget-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="e.g. 25000"
+                        aria-label="Monthly budget amount"
+                        value={budgetDraft}
+                        onChange={(e) => setBudgetDraft(e.target.value)}
+                        autoFocus
+                        className="input-field flex-1 min-w-0 min-h-[44px] px-3 py-2 text-[15px] font-mono font-semibold tabular-nums"
+                      />
+                      <button
+                        type="submit"
+                        aria-label="Save budget"
+                        className="btn-primary min-h-[44px] px-4 py-2 text-[13px]"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Cancel budget edit"
+                        onClick={() => {
+                          setEditingBudget(false);
+                          setBudgetError(null);
+                        }}
+                        className="btn-secondary min-h-[44px] px-3 py-2 text-[13px]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {budgetError && (
+                      <p className="text-[12px] font-medium text-[var(--accent-danger-ink)]">
+                        {budgetError}
+                      </p>
+                    )}
+                  </form>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">
+                  {hud.primaryLabel}
+                </p>
+
+                <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                  <p
+                    data-testid="overview-remaining-balance"
+                    aria-label={`${hud.primaryLabel}: ₹${formatCurrencyExact(hud.primaryAmount)}`}
+                    className={`text-[38px] sm:text-[46px] xl:text-[50px] font-bold font-mono tabular-nums tracking-tight leading-none break-words transition-colors duration-200 ${
+                      hud.stateKey === 'overspent' || hud.stateKey === 'depleted'
+                        ? 'text-[var(--accent-danger-ink)]'
+                        : toneStyle.balanceText
+                    }`}
+                  >
+                    ₹{formatAnimatedCurrency(animatedPrimary, hud.primaryAmount)}
+                  </p>
+                  <span className="text-[14px] font-mono font-semibold tabular-nums text-[var(--text-secondary)]">
+                    {remainingPctDisplay}% remaining
+                  </span>
+                </div>
+
+                {intelligence.isAvailable && intelligence.contextualStatus && (
+                  <p
+                    data-testid="aether-contextual-status"
+                    className={`text-[13.5px] leading-snug max-w-lg transition-colors duration-200 ${
+                      intelligence.contextualTone === 'danger'
+                        ? 'text-[var(--accent-danger-ink)] font-medium'
+                        : intelligence.contextualTone === 'warning'
+                          ? 'text-[var(--accent-warning-ink)] font-medium'
+                          : 'text-[var(--text-tertiary)]'
+                    }`}
+                  >
+                    {intelligence.contextualStatus}
+                  </p>
+                )}
+
+                {hasSharedBalances && (
+                  <div className="pt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('expenses', 'splits')}
+                      className="inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-[12px] transition-colors"
+                    >
+                      <Users className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />
+                      <span className="font-medium text-[var(--text-secondary)]">
+                        Split Ledger:
+                      </span>
+                      {ledgerDashboard.totalIOwe > 0 && (
+                        <span className="font-mono font-semibold tabular-nums text-[var(--accent-warning-ink)]">
+                          You owe ₹{formatCurrencyExact(ledgerDashboard.totalIOwe)}
+                        </span>
+                      )}
+                      {ledgerDashboard.totalOwedToMe > 0 && (
+                        <span className="font-mono font-semibold tabular-nums text-[var(--accent-success-ink)]">
+                          Owed ₹{formatCurrencyExact(ledgerDashboard.totalOwedToMe)}
+                        </span>
+                      )}
+                      {onNavigate && (
+                        <ArrowRight className="w-3 h-3 text-[var(--accent-ink)]" />
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Supporting Pillars & Strictly Separated Consumption vs. Cycle Elapsed Bars */}
+          <div className="lg:col-span-6 min-w-0 space-y-4 lg:pl-6 lg:border-l lg:border-[var(--border-subtle)]">
+            {hud.stateKey === 'loading' ? (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="h-14 rounded bg-[var(--bg-subtle)]" />
+                <div className="h-14 rounded bg-[var(--bg-subtle)]" />
+                <div className="h-14 rounded bg-[var(--bg-subtle)]" />
+              </div>
+            ) : hud.showFinancialNumbers ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-3.5">
+                  <div className="min-w-0">
+                    <div className="h-5 flex items-center">
+                      <span className="text-[12px] font-medium text-[var(--text-secondary)]">
+                        Spent this cycle
+                      </span>
+                    </div>
+                    <p
+                      data-testid="overview-total-spent"
+                      className="text-[19px] sm:text-[21px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-1 whitespace-nowrap"
+                    >
+                      ₹{formatAnimatedCurrency(animatedSpent, hud.activeSpent)}
+                    </p>
+                    <p className="text-[12px] font-mono text-[var(--text-secondary)] tabular-nums mt-0.5">
+                      <span data-testid="overview-utilization">{hud.consumedPct}%</span> used
+                    </p>
+                  </div>
+
+                  <div className="min-w-0 sm:pl-4 sm:border-l sm:border-[var(--border-subtle)]">
+                    <div className="h-5 flex items-center gap-1.5">
+                      <span className="text-[12px] font-medium text-[var(--text-secondary)] whitespace-nowrap">
+                        Cycle budget
+                      </span>
+                      {!editingBudget && (
+                        <button
+                          type="button"
+                          onClick={handleOpenEditBudget}
+                          aria-label="Edit total budget"
+                          className="inline-flex items-center justify-center w-6 h-6 rounded-md text-[var(--text-secondary)] hover:text-[var(--accent-ink)] hover:bg-[var(--accent-primary-soft)] transition-colors shrink-0"
+                        >
+                          <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                        </button>
+                      )}
+                    </div>
+
+                    {!editingBudget ? (
+                      <>
+                        <p
+                          data-testid="overview-total-budget"
+                          className="text-[19px] sm:text-[21px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-1 whitespace-nowrap"
+                        >
+                          ₹{formatCurrency(hud.effectiveBudget)}
+                        </p>
+                        <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
+                          {budgetState.activeTransactionCount} expense
+                          {budgetState.activeTransactionCount === 1 ? '' : 's'}
+                        </p>
+                      </>
+                    ) : (
+                      <form onSubmit={handleSaveBudget} className="mt-1 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            aria-label="Monthly budget amount"
+                            value={budgetDraft}
+                            onChange={(e) => setBudgetDraft(e.target.value)}
+                            autoFocus
+                            className="input-field w-24 sm:w-28 min-h-[36px] px-2.5 py-1 text-[14px] font-mono font-semibold tabular-nums"
+                          />
+                          <button
+                            type="submit"
+                            aria-label="Save budget"
+                            className="w-8 h-8 rounded-lg bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white flex items-center justify-center shrink-0 transition-colors"
+                          >
+                            <Check className="w-4 h-4" aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Cancel budget edit"
+                            onClick={() => {
+                              setEditingBudget(false);
+                              setBudgetError(null);
+                            }}
+                            className="w-8 h-8 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] flex items-center justify-center shrink-0 transition-colors"
+                          >
+                            <X className="w-4 h-4" aria-hidden="true" />
+                          </button>
+                        </div>
+                        {budgetError && (
+                          <p className="text-[12px] font-medium text-[var(--accent-danger-ink)]">
+                            {budgetError}
+                          </p>
+                        )}
+                      </form>
+                    )}
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1 min-w-0 sm:pl-4 sm:border-l sm:border-[var(--border-subtle)]">
+                    <div className="h-5 flex items-center">
+                      <span className="text-[12px] font-medium text-[var(--text-secondary)]">
+                        Safe daily room
+                      </span>
+                    </div>
+                    <p className="text-[19px] sm:text-[21px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-1 whitespace-nowrap">
+                      {intelligence.pace
+                        ? `₹${formatCurrency(intelligence.pace.safeDailyRemaining)}/d`
+                        : `${hud.cycleElapsedPct}% elapsed`}
+                    </p>
+                    <p className="text-[11.5px] font-mono text-[var(--text-secondary)] tabular-nums mt-0.5 leading-snug">
+                      {hud.cyclePaceText}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Two Distinct Progress Bars: Budget Consumption vs. Cycle Time Elapsed */}
+                <div
+                  className="pt-3.5 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 gap-4"
+                  data-testid="overview-budget-progress"
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 text-[12px]">
+                      <span className="font-medium text-[var(--text-secondary)]">
+                        Budget consumption
+                      </span>
+                      <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">
+                        {hud.consumedPct}%
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={hud.cycleBarPct}
+                      tone={toneStyle.progressTone}
+                      size="md"
+                      label={`Budget consumption: ${hud.consumedPct}% of cycle budget spent`}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 text-[12px]">
+                      <span className="font-medium text-[var(--text-secondary)]">
+                        Cycle time elapsed
+                      </span>
+                      <span className="font-mono font-semibold tabular-nums text-[var(--text-secondary)]">
+                        {hud.cycleElapsedPct}%
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={hud.cycleElapsedPct}
+                      tone="brand"
+                      size="md"
+                      label={`Cycle time elapsed: ${hud.cycleElapsedPct}% (${hud.cyclePaceText})`}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+                {hud.stateKey === 'unconfigured'
+                  ? 'Spending tracking, consumption pacing, and cycle projections activate once your monthly budget is configured.'
+                  : 'Existing expenses remain preserved in your Expenses ledger.'}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Overspend Alert Footer */}
+        {hud.stateKey === 'overspent' && (
+          <div
+            role="alert"
+            data-testid="aether-overspend-alert"
+            className="relative rounded-xl px-4 py-2.5 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] flex flex-wrap items-center justify-between gap-2 transition-colors duration-200"
+          >
+            <div className="flex items-center gap-2 text-[var(--accent-danger-ink)] font-semibold text-[13px]">
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>
+                Over budget by{' '}
+                <span className="font-mono tabular-nums">
+                  ₹{formatAnimatedCurrency(animatedOverspend, hud.overspendAmount)}
+                </span>
+              </span>
+            </div>
+            <span className="text-[12.5px] font-mono font-semibold tabular-nums text-[var(--accent-danger-ink)]">
+              Net balance -₹{formatCurrencyExact(hud.overspendAmount)}
+            </span>
+          </div>
+        )}
+      </section>
+
+      {/* 2. DEDICATED AETHER RESERVE EXPERIENCE */}
+      <section
+        aria-label="AETHER interactive reserve"
+        data-testid="aether-dedicated-showcase"
+        className="aether-stage-card overflow-hidden grid grid-cols-1 lg:grid-cols-12 items-stretch"
+      >
+        {/* Spacious Optical Chamber */}
+        <div className="lg:col-span-7 xl:col-span-8 p-3 sm:p-4 bg-[var(--bg-well)]/35 flex items-center">
           <ConnectedBudgetCapsule
             embedded
             showStageHeader={false}
             budgetState={budgetState}
-            className="w-full h-[268px] sm:h-[304px] md:h-[324px] lg:h-[364px] xl:h-[384px]"
+            className="w-full h-[250px] sm:h-[300px] lg:h-[330px]"
           />
         </div>
 
-        {/* Slot 3: Spending Intelligence & Cycle Pace */}
-        <div className="lg:col-span-7 min-w-0 pt-4 sm:pt-5 border-t border-[#E7EAF0] space-y-4 sm:space-y-5">
-          {hud.stateKey === 'loading' ? (
-            <div className="grid grid-cols-3 gap-4">
-              <div className="h-12 rounded bg-[#E7EAF0]" />
-              <div className="h-12 rounded bg-[#E7EAF0]" />
-              <div className="h-12 rounded bg-[#E7EAF0]" />
+        {/* Clean Minimal Studio Console */}
+        <div className="lg:col-span-5 xl:col-span-4 border-t lg:border-t-0 lg:border-l border-[var(--border-subtle)] p-5 sm:p-6 flex flex-col justify-between gap-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-[17px] font-bold font-display tracking-tight text-[var(--text-primary)]">
+                AETHER
+              </h2>
+              <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5">
+                Interactive 3D cycle reserve
+              </p>
             </div>
-          ) : hud.showFinancialNumbers ? (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-4">
-                <div className="min-w-0">
-                  <p className="text-[12px] font-medium text-[#697386]">
-                    Spent this cycle
-                  </p>
-                  <p
-                    data-testid="overview-total-spent"
-                    className="text-[18px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 whitespace-nowrap"
-                  >
-                    ₹{formatAnimatedCurrency(animatedSpent, hud.activeSpent)}
-                  </p>
-                  <p className="text-[11.5px] font-mono text-[#697386] tabular-nums mt-0.5">
-                    <span data-testid="overview-utilization">{hud.consumedPct}%</span> consumed
-                  </p>
-                </div>
+            <span
+              className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${toneStyle.statusText}`}
+            >
+              <StatusIcon stateKey={effectiveStatusStateKey} />
+              <span>{aetherStatusLine}</span>
+            </span>
+          </div>
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[12px] font-medium text-[#697386] whitespace-nowrap">
-                      Monthly budget
-                    </span>
-                    {!editingBudget && (
-                      <button
-                        type="button"
-                        onClick={handleOpenEditBudget}
-                        aria-label="Edit total budget"
-                        className="inline-flex items-center justify-center w-9 h-9 sm:w-7 sm:h-7 rounded-lg text-[#697386] hover:text-[#365FE8] hover:bg-[#EDF2FF] transition-colors shrink-0"
-                      >
-                        <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
-                    )}
-                  </div>
-
-                  {!editingBudget ? (
-                    <>
-                      <p
-                        data-testid="overview-total-budget"
-                        className="text-[18px] sm:text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-1 whitespace-nowrap"
-                      >
-                        ₹{formatCurrency(hud.effectiveBudget)}
-                      </p>
-                      <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
-                        {budgetState.activeTransactionCount} active expense
-                        {budgetState.activeTransactionCount === 1 ? '' : 's'}
-                      </p>
-                    </>
-                  ) : (
-                    <form onSubmit={handleSaveBudget} className="mt-1 space-y-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          aria-label="Monthly budget amount"
-                          value={budgetDraft}
-                          onChange={(e) => setBudgetDraft(e.target.value)}
-                          autoFocus
-                          className="input-field w-24 sm:w-28 min-h-[40px] sm:min-h-[38px] px-2.5 py-1.5 text-[14px] font-mono font-semibold tabular-nums"
-                        />
-                        <button
-                          type="submit"
-                          aria-label="Save budget"
-                          className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-[#365FE8] hover:bg-[#294FCC] text-white flex items-center justify-center shrink-0 transition-colors"
-                        >
-                          <Check className="w-4 h-4" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Cancel budget edit"
-                          onClick={() => {
-                            setEditingBudget(false);
-                            setBudgetError(null);
-                          }}
-                          className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg bg-[#F1F3F6] hover:bg-[#E7EAF0] text-[#697386] flex items-center justify-center shrink-0 transition-colors"
-                        >
-                          <X className="w-4 h-4" aria-hidden="true" />
-                        </button>
-                      </div>
-                      {budgetError && (
-                        <p className="text-[11px] font-medium text-[#DE5252]">
-                          {budgetError}
-                        </p>
-                      )}
-                    </form>
-                  )}
-                </div>
-
-                <div className="col-span-2 sm:col-span-1 min-w-0">
-                  <p className="text-[12px] font-medium text-[#697386]">
-                    Cycle progress
-                  </p>
-                  <p className="text-[16px] sm:text-[18px] font-bold font-mono tabular-nums text-[#151922] mt-1 whitespace-nowrap">
-                    {hud.cycleElapsedPct}% elapsed
-                  </p>
-                  <p className="text-[11.5px] font-mono text-[#697386] tabular-nums mt-0.5">
-                    {hud.cyclePaceText}
-                  </p>
-                </div>
-              </div>
-
-              {/* Complementary Spend vs. Elapsed Cycle Pace Indicator */}
-              <div
-                className="pt-4 border-t border-[#E7EAF0] space-y-2"
-                data-testid="overview-budget-progress"
+          <div className="space-y-2 py-2 border-y border-[var(--border-subtle)]">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
+              Live liquid reserve level
+            </p>
+            <div className="flex items-baseline gap-2.5">
+              <span
+                className={`text-[34px] sm:text-[38px] font-bold font-mono tabular-nums leading-none tracking-tight ${
+                  hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid'
+                    ? 'text-[var(--text-secondary)]'
+                    : toneStyle.balanceText
+                }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
-                  <span className="font-medium text-[#697386]">
-                    Spending vs. cycle pace
-                  </span>
-                  <span className="font-mono font-semibold tabular-nums text-[#151922]">
-                    ₹{formatCurrencyExact(hud.activeSpent)} / ₹
-                    {formatCurrency(hud.effectiveBudget)}
-                  </span>
-                </div>
-
-                <ProgressBar
-                  value={hud.cycleBarPct}
-                  tone={toneStyle.progressTone}
-                  size="md"
-                  label="Current spend against cycle budget and elapsed days"
-                  markerPct={hud.effectiveBudget > 0 ? hud.cycleElapsedPct : undefined}
-                  markerLabel={`Cycle pace: ${hud.cycleElapsedPct}% elapsed (${hud.cyclePaceText})`}
-                />
-              </div>
-
-              {/* Phase 8: Contextual Budget Intelligence */}
-              {intelligence.isAvailable && intelligence.hasAnyDetails && (
-                <div
-                  data-testid="aether-intelligence-panel"
-                  className="pt-3.5 border-t border-[#E7EAF0] space-y-2"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] font-medium text-[#697386]">
-                      Cycle insights
-                    </span>
-                    <button
-                      type="button"
-                      data-testid="aether-intelligence-toggle"
-                      aria-expanded={showDetails}
-                      aria-controls="aether-intelligence-details"
-                      onClick={() => setShowDetails((prev) => !prev)}
-                      className="inline-flex items-center gap-1 min-h-[40px] sm:min-h-[32px] px-2.5 -mr-2 rounded-lg text-[12px] font-semibold text-[#365FE8] hover:bg-[#EDF2FF] transition-colors whitespace-nowrap shrink-0"
-                    >
-                      <span>{showDetails ? 'Hide details' : 'How it’s calculated'}</span>
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-150 ${
-                          showDetails ? 'rotate-180' : ''
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
-
-                  <dl className="divide-y divide-[#E7EAF0]">
-                    {intelligence.pace && (
-                      <div
-                        data-testid="aether-insight-pace"
-                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0.5 last:pb-0 text-[13px]"
-                      >
-                        <dt className="text-[#151922] font-medium">
-                          {intelligence.pace.summary}
-                        </dt>
-                        <dd
-                          className={`font-mono text-[12px] font-semibold tabular-nums whitespace-nowrap ${
-                            INTEL_TONE_INK[intelligence.pace.tone]
-                          }`}
-                        >
-                          {intelligence.pace.metricText}
-                        </dd>
-                      </div>
-                    )}
-
-                    {intelligence.projection && (
-                      <div
-                        data-testid="aether-insight-projection"
-                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0.5 last:pb-0 text-[13px]"
-                      >
-                        <dt className="text-[#151922] font-medium">
-                          {intelligence.projection.label}{' '}
-                          <span className="text-[11.5px] font-normal text-[#697386]">
-                            (estimate)
-                          </span>
-                        </dt>
-                        <dd
-                          className={`font-mono text-[12px] font-semibold tabular-nums whitespace-nowrap ${
-                            INTEL_TONE_INK[intelligence.projection.tone]
-                          }`}
-                        >
-                          {intelligence.projection.valueText}
-                        </dd>
-                      </div>
-                    )}
-
-                    {intelligence.categoryAttention && (
-                      <div
-                        data-testid="aether-insight-category"
-                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2 first:pt-0.5 last:pb-0 text-[13px]"
-                      >
-                        <dt className="text-[#151922] font-medium">
-                          {intelligence.categoryAttention.summary}
-                        </dt>
-                        <dd
-                          className={`font-mono text-[12px] font-semibold tabular-nums whitespace-nowrap ${
-                            INTEL_TONE_INK[intelligence.categoryAttention.tone]
-                          }`}
-                        >
-                          {intelligence.categoryAttention.metricText}
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
-
-                  {showDetails && (
-                    <div
-                      id="aether-intelligence-details"
-                      data-testid="aether-intelligence-details"
-                      className="aether-disclosure-panel rounded-xl bg-[#F8FAFF] px-3.5 py-2.5 space-y-1.5 text-[12px] leading-relaxed text-[#4B5565]"
-                    >
-                      {intelligence.pace && (
-                        <p>
-                          <span className="font-semibold text-[#151922]">Pace: </span>
-                          {intelligence.pace.explanation}
-                        </p>
-                      )}
-                      {intelligence.projection ? (
-                        <p>
-                          <span className="font-semibold text-[#151922]">
-                            Cycle-end estimate:{' '}
-                          </span>
-                          {intelligence.projection.assumption}
-                        </p>
-                      ) : (
-                        intelligence.omittedReasons.projection &&
-                        budgetState.status === 'active' && (
-                          <p>
-                            <span className="font-semibold text-[#151922]">
-                              Cycle-end estimate:{' '}
-                            </span>
-                            {intelligence.omittedReasons.projection}
-                          </p>
-                        )
-                      )}
-                      {intelligence.categoryAttention && (
-                        <p>
-                          <span className="font-semibold text-[#151922]">
-                            {intelligence.categoryAttention.category}:{' '}
-                          </span>
-                          {intelligence.categoryAttention.explanation}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-[#697386]">
-              <span>
-                {hud.stateKey === 'unconfigured'
-                  ? 'Spending telemetry and cycle tracking activate once a budget target is set.'
-                  : 'Existing expenses remain preserved in your Expenses ledger.'}
+                {hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid'
+                  ? 'Standby'
+                  : hud.stateKey === 'loading'
+                    ? 'Syncing'
+                    : `${remainingPctDisplay}%`}
               </span>
+              {hud.showFinancialNumbers && (
+                <span className="text-[13px] font-mono tabular-nums text-[var(--text-secondary)]">
+                  of ₹{formatCurrency(hud.effectiveBudget)} target
+                </span>
+              )}
+            </div>
+            {hud.showFinancialNumbers && (
+              <p className="text-[12.5px] text-[var(--text-secondary)]">
+                ₹{formatCurrencyExact(hud.primaryAmount)} available inside the active cycle vessel.
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-2 text-[11.5px] text-[var(--text-muted)]">
+            <span className="truncate">Drag to orbit · Arrow keys</span>
+            <span className="font-mono shrink-0">R / double-click reset</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. BUDGET TRAJECTORY (Pacing, Daily Burn Comparison, Cycle-End Projection, Category Watch) */}
+      {hud.showFinancialNumbers && intelligence.isAvailable && intelligence.hasAnyDetails && (
+        <section
+          aria-label="Budget trajectory"
+          data-testid="aether-intelligence-panel"
+          className="surface-card p-5 sm:p-6 space-y-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-[16px] font-semibold font-display tracking-tight text-[var(--text-primary)]">
+                Budget Trajectory
+              </h2>
+              <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5">
+                Daily burn rate vs. cycle target, projected cycle-end balance, and category watch
+              </p>
+            </div>
+            <button
+              type="button"
+              data-testid="aether-intelligence-toggle"
+              aria-expanded={showDetails}
+              aria-controls="aether-intelligence-details"
+              onClick={() => setShowDetails((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 min-h-[34px] px-3 rounded-xl text-[12px] font-semibold text-[var(--accent-ink)] bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] border border-[var(--accent-border)] transition-colors whitespace-nowrap shrink-0"
+            >
+              <span>{showDetails ? 'Hide details' : 'How it’s calculated'}</span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                  showDetails ? 'rotate-180' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+
+          <dl
+            className={`border-t border-[var(--border-subtle)] pt-3.5 grid grid-cols-1 ${intelGridClass} divide-y md:divide-y-0 md:divide-x divide-[var(--border-subtle)]`}
+          >
+            {intelligence.pace && (
+              <div
+                data-testid="aether-insight-pace"
+                className="py-2.5 md:py-0.5 md:pr-5 first:pt-0.5 space-y-2"
+              >
+                <div>
+                  <dt className="text-[12px] font-medium text-[var(--text-secondary)]">
+                    Spending pace
+                  </dt>
+                  <dd
+                    className={`font-mono text-[15px] font-bold tabular-nums mt-0.5 ${
+                      INTEL_TONE_INK[intelligence.pace.tone]
+                    }`}
+                  >
+                    {intelligence.pace.metricText}
+                  </dd>
+                  <dd className="text-[12.5px] text-[var(--text-primary)] font-medium mt-0.5">
+                    {intelligence.pace.summary}
+                  </dd>
+                </div>
+
+                {intelligence.pace.dailyBudgetAllowance > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <div className="flex items-center justify-between text-[11.5px] font-mono tabular-nums text-[var(--text-secondary)]">
+                      <span>Actual ₹{formatCurrency(intelligence.pace.actualDailyAverage)}/d</span>
+                      <span>Plan ₹{formatCurrency(intelligence.pace.dailyBudgetAllowance)}/d</span>
+                    </div>
+                    <ProgressBar
+                      value={Math.min(100, burnBarRatioPct)}
+                      tone={
+                        intelligence.pace.tone === 'danger'
+                          ? 'danger'
+                          : intelligence.pace.tone === 'warning'
+                            ? 'warning'
+                            : 'success'
+                      }
+                      size="sm"
+                      label="Daily burn rate compared to daily budget allowance"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {intelligence.projection && (
+              <div
+                data-testid="aether-insight-projection"
+                className="py-2.5 md:py-0.5 md:px-5 space-y-1"
+              >
+                <dt className="text-[12px] font-medium text-[var(--text-secondary)]">
+                  {intelligence.projection.label}{' '}
+                  <span className="font-normal">(estimate)</span>
+                </dt>
+                <dd
+                  className={`font-mono text-[15px] font-bold tabular-nums mt-0.5 ${
+                    INTEL_TONE_INK[intelligence.projection.tone]
+                  }`}
+                >
+                  {intelligence.projection.valueText}
+                </dd>
+                <dd className="text-[12px] text-[var(--text-secondary)] leading-relaxed">
+                  Based on ₹{formatCurrency(intelligence.projection.dailyAverage)}/day across{' '}
+                  {intelligence.projection.remainingFutureDays} day
+                  {intelligence.projection.remainingFutureDays === 1 ? '' : 's'} remaining.
+                </dd>
+              </div>
+            )}
+
+            {intelligence.categoryAttention && (
+              <div
+                data-testid="aether-insight-category"
+                className="py-2.5 md:py-0.5 md:pl-5 last:pb-0.5 space-y-1.5"
+              >
+                <div>
+                  <dt className="text-[12px] font-medium text-[var(--text-secondary)]">
+                    Category watch
+                  </dt>
+                  <dd
+                    className={`font-mono text-[15px] font-bold tabular-nums mt-0.5 ${
+                      INTEL_TONE_INK[intelligence.categoryAttention.tone]
+                    }`}
+                  >
+                    {intelligence.categoryAttention.metricText}
+                  </dd>
+                  <dd className="text-[12.5px] text-[var(--text-primary)] font-medium mt-0.5">
+                    {intelligence.categoryAttention.summary}
+                  </dd>
+                </div>
+                {onNavigate && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('insights', 'radar')}
+                    className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--accent-ink)] hover:underline"
+                  >
+                    <span>Review category</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            )}
+          </dl>
+
+          {showDetails && (
+            <div
+              id="aether-intelligence-details"
+              data-testid="aether-intelligence-details"
+              className="aether-disclosure-panel rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] px-4 py-3 space-y-2 text-[12.5px] leading-relaxed text-[var(--text-tertiary)]"
+            >
+              {intelligence.pace && (
+                <p>
+                  <span className="font-semibold text-[var(--text-primary)]">Pace: </span>
+                  {intelligence.pace.explanation}
+                </p>
+              )}
+              {intelligence.projection ? (
+                <p>
+                  <span className="font-semibold text-[var(--text-primary)]">
+                    Cycle-end estimate:{' '}
+                  </span>
+                  {intelligence.projection.assumption}
+                </p>
+              ) : (
+                intelligence.omittedReasons.projection &&
+                budgetState.status === 'active' && (
+                  <p>
+                    <span className="font-semibold text-[var(--text-primary)]">
+                      Cycle-end estimate:{' '}
+                    </span>
+                    {intelligence.omittedReasons.projection}
+                  </p>
+                )
+              )}
+              {intelligence.categoryAttention && (
+                <p>
+                  <span className="font-semibold text-[var(--text-primary)]">
+                    {intelligence.categoryAttention.category}:{' '}
+                  </span>
+                  {intelligence.categoryAttention.explanation}
+                </p>
+              )}
             </div>
           )}
-        </div>
-      </div>
+        </section>
+      )}
 
-      {/* Screen-reader summary of integrated instrument */}
+      {/* Screen-reader summary of integrated budget state */}
       <span className="sr-only">{hud.ariaAnnouncement}</span>
-    </section>
+    </div>
   );
 }
 

@@ -19,10 +19,10 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
     return (
       <div className="surface-card p-5 space-y-1.5">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
-          <h3 className="text-sm font-bold text-[#151922]">Your Price Insights</h3>
+          <Sparkles className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
+          <h3 className="font-display text-sm font-bold text-[var(--text-primary)]">Your Price Insights</h3>
         </div>
-        <p className="text-xs text-[#697386] leading-relaxed">
+        <p className="text-[12.5px] text-[var(--text-secondary)] leading-relaxed">
           Record at least 2 purchases for the same product (via Shopping checkout, Receipt Scan, or Manual Entry) to unlock real historical price insights. No trends are fabricated from a single purchase.
         </p>
       </div>
@@ -33,15 +33,15 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
     <div className="surface-card p-5 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
-          <h3 className="text-sm font-bold text-[#151922]">Your Price Insights</h3>
+          <Sparkles className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
+          <h3 className="font-display text-sm font-bold text-[var(--text-primary)]">Your Price Insights</h3>
         </div>
-        <span className="text-xs text-[#697386]">
+        <span className="text-[12px] text-[var(--text-secondary)]">
           Based on real recorded purchases
         </span>
       </div>
 
-      <div className="border-t border-[#E7EAF0] divide-y divide-[#E7EAF0]">
+      <div className="border-t border-[var(--border-subtle)] divide-y divide-[var(--border-subtle)]">
         {insights.map((insight) => {
           const Icon =
             insight.kind === 'increase'
@@ -56,17 +56,17 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
 
           const toneText =
             insight.tone === 'warning'
-              ? 'text-[#DE5252]'
+              ? 'text-[var(--accent-danger-ink)]'
               : insight.tone === 'positive'
-              ? 'text-[#15966B]'
-              : 'text-[#365FE8]';
+              ? 'text-[var(--accent-success-ink)]'
+              : 'text-[var(--accent-ink)]';
 
           const iconSurface =
             insight.tone === 'warning'
-              ? 'bg-[#FDECEC] text-[#DE5252]'
+              ? 'bg-[var(--accent-danger-soft)] text-[var(--accent-danger-ink)]'
               : insight.tone === 'positive'
-              ? 'bg-[#E8F7F1] text-[#15966B]'
-              : 'bg-[#EDF2FF] text-[#365FE8]';
+              ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)]'
+              : 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)]';
 
           const clickable = Boolean(insight.productId && onSelectProduct);
 
@@ -88,20 +88,20 @@ export function PriceInsightCard({ insights, onSelectProduct }: PriceInsightCard
 
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[13px] font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">
+                  <p className="text-[13.5px] font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-ink)] transition-colors truncate">
                     {insight.title}
                   </p>
                   <span
-                    className={`text-xs font-mono font-bold tabular-nums whitespace-nowrap shrink-0 ${toneText}`}
+                    className={`text-[12.5px] font-mono font-bold tabular-nums whitespace-nowrap shrink-0 ${toneText}`}
                   >
                     {insight.metricBadge}
                   </span>
                 </div>
-                <p className="text-xs text-[#697386] leading-relaxed">
+                <p className="text-[12.5px] text-[var(--text-secondary)] leading-relaxed">
                   {insight.description}
                 </p>
                 {clickable && (
-                  <span className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#365FE8] pt-0.5">
+                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--accent-ink)] pt-0.5">
                     View price chart <ArrowRight className="w-3 h-3" />
                   </span>
                 )}

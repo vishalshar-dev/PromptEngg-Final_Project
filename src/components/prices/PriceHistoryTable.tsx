@@ -20,31 +20,35 @@ export function PriceHistoryTable({ observations, preferredUnit }: PriceHistoryT
     <div className="surface-card p-5 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-[#697386]" strokeWidth={2.2} />
-          <h4 className="text-sm font-bold text-[#151922]">Recorded Purchase History</h4>
+          <History className="w-4 h-4 text-[var(--text-secondary)]" strokeWidth={2.2} />
+          <h4 className="font-display text-sm font-bold text-[var(--text-primary)]">
+            Recorded Purchase History
+          </h4>
         </div>
-        <span className="text-xs font-mono text-[#697386]">
+        <span className="text-[12px] font-mono text-[var(--text-secondary)] tabular-nums">
           {sortedDesc.length} {sortedDesc.length === 1 ? 'entry' : 'entries'}
         </span>
       </div>
 
       {sortedDesc.length === 0 ? (
-        <p className="text-xs text-[#697386] py-4 text-center">No observations recorded yet.</p>
+        <p className="text-[12.5px] text-[var(--text-secondary)] py-4 text-center">
+          No observations recorded yet.
+        </p>
       ) : (
         <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full text-left border-collapse min-w-[600px]">
+          <table className="w-full text-left border-collapse min-w-[620px]">
             <thead>
-              <tr className="border-b border-[#E7EAF0] text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
-                <th className="py-2 pr-3">Date &amp; Month</th>
-                <th className="py-2 px-3">Package &amp; Qty</th>
-                <th className="py-2 px-3">Paid</th>
-                <th className="py-2 px-3">Unit Price (₹/{preferredUnit})</th>
-                <th className="py-2 px-3">Source &amp; Kind</th>
-                <th className="py-2 px-3">Status</th>
-                <th className="py-2 pl-3 text-right">Actions</th>
+              <tr className="border-b border-[var(--border-subtle)] text-[12px] font-medium text-[var(--text-secondary)]">
+                <th className="py-2.5 pr-3">Date &amp; Month</th>
+                <th className="py-2.5 px-3">Package &amp; Qty</th>
+                <th className="py-2.5 px-3">Paid</th>
+                <th className="py-2.5 px-3">Unit Price (₹/{preferredUnit})</th>
+                <th className="py-2.5 px-3">Source &amp; Kind</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 pl-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E7EAF0] text-xs">
+            <tbody className="divide-y divide-[var(--border-subtle)] text-[12.5px]">
               {sortedDesc.map((obs) => {
                 const isInactive = obs.status !== 'active';
                 const dt = new Date(obs.purchaseDate);
@@ -74,47 +78,58 @@ export function PriceHistoryTable({ observations, preferredUnit }: PriceHistoryT
                     : 'Manual';
 
                 return (
-                  <tr key={obs.id} className={isInactive ? 'opacity-60' : 'hover:bg-[#F7F8FA]'}>
+                  <tr
+                    key={obs.id}
+                    className={
+                      isInactive ? 'opacity-60' : 'hover:bg-[var(--bg-hover)] transition-colors'
+                    }
+                  >
                     <td className="py-2.5 pr-3 whitespace-nowrap">
-                      <p className={`font-semibold ${isInactive ? 'line-through text-[#697386]' : 'text-[#151922]'}`}>
+                      <p
+                        className={`font-semibold ${
+                          isInactive
+                            ? 'line-through text-[var(--text-secondary)]'
+                            : 'text-[var(--text-primary)]'
+                        }`}
+                      >
                         {dateDisplay}
                       </p>
-                      <p className="text-[11px] text-[#929BAB]">{monthDisplay}</p>
+                      <p className="text-[11.5px] text-[var(--text-muted)]">{monthDisplay}</p>
                     </td>
                     <td className="py-2.5 px-3">
-                      <p className="font-mono font-semibold text-[#151922]">
+                      <p className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
                         {obs.quantity} × {obs.packageSize}
                       </p>
                       {obs.brand && (
-                        <p className="text-[11px] text-[#697386]">{obs.brand}</p>
+                        <p className="text-[11.5px] text-[var(--text-secondary)]">{obs.brand}</p>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-semibold text-[#151922] tabular-nums">
+                    <td className="py-2.5 px-3 font-mono font-semibold text-[var(--text-primary)] tabular-nums">
                       ₹{formatCurrencyExact(obs.totalPrice)}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-[#365FE8] tabular-nums">
+                    <td className="py-2.5 px-3 font-mono font-bold text-[var(--accent-ink)] tabular-nums">
                       ₹{formatCurrencyExact(obs.unitPrice)}/{obs.unitOfMeasurement}
                     </td>
                     <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-1.5 text-[#151922]">
-                        <SourceIcon className="w-3.5 h-3.5 text-[#697386]" />
+                      <div className="flex items-center gap-1.5 text-[var(--text-primary)]">
+                        <SourceIcon className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
                         <span className="font-medium truncate max-w-[120px]">{sourceText}</span>
                       </div>
-                      <p className="text-[11px] text-[#929BAB]">
+                      <p className="text-[11.5px] text-[var(--text-muted)]">
                         {obs.entryKind === 'manual_estimate' ? 'Manual Estimate' : 'Actual Purchase'}
                       </p>
                     </td>
                     <td className="py-2.5 px-3">
                       {obs.status === 'active' ? (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#E8F7F1] text-[#15966B] border border-[#B7E4D3]">
+                        <span className="text-[12px] font-semibold text-[var(--accent-success-ink)]">
                           Active
                         </span>
                       ) : obs.status === 'cancelled' ? (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#FDECEC] text-[#DE5252] border border-[#F6B8B8]">
+                        <span className="text-[12px] font-semibold text-[var(--accent-danger-ink)]">
                           Cancelled
                         </span>
                       ) : (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#FEF6E7] text-[#9E6614] border border-[#F3D8A8]">
+                        <span className="text-[12px] font-semibold text-[var(--accent-warning-ink)]">
                           Refunded
                         </span>
                       )}
@@ -126,14 +141,14 @@ export function PriceHistoryTable({ observations, preferredUnit }: PriceHistoryT
                             <button
                               type="button"
                               onClick={() => refundTransaction(obs.transactionId!)}
-                              className="text-[11px] font-semibold text-[#9E6614] hover:text-[#784D0E] px-2 py-1 rounded-md bg-[#FEF6E7] border border-[#F3D8A8]"
+                              className="text-[12px] font-semibold text-[var(--accent-warning-ink)] px-2.5 py-1 rounded-lg bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] hover:opacity-90"
                             >
                               Refund
                             </button>
                             <button
                               type="button"
                               onClick={() => cancelTransaction(obs.transactionId!)}
-                              className="text-[11px] font-semibold text-[#DE5252] hover:text-[#B93B3B] px-2 py-1 rounded-md bg-[#FDECEC] border border-[#F6B8B8]"
+                              className="text-[12px] font-semibold text-[var(--accent-danger-ink)] px-2.5 py-1 rounded-lg bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] hover:opacity-90"
                             >
                               Cancel
                             </button>
@@ -145,9 +160,9 @@ export function PriceHistoryTable({ observations, preferredUnit }: PriceHistoryT
                             onClick={() => deletePriceObservation(obs.id)}
                             aria-label="Delete price observation"
                             title="Delete observation"
-                            className="p-1 text-[#697386] hover:text-[#DE5252] rounded hover:bg-[#FDECEC]"
+                            className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] rounded-lg hover:bg-[var(--accent-danger-soft)]"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>

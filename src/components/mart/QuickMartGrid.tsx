@@ -304,7 +304,7 @@ export function QuickMartGrid({
     return (
       <div
         key={`${mode}-${flashKey}`}
-        className="bg-white rounded-2xl p-3 border border-[#E7EAF0] shadow-card flex items-center justify-between gap-2.5"
+        className="surface-card rounded-2xl p-3.5 flex items-center justify-between gap-2.5"
       >
         <button
           type="button"
@@ -320,12 +320,12 @@ export function QuickMartGrid({
             size="sm"
           />
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[#151922] truncate">
+            <p className="text-[13px] font-bold text-[var(--text-primary)] truncate">
               {insight.item.name}
               {insight.lastVariantLabel ? ` · ${insight.lastVariantLabel}` : ''}
             </p>
-            <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#697386] mt-0.5 flex-wrap tabular-nums">
-              <span className="font-semibold text-[#151922]">
+            <div className="flex items-center gap-1.5 text-[12px] font-mono text-[var(--text-secondary)] mt-0.5 flex-wrap tabular-nums">
+              <span className="font-semibold text-[var(--text-primary)]">
                 ₹{formatCurrencyExact(insight.currentPrice)}
               </span>
               <span aria-hidden="true">·</span>
@@ -340,7 +340,7 @@ export function QuickMartGrid({
                 <span
                   title={`Previously paid ₹${formatCurrencyExact(insight.lastPaidPrice)}`}
                   className={`font-semibold ${
-                    insight.priceDiff > 0 ? 'text-[#C7851F]' : 'text-[#15966B]'
+                    insight.priceDiff > 0 ? 'text-[var(--accent-warning-ink)]' : 'text-[var(--accent-success-ink)]'
                   }`}
                 >
                   · {insight.priceDiff > 0
@@ -358,8 +358,8 @@ export function QuickMartGrid({
           aria-label={`Reorder ${insight.item.name}`}
           className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 whitespace-nowrap shrink-0 transition-colors ${
             isFlashed
-              ? 'bg-[#15966B] text-white'
-              : 'bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white border border-[#365FE8]/25'
+              ? 'bg-[var(--accent-success)] text-white'
+              : 'bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary)] text-[var(--accent-ink)] hover:text-white border border-[var(--accent-border)]'
           }`}
         >
           {isFlashed ? (
@@ -417,7 +417,7 @@ export function QuickMartGrid({
                 aria-label="Compare current basket across apps"
                 className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
               >
-                <Scale className="w-3.5 h-3.5 text-[#15966B] shrink-0" />
+                <Scale className="w-3.5 h-3.5 text-[var(--accent-success)] shrink-0" />
                 <span className="hidden sm:inline">Compare Basket</span>
               </button>
             )}
@@ -429,9 +429,9 @@ export function QuickMartGrid({
                 aria-label={`Open shopping cart with ${cartSummary.totalUnits} items`}
                 className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
               >
-                <ShoppingCart className="w-3.5 h-3.5 text-[#365FE8] shrink-0" strokeWidth={2.2} />
+                <ShoppingCart className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" strokeWidth={2.2} />
                 <span className="hidden sm:inline">Cart</span>
-                <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#365FE8] text-white text-[10px] font-bold inline-flex items-center justify-center tabular-nums">
+                <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent-primary)] text-white text-[11px] font-bold inline-flex items-center justify-center tabular-nums">
                   {cartSummary.lineCount}
                 </span>
               </button>
@@ -442,47 +442,47 @@ export function QuickMartGrid({
 
       {/* Compact Single-Elevation Hairline Shopping Summary Strip */}
       {featureSettings.showShopSummaryMetrics && (
-        <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+        <div className="surface-card rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-subtle)]">
           <div className="px-4 py-3 sm:py-3.5">
-            <p className="text-[11px] font-medium text-[#697386]">Cart Value</p>
-            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[#365FE8] mt-0.5">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">Cart Value</p>
+            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[var(--accent-ink)] mt-0.5">
               ₹{formatCurrencyExact(cartSummary.totalAmount)}
             </p>
-            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               {cartSummary.lineCount} {cartSummary.lineCount === 1 ? 'line' : 'lines'} active
             </p>
           </div>
 
           <div className="px-4 py-3 sm:py-3.5">
-            <p className="text-[11px] font-medium text-[#697386]">Cart Quantity</p>
-            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">Cart Quantity</p>
+            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
               {formatQuantity(cartSummary.totalUnits)}
             </p>
-            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               Total units selected
             </p>
           </div>
 
           <div className="px-4 py-3 sm:py-3.5">
-            <p className="text-[11px] font-medium text-[#697386]">Month Spend</p>
-            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">Month Spend</p>
+            <p className="text-base sm:text-lg font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
               ₹{formatCurrencyExact(monthlySpend)}
             </p>
-            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               Logged this month
             </p>
           </div>
 
           <div className="px-4 py-3 sm:py-3.5">
-            <p className="text-[11px] font-medium text-[#697386]">Budget Left</p>
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">Budget Left</p>
             <p
               className={`text-base sm:text-lg font-bold font-mono tabular-nums mt-0.5 ${
-                remainingMonthlyBudget >= 0 ? 'text-[#15966B]' : 'text-[#DE5252]'
+                remainingMonthlyBudget >= 0 ? 'text-[var(--accent-success-ink)]' : 'text-[var(--accent-danger)]'
               }`}
             >
               ₹{formatCurrencyExact(remainingMonthlyBudget)}
             </p>
-            <p className="hidden sm:block text-[11px] text-[#697386] mt-0.5 truncate">
+            <p className="hidden sm:block text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               {remainingMonthlyBudget >= 0 ? 'Remaining allowance' : 'Over monthly budget'}
             </p>
           </div>
@@ -491,14 +491,14 @@ export function QuickMartGrid({
 
       {/* Active Broke Mode Accountability Notice */}
       {isBrokeMode && (
-        <div className="rounded-2xl px-4 py-3 bg-[#FEF6E7] border border-[#F3D8A8] flex flex-wrap items-center justify-between gap-2">
+        <div className="rounded-2xl px-4 py-3 bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <ShieldAlert className="w-4 h-4 text-[#C7851F] flex-shrink-0" />
-            <p className="text-xs font-semibold text-[#9E6614]">
+            <ShieldAlert className="w-4 h-4 text-[var(--accent-warning)] flex-shrink-0" />
+            <p className="text-xs font-semibold text-[var(--accent-warning-ink)]">
               Broke Mode Active ({brokeStatus.periodLabel}) · Essential items stay unrestricted; watched categories are highlighted.
             </p>
           </div>
-          <div className="flex items-center gap-3 text-xs font-mono font-semibold tabular-nums text-[#9E6614]">
+          <div className="flex items-center gap-3 text-xs font-mono font-semibold tabular-nums text-[var(--accent-warning-ink)]">
             <span>Allowance Left: ₹{formatCurrencyExact(brokeStatus.remaining)}</span>
             <span className="hidden sm:inline">·</span>
             <span>Non-Essential Left: ₹{formatCurrencyExact(brokeStatus.nonEssentialRemaining)}</span>
@@ -506,133 +506,118 @@ export function QuickMartGrid({
         </div>
       )}
 
-      {/* Sub-Section Segmented Bar (dynamically sized to enabled features) */}
-      {(() => {
-        const enabledShopTabs =
-          2 +
-          (featureSettings.showShopBaskets ? 1 : 0) +
-          (featureSettings.showShopRecurring ? 1 : 0) +
-          (featureSettings.showShopHistory ? 1 : 0);
-        const gridColsCls =
-          enabledShopTabs === 2
-            ? 'grid-cols-2'
-            : enabledShopTabs === 3
-              ? 'grid-cols-3'
-              : enabledShopTabs === 4
-                ? 'grid-cols-4'
-                : 'grid-cols-5';
-        return (
-          <div className={`grid ${gridColsCls} sm:inline-flex items-center gap-1 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0] w-full sm:w-fit`}>
+      {/* Sub-Section Segmented Bar — horizontally scrollable single-line tabs on narrow screens */}
+      <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
+        <div className="inline-flex items-center gap-1 bg-[var(--bg-well)] p-1 rounded-xl border border-[var(--border-subtle)] min-w-full sm:min-w-0 w-max sm:w-fit">
+          <button
+            type="button"
+            onClick={() => {
+              setSection('home');
+              handleBackToHome();
+            }}
+            className={`min-h-[36px] py-1.5 px-3 sm:px-3.5 rounded-lg text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-all ${
+              section === 'home' && !selectedCategory
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Home</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSection('catalog');
+              setSelectedCategory(null);
+              setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
+            }}
+            className={`min-h-[36px] py-1.5 px-3 sm:px-3.5 rounded-lg text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-all ${
+              section === 'catalog' || Boolean(selectedCategory)
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            <Package className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Catalog</span>
+          </button>
+
+          {featureSettings.showShopBaskets && (
             <button
               type="button"
               onClick={() => {
-                setSection('home');
+                setSection('baskets');
                 handleBackToHome();
               }}
-              className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-                section === 'home' && !selectedCategory
-                  ? 'bg-white text-[#151922] shadow-xs'
-                  : 'text-[#697386] hover:text-[#151922]'
+              className={`min-h-[36px] py-1.5 px-3 sm:px-3.5 rounded-lg text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-all ${
+                section === 'baskets'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <LayoutGrid className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Home</span>
+              <Bookmark className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                Baskets
+                {basketTemplates.length > 0 && (
+                  <span className="font-mono text-[12px] text-[var(--accent-ink)] ml-1 tabular-nums">
+                    ({basketTemplates.length})
+                  </span>
+                )}
+              </span>
             </button>
+          )}
 
+          {featureSettings.showShopRecurring && (
             <button
               type="button"
               onClick={() => {
-                setSection('catalog');
-                setSelectedCategory(null);
-                setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
+                setSection('recurring');
+                handleBackToHome();
               }}
-              className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-                section === 'catalog' || Boolean(selectedCategory)
-                  ? 'bg-white text-[#151922] shadow-xs'
-                  : 'text-[#697386] hover:text-[#151922]'
+              className={`min-h-[36px] py-1.5 px-3 sm:px-3.5 rounded-lg text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-all ${
+                section === 'recurring'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <Package className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Catalog</span>
+              <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                Recurring
+                {dueRecurring.length > 0 && (
+                  <span className="font-mono text-[12px] text-[var(--accent-ink)] ml-1 tabular-nums">
+                    ({dueRecurring.length})
+                  </span>
+                )}
+              </span>
             </button>
+          )}
 
-            {featureSettings.showShopBaskets && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSection('baskets');
-                  handleBackToHome();
-                }}
-                className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-                  section === 'baskets'
-                    ? 'bg-white text-[#151922] shadow-xs'
-                    : 'text-[#697386] hover:text-[#151922]'
-                }`}
-              >
-                <Bookmark className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>
-                  Baskets
-                  {basketTemplates.length > 0 && (
-                    <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
-                      ({basketTemplates.length})
-                    </span>
-                  )}
-                </span>
-              </button>
-            )}
-
-            {featureSettings.showShopRecurring && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSection('recurring');
-                  handleBackToHome();
-                }}
-                className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-                  section === 'recurring'
-                    ? 'bg-white text-[#151922] shadow-xs'
-                    : 'text-[#697386] hover:text-[#151922]'
-                }`}
-              >
-                <Repeat className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>
-                  Recurring
-                  {dueRecurring.length > 0 && (
-                    <span className="hidden sm:inline font-mono text-[11px] text-[#365FE8] ml-1 tabular-nums">
-                      ({dueRecurring.length})
-                    </span>
-                  )}
-                </span>
-              </button>
-            )}
-
-            {featureSettings.showShopHistory && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSection('history');
-                  handleBackToHome();
-                }}
-                className={`py-1.5 sm:py-2 px-1 sm:px-3.5 rounded-lg text-[10.5px] sm:text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 whitespace-nowrap transition-all ${
-                  section === 'history'
-                    ? 'bg-white text-[#151922] shadow-xs'
-                    : 'text-[#697386] hover:text-[#151922]'
-                }`}
-              >
-                <History className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>
-                  History
-                  {purchaseHistory.length > 0 && (
-                    <span className="hidden sm:inline font-mono text-[11px] text-[#697386] ml-1 tabular-nums">
-                      ({purchaseHistory.length})
-                    </span>
-                  )}
-                </span>
-              </button>
-            )}
-          </div>
-        );
-      })()}
+          {featureSettings.showShopHistory && (
+            <button
+              type="button"
+              onClick={() => {
+                setSection('history');
+                handleBackToHome();
+              }}
+              className={`min-h-[36px] py-1.5 px-3 sm:px-3.5 rounded-lg text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-all ${
+                section === 'history'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                History
+                {purchaseHistory.length > 0 && (
+                  <span className="font-mono text-[12px] text-[var(--text-secondary)] ml-1 tabular-nums">
+                    ({purchaseHistory.length})
+                  </span>
+                )}
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Persistent Global Search Bar across Home & Catalog */}
       {(section === 'home' || section === 'catalog') && (
@@ -666,7 +651,7 @@ export function QuickMartGrid({
             <button
               type="button"
               onClick={handleBackToHome}
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F7F8FA] border border-[#E7EAF0] text-xs font-semibold text-[#4B5565] whitespace-nowrap shrink-0 flex items-center gap-1"
+              className="px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-tertiary)] whitespace-nowrap shrink-0 flex items-center gap-1"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Home
@@ -680,8 +665,8 @@ export function QuickMartGrid({
                   onClick={() => handleSelectCategory(cat.name)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors ${
                     active
-                      ? 'bg-[#EDF2FF] border-[#365FE8]/40 text-[#365FE8]'
-                      : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                      : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {cat.name}
@@ -690,7 +675,7 @@ export function QuickMartGrid({
             })}
           </div>
 
-          <div className="bg-white rounded-2xl p-4 flex items-center justify-between gap-3 border border-[#E7EAF0] shadow-card">
+          <div className="surface-card rounded-2xl p-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className={`w-10 h-10 rounded-xl ${
@@ -707,10 +692,10 @@ export function QuickMartGrid({
                 />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-bold text-[#151922] truncate">
+                <h3 className="text-base font-bold text-[var(--text-primary)] truncate">
                   {selectedCategory}
                 </h3>
-                <p className="text-xs text-[#697386]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   {filteredItems.length} product{filteredItems.length === 1 ? '' : 's'}
                   {filters.subcategory && filters.subcategory !== 'All'
                     ? ` in ${filters.subcategory}`
@@ -739,8 +724,8 @@ export function QuickMartGrid({
                 onClick={() => setFilters((p) => ({ ...p, subcategory: 'All' }))}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors ${
                   !filters.subcategory || filters.subcategory === 'All'
-                    ? 'bg-[#151922] border-[#151922] text-white dark:bg-[#365FE8] dark:border-[#365FE8]'
-                    : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                    ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white'
+                    : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 All ({categoryItemCounts[selectedCategory] ?? 0})
@@ -765,8 +750,8 @@ export function QuickMartGrid({
                     }
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold border whitespace-nowrap shrink-0 transition-colors ${
                       active
-                        ? 'bg-[#EDF2FF] border-[#365FE8]/40 text-[#365FE8]'
-                        : 'bg-white border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                        ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                        : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {sub} ({subCount})
@@ -811,7 +796,7 @@ export function QuickMartGrid({
                       key={cat.id}
                       type="button"
                       onClick={() => handleSelectCategory(cat.name)}
-                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F7F8FA] border border-[#E7EAF0] text-xs font-semibold text-[#151922] whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors shadow-xs"
+                      className="px-3 py-1.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors shadow-xs"
                     >
                       <span className={style.text}>
                         <CategoryIcon iconKey={cat.iconKey} className="w-3.5 h-3.5" />
@@ -827,7 +812,7 @@ export function QuickMartGrid({
                   const el = document.getElementById('mart-all-categories');
                   el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#365FE8] hover:bg-[#EDF2FF] whitespace-nowrap shrink-0 transition-colors"
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[var(--accent-ink)] hover:bg-[var(--accent-primary-soft)] whitespace-nowrap shrink-0 transition-colors"
               >
                 All ({categoryConfigs.length})
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -839,9 +824,9 @@ export function QuickMartGrid({
           {featureSettings.showShopRecurring &&
             runningLowItems.length > 0 &&
             !isSearchingOrFiltering && (
-              <div className="bg-white rounded-2xl p-4 border border-[#365FE8]/25 shadow-card flex flex-wrap items-center justify-between gap-3">
+              <div className="surface-card rounded-2xl p-4 !border-[var(--accent-border)] flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] flex items-center justify-center flex-shrink-0">
                     {dueRecurring.length > 0 ? (
                       <Repeat className="w-4 h-4" />
                     ) : (
@@ -850,16 +835,16 @@ export function QuickMartGrid({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-[#151922]">
+                      <p className="text-sm font-bold text-[var(--text-primary)]">
                         Running Low ({runningLowItems.length})
                       </p>
                       {dueRecurring.length > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-[#FEF6E7] border border-[#F3D8A8] text-[#9E6614] text-[10.5px] font-mono font-semibold">
-                          {dueRecurring.length} due today
+                        <span className="text-[12px] font-mono font-semibold text-[var(--accent-warning-ink)]">
+                          · {dueRecurring.length} due today
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#697386] truncate">
+                    <p className="text-xs text-[var(--text-secondary)] truncate">
                       {runningLowItems
                         .slice(0, 3)
                         .map((entry) => `${entry.item.name} (${entry.statusLabel})`)
@@ -876,7 +861,7 @@ export function QuickMartGrid({
                   onClick={
                     dueRecurring.length > 0 ? handleAddDueQuick : handleRestockRunningLow
                   }
-                  className="px-3.5 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#365FE8] border border-[#365FE8]/25 text-[#365FE8] hover:text-white text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors"
+                  className="px-3.5 py-2 rounded-xl bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary)] border border-[var(--accent-border)] text-[var(--accent-ink)] hover:text-white text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-colors"
                 >
                   {dueAddedFlash !== null ? (
                     <>
@@ -898,7 +883,7 @@ export function QuickMartGrid({
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="text-xs font-semibold text-[#365FE8] hover:underline"
+                    className="text-xs font-semibold text-[var(--accent-ink)] hover:underline"
                   >
                     Back to Home
                   </button>
@@ -944,14 +929,14 @@ export function QuickMartGrid({
                         action={
                           <div className="flex items-center gap-3">
                             {recentInsights.length > 0 && frequentInsights.length > 0 && (
-                              <div className="inline-flex items-center p-0.5 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] tactile-well">
+                              <div className="inline-flex items-center p-0.5 rounded-xl bg-[var(--bg-well)] border border-[var(--border-subtle)] tactile-well">
                                 <button
                                   type="button"
                                   onClick={() => setReorderTab('recent')}
-                                  className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold transition-colors ${
+                                  className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors ${
                                     activeMode === 'recent'
-                                      ? 'bg-white text-[#151922] shadow-xs'
-                                      : 'text-[#697386] hover:text-[#151922]'
+                                      ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                                   }`}
                                 >
                                   Recent
@@ -959,10 +944,10 @@ export function QuickMartGrid({
                                 <button
                                   type="button"
                                   onClick={() => setReorderTab('frequent')}
-                                  className={`px-2.5 py-1 rounded-lg text-[11.5px] font-semibold transition-colors ${
+                                  className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors ${
                                     activeMode === 'frequent'
-                                      ? 'bg-white text-[#151922] shadow-xs'
-                                      : 'text-[#697386] hover:text-[#151922]'
+                                      ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-xs'
+                                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                                   }`}
                                 >
                                   Most Bought
@@ -972,7 +957,7 @@ export function QuickMartGrid({
                             <button
                               type="button"
                               onClick={() => setSection('history')}
-                              className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-0.5 whitespace-nowrap"
+                              className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-0.5 whitespace-nowrap"
                             >
                               Orders <ChevronRight className="w-3.5 h-3.5" />
                             </button>
@@ -996,7 +981,7 @@ export function QuickMartGrid({
                       <button
                         type="button"
                         onClick={() => setSection('baskets')}
-                        className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-0.5 whitespace-nowrap"
+                        className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-0.5 whitespace-nowrap"
                       >
                         Manage Baskets <ChevronRight className="w-3.5 h-3.5" />
                       </button>
@@ -1009,7 +994,7 @@ export function QuickMartGrid({
                       return (
                         <div
                           key={ev.basket.id}
-                          className="bg-white rounded-2xl p-3.5 border border-[#E7EAF0] shadow-card flex flex-col justify-between gap-3"
+                          className="surface-card rounded-2xl p-3.5 flex flex-col justify-between gap-3"
                         >
                           <button
                             type="button"
@@ -1017,17 +1002,17 @@ export function QuickMartGrid({
                             className="text-left w-full"
                           >
                             <div className="flex items-center gap-2">
-                              <ShoppingBag className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />
-                              <p className="text-sm font-bold text-[#151922] truncate">
+                              <ShoppingBag className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />
+                              <p className="text-sm font-bold text-[var(--text-primary)] truncate">
                                 {ev.basket.name}
                               </p>
                             </div>
-                            <p className="text-xs font-mono text-[#697386] mt-1 tabular-nums">
+                            <p className="text-xs font-mono text-[var(--text-secondary)] mt-1 tabular-nums">
                               {ev.lineCount} items · ₹{formatCurrencyExact(ev.currentTotal)}
                               {hasDiff && (
                                 <span
                                   className={
-                                    ev.priceDiff > 0 ? ' text-[#C7851F]' : ' text-[#15966B]'
+                                    ev.priceDiff > 0 ? ' text-[var(--accent-warning-ink)]' : ' text-[var(--accent-success-ink)]'
                                   }
                                 >
                                   {' '}
@@ -1044,8 +1029,8 @@ export function QuickMartGrid({
                             aria-label={`Load basket ${ev.basket.name}`}
                             className={`w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
                               flashed
-                                ? 'bg-[#15966B] text-white'
-                                : 'bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white border border-[#365FE8]/25'
+                                ? 'bg-[var(--accent-success)] text-white'
+                                : 'bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary)] text-[var(--accent-ink)] hover:text-white border border-[var(--accent-border)]'
                             }`}
                           >
                             {flashed ? (
@@ -1081,9 +1066,9 @@ export function QuickMartGrid({
                       <button
                         type="button"
                         onClick={() => setFilters((p) => ({ ...p, onlyFavourites: true }))}
-                        className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
+                        className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1"
                       >
-                        <Heart className="w-3.5 h-3.5 text-[#DE5252]" fill="currentColor" />
+                        <Heart className="w-3.5 h-3.5 text-[var(--accent-danger)]" fill="currentColor" />
                         View All
                       </button>
                     ) : (
@@ -1093,7 +1078,7 @@ export function QuickMartGrid({
                           setSection('catalog');
                           setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
                         }}
-                        className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
+                        className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1"
                       >
                         Browse Catalog <ChevronRight className="w-3.5 h-3.5" />
                       </button>
@@ -1115,8 +1100,8 @@ export function QuickMartGrid({
                     onOpenDetails={(item) => setDetailProduct(item)}
                   />
                 ) : (
-                  <div className="flex items-center gap-2.5 py-2.5 border-t border-[#E7EAF0] text-xs text-[#697386]">
-                    <Heart className="w-3.5 h-3.5 text-[#DE5252] shrink-0" strokeWidth={2.2} />
+                  <div className="flex items-center gap-2.5 py-2.5 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
+                    <Heart className="w-3.5 h-3.5 text-[var(--accent-danger)] shrink-0" strokeWidth={2.2} />
                     <p>
                       No favourites pinned yet. Tap the heart icon on any product below to pin quick picks.
                     </p>
@@ -1137,7 +1122,7 @@ export function QuickMartGrid({
                           setSection('catalog');
                           setFilters((p) => ({ ...p, category: 'All', subcategory: 'All' }));
                         }}
-                        className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-0.5"
+                        className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-0.5"
                       >
                         <Sparkles className="w-3.5 h-3.5 mr-0.5" />
                         All Products <ChevronRight className="w-3.5 h-3.5" />
@@ -1172,7 +1157,7 @@ export function QuickMartGrid({
                           setEditingProduct(null);
                           setProductFormOpen(true);
                         }}
-                        className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
+                        className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1"
                       >
                         <Plus className="w-3.5 h-3.5" /> Add Custom
                       </button>
@@ -1203,7 +1188,7 @@ export function QuickMartGrid({
                     <button
                       type="button"
                       onClick={() => setCategoryManagerOpen(true)}
-                      className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
+                      className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5" />
                       Customize
@@ -1225,17 +1210,17 @@ export function QuickMartGrid({
 
               {/* Quick Bills & Subscriptions */}
               {featureSettings.showShopRecurring && billItems.length > 0 && (
-                <section className="bg-white rounded-2xl p-5 border border-[#E7EAF0] shadow-card space-y-3.5">
+                <section className="surface-card rounded-2xl p-5 space-y-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] flex items-center justify-center">
                         <Receipt className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-[#151922]">
+                        <h3 className="text-sm font-bold text-[var(--text-primary)]">
                           Quick Bills &amp; Subscriptions
                         </h3>
-                        <p className="text-xs text-[#697386]">
+                        <p className="text-xs text-[var(--text-secondary)]">
                           Auto-captured as recurring if paid repeatedly · Logged only after checkout
                         </p>
                       </div>
@@ -1243,24 +1228,24 @@ export function QuickMartGrid({
                     <button
                       type="button"
                       onClick={() => setSection('recurring')}
-                      className="text-xs font-semibold text-[#365FE8] hover:underline whitespace-nowrap"
+                      className="text-xs font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap"
                     >
                       Manage
                     </button>
                   </div>
-                  <div className="border-t border-[#E7EAF0] pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+                  <div className="border-t border-[var(--border-subtle)] pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
                     {billItems.map((bill) => (
                       <div
                         key={bill.id}
-                        className="py-2 flex items-center justify-between gap-2 border-b border-[#E7EAF0]/70"
+                        className="py-2 flex items-center justify-between gap-2 border-b border-[var(--border-subtle)]/70"
                       >
                         <button
                           type="button"
                           onClick={() => setDetailProduct(bill)}
                           className="min-w-0 text-left flex-1 group"
                         >
-                          <p className="text-xs font-bold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">{bill.name}</p>
-                          <p className="text-[11px] font-mono text-[#697386] tabular-nums">
+                          <p className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-ink)] transition-colors truncate">{bill.name}</p>
+                          <p className="text-[12px] font-mono text-[var(--text-secondary)] tabular-nums">
                             ₹{formatCurrencyExact(bill.price)} ·{' '}
                             {bill.recurrence?.frequency ?? 'on-demand'}
                           </p>
@@ -1269,7 +1254,7 @@ export function QuickMartGrid({
                           type="button"
                           onClick={() => addToCart(bill, 1)}
                           aria-label={`Add bill ${bill.name} to cart`}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#EDF2FF] hover:bg-[#365FE8] text-[#365FE8] hover:text-white text-xs font-semibold whitespace-nowrap transition-colors shrink-0"
+                          className="px-2.5 py-1.5 rounded-lg bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary)] text-[var(--accent-ink)] hover:text-white text-xs font-semibold whitespace-nowrap transition-colors shrink-0"
                         >
                           {bill.quantity > 0 ? `${formatQuantity(bill.quantity)} in Cart` : '+ Add Bill'}
                         </button>

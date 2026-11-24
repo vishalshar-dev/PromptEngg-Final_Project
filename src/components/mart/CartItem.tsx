@@ -61,9 +61,9 @@ export function CartItemRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
-          <p className="text-[13.5px] font-semibold text-[#151922] truncate">{item.name}</p>
+          <p className="text-[13.5px] font-semibold text-[var(--text-primary)] truncate">{item.name}</p>
           {variantLabel && (
-            <span className="text-[12px] font-medium text-[#697386] flex-shrink-0">
+            <span className="text-[12px] font-medium text-[var(--text-secondary)] flex-shrink-0">
               · {variantLabel}
             </span>
           )}
@@ -71,7 +71,7 @@ export function CartItemRow({
 
         {editingPrice ? (
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-[12px] text-[#365FE8] font-semibold">₹</span>
+            <span className="text-[12px] text-[var(--accent-ink)] font-semibold">₹</span>
             <input
               type="number"
               min="1"
@@ -86,14 +86,14 @@ export function CartItemRow({
                   setTempPrice('');
                 }
               }}
-              className="w-16 bg-white border border-[#365FE8] rounded px-1.5 py-0.5 text-[12px] text-[#151922] font-mono outline-none"
+              className="w-16 bg-[var(--bg-surface)] border border-[var(--accent-primary)] rounded px-1.5 py-0.5 text-[12px] text-[var(--text-primary)] font-mono outline-none"
               autoFocus
             />
             <button
               type="button"
               onClick={commitPrice}
               aria-label="Save price"
-              className="w-5 h-5 rounded bg-[#365FE8] text-white flex items-center justify-center"
+              className="w-6 h-6 rounded bg-[var(--accent-primary)] text-white flex items-center justify-center"
             >
               <Check className="w-3 h-3" strokeWidth={2.5} />
             </button>
@@ -104,13 +104,13 @@ export function CartItemRow({
                 setTempPrice('');
               }}
               aria-label="Cancel price edit"
-              className="w-5 h-5 rounded bg-[#F1F3F6] text-[#697386] flex items-center justify-center"
+              className="w-6 h-6 rounded bg-[var(--bg-subtle)] text-[var(--text-secondary)] flex items-center justify-center"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-[12px] text-[#697386] mt-0.5 tabular-nums">
+          <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)] mt-0.5 tabular-nums">
             {item.brand && (
               <>
                 <span className="truncate max-w-[90px]">{item.brand}</span>
@@ -127,7 +127,7 @@ export function CartItemRow({
                 setTempPrice(String(price));
               }}
               aria-label={`Edit price of ${item.name}`}
-              className="text-[#929BAB] hover:text-[#151922] p-0.5"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5"
             >
               <Pencil className="w-3 h-3" />
             </button>
@@ -136,14 +136,14 @@ export function CartItemRow({
       </div>
 
       {/* Quantity Controls */}
-      <div className="flex items-center gap-1 bg-[#F7F8FA] rounded-lg p-0.5 border border-[#E7EAF0] shrink-0">
+      <div className="flex items-center gap-1 bg-[var(--bg-subtle)] rounded-lg p-0.5 border border-[var(--border-subtle)] shrink-0">
         <button
           type="button"
           onClick={() => onUpdateQuantity(item.id, -step, variantId)}
           aria-label={`Decrease ${item.name} quantity`}
-          className="w-6 h-6 rounded-md hover:bg-white flex items-center justify-center transition-colors"
+          className="w-7 h-7 rounded-md hover:bg-[var(--bg-surface)] flex items-center justify-center transition-colors"
         >
-          <Minus className="w-3 h-3 text-[#151922]" strokeWidth={2.2} />
+          <Minus className="w-3 h-3 text-[var(--text-primary)]" strokeWidth={2.2} />
         </button>
 
         {editingQty ? (
@@ -162,7 +162,7 @@ export function CartItemRow({
                 setTempQty('');
               }
             }}
-            className="w-11 bg-white border border-[#365FE8] rounded px-1 py-0.5 text-[12px] text-[#151922] font-mono text-center outline-none"
+            className="w-11 bg-[var(--bg-surface)] border border-[var(--accent-primary)] rounded px-1 py-0.5 text-[12px] text-[var(--text-primary)] font-mono text-center outline-none"
             autoFocus
           />
         ) : (
@@ -173,7 +173,7 @@ export function CartItemRow({
               setTempQty(String(quantity));
             }}
             title="Click to enter exact quantity"
-            className="text-[12px] font-semibold text-[#151922] font-mono min-w-[1.5rem] px-1 text-center tabular-nums hover:text-[#365FE8]"
+            className="text-[12px] font-semibold text-[var(--text-primary)] font-mono min-w-[1.5rem] px-1 text-center tabular-nums hover:text-[var(--accent-ink)]"
           >
             {formatQuantity(quantity)}
           </button>
@@ -183,7 +183,7 @@ export function CartItemRow({
           type="button"
           onClick={() => onUpdateQuantity(item.id, step, variantId)}
           aria-label={`Increase ${item.name} quantity`}
-          className="w-6 h-6 rounded-md bg-white border border-[#E7EAF0] hover:border-[#D5DBE5] text-[#151922] flex items-center justify-center transition-colors"
+          className="w-7 h-7 rounded-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] text-[var(--text-primary)] flex items-center justify-center transition-colors"
         >
           <Plus className="w-3 h-3" strokeWidth={2.2} />
         </button>
@@ -191,14 +191,14 @@ export function CartItemRow({
 
       {/* Subtotal + Remove */}
       <div className="flex items-center gap-1 flex-shrink-0">
-        <span className="text-[13px] font-semibold text-[#151922] font-mono tabular-nums w-16 text-right">
+        <span className="text-[13px] font-semibold text-[var(--text-primary)] font-mono tabular-nums w-16 text-right">
           ₹{formatCurrencyExact(subtotal)}
         </span>
         <button
           type="button"
           onClick={() => onRemove(item.id, variantId)}
           aria-label={`Remove ${item.name} from cart`}
-          className="w-6 h-6 rounded-md text-[#929BAB] hover:text-[#DE5252] hover:bg-[#FDECEC] flex items-center justify-center transition-colors"
+          className="w-7 h-7 rounded-md text-[var(--text-muted)] hover:text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)] flex items-center justify-center transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>

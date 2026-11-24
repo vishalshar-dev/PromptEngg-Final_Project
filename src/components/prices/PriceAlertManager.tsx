@@ -96,10 +96,10 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
     <div className="space-y-4">
       {/* Triggered Notifications */}
       {activeTriggered.length > 0 && (
-        <div className="rounded-2xl p-4 border border-[#F3D8A8] bg-[#FEF6E7] space-y-2.5">
+        <div className="rounded-2xl p-4 border border-[var(--accent-warning-border)] bg-[var(--accent-warning-soft)] space-y-2.5">
           <div className="flex items-center gap-2">
-            <BellRing className="w-4 h-4 text-[#C7851F]" strokeWidth={2.2} />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#9E6614]">
+            <BellRing className="w-4 h-4 text-[var(--accent-warning-ink)]" strokeWidth={2.2} />
+            <h4 className="text-[13px] font-bold text-[var(--accent-warning-ink)]">
               Triggered on Latest Purchases ({activeTriggered.length})
             </h4>
           </div>
@@ -107,11 +107,11 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
             {activeTriggered.map((t) => (
               <div
                 key={t.id}
-                className="flex items-center justify-between gap-3 bg-white border border-[#F3D8A8] rounded-xl px-3 py-2.5"
+                className="flex items-center justify-between gap-3 bg-[var(--bg-surface)] border border-[var(--accent-warning-border)] rounded-xl px-3.5 py-2.5"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-[#151922]">{t.message}</p>
-                  <p className="text-[11px] text-[#697386] mt-0.5">
+                  <p className="text-[13px] font-semibold text-[var(--text-primary)]">{t.message}</p>
+                  <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
                     Recorded {new Date(t.triggeredAt).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -119,9 +119,9 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                   type="button"
                   onClick={() => dismissTriggeredAlert(t.id)}
                   aria-label="Dismiss alert notification"
-                  className="p-1 text-[#697386] hover:text-[#151922] rounded-lg hover:bg-[#F1F3F6]"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-hover)]"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
@@ -133,23 +133,25 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
       <form onSubmit={handleCreate} className="surface-card p-5 space-y-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
-            <h4 className="text-sm font-bold text-[#151922]">Create Price Alert Rule</h4>
+            <Bell className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
+            <h4 className="font-display text-sm font-bold text-[var(--text-primary)]">
+              Create Price Alert Rule
+            </h4>
           </div>
-          <span className="text-xs text-[#697386]">
+          <span className="text-[12px] text-[var(--text-secondary)]">
             Checked on every new purchase or receipt scan
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 items-end">
           <div className="sm:col-span-2">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+            <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
               Product
             </label>
             <select
               value={selectedProduct?.productId ?? ''}
               onChange={(e) => setSelectedProductId(e.target.value)}
-              className="input-field w-full px-3 py-2 text-xs font-medium"
+              className="input-field w-full px-3 py-2 text-[13px] font-medium min-h-[38px]"
             >
               {productOptions.map((opt) => (
                 <option key={opt.productId} value={opt.productId}>
@@ -160,7 +162,7 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+            <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
               Target ≤ (₹/{selectedProduct?.unit || 'unit'})
             </label>
             <input
@@ -170,12 +172,12 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
               placeholder="e.g. 55"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
-              className="input-field w-full px-3 py-2 text-xs font-mono"
+              className="input-field w-full px-3 py-2 text-[13px] font-mono min-h-[38px]"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+            <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
               Spike Alert (≥ %)
             </label>
             <input
@@ -185,19 +187,21 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
               placeholder="e.g. 15"
               value={increasePct}
               onChange={(e) => setIncreasePct(e.target.value)}
-              className="input-field w-full px-3 py-2 text-xs font-mono"
+              className="input-field w-full px-3 py-2 text-[13px] font-mono min-h-[38px]"
             />
           </div>
         </div>
 
-        {formError && <p className="text-xs font-semibold text-[#DE5252]">{formError}</p>}
+        {formError && (
+          <p className="text-[12.5px] font-semibold text-[var(--accent-danger-ink)]">{formError}</p>
+        )}
 
         <div className="flex justify-end">
           <button
             type="submit"
-            className="btn-primary px-4 py-2 text-xs flex items-center gap-1.5"
+            className="btn-primary px-4 py-2 text-[13px] flex items-center gap-1.5"
           >
-            <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+            <Plus className="w-4 h-4" strokeWidth={2.4} />
             Save Price Alert
           </button>
         </div>
@@ -205,12 +209,12 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
 
       {/* Configured Alerts List */}
       <div className="surface-card p-5 space-y-3">
-        <h4 className="text-sm font-bold text-[#151922]">
+        <h4 className="font-display text-sm font-bold text-[var(--text-primary)]">
           Configured Alerts ({priceAlerts.length})
         </h4>
 
         {priceAlerts.length === 0 ? (
-          <p className="text-xs text-[#697386] py-4 text-center">
+          <p className="text-[12.5px] text-[var(--text-secondary)] py-4 text-center">
             No price alerts configured yet. Add one above to get notified when a purchase hits a target price or jumps above your threshold.
           </p>
         ) : (
@@ -220,29 +224,27 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
               return (
                 <div
                   key={alert.id}
-                  className={`rounded-xl p-3.5 border transition-all ${
-                    alert.enabled
-                      ? 'bg-[#F7F8FA] border-[#E7EAF0]'
-                      : 'bg-[#F7F8FA] border-[#E7EAF0] opacity-60'
+                  className={`surface-well p-3.5 transition-opacity ${
+                    alert.enabled ? '' : 'opacity-60'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-[#151922] truncate">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-bold text-[var(--text-primary)] truncate">
                           {alert.productName}
                         </p>
-                        <span className="text-[11px] font-mono text-[#697386] bg-white border border-[#E7EAF0] px-1.5 py-0.5 rounded">
-                          per {alert.unitOfMeasurement}
+                        <span className="text-[12px] font-mono text-[var(--text-secondary)]">
+                          · per {alert.unitOfMeasurement}
                         </span>
                       </div>
 
                       {!isEditing ? (
-                        <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-[#697386]">
+                        <div className="flex flex-wrap items-center gap-3 mt-1 text-[12.5px] text-[var(--text-secondary)]">
                           {alert.targetUnitPrice != null && (
                             <span>
                               Target ≤{' '}
-                              <strong className="font-mono text-[#15966B]">
+                              <strong className="font-mono text-[var(--accent-success-ink)]">
                                 ₹{formatCurrencyExact(alert.targetUnitPrice)}/{alert.unitOfMeasurement}
                               </strong>
                             </span>
@@ -250,7 +252,7 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                           {alert.increaseThresholdPct != null && (
                             <span>
                               Spike ≥{' '}
-                              <strong className="font-mono text-[#DE5252]">
+                              <strong className="font-mono text-[var(--accent-danger-ink)]">
                                 +{alert.increaseThresholdPct}%
                               </strong>
                             </span>
@@ -264,7 +266,7 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                             placeholder="Target ₹"
                             value={editTarget}
                             onChange={(e) => setEditTarget(e.target.value)}
-                            className="input-field w-24 px-2 py-1 text-xs font-mono"
+                            className="input-field w-24 px-2 py-1.5 text-[12.5px] font-mono"
                           />
                           <input
                             type="number"
@@ -272,19 +274,19 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                             placeholder="Spike %"
                             value={editIncreasePct}
                             onChange={(e) => setEditIncreasePct(e.target.value)}
-                            className="input-field w-24 px-2 py-1 text-xs font-mono"
+                            className="input-field w-24 px-2 py-1.5 text-[12.5px] font-mono"
                           />
                           <button
                             type="button"
                             onClick={() => handleSaveEdit(alert.id)}
-                            className="btn-primary px-2.5 py-1 text-xs flex items-center gap-1"
+                            className="btn-primary px-3 py-1.5 text-[12px] flex items-center gap-1"
                           >
-                            <Check className="w-3 h-3" /> Save
+                            <Check className="w-3.5 h-3.5" /> Save
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingId(null)}
-                            className="btn-secondary px-2 py-1 text-xs"
+                            className="btn-secondary px-2.5 py-1.5 text-[12px]"
                           >
                             Cancel
                           </button>
@@ -292,7 +294,7 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                       )}
 
                       {alert.lastTriggerMessage && (
-                        <p className="text-xs text-[#9E6614] mt-1 font-medium">
+                        <p className="text-[12px] text-[var(--accent-warning-ink)] mt-1 font-medium">
                           Last triggered: {alert.lastTriggerMessage}
                         </p>
                       )}
@@ -303,13 +305,13 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                         type="button"
                         onClick={() => togglePriceAlert(alert.id)}
                         aria-label={alert.enabled ? 'Disable alert' : 'Enable alert'}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border ${
+                        className={`px-2.5 py-1.5 rounded-lg text-[12px] font-semibold flex items-center gap-1 border whitespace-nowrap ${
                           alert.enabled
-                            ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                            : 'bg-white text-[#697386] border-[#E7EAF0]'
+                            ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
+                            : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
                         }`}
                       >
-                        <Power className="w-3 h-3" />
+                        <Power className="w-3.5 h-3.5" />
                         {alert.enabled ? 'Enabled' : 'Paused'}
                       </button>
 
@@ -328,7 +330,7 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                             );
                           }}
                           aria-label="Edit alert"
-                          className="p-1.5 rounded-lg bg-white border border-[#E7EAF0] hover:bg-[#F1F3F6] text-[#697386] hover:text-[#151922]"
+                          className="p-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -338,7 +340,7 @@ export function PriceAlertManager({ summaries, initialProductId }: PriceAlertMan
                         type="button"
                         onClick={() => deletePriceAlert(alert.id)}
                         aria-label="Delete alert"
-                        className="p-1.5 rounded-lg bg-white border border-[#E7EAF0] hover:bg-[#FDECEC] text-[#697386] hover:text-[#DE5252]"
+                        className="p-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:bg-[var(--accent-danger-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)]"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

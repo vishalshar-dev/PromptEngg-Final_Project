@@ -211,19 +211,19 @@ export function CheckoutSummary({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-[#151922]/35 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-xl max-h-[92vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-2xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-xl max-h-[92vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-t-2xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7EAF0]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" strokeWidth={2} />
             </div>
             <div>
-              <h3 className="text-[16px] font-semibold text-[#151922]">Checkout Summary</h3>
-              <p className="text-[12px] text-[#697386]">
+              <h3 className="text-[16px] font-semibold text-[var(--text-primary)]">Checkout Summary</h3>
+              <p className="text-[12px] text-[var(--text-secondary)]">
                 Review itemized basket &amp; record expenditure
               </p>
             </div>
@@ -232,7 +232,7 @@ export function CheckoutSummary({
             type="button"
             onClick={onClose}
             aria-label="Close checkout summary"
-            className="w-8 h-8 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+            className="w-9 h-9 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -241,8 +241,8 @@ export function CheckoutSummary({
         {/* Scrollable Content */}
         <div className="p-5 space-y-4 overflow-y-auto scrollbar-thin">
           {/* Itemized List */}
-          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-4 space-y-2.5">
-            <p className="text-[12px] font-medium text-[#697386]">
+          <div className="surface-well rounded-xl p-4 space-y-2.5">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
               Items ({formatQuantity(breakdown.totalCount)} units across {breakdown.lines.length}{' '}
               {breakdown.lines.length === 1 ? 'line' : 'lines'})
             </p>
@@ -253,50 +253,50 @@ export function CheckoutSummary({
                   className="flex items-center justify-between text-[12.5px] gap-2"
                 >
                   <div className="min-w-0">
-                    <span className="font-medium text-[#151922]">
+                    <span className="font-medium text-[var(--text-primary)]">
                       {line.item.name}
                       {line.variantLabel ? ` · ${line.variantLabel}` : ''}
                     </span>
-                    <span className="text-[#697386] font-mono ml-2 tabular-nums">
+                    <span className="text-[var(--text-secondary)] font-mono ml-2 tabular-nums">
                       {formatQuantity(line.quantity)} × ₹{formatCurrencyExact(line.price)} ({line.unit})
                     </span>
                   </div>
-                  <span className="font-mono font-semibold text-[#151922] tabular-nums flex-shrink-0">
+                  <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums flex-shrink-0">
                     ₹{formatCurrencyExact(line.subtotal)}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-2 border-t border-[#E7EAF0] flex flex-wrap gap-2 text-[12px] text-[#697386]">
+            <div className="pt-2 border-t border-[var(--border-subtle)] flex flex-wrap gap-2 text-[12px] text-[var(--text-secondary)]">
               {categoryEntries.map(([cat, amt], i) => (
                 <span key={cat} className="tabular-nums">
-                  {i > 0 && <span className="mr-2 text-[#D5DBE5]" aria-hidden="true">·</span>}
-                  {cat}: <span className="font-mono font-medium text-[#151922]">₹{formatCurrencyExact(amt)}</span>
+                  {i > 0 && <span className="mr-2 text-[var(--border-strong)]" aria-hidden="true">·</span>}
+                  {cat}: <span className="font-mono font-medium text-[var(--text-primary)]">₹{formatCurrencyExact(amt)}</span>
                 </span>
               ))}
             </div>
 
-            <div className="pt-2.5 border-t border-[#E7EAF0] flex items-center justify-between">
-              <span className="text-[12px] font-medium text-[#697386]">
+            <div className="pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-between">
+              <span className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Cart Total
               </span>
-              <span className="text-[20px] font-semibold font-mono text-[#151922] tabular-nums">
+              <span className="text-[20px] font-semibold font-mono text-[var(--text-primary)] tabular-nums">
                 ₹{formatCurrencyExact(breakdown.totalAmount)}
               </span>
             </div>
           </div>
 
           {/* Optional Expense Splitting */}
-          <div className="bg-white border border-[#E7EAF0] rounded-2xl p-4 space-y-3">
+          <div className="border-t border-[var(--border-subtle)] pt-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] flex items-center justify-center shrink-0">
                   <Split className="w-4 h-4" strokeWidth={2.2} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#151922]">Split This Purchase</p>
-                  <p className="text-xs text-[#697386]">
+                  <p className="text-sm font-bold text-[var(--text-primary)]">Split This Purchase</p>
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Track shared balances &amp; charge only your personal share to budget
                   </p>
                 </div>
@@ -308,7 +308,7 @@ export function CheckoutSummary({
                 aria-label="Toggle split expense"
                 onClick={() => setSplitEnabled((v) => !v)}
                 className={`w-11 h-6 rounded-full transition-colors p-0.5 shrink-0 ${
-                  splitEnabled ? 'bg-[#365FE8]' : 'bg-[#D5DBE5]'
+                  splitEnabled ? 'bg-[var(--accent-primary)]' : 'bg-[var(--border-strong)]'
                 }`}
               >
                 <div
@@ -320,10 +320,10 @@ export function CheckoutSummary({
             </div>
 
             {splitEnabled && (
-              <div className="space-y-3 pt-3 border-t border-[#E7EAF0] animate-fade-in">
+              <div className="space-y-3 pt-3 border-t border-[var(--border-subtle)] animate-fade-in">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-xs font-semibold text-[#4B5565] block mb-1">
+                    <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1">
                       Expense Label
                     </label>
                     <input
@@ -334,7 +334,7 @@ export function CheckoutSummary({
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-[#4B5565] block mb-1">
+                    <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1">
                       Paid By
                     </label>
                     <select
@@ -355,13 +355,13 @@ export function CheckoutSummary({
                 {/* Participants */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-semibold text-[#4B5565] flex items-center gap-1">
+                    <span className="text-xs font-semibold text-[var(--text-tertiary)] flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" /> Participants ({selectedIds.length})
                     </span>
                     <button
                       type="button"
                       onClick={() => setAddingPerson((v) => !v)}
-                      className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1"
+                      className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1"
                     >
                       <UserPlus className="w-3.5 h-3.5" />
                       Add Person
@@ -369,7 +369,7 @@ export function CheckoutSummary({
                   </div>
 
                   {addingPerson && (
-                    <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3 mb-2 space-y-2">
+                    <div className="surface-well rounded-xl p-3 mb-2 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="text"
@@ -388,7 +388,7 @@ export function CheckoutSummary({
                         />
                       </div>
                       {personError && (
-                        <p className="text-xs text-[#DE5252]">{personError}</p>
+                        <p className="text-xs text-[var(--accent-danger)]">{personError}</p>
                       )}
                       <div className="flex justify-end gap-1.5">
                         <button
@@ -419,8 +419,8 @@ export function CheckoutSummary({
                           onClick={() => toggleParticipant(p.id)}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                             active
-                              ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
-                              : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                              ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                              : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                           }`}
                         >
                           {p.name}
@@ -439,8 +439,8 @@ export function CheckoutSummary({
                       onClick={() => setSplitMethod(m)}
                       className={`py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
                         splitMethod === m
-                          ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
-                          : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386]'
+                          ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                          : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
                       }`}
                     >
                       {m}
@@ -449,7 +449,7 @@ export function CheckoutSummary({
                 </div>
 
                 {/* Per-person share breakdown */}
-                <div className="space-y-1.5 bg-[#F7F8FA] rounded-xl p-3 border border-[#E7EAF0]">
+                <div className="space-y-1.5 surface-well rounded-xl p-3">
                   {selectedIds.map((pid) => {
                     const label =
                       allPeopleChoices.find((c) => c.id === pid)?.name ?? 'Participant';
@@ -461,9 +461,9 @@ export function CheckoutSummary({
                         key={pid}
                         className="flex items-center justify-between gap-2 text-xs"
                       >
-                        <span className="font-semibold text-[#151922]">{label}</span>
+                        <span className="font-semibold text-[var(--text-primary)]">{label}</span>
                         {splitMethod === 'equal' ? (
-                          <span className="font-mono font-bold text-[#365FE8] tabular-nums">
+                          <span className="font-mono font-bold text-[var(--accent-ink)] tabular-nums">
                             ₹{formatCurrencyExact(equalAmt)}
                           </span>
                         ) : splitMethod === 'custom' ? (
@@ -479,7 +479,7 @@ export function CheckoutSummary({
                                 [pid]: e.target.value,
                               }))
                             }
-                            className="w-24 bg-white border border-[#E7EAF0] rounded px-2 py-1 text-right font-mono text-[#151922]"
+                            className="w-24 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded px-2 py-1 text-right font-mono text-[var(--text-primary)]"
                           />
                         ) : (
                           <div className="flex items-center gap-1">
@@ -496,9 +496,9 @@ export function CheckoutSummary({
                                   [pid]: e.target.value,
                                 }))
                               }
-                              className="w-16 bg-white border border-[#E7EAF0] rounded px-2 py-1 text-right font-mono text-[#151922]"
+                              className="w-16 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded px-2 py-1 text-right font-mono text-[var(--text-primary)]"
                             />
-                            <span className="text-[#697386]">%</span>
+                            <span className="text-[var(--text-secondary)]">%</span>
                           </div>
                         )}
                       </div>
@@ -507,7 +507,7 @@ export function CheckoutSummary({
                 </div>
 
                 {!splitValidation.ok && splitValidation.error && (
-                  <p className="text-xs text-[#DE5252] flex items-center gap-1.5">
+                  <p className="text-xs text-[var(--accent-danger)] flex items-center gap-1.5">
                     <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                     {splitValidation.error}
                   </p>
@@ -517,16 +517,16 @@ export function CheckoutSummary({
           </div>
 
           {/* Personal Budget Impact */}
-          <div className="rounded-xl p-3.5 bg-[#E8F7F1] border border-[#B7E4D3] flex items-center justify-between">
+          <div className="rounded-xl p-3.5 bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#15966B] flex-shrink-0" />
-              <span className="text-xs font-semibold text-[#15966B]">
+              <ShieldCheck className="w-4 h-4 text-[var(--accent-success-ink)] flex-shrink-0" />
+              <span className="text-xs font-semibold text-[var(--accent-success-ink)]">
                 {splitEnabled
                   ? 'Your personal share charged to budget'
                   : 'Amount charged to monthly budget'}
               </span>
             </div>
-            <span className="text-base font-bold font-mono text-[#15966B] tabular-nums">
+            <span className="text-base font-bold font-mono text-[var(--accent-success-ink)] tabular-nums">
               ₹
               {formatCurrencyExact(
                 splitEnabled ? splitValidation.userShare : breakdown.totalAmount
@@ -538,12 +538,12 @@ export function CheckoutSummary({
             (watchedBasketSpend > 0 ||
               brokeStatus.spent + (splitEnabled ? splitValidation.userShare : breakdown.totalAmount) >
                 brokeStatus.limit) && (
-              <div className="rounded-xl p-3.5 bg-[#FEF6E7] border border-[#F3D8A8] space-y-1">
-                <p className="text-xs font-bold text-[#9E6614] flex items-center gap-1.5">
+              <div className="rounded-xl p-3.5 bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] space-y-1">
+                <p className="text-xs font-bold text-[var(--accent-warning-ink)] flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   Broke Mode Accountability Notice
                 </p>
-                <p className="text-xs text-[#9E6614] leading-relaxed">
+                <p className="text-xs text-[var(--accent-warning-ink)] leading-relaxed">
                   {watchedBasketSpend > 0
                     ? `Cart includes ₹${formatCurrencyExact(watchedBasketSpend)} in watched discretionary categories. Remaining non-essential allowance: ₹${formatCurrencyExact(brokeStatus.nonEssentialRemaining)}. `
                     : ''}
@@ -558,7 +558,7 @@ export function CheckoutSummary({
             )}
 
           {submitError && (
-            <p className="text-xs text-[#DE5252] flex items-center gap-1.5">
+            <p className="text-xs text-[var(--accent-danger)] flex items-center gap-1.5">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {submitError}
             </p>
@@ -566,7 +566,7 @@ export function CheckoutSummary({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#E7EAF0] bg-[#F7F8FA] flex items-center gap-3">
+        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -578,7 +578,7 @@ export function CheckoutSummary({
             type="button"
             onClick={handleConfirmPurchase}
             disabled={breakdown.items.length === 0}
-            className="flex-1 btn-primary py-3 text-sm disabled:bg-[#E7EAF0] disabled:text-[#929BAB]"
+            className="flex-1 btn-primary py-3 text-sm disabled:bg-[var(--bg-well)] disabled:text-[var(--text-muted)]"
           >
             <Check className="w-4 h-4" strokeWidth={2.5} />
             Confirm Purchase

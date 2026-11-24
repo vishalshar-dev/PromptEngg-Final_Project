@@ -144,12 +144,12 @@ export function DisciplineChallengesPanel({
         <div className="lg:col-span-6 surface-card p-5 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-[#365FE8]" />
-              <h3 className="text-base font-bold text-[#151922]">
+              <Award className="w-5 h-5 text-[var(--accent-ink)]" />
+              <h3 className="font-display text-base font-bold text-[var(--text-primary)]">
                 Financial Discipline Score
               </h3>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#F1F3F6] text-[#4F5869] border border-[#E7EAF0]">
+            <span className="text-[12px] font-semibold px-2.5 py-1 rounded-lg bg-[var(--bg-well)] text-[var(--text-tertiary)] border border-[var(--border-subtle)]">
               {disciplineScore.grade}
             </span>
           </div>
@@ -157,11 +157,11 @@ export function DisciplineChallengesPanel({
           {!disciplineScore.hasSufficientHistory ||
           disciplineScore.score === null ||
           !disciplineScore.breakdown ? (
-            <div className="surface-subtle p-4 space-y-2">
-              <p className="text-sm font-bold text-[#151922]">
+            <div className="surface-well p-4 space-y-2">
+              <p className="text-sm font-bold text-[var(--text-primary)]">
                 Insufficient Transaction History
               </p>
-              <p className="text-xs text-[#697386] leading-relaxed">
+              <p className="text-[12.5px] text-[var(--text-secondary)] leading-relaxed">
                 {disciplineScore.explanation[0]} Wellness Radar never awards artificial 100/100 scores for empty histories.
               </p>
             </div>
@@ -170,26 +170,26 @@ export function DisciplineChallengesPanel({
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-bold font-mono tabular-nums text-[#151922]">
+                    <span className="text-5xl font-bold font-mono tabular-nums text-[var(--text-primary)]">
                       {disciplineScore.score}
                     </span>
-                    <span className="text-sm font-semibold text-[#697386]">
+                    <span className="text-sm font-semibold text-[var(--text-secondary)]">
                       / 100
                     </span>
                   </div>
-                  <p className="text-xs text-[#697386] mt-1">
+                  <p className="text-[12px] text-[var(--text-secondary)] mt-1">
                     {disciplineScore.previousScore !== null ? (
                       <>
                         Previous window:{' '}
-                        <span className="font-mono font-semibold text-[#151922]">
+                        <span className="font-mono tabular-nums font-semibold text-[var(--text-primary)]">
                           {disciplineScore.previousScore}
                         </span>{' '}
                         ·{' '}
                         <span
-                          className={`font-mono font-bold ${
+                          className={`font-mono tabular-nums font-bold ${
                             (disciplineScore.scoreDelta ?? 0) >= 0
-                              ? 'text-[#15966B]'
-                              : 'text-[#DE5252]'
+                              ? 'text-[var(--accent-success-ink)]'
+                              : 'text-[var(--accent-danger-ink)]'
                           }`}
                         >
                           {(disciplineScore.scoreDelta ?? 0) >= 0 ? '+' : ''}
@@ -203,7 +203,7 @@ export function DisciplineChallengesPanel({
                 </div>
               </div>
 
-              <div className="space-y-2.5 pt-3 border-t border-[#E7EAF0]">
+              <div className="space-y-2.5 pt-3 border-t border-[var(--border-subtle)]">
                 {(
                   [
                     [
@@ -234,17 +234,17 @@ export function DisciplineChallengesPanel({
                   ] as const
                 ).map(([label, pts, max]) => (
                   <div key={label} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-[#4F5869] font-semibold">
+                    <div className="flex justify-between text-[12px]">
+                      <span className="text-[var(--text-tertiary)] font-semibold">
                         {label}
                       </span>
-                      <span className="font-mono font-bold text-[#151922] tabular-nums">
+                      <span className="font-mono font-bold text-[var(--text-primary)] tabular-nums">
                         {pts} / {max}
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full tactile-well bg-[#ECEFF4] overflow-hidden">
+                    <div className="h-1.5 rounded-full tactile-well bg-[var(--bg-well)] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#365FE8]"
+                        className="h-full rounded-full bg-[var(--accent-primary)]"
                         style={{ width: `${Math.round((pts / max) * 100)}%` }}
                       />
                     </div>
@@ -252,20 +252,20 @@ export function DisciplineChallengesPanel({
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-[#E7EAF0] text-xs">
-                <div className="rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] p-3">
-                  <p className="text-[10px] font-bold uppercase text-[#15966B]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-[var(--border-subtle)] text-[12px]">
+                <div className="rounded-xl bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] p-3">
+                  <p className="text-[12px] font-semibold text-[var(--accent-success-ink)]">
                     Strongest Habit
                   </p>
-                  <p className="font-bold text-[#151922] mt-0.5">
+                  <p className="font-bold text-[var(--text-primary)] mt-0.5">
                     {disciplineScore.strongestHabit}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#FEF6E7] border border-[#F3D8A8] p-3">
-                  <p className="text-[10px] font-bold uppercase text-[#9E6614]">
+                <div className="rounded-xl bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] p-3">
+                  <p className="text-[12px] font-semibold text-[var(--accent-warning-ink)]">
                     Biggest Improvement Area
                   </p>
-                  <p className="font-bold text-[#151922] mt-0.5">
+                  <p className="font-bold text-[var(--text-primary)] mt-0.5">
                     {disciplineScore.biggestImprovementArea}
                   </p>
                 </div>
@@ -277,10 +277,10 @@ export function DisciplineChallengesPanel({
         {/* Right: 6-Week Discipline Score History Chart */}
         <div className="lg:col-span-6 surface-card p-5 space-y-3">
           <div>
-            <h4 className="text-[15px] font-bold text-[#151922]">
+            <h4 className="font-display text-[15px] font-bold text-[var(--text-primary)]">
               Discipline Score History (Weekly Trend)
             </h4>
-            <p className="text-xs text-[#697386]">
+            <p className="text-[12px] text-[var(--text-secondary)]">
               Calculated from actual recorded weeks; weeks with zero data remain blank.
             </p>
           </div>
@@ -288,7 +288,7 @@ export function DisciplineChallengesPanel({
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={behaviour.disciplineTrend}
-                margin={{ top: 10, right: 12, left: -16, bottom: 0 }}
+                margin={{ top: 10, right: 12, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={chartTokens.gridStroke} />
                 <XAxis
@@ -300,6 +300,7 @@ export function DisciplineChallengesPanel({
                   }}
                 />
                 <YAxis
+                  width={36}
                   domain={[0, 100]}
                   tick={{
                     fill: chartTokens.tickColor,
@@ -331,23 +332,23 @@ export function DisciplineChallengesPanel({
         <div className="lg:col-span-7 surface-card p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-[#C7851F]" />
-              <h4 className="text-[15px] font-bold text-[#151922]">
+              <Flame className="w-4 h-4 text-[var(--accent-warning-ink)]" />
+              <h4 className="font-display text-[15px] font-bold text-[var(--text-primary)]">
                 Active &amp; Completed Challenges ({evaluatedChallenges.length})
               </h4>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-[#9E6614]">
+              <span className="text-[12px] font-mono tabular-nums font-bold text-[var(--accent-warning-ink)]">
                 Streak: {verifiedStreak}d
               </span>
               <button
                 type="button"
                 disabled={todayCheckedIn}
                 onClick={onCheckInToday}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold flex items-center gap-1 border transition-colors ${
                   todayCheckedIn
-                    ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                    : 'btn-primary border-[#365FE8]'
+                    ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
+                    : 'btn-primary border-transparent'
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -356,12 +357,12 @@ export function DisciplineChallengesPanel({
             </div>
           </div>
 
-          <p className="text-xs text-[#697386]">
+          <p className="text-[12px] text-[var(--text-secondary)]">
             Streaks and challenge days only increment on days with verified clean spending or an explicit clean-day check-in — empty no-data days do not count.
           </p>
 
           {evaluatedChallenges.length === 0 ? (
-            <p className="text-xs text-[#697386] py-3">
+            <p className="text-[12.5px] text-[var(--text-secondary)] py-3">
               No challenges active. Pick a preset discipline challenge or create your own on the right.
             </p>
           ) : (
@@ -371,10 +372,10 @@ export function DisciplineChallengesPanel({
                   key={ev.challenge.id}
                   className={`rounded-xl p-4 border space-y-2.5 ${
                     ev.challenge.status === 'completed'
-                      ? 'bg-[#E8F7F1] border-[#B7E4D3]'
+                      ? 'bg-[var(--accent-success-soft)] border-[var(--accent-success-border)]'
                       : ev.violated
-                      ? 'bg-[#FDECEC] border-[#F6B8B8]'
-                      : 'surface-subtle'
+                      ? 'bg-[var(--accent-danger-soft)] border-[var(--accent-danger-border)]'
+                      : 'surface-well border-transparent'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -383,14 +384,23 @@ export function DisciplineChallengesPanel({
                         <Trophy
                           className={`w-3.5 h-3.5 ${
                             ev.challenge.status === 'completed'
-                              ? 'text-[#15966B]'
-                              : 'text-[#C7851F]'
+                              ? 'text-[var(--accent-success-ink)]'
+                              : 'text-[var(--accent-warning-ink)]'
                           }`}
                         />
-                        <span className="text-xs font-bold text-[#151922]">
+                        <span className="text-[13px] font-bold text-[var(--text-primary)]">
                           {ev.challenge.title}
                         </span>
-                        <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#4F5869] border border-[#E7EAF0]">
+                        <span
+                          className={`text-[12px] font-semibold ${
+                            ev.challenge.status === 'completed'
+                              ? 'text-[var(--accent-success-ink)]'
+                              : ev.violated
+                              ? 'text-[var(--accent-danger-ink)]'
+                              : 'text-[var(--accent-ink)]'
+                          }`}
+                        >
+                          ·{' '}
                           {ev.challenge.status === 'completed'
                             ? 'Completed'
                             : ev.violated
@@ -398,11 +408,11 @@ export function DisciplineChallengesPanel({
                             : 'Active'}
                         </span>
                       </div>
-                      <p className="text-xs text-[#697386] mt-1">
+                      <p className="text-[12px] text-[var(--text-secondary)] mt-1">
                         {ev.challenge.description}
                       </p>
                       {ev.violated && ev.violationReason && (
-                        <p className="text-xs font-bold text-[#DE5252] mt-1">
+                        <p className="text-[12px] font-semibold text-[var(--accent-danger-ink)] mt-1">
                           {ev.violationReason}
                         </p>
                       )}
@@ -413,7 +423,7 @@ export function DisciplineChallengesPanel({
                         <button
                           type="button"
                           onClick={() => onCompleteChallenge(ev.challenge.id)}
-                          className="btn-primary px-2.5 py-1 text-xs"
+                          className="btn-primary px-2.5 py-1 text-[12px]"
                         >
                           Claim Complete
                         </button>
@@ -422,7 +432,7 @@ export function DisciplineChallengesPanel({
                         type="button"
                         onClick={() => onDeleteChallenge(ev.challenge.id)}
                         aria-label={`Delete challenge ${ev.challenge.title}`}
-                        className="p-1.5 rounded-lg text-[#697386] hover:text-[#DE5252] hover:bg-[#FDECEC]"
+                        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] hover:bg-[var(--accent-danger-soft)]"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -430,17 +440,17 @@ export function DisciplineChallengesPanel({
                   </div>
 
                   <div className="space-y-1">
-                    <div className="flex justify-between text-xs font-mono tabular-nums text-[#697386]">
+                    <div className="flex justify-between text-[12px] font-mono tabular-nums text-[var(--text-secondary)]">
                       <span>
                         Verified Clean: {ev.verifiedCleanDays}/
                         {ev.challenge.targetDays} days · Day {ev.elapsedDays}
                       </span>
                       <span>{ev.progressPct}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-[#ECEFF4] overflow-hidden">
+                    <div className="h-2 rounded-full bg-[var(--bg-surface)] overflow-hidden">
                       <div
                         className={`h-full rounded-full ${
-                          ev.violated ? 'bg-[#DE5252]' : 'bg-[#15966B]'
+                          ev.violated ? 'bg-[var(--accent-danger)]' : 'bg-[var(--accent-success)]'
                         }`}
                         style={{ width: `${Math.min(100, ev.progressPct)}%` }}
                       />
@@ -454,18 +464,18 @@ export function DisciplineChallengesPanel({
 
         {/* Preset + Custom Challenge Creator */}
         <div className="lg:col-span-5 surface-card p-5 space-y-4">
-          <h4 className="text-[15px] font-bold text-[#151922]">
+          <h4 className="font-display text-[15px] font-bold text-[var(--text-primary)]">
             Start a Financial Challenge
           </h4>
           <div className="space-y-2">
             {CHALLENGE_TEMPLATES.map((tpl) => (
               <div
                 key={tpl.templateId}
-                className="surface-subtle p-3 flex items-center justify-between gap-2.5"
+                className="surface-well p-3 flex items-center justify-between gap-2.5"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-[#151922]">{tpl.title}</p>
-                  <p className="text-xs text-[#697386] line-clamp-2">
+                  <p className="text-[12.5px] font-bold text-[var(--text-primary)]">{tpl.title}</p>
+                  <p className="text-[12px] text-[var(--text-secondary)] line-clamp-2">
                     {tpl.description}
                   </p>
                 </div>
@@ -481,7 +491,7 @@ export function DisciplineChallengesPanel({
                       maxAllowedSpend: tpl.defaultMaxSpend ?? null,
                     })
                   }
-                  className="btn-secondary px-3 py-1.5 text-xs shrink-0"
+                  className="btn-secondary px-3 py-1.5 text-[12px] shrink-0"
                 >
                   Start
                 </button>
@@ -491,9 +501,9 @@ export function DisciplineChallengesPanel({
 
           <form
             onSubmit={handleCreateCustomChallenge}
-            className="pt-3 border-t border-[#E7EAF0] space-y-2.5"
+            className="pt-3 border-t border-[var(--border-subtle)] space-y-2.5"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+            <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
               Custom Challenge
             </p>
             <input
@@ -502,7 +512,7 @@ export function DisciplineChallengesPanel({
               aria-label="Custom challenge title"
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
-              className="input-field w-full px-3 py-2 text-xs"
+              className="input-field w-full px-3 py-2 text-[12.5px]"
             />
             <div className="grid grid-cols-3 gap-2">
               <input
@@ -513,13 +523,13 @@ export function DisciplineChallengesPanel({
                 aria-label="Custom challenge target days"
                 value={customDays}
                 onChange={(e) => setCustomDays(e.target.value)}
-                className="input-field px-2.5 py-2 text-xs font-mono"
+                className="input-field px-2.5 py-2 text-[12.5px] font-mono tabular-nums"
               />
               <select
                 aria-label="Custom challenge category"
                 value={customCategory}
                 onChange={(e) => setCustomCategory(e.target.value)}
-                className="input-field px-2 py-2 text-xs"
+                className="input-field px-2 py-2 text-[12.5px]"
               >
                 <option value="">All Categories</option>
                 {categories.map((c) => (
@@ -535,12 +545,12 @@ export function DisciplineChallengesPanel({
                 aria-label="Custom challenge max spend"
                 value={customMaxSpend}
                 onChange={(e) => setCustomMaxSpend(e.target.value)}
-                className="input-field px-2.5 py-2 text-xs font-mono"
+                className="input-field px-2.5 py-2 text-[12.5px] font-mono tabular-nums"
               />
             </div>
             <button
               type="submit"
-              className="btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5"
+              className="btn-primary w-full py-2.5 text-[12.5px] flex items-center justify-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
               Launch Custom Challenge
@@ -553,12 +563,12 @@ export function DisciplineChallengesPanel({
       <div className="surface-card p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#365FE8]" />
+            <Target className="w-4 h-4 text-[var(--accent-ink)]" />
             <div>
-              <h4 className="text-[15px] font-bold text-[#151922]">
+              <h4 className="font-display text-[15px] font-bold text-[var(--text-primary)]">
                 Financial Targets &amp; Savings Tracker
               </h4>
-              <p className="text-xs text-[#697386]">
+              <p className="text-[12px] text-[var(--text-secondary)]">
                 Tracks observed spend reduction separately from estimated savings and actual money you transfer into savings.
               </p>
             </div>
@@ -568,7 +578,7 @@ export function DisciplineChallengesPanel({
         {/* Create Target Form */}
         <form
           onSubmit={handleCreateTarget}
-          className="surface-subtle grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3.5"
+          className="surface-well grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3.5"
         >
           <input
             type="text"
@@ -576,7 +586,7 @@ export function DisciplineChallengesPanel({
             aria-label="Financial target title"
             value={targetTitle}
             onChange={(e) => setTargetTitle(e.target.value)}
-            className="input-field sm:col-span-4 px-3 py-2 text-xs"
+            className="input-field sm:col-span-4 px-3 py-2 text-[12.5px]"
           />
           <select
             aria-label="Financial target rule"
@@ -584,7 +594,7 @@ export function DisciplineChallengesPanel({
             onChange={(e) =>
               setTargetType(e.target.value as FinancialTargetType)
             }
-            className="input-field sm:col-span-3 px-2.5 py-2 text-xs"
+            className="input-field sm:col-span-3 px-2.5 py-2 text-[12.5px]"
           >
             <option value="reduce_junk_by_amount">Reduce Junk By (₹)</option>
             <option value="reduce_impulsive_pct">Reduce Impulsive By (%)</option>
@@ -598,7 +608,7 @@ export function DisciplineChallengesPanel({
             onChange={(e) =>
               setTargetPeriod(e.target.value as 'weekly' | 'monthly')
             }
-            className="input-field sm:col-span-2 px-2.5 py-2 text-xs"
+            className="input-field sm:col-span-2 px-2.5 py-2 text-[12.5px]"
           >
             <option value="monthly">Monthly</option>
             <option value="weekly">Weekly</option>
@@ -609,11 +619,11 @@ export function DisciplineChallengesPanel({
             aria-label="Financial target value"
             value={targetValue}
             onChange={(e) => setTargetValue(e.target.value)}
-            className="input-field sm:col-span-1 px-2.5 py-2 text-xs font-mono"
+            className="input-field sm:col-span-1 px-2.5 py-2 text-[12.5px] font-mono tabular-nums"
           />
           <button
             type="submit"
-            className="btn-primary sm:col-span-2 py-2 px-3 text-xs flex items-center justify-center gap-1"
+            className="btn-primary sm:col-span-2 py-2 px-3 text-[12.5px] flex items-center justify-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
             Add Target
@@ -621,19 +631,19 @@ export function DisciplineChallengesPanel({
         </form>
 
         {evaluatedTargets.length === 0 ? (
-          <p className="text-xs text-[#697386] py-2">
+          <p className="text-[12.5px] text-[var(--text-secondary)] py-2">
             No savings or reduction targets created yet. Add one above to measure real reduction vs transferred savings.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {evaluatedTargets.map((ev) => (
-              <div key={ev.target.id} className="surface-subtle p-4 space-y-3">
+              <div key={ev.target.id} className="surface-well p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold text-[#151922]">
+                    <p className="text-[13px] font-bold text-[var(--text-primary)]">
                       {ev.target.title}
                     </p>
-                    <p className="text-xs text-[#697386] mt-0.5">
+                    <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">
                       {ev.statusLabel}
                     </p>
                   </div>
@@ -641,50 +651,50 @@ export function DisciplineChallengesPanel({
                     type="button"
                     onClick={() => onDeleteTarget(ev.target.id)}
                     aria-label={`Delete target ${ev.target.title}`}
-                    className="p-1 rounded-lg text-[#697386] hover:text-[#DE5252]"
+                    className="p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)]"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="h-2 rounded-full bg-[#ECEFF4] overflow-hidden">
+                <div className="h-2 rounded-full bg-[var(--bg-surface)] overflow-hidden">
                   <div
                     className={`h-full rounded-full ${
-                      ev.achieved ? 'bg-[#15966B]' : 'bg-[#E5A23B]'
+                      ev.achieved ? 'bg-[var(--accent-success)]' : 'bg-[var(--accent-warning)]'
                     }`}
                     style={{ width: `${Math.min(100, ev.progressPct)}%` }}
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-xs pt-1">
-                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2">
-                    <p className="text-[10px] font-semibold uppercase text-[#697386]">
+                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[var(--border-subtle)] text-[12px]">
+                  <div>
+                    <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                       Spend Reduction
                     </p>
-                    <p className="font-mono font-bold text-[#15966B] tabular-nums mt-0.5">
+                    <p className="font-mono font-bold text-[var(--accent-success-ink)] tabular-nums mt-0.5">
                       ₹{formatCurrencyExact(ev.spendReduction)}
                     </p>
                   </div>
-                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2">
-                    <p className="text-[10px] font-semibold uppercase text-[#697386]">
+                  <div>
+                    <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                       Target Est.
                     </p>
-                    <p className="font-mono font-bold text-[#365FE8] tabular-nums mt-0.5">
+                    <p className="font-mono font-bold text-[var(--accent-ink)] tabular-nums mt-0.5">
                       ₹{formatCurrencyExact(ev.estimatedSavings)}
                     </p>
                   </div>
-                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2">
-                    <p className="text-[10px] font-semibold uppercase text-[#697386]">
+                  <div>
+                    <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                       Transferred
                     </p>
-                    <p className="font-mono font-bold text-[#151922] tabular-nums mt-0.5">
+                    <p className="font-mono font-bold text-[var(--text-primary)] tabular-nums mt-0.5">
                       ₹{formatCurrencyExact(ev.transferredSavings)}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2 border-t border-[#E7EAF0]">
-                  <PiggyBank className="w-4 h-4 text-[#15966B] shrink-0" />
+                <div className="flex items-center gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                  <PiggyBank className="w-4 h-4 text-[var(--accent-success-ink)] shrink-0" />
                   <input
                     type="number"
                     min="1"
@@ -697,12 +707,12 @@ export function DisciplineChallengesPanel({
                         [ev.target.id]: e.target.value,
                       }))
                     }
-                    className="input-field flex-1 min-w-0 px-2.5 py-1.5 text-xs font-mono"
+                    className="input-field flex-1 min-w-0 px-2.5 py-1.5 text-[12px] font-mono tabular-nums"
                   />
                   <button
                     type="button"
                     onClick={() => handleTransfer(ev.target.id)}
-                    className="btn-secondary px-3 py-1.5 text-xs"
+                    className="btn-secondary px-3 py-1.5 text-[12px]"
                   >
                     Record Transfer
                   </button>

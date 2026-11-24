@@ -67,42 +67,42 @@ export function DataBackup() {
   return (
     <div className="relative space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
           <Database className="w-4 h-4" strokeWidth={2.25} />
         </div>
         <div>
-          <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+          <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
             Data Backup &amp; Restore
           </h3>
-          <p className="text-xs text-[#697386]">
+          <p className="text-[12px] text-[var(--text-secondary)]">
             Export or restore a full JSON snapshot of your data
           </p>
         </div>
       </div>
 
       {/* Hairline Backup Summary */}
-      <div className="grid grid-cols-3 divide-x divide-[#E7EAF0] border-y border-[#E7EAF0] py-2.5">
+      <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] border-y border-[var(--border-subtle)] py-2.5">
         <div className="text-center px-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Txns
           </p>
-          <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+          <p className="text-xs font-bold text-[var(--text-primary)] font-mono tabular-nums mt-0.5">
             {transactionsCount}
           </p>
         </div>
         <div className="text-center px-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Audits
           </p>
-          <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+          <p className="text-xs font-bold text-[var(--text-primary)] font-mono tabular-nums mt-0.5">
             {savedAuditsCount}
           </p>
         </div>
         <div className="text-center px-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Budget
           </p>
-          <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+          <p className="text-xs font-bold text-[var(--text-primary)] font-mono tabular-nums mt-0.5">
             ₹{formatCurrency(totalBudget)}
           </p>
         </div>
@@ -113,7 +113,7 @@ export function DataBackup() {
         <button
           type="button"
           onClick={handleExport}
-          className="btn-secondary py-2.5 px-4 text-xs flex items-center justify-center gap-2"
+          className="btn-secondary py-2.5 px-4 text-[12.5px] flex items-center justify-center gap-2"
         >
           <Download className="w-4 h-4" strokeWidth={2.25} />
           Export Data
@@ -121,7 +121,7 @@ export function DataBackup() {
         <button
           type="button"
           onClick={handleImportClick}
-          className="btn-secondary py-2.5 px-4 text-xs flex items-center justify-center gap-2"
+          className="btn-secondary py-2.5 px-4 text-[12.5px] flex items-center justify-center gap-2"
         >
           <Upload className="w-4 h-4" strokeWidth={2.25} />
           Import Backup
@@ -140,10 +140,10 @@ export function DataBackup() {
       {toast && (
         <div
           role="status"
-          className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl border shadow-lg flex items-center gap-2 ${
+          className={`modal-panel fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl flex items-center gap-2 ${
             toast.type === 'success'
-              ? 'bg-[#E8F7F1] border-[#B7E4D3] text-[#15966B]'
-              : 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+              ? 'border-[var(--accent-success-border)] text-[var(--accent-success-ink)]'
+              : 'border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
           }`}
         >
           {toast.type === 'success' ? (

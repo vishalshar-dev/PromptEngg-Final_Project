@@ -33,17 +33,17 @@ export class FirebaseErrorBoundary extends Component<Props, State> {
     }
 
     return (
-      <div className="min-h-screen bg-[#F7F8FA] text-[#151922] flex items-center justify-center p-4">
+      <div className="min-h-screen app-canvas-atmosphere text-[var(--text-primary)] flex items-center justify-center p-4">
         <div className="surface-card max-w-md w-full p-6 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FDECEC] text-[#DE5252] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base font-bold text-[#151922]">
+              <h1 className="text-base font-bold font-display text-[var(--text-primary)]">
                 Something went wrong
               </h1>
-              <p className="text-xs text-[#697386] mt-1 leading-relaxed break-words">
+              <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed break-words">
                 {this.state.errorMessage}
               </p>
             </div>

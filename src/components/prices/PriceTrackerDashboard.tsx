@@ -214,13 +214,13 @@ export function PriceTrackerDashboard({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Compact Controls & Section Tabs */}
+    <div className="space-y-5">
+      {/* Controls & Section Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div
           role="tablist"
           aria-label="Price Intelligence sections"
-          className="inline-flex items-center bg-[#F1F3F6] border border-[#E7EAF0] p-1 rounded-xl gap-1 w-full sm:w-auto"
+          className="tactile-well inline-flex items-center bg-[var(--bg-well)] border border-[var(--border-subtle)] p-1 rounded-xl gap-1 w-full sm:w-auto overflow-x-auto no-scrollbar"
         >
           <button
             type="button"
@@ -230,10 +230,10 @@ export function PriceTrackerDashboard({
               setSection('overview');
               setSelectedProductId(null);
             }}
-            className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
+            className={`flex-1 sm:flex-initial min-h-[36px] py-1.5 px-3 rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'overview' && !selectedProductId
-                ? 'bg-white text-[#151922] shadow-xs'
-                : 'text-[#697386] hover:text-[#151922]'
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <LineChart className="w-3.5 h-3.5" />
@@ -248,10 +248,10 @@ export function PriceTrackerDashboard({
               setSection('categories');
               setSelectedProductId(null);
             }}
-            className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
+            className={`flex-1 sm:flex-initial min-h-[36px] py-1.5 px-3 rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'categories'
-                ? 'bg-white text-[#151922] shadow-xs'
-                : 'text-[#697386] hover:text-[#151922]'
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -266,20 +266,20 @@ export function PriceTrackerDashboard({
               setSection('alerts');
               setSelectedProductId(null);
             }}
-            className={`flex-1 sm:flex-initial py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
+            className={`flex-1 sm:flex-initial min-h-[36px] py-1.5 px-3 rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors ${
               section === 'alerts'
-                ? 'bg-white text-[#151922] shadow-xs'
-                : 'text-[#697386] hover:text-[#151922]'
+                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
             <span>Alerts</span>
             {(priceAlerts.length > 0 || activeTriggeredAlerts.length > 0) && (
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                className={`text-[12px] font-mono tabular-nums ${
                   activeTriggeredAlerts.length > 0
-                    ? 'bg-[#FEF6E7] text-[#9E6614]'
-                    : 'bg-[#F1F3F6] text-[#697386]'
+                    ? 'text-[var(--accent-warning-ink)] font-bold'
+                    : 'text-[var(--text-muted)]'
                 }`}
               >
                 {activeTriggeredAlerts.length > 0
@@ -293,9 +293,9 @@ export function PriceTrackerDashboard({
         <button
           type="button"
           onClick={() => openManualModalForProduct(selectedSummary?.productId)}
-          className="btn-primary px-3.5 py-2 text-xs flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+          className="btn-primary px-4 py-2 text-[13px] min-h-[40px] flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
         >
-          <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+          <Plus className="w-4 h-4" strokeWidth={2.4} />
           Log Price / Purchase
         </button>
       </div>
@@ -304,7 +304,7 @@ export function PriceTrackerDashboard({
       {entryFlash && (
         <div
           role="status"
-          className="rounded-xl px-4 py-2.5 border border-[#B7E4D3] bg-[#E8F7F1] flex items-center gap-2 text-xs font-semibold text-[#15966B]"
+          className="rounded-xl px-4 py-2.5 border border-[var(--accent-success-border)] bg-[var(--accent-success-soft)] flex items-center gap-2 text-[13px] font-semibold text-[var(--accent-success-ink)]"
         >
           <Check className="w-4 h-4 flex-shrink-0" strokeWidth={2.5} />
           <span>{entryFlash}</span>
@@ -313,15 +313,15 @@ export function PriceTrackerDashboard({
 
       {/* Triggered Alert Toast Banner on Overview */}
       {section === 'overview' && activeTriggeredAlerts.length > 0 && (
-        <div className="rounded-2xl p-3.5 border border-[#F3D8A8] bg-[#FEF6E7] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="rounded-2xl p-4 border border-[var(--accent-warning-border)] bg-[var(--accent-warning-soft)] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-start gap-2.5">
-            <BellRing className="w-4 h-4 text-[#C7851F] mt-0.5 flex-shrink-0" />
+            <BellRing className="w-4 h-4 text-[var(--accent-warning-ink)] mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs font-bold text-[#9E6614]">
+              <p className="text-[13px] font-bold text-[var(--accent-warning-ink)]">
                 {activeTriggeredAlerts[0].message}
               </p>
               {activeTriggeredAlerts.length > 1 && (
-                <p className="text-[11px] text-[#697386]">
+                <p className="text-[12px] text-[var(--text-secondary)]">
                   +{activeTriggeredAlerts.length - 1} more alert notification(s)
                 </p>
               )}
@@ -331,7 +331,7 @@ export function PriceTrackerDashboard({
             <button
               type="button"
               onClick={() => setSection('alerts')}
-              className="px-2.5 py-1 rounded-lg bg-white border border-[#F3D8A8] text-[#9E6614] text-xs font-semibold hover:bg-[#FFF9EE] whitespace-nowrap"
+              className="btn-secondary px-3 py-1.5 text-[12px] whitespace-nowrap"
             >
               Manage Alerts
             </button>
@@ -339,9 +339,9 @@ export function PriceTrackerDashboard({
               type="button"
               onClick={() => dismissTriggeredAlert(activeTriggeredAlerts[0].id)}
               aria-label="Dismiss triggered alert"
-              className="p-1 text-[#697386] hover:text-[#151922]"
+              className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -357,7 +357,7 @@ export function PriceTrackerDashboard({
                   type="button"
                   onClick={() => setSelectedProductId(null)}
                   aria-label="Back to price dashboard"
-                  className="w-9 h-9 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] flex-shrink-0"
+                  className="w-10 h-10 rounded-xl bg-[var(--bg-well)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex-shrink-0 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
@@ -376,21 +376,21 @@ export function PriceTrackerDashboard({
                         size="sm"
                       />
                       <div className="min-w-0">
-                        <h3 className="text-base sm:text-lg font-bold text-[#151922] truncate">
+                        <h3 className="font-display text-base sm:text-lg font-bold text-[var(--text-primary)] truncate">
                           {selectedSummary.productName}
                         </h3>
-                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                        <div className="flex items-center gap-2 flex-wrap text-[12.5px]">
                           <span className={`font-semibold ${catStyle.text}`}>
                             {selectedSummary.category}
                           </span>
-                          <span className="text-[#929BAB]">·</span>
-                          <span className="font-mono text-[#697386]">
+                          <span className="text-[var(--text-muted)]" aria-hidden="true">·</span>
+                          <span className="font-mono text-[var(--text-secondary)]">
                             Normalized per {selectedSummary.unitOfMeasurement}
                           </span>
                           {selectedSummary.brands.length > 0 && (
                             <>
-                              <span className="text-[#929BAB]">·</span>
-                              <span className="text-[#151922] font-medium">
+                              <span className="text-[var(--text-muted)]" aria-hidden="true">·</span>
+                              <span className="text-[var(--text-primary)] font-medium">
                                 {selectedSummary.brands.join(', ')}
                               </span>
                             </>
@@ -402,11 +402,11 @@ export function PriceTrackerDashboard({
                 })()}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => openManualModalForProduct(selectedSummary.productId)}
-                  className="btn-primary px-3 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
+                  className="btn-primary px-3.5 py-2 text-[12.5px] min-h-[38px] flex items-center gap-1.5 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Purchase
@@ -414,7 +414,7 @@ export function PriceTrackerDashboard({
                 <button
                   type="button"
                   onClick={() => setSection('alerts')}
-                  className="btn-secondary px-3 py-2 text-xs flex items-center gap-1.5 whitespace-nowrap"
+                  className="btn-secondary px-3.5 py-2 text-[12.5px] min-h-[38px] flex items-center gap-1.5 whitespace-nowrap"
                 >
                   <Bell className="w-3.5 h-3.5" />
                   Set Alert
@@ -424,38 +424,38 @@ export function PriceTrackerDashboard({
 
             {/* Key Product Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-              <div className="surface-subtle p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Latest</p>
-                <p className="text-base font-bold font-mono text-[#151922] mt-0.5 tabular-nums">
+              <div className="surface-well p-3.5">
+                <p className="text-[12px] font-medium text-[var(--text-secondary)]">Latest</p>
+                <p className="text-base font-bold font-mono text-[var(--text-primary)] mt-1 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.latestPrice)}
-                  <span className="text-[11px] text-[#697386]">
+                  <span className="text-[12px] text-[var(--text-secondary)] font-normal">
                     /{selectedSummary.unitOfMeasurement}
                   </span>
                 </p>
               </div>
-              <div className="surface-subtle p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Average</p>
-                <p className="text-base font-bold font-mono text-[#151922] mt-0.5 tabular-nums">
+              <div className="surface-well p-3.5">
+                <p className="text-[12px] font-medium text-[var(--text-secondary)]">Average</p>
+                <p className="text-base font-bold font-mono text-[var(--text-primary)] mt-1 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.averagePrice)}
                 </p>
               </div>
-              <div className="surface-subtle p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Highest</p>
-                <p className="text-base font-bold font-mono text-[#9E6614] mt-0.5 tabular-nums">
+              <div className="surface-well p-3.5">
+                <p className="text-[12px] font-medium text-[var(--text-secondary)]">Highest</p>
+                <p className="text-base font-bold font-mono text-[var(--accent-warning-ink)] mt-1 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.highestPrice)}
                 </p>
               </div>
-              <div className="surface-subtle p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Lowest</p>
-                <p className="text-base font-bold font-mono text-[#15966B] mt-0.5 tabular-nums">
+              <div className="surface-well p-3.5">
+                <p className="text-[12px] font-medium text-[var(--text-secondary)]">Lowest</p>
+                <p className="text-base font-bold font-mono text-[var(--accent-success-ink)] mt-1 tabular-nums">
                   ₹{formatCurrencyExact(selectedSummary.lowestPrice)}
                 </p>
               </div>
-              <div className="surface-subtle p-3 col-span-2 sm:col-span-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">Purchases</p>
-                <p className="text-base font-bold font-mono text-[#365FE8] mt-0.5 tabular-nums">
+              <div className="surface-well p-3.5 col-span-2 sm:col-span-1">
+                <p className="text-[12px] font-medium text-[var(--text-secondary)]">Purchases</p>
+                <p className="text-base font-bold font-mono text-[var(--accent-ink)] mt-1 tabular-nums">
                   {selectedSummary.purchaseCount}
-                  <span className="text-[11px] text-[#697386] ml-1">
+                  <span className="text-[12px] text-[var(--text-secondary)] font-normal ml-1">
                     (₹{formatCurrencyExact(selectedSummary.totalSpend)})
                   </span>
                 </p>
@@ -482,53 +482,53 @@ export function PriceTrackerDashboard({
       {section === 'overview' && !selectedSummary && (
         <div className="space-y-4">
           {/* Summary KPI Strip */}
-          <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 [&>*:nth-child(odd)]:border-r [&>*:nth-child(-n+2)]:border-b lg:[&>*]:border-b-0 lg:[&>*:not(:last-child)]:border-r [&>*]:border-[#E7EAF0]">
+          <div className="surface-card grid grid-cols-2 lg:grid-cols-4 [&>*:nth-child(odd)]:border-r [&>*:nth-child(-n+2)]:border-b lg:[&>*]:border-b-0 lg:[&>*:not(:last-child)]:border-r [&>*]:border-[var(--border-subtle)] overflow-hidden">
             <div className="p-4 sm:p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                 Tracked Products
               </p>
-              <p className="text-xl font-bold font-mono text-[#151922] mt-1 tabular-nums">
+              <p className="font-display text-xl font-bold font-mono text-[var(--text-primary)] mt-1 tabular-nums">
                 {totalTracked}
               </p>
-              <p className="text-xs text-[#697386] mt-0.5 tabular-nums">
+              <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 tabular-nums">
                 ₹{formatCurrencyExact(totalTrackedSpend)} tracked spend
               </p>
             </div>
 
             <div className="p-4 sm:p-5">
               <div className="flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-[#DE5252]" />
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                <TrendingUp className="w-3.5 h-3.5 text-[var(--accent-danger-ink)]" />
+                <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                   Price Increases
                 </p>
               </div>
-              <p className="text-xl font-bold font-mono text-[#DE5252] mt-1 tabular-nums">
+              <p className="font-display text-xl font-bold font-mono text-[var(--accent-danger-ink)] mt-1 tabular-nums">
                 {increasingCount}
               </p>
-              <p className="text-xs text-[#697386] mt-0.5">Products trending higher</p>
+              <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">Products trending higher</p>
             </div>
 
             <div className="p-4 sm:p-5">
               <div className="flex items-center gap-1.5">
-                <TrendingDown className="w-3.5 h-3.5 text-[#15966B]" />
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                <TrendingDown className="w-3.5 h-3.5 text-[var(--accent-success-ink)]" />
+                <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                   Price Drops
                 </p>
               </div>
-              <p className="text-xl font-bold font-mono text-[#15966B] mt-1 tabular-nums">
+              <p className="font-display text-xl font-bold font-mono text-[var(--accent-success-ink)] mt-1 tabular-nums">
                 {decreasingCount}
               </p>
-              <p className="text-xs text-[#697386] mt-0.5">Products cheaper than start</p>
+              <p className="text-[12px] text-[var(--text-secondary)] mt-0.5">Products cheaper than start</p>
             </div>
 
             <div className="p-4 sm:p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <p className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                 Latest Purchase
               </p>
-              <p className="text-sm font-bold text-[#151922] mt-1.5 truncate">
+              <p className="text-sm font-bold text-[var(--text-primary)] mt-1.5 truncate">
                 {latestPurchaseSummary ? latestPurchaseSummary.productName : '—'}
               </p>
-              <p className="text-xs font-mono text-[#697386] mt-0.5 tabular-nums">
+              <p className="text-[12px] font-mono text-[var(--text-secondary)] mt-0.5 tabular-nums">
                 {latestPurchaseSummary
                   ? `₹${formatCurrencyExact(latestPurchaseSummary.latestPrice)}/${
                       latestPurchaseSummary.unitOfMeasurement
@@ -547,14 +547,14 @@ export function PriceTrackerDashboard({
           <div className="surface-card p-4 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
               <div className="md:col-span-5 relative">
-                <Search className="w-4 h-4 text-[#929BAB] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   aria-label="Search tracked products or brands"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search product or brand (e.g. Milk, Amul)..."
-                  className="input-field w-full pl-9 pr-3 py-2 text-xs"
+                  className="input-field w-full pl-9 pr-3 py-2 text-[13px] min-h-[38px]"
                 />
               </div>
 
@@ -563,7 +563,7 @@ export function PriceTrackerDashboard({
                   aria-label="Filter by category"
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs font-medium"
+                  className="input-field w-full px-3 py-2 text-[13px] font-medium min-h-[38px]"
                 >
                   <option value="All">All Categories</option>
                   {categoryConfigs.map((c) => (
@@ -579,7 +579,7 @@ export function PriceTrackerDashboard({
                   aria-label="Sort products"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as ProductTrendSort)}
-                  className="input-field w-full px-3 py-2 text-xs font-medium"
+                  className="input-field w-full px-3 py-2 text-[13px] font-medium min-h-[38px]"
                 >
                   <option value="latest_purchase">Sort: Latest Purchase</option>
                   <option value="highest_increase">Sort: Highest Increase</option>
@@ -604,10 +604,10 @@ export function PriceTrackerDashboard({
                   key={f.id}
                   type="button"
                   onClick={() => setTrendFilter(f.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-lg text-[12.5px] font-semibold border transition-colors whitespace-nowrap ${
                     trendFilter === f.id
-                      ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
-                      : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-border)]'
+                      : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {f.label}
@@ -619,29 +619,29 @@ export function PriceTrackerDashboard({
           {/* Tracked Product Grid or Empty State */}
           {summaries.length === 0 ? (
             <div className="surface-card p-8 sm:p-10 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center mx-auto text-[#365FE8]">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center mx-auto text-[var(--accent-ink)]">
                 <Package className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-[#151922]">
+                <h3 className="font-display text-base font-bold text-[var(--text-primary)]">
                   No purchase price records yet
                 </h3>
-                <p className="text-xs text-[#697386] mt-1 max-w-md mx-auto leading-relaxed">
+                <p className="text-[13px] text-[var(--text-secondary)] mt-1 max-w-md mx-auto leading-relaxed">
                   Check out products in Shopping, record a scanned receipt in Receipt Scanner, or log a manual purchase above. Only real purchases appear here.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => openManualModalForProduct()}
-                className="btn-primary inline-flex items-center gap-1.5 px-4 py-2.5 text-xs"
+                className="btn-primary inline-flex items-center gap-1.5 px-4 py-2.5 text-[13px]"
               >
-                <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
+                <Plus className="w-4 h-4" strokeWidth={2.4} />
                 Log First Purchase
               </button>
             </div>
           ) : filteredSummaries.length === 0 ? (
             <div className="surface-card p-8 text-center space-y-2">
-              <p className="text-sm font-semibold text-[#151922]">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
                 No tracked products match your current search/filters
               </p>
               <button
@@ -651,7 +651,7 @@ export function PriceTrackerDashboard({
                   setCategoryFilter('All');
                   setTrendFilter('all');
                 }}
-                className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC]"
+                className="text-[13px] font-semibold text-[var(--accent-ink)] hover:underline"
               >
                 Reset filters
               </button>
@@ -704,27 +704,29 @@ export function PriceTrackerDashboard({
       {entryOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div
-            className="fixed inset-0 z-40 bg-[#151922]/40 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-[var(--backdrop-scrim)] backdrop-blur-sm"
             onClick={() => setEntryOpen(false)}
           />
           <form
             onSubmit={handleManualSubmit}
-            className="relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl p-5 shadow-xl space-y-3.5"
+            className="modal-panel relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 animate-slide-up"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#151922]">Log Purchase / Price Entry</h3>
+              <h3 className="font-display text-base font-bold text-[var(--text-primary)]">
+                Log Purchase / Price Entry
+              </h3>
               <button
                 type="button"
                 onClick={() => setEntryOpen(false)}
                 aria-label="Close modal"
-                className="p-1.5 rounded-lg bg-[#F1F3F6] text-[#697386] hover:text-[#151922]"
+                className="p-1.5 rounded-lg bg-[var(--bg-well)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+              <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                 Product Name
               </label>
               <input
@@ -734,7 +736,7 @@ export function PriceTrackerDashboard({
                 placeholder="e.g. Amul Taaza Milk 500ml or Basmati Rice"
                 value={entryName}
                 onChange={(e) => setEntryName(e.target.value)}
-                className="input-field w-full px-3 py-2 text-xs"
+                className="input-field w-full px-3 py-2 text-[13px]"
               />
               <datalist id="price-tracker-product-suggestions">
                 {items.map((i) => (
@@ -742,7 +744,7 @@ export function PriceTrackerDashboard({
                 ))}
               </datalist>
               {liveMatchPreview && (
-                <p className="text-[11px] text-[#365FE8] mt-1 font-medium">
+                <p className="text-[12px] text-[var(--accent-ink)] mt-1 font-medium">
                   {liveMatchPreview.resolved.matchedExisting
                     ? `Links to "${liveMatchPreview.resolved.productName}"`
                     : `Tracks as "${liveMatchPreview.resolved.productName}"`}{' '}
@@ -763,7 +765,7 @@ export function PriceTrackerDashboard({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                   Brand (Optional)
                 </label>
                 <input
@@ -771,18 +773,18 @@ export function PriceTrackerDashboard({
                   placeholder="e.g. Amul, Fortune"
                   value={entryBrand}
                   onChange={(e) => setEntryBrand(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs"
+                  className="input-field w-full px-3 py-2 text-[13px]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                   Category
                 </label>
                 <select
                   value={entryCategory}
                   onChange={(e) => setEntryCategory(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs"
+                  className="input-field w-full px-3 py-2 text-[13px]"
                 >
                   {categoryConfigs.map((c) => (
                     <option key={c.id} value={c.name}>
@@ -795,7 +797,7 @@ export function PriceTrackerDashboard({
 
             <div className="grid grid-cols-3 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                   Qty Bought
                 </label>
                 <input
@@ -805,12 +807,12 @@ export function PriceTrackerDashboard({
                   required
                   value={entryQty}
                   onChange={(e) => setEntryQty(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs font-mono"
+                  className="input-field w-full px-3 py-2 text-[13px] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                   Package Size
                 </label>
                 <input
@@ -819,12 +821,12 @@ export function PriceTrackerDashboard({
                   placeholder="e.g. 500 ml, 1 kg"
                   value={entryPackageSize}
                   onChange={(e) => setEntryPackageSize(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs font-mono"
+                  className="input-field w-full px-3 py-2 text-[13px] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                   Total Paid (₹)
                 </label>
                 <input
@@ -835,33 +837,33 @@ export function PriceTrackerDashboard({
                   placeholder="e.g. 60"
                   value={entryTotalPrice}
                   onChange={(e) => setEntryTotalPrice(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs font-mono"
+                  className="input-field w-full px-3 py-2 text-[13px] font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
-                  <Calendar className="w-3 h-3 inline mr-1" />
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
+                  <Calendar className="w-3.5 h-3.5 inline mr-1" />
                   Purchase Date
                 </label>
                 <input
                   type="date"
                   value={entryDate}
                   onChange={(e) => setEntryDate(e.target.value)}
-                  className="input-field w-full px-3 py-2 text-xs font-mono"
+                  className="input-field w-full px-3 py-2 text-[13px] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1">
+                <label className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1">
                   Entry Type
                 </label>
                 <select
                   value={entryKind}
                   onChange={(e) => setEntryKind(e.target.value as PriceEntryKind)}
-                  className="input-field w-full px-3 py-2 text-xs"
+                  className="input-field w-full px-3 py-2 text-[13px]"
                 >
                   <option value="actual_purchase">Actual Purchase</option>
                   <option value="manual_estimate">Manual Estimate Only</option>
@@ -870,32 +872,32 @@ export function PriceTrackerDashboard({
             </div>
 
             {entryKind === 'actual_purchase' && (
-              <label className="flex items-center gap-2 text-xs text-[#151922] bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl px-3 py-2 cursor-pointer">
+              <label className="surface-well flex items-center gap-2.5 text-[12.5px] text-[var(--text-primary)] px-3.5 py-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={logExpense}
                   onChange={(e) => setLogExpense(e.target.checked)}
-                  className="rounded accent-[#365FE8]"
+                  className="rounded accent-[var(--accent-primary)]"
                 />
                 <span>Also record as expense transaction in Expenses &amp; Budget</span>
               </label>
             )}
 
             {entryError && (
-              <p className="text-xs font-semibold text-[#DE5252]">{entryError}</p>
+              <p className="text-[12.5px] font-semibold text-[var(--accent-danger-ink)]">{entryError}</p>
             )}
 
             <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setEntryOpen(false)}
-                className="btn-secondary px-4 py-2 text-xs"
+                className="btn-secondary px-4 py-2 text-[13px]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-primary px-4 py-2 text-xs"
+                className="btn-primary px-4 py-2 text-[13px]"
               >
                 Save Price Record
               </button>

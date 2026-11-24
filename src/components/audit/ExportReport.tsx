@@ -57,34 +57,34 @@ export function ExportReport() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
           <FileText className="w-4 h-4" strokeWidth={2.25} />
         </div>
         <div>
-          <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+          <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
             Export Audit Report
           </h3>
-          <p className="text-xs text-[#697386]">
+          <p className="text-[12px] text-[var(--text-secondary)]">
             Download structured text or printable HTML summary
           </p>
         </div>
       </div>
 
       {/* Hairline Quick Stats */}
-      <div className="grid grid-cols-2 divide-x divide-[#E7EAF0] border-y border-[#E7EAF0] py-2.5">
+      <div className="grid grid-cols-2 divide-x divide-[var(--border-subtle)] border-y border-[var(--border-subtle)] py-2.5">
         <div className="text-center px-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Cart Value
           </p>
-          <p className="text-sm font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+          <p className="text-sm font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
             ₹{formatCurrency(cartTotal)}
           </p>
         </div>
         <div className="text-center px-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Est. Fee Exposure
           </p>
-          <p className="text-sm font-bold font-mono tabular-nums text-[#15966B] mt-0.5">
+          <p className="text-sm font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-0.5">
             ₹{formatCurrency(totalFees)}
           </p>
         </div>
@@ -96,7 +96,7 @@ export function ExportReport() {
           type="button"
           onClick={handleExportText}
           disabled={exporting !== null}
-          className="btn-secondary py-2.5 px-4 text-xs flex items-center justify-center gap-2"
+          className="btn-secondary py-2.5 px-4 text-[12.5px] flex items-center justify-center gap-2"
         >
           {exporting === 'text' ? (
             <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.25} />
@@ -109,7 +109,7 @@ export function ExportReport() {
           type="button"
           onClick={handleExportHtml}
           disabled={exporting !== null}
-          className="btn-secondary py-2.5 px-4 text-xs flex items-center justify-center gap-2"
+          className="btn-secondary py-2.5 px-4 text-[12.5px] flex items-center justify-center gap-2"
         >
           {exporting === 'html' ? (
             <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.25} />
@@ -124,15 +124,15 @@ export function ExportReport() {
       <button
         type="button"
         onClick={() => setShowPreview(!showPreview)}
-        className="w-full text-xs font-semibold text-[#697386] hover:text-[#151922] transition-colors flex items-center justify-center gap-1.5 py-1.5"
+        className="w-full text-[12.5px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-1.5 py-1.5"
       >
         <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.25} />
         {showPreview ? 'Hide preview' : 'Preview report'}
       </button>
 
       {showPreview && (
-        <div className="surface-subtle p-3.5 max-h-72 overflow-y-auto scrollbar-thin">
-          <pre className="text-[11px] leading-relaxed text-[#697386] font-mono whitespace-pre-wrap break-words">
+        <div className="surface-well p-3.5 max-h-72 overflow-y-auto scrollbar-thin">
+          <pre className="text-[12px] leading-relaxed text-[var(--text-secondary)] font-mono whitespace-pre-wrap break-words">
             {reportText}
           </pre>
         </div>

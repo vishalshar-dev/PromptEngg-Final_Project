@@ -48,13 +48,13 @@ export function InsightsDashboard({
   return (
     <div className="space-y-5">
       {/* Header + Integrated Underline Tab Strip */}
-      <div className="border-b border-[#E7EAF0]">
+      <div className="border-b border-[var(--border-subtle)]">
         <div className="pb-4">
           <div className="min-w-0">
-            <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
+            <h1 className="font-display text-[24px] sm:text-[28px] font-bold tracking-tight text-[var(--text-primary)] leading-tight">
               Insights
             </h1>
-            <p className="text-[13.5px] text-[#697386] mt-1 max-w-2xl leading-relaxed">
+            <p className="text-[13.5px] text-[var(--text-secondary)] mt-1 max-w-2xl leading-relaxed">
               Ask Penny about your spending &amp; upcoming bills, track category velocity, and monitor product unit prices.
             </p>
           </div>
@@ -63,17 +63,17 @@ export function InsightsDashboard({
         <div
           role="tablist"
           aria-label="Insights sections"
-          className="flex items-center gap-4 sm:gap-6 -mb-px overflow-x-auto no-scrollbar"
+          className="flex items-center gap-5 sm:gap-7 -mb-px overflow-x-auto no-scrollbar"
         >
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'penny'}
             onClick={() => setActiveTab('penny')}
-            className={`flex items-center gap-1.5 sm:gap-2 pb-3 text-[13px] sm:text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+            className={`flex items-center gap-2 pb-3 pt-1 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'penny'
-                ? 'border-[#365FE8] text-[#365FE8]'
-                : 'border-transparent text-[#697386] hover:text-[#151922]'
+                ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <Sparkles className="w-4 h-4" />
@@ -85,10 +85,10 @@ export function InsightsDashboard({
             role="tab"
             aria-selected={activeTab === 'radar'}
             onClick={() => setActiveTab('radar')}
-            className={`flex items-center gap-1.5 sm:gap-2 pb-3 text-[13px] sm:text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+            className={`flex items-center gap-2 pb-3 pt-1 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'radar'
-                ? 'border-[#365FE8] text-[#365FE8]'
-                : 'border-transparent text-[#697386] hover:text-[#151922]'
+                ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <Radar className="w-4 h-4" />
@@ -101,10 +101,10 @@ export function InsightsDashboard({
               role="tab"
               aria-selected={activeTab === 'prices'}
               onClick={() => setActiveTab('prices')}
-              className={`flex items-center gap-1.5 sm:gap-2 pb-3 text-[13px] sm:text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+              className={`flex items-center gap-2 pb-3 pt-1 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                 activeTab === 'prices'
-                  ? 'border-[#365FE8] text-[#365FE8]'
-                  : 'border-transparent text-[#697386] hover:text-[#151922]'
+                  ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               <LineChart className="w-4 h-4" />

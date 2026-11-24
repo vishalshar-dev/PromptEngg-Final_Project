@@ -141,31 +141,31 @@ export function AppShell({
     .toUpperCase();
 
   return (
-    <div className="min-h-screen app-canvas-atmosphere text-[#151922] flex flex-col lg:flex-row">
+    <div className="min-h-screen app-canvas-atmosphere text-[var(--text-primary)] flex flex-col lg:flex-row">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-[#365FE8] focus:text-white focus:text-sm focus:font-semibold"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-xl focus:bg-[var(--accent-primary)] focus:text-white focus:text-sm focus:font-semibold"
       >
         Skip to content
       </a>
 
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-[256px] shrink-0 shell-sidebar sticky top-0 h-screen px-4 py-5 gap-4">
+      <aside className="hidden lg:flex lg:flex-col w-[252px] shrink-0 shell-sidebar sticky top-0 h-screen px-4 py-5 gap-4">
         {/* Brand */}
         <button
           type="button"
           onClick={() => onSelectSection('overview')}
-          className="w-full shrink-0 flex items-center gap-3 px-2 py-1.5 text-left rounded-xl hover:bg-[#F7F8FA] transition-colors"
+          className="w-full shrink-0 flex items-center gap-3 px-2.5 py-2 text-left rounded-xl hover:bg-[var(--bg-hover)] transition-colors"
         >
-          <div className="w-9 h-9 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_2px_6px_rgba(0,0,0,0.16)]">
+          <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_2px_6px_rgba(0,0,0,0.16)]">
             <Wallet className="w-[18px] h-[18px] text-white" strokeWidth={2.2} />
           </div>
           <div className="min-w-0">
-            <p className="text-[15px] font-bold font-display tracking-tight text-[#151922] leading-tight">
+            <p className="text-[15.5px] font-bold font-display tracking-tight text-[var(--text-primary)] leading-tight whitespace-nowrap">
               CartAudit
             </p>
-            <p className="text-[11px] font-medium text-[#697386] leading-tight mt-0.5">
-              Smart Budget Radar
+            <p className="text-[12px] font-medium text-[var(--text-secondary)] leading-tight mt-0.5 truncate">
+              Personal Finance
             </p>
           </div>
         </button>
@@ -182,29 +182,23 @@ export function AppShell({
                   type="button"
                   onClick={() => onSelectSection(item.id)}
                   aria-current={active ? 'page' : undefined}
-                  className={`relative w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] transition-all ${
+                  className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] whitespace-nowrap transition-colors ${
                     active
-                      ? 'bg-[#EDF2FF] text-[#365FE8] font-semibold border border-[#D4E0FF]'
-                      : 'text-[#697386] font-medium border border-transparent hover:bg-[#F7F8FA] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] font-semibold border border-[var(--accent-border)]'
+                      : 'text-[var(--text-secondary)] font-medium border border-transparent hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  {active && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute left-1 top-2 bottom-2 w-[3px] rounded-full bg-[#365FE8]"
-                    />
-                  )}
-                  <span className="flex items-center gap-3 min-w-0 pl-1">
+                  <span className="flex items-center gap-3 min-w-0">
                     <Icon
                       className={`w-[18px] h-[18px] shrink-0 ${
-                        active ? 'text-[#365FE8]' : 'text-[#697386]'
+                        active ? 'text-[var(--accent-ink)]' : 'text-[var(--text-secondary)]'
                       }`}
-                      strokeWidth={active ? 2.2 : 1.9}
+                      strokeWidth={active ? 2.2 : 1.85}
                     />
                     <span className="truncate">{item.label}</span>
                   </span>
                   {item.id === 'shopping' && cartItemCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-md bg-[#365FE8] text-white text-[11px] font-mono font-semibold tabular-nums">
+                    <span className="px-1.5 py-0.5 rounded-md bg-[var(--accent-primary)] text-white text-xs font-mono font-semibold tabular-nums shrink-0">
                       {cartItemCount}
                     </span>
                   )}
@@ -223,39 +217,39 @@ export function AppShell({
               onClick={() => setSettingsOpen(true)}
               data-testid="sidebar-cloud-account"
               aria-label={`Cloud account ${user.displayName || user.email || ''} (${syncLabel})`}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-left transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-left transition-colors"
             >
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
                   alt=""
                   referrerPolicy="no-referrer"
-                  className="w-7 h-7 rounded-lg object-cover shrink-0 border border-[#E7EAF0]"
+                  className="w-7 h-7 rounded-lg object-cover shrink-0 border border-[var(--border-subtle)]"
                 />
               ) : (
-                <div className="w-7 h-7 rounded-lg bg-[#365FE8] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-[var(--accent-primary)] text-white text-xs font-bold flex items-center justify-center shrink-0">
                   {userInitial}
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-[#151922] truncate leading-tight">
+                <p className="text-xs font-semibold text-[var(--text-primary)] truncate leading-tight">
                   {user.displayName || 'Synced Account'}
                 </p>
                 <p
-                  className={`text-[10.5px] font-semibold truncate leading-tight mt-0.5 flex items-center gap-1 ${
+                  className={`text-[12px] font-medium truncate leading-tight mt-0.5 flex items-center gap-1 ${
                     syncStatus === 'error'
-                      ? 'text-[#DE5252]'
+                      ? 'text-[var(--accent-danger-ink)]'
                       : syncStatus === 'offline'
-                        ? 'text-[#C7851F]'
-                        : 'text-[#15966B]'
+                        ? 'text-[var(--accent-warning-ink)]'
+                        : 'text-[var(--accent-success-ink)]'
                   }`}
                 >
                   {syncStatus === 'syncing' || syncStatus === 'connecting' ? (
-                    <RefreshCw className="w-2.5 h-2.5 animate-spin shrink-0" />
+                    <RefreshCw className="w-3 h-3 animate-spin shrink-0" />
                   ) : syncStatus === 'offline' ? (
-                    <CloudOff className="w-2.5 h-2.5 shrink-0" />
+                    <CloudOff className="w-3 h-3 shrink-0" />
                   ) : (
-                    <Cloud className="w-2.5 h-2.5 shrink-0" />
+                    <Cloud className="w-3 h-3 shrink-0" />
                   )}
                   <span>{syncLabel}</span>
                 </p>
@@ -267,9 +261,9 @@ export function AppShell({
               disabled={isSigningIn}
               onClick={() => void signInWithGoogle()}
               data-testid="sidebar-google-signin"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#DCE6FF] border border-[#D4E0FF] text-[#365FE8] text-xs font-bold transition-colors whitespace-nowrap"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] border border-[var(--accent-border)] text-[var(--accent-ink)] text-xs font-semibold transition-colors whitespace-nowrap"
             >
-              <LogIn className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} />
+              <LogIn className="w-3.5 h-3.5 shrink-0" strokeWidth={2.1} />
               <span>{isSigningIn ? 'Connecting…' : 'Sign in to Sync'}</span>
             </button>
           )}
@@ -281,13 +275,13 @@ export function AppShell({
               onClick={onOpenCart}
               aria-label={`Open shopping cart with ${cartItemCount} items`}
               data-testid="sidebar-open-cart"
-              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#EDF2FF] hover:bg-[#DCE6FF] border border-[#D4E0FF] text-[#365FE8] text-xs font-bold transition-colors"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] border border-[var(--accent-border)] text-[var(--accent-ink)] text-xs font-semibold transition-colors whitespace-nowrap"
             >
               <span className="flex items-center gap-2 min-w-0">
-                <ShoppingBag className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} />
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" strokeWidth={2.1} />
                 <span className="truncate">Open Cart</span>
               </span>
-              <span className="px-1.5 py-0.5 rounded-md bg-[#365FE8] text-white text-[11px] font-mono tabular-nums">
+              <span className="px-1.5 py-0.5 rounded-md bg-[var(--accent-primary)] text-white text-xs font-mono tabular-nums shrink-0">
                 {cartItemCount}
               </span>
             </button>
@@ -300,16 +294,16 @@ export function AppShell({
               onClick={onToggleTheme}
               aria-label={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
               data-testid="sidebar-theme-toggle"
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-xs font-semibold text-[#151922] transition-colors"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] transition-colors whitespace-nowrap"
             >
               {isDark ? (
                 <>
-                  <Sun className="w-3.5 h-3.5 text-[#F5B74F]" strokeWidth={2.2} />
+                  <Sun className="w-3.5 h-3.5 text-[var(--accent-warning)]" strokeWidth={2.1} />
                   <span>Light</span>
                 </>
               ) : (
                 <>
-                  <Moon className="w-3.5 h-3.5 text-[#365FE8]" strokeWidth={2.2} />
+                  <Moon className="w-3.5 h-3.5 text-[var(--accent-ink)]" strokeWidth={2.1} />
                   <span>Dark</span>
                 </>
               )}
@@ -320,74 +314,86 @@ export function AppShell({
               onClick={() => setSettingsOpen(true)}
               aria-label="Open settings"
               data-testid="sidebar-settings-button"
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-[#F7F8FA] hover:bg-[#F1F3F6] border border-[#E7EAF0] text-xs font-semibold text-[#151922] transition-colors"
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] transition-colors whitespace-nowrap"
             >
-              <Settings className="w-3.5 h-3.5 text-[#697386]" strokeWidth={2.2} />
+              <Settings className="w-3.5 h-3.5 text-[var(--text-secondary)]" strokeWidth={2.1} />
               <span>Settings</span>
             </button>
           </div>
 
-          {/* Bottom Budget Status Card */}
-          <div className="surface-subtle p-4 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
-                Budget Status
+          {/* Compact Persistent Budget Strip */}
+          <button
+            type="button"
+            onClick={() => onSelectSection('overview')}
+            data-testid="sidebar-budget-strip"
+            aria-label={`Budget status: ${Math.round(utilisationPct)}% used, ${
+              remainingBudget < 0 ? 'over by ' : ''
+            }₹${formatCurrencyExact(Math.abs(remainingBudget))} ${
+              remainingBudget < 0 ? 'deficit' : 'remaining'
+            }`}
+            className={`w-full text-left surface-subtle px-3.5 py-2.5 space-y-1.5 transition-all hover:border-[var(--accent-border)] ${
+              activeSection === 'overview' ? 'opacity-80 hover:opacity-100' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11.5px] font-semibold text-[var(--text-secondary)]">
+                Cycle budget
               </span>
               <span
-                className={`text-[11px] font-semibold font-mono tabular-nums ${
+                className={`text-[11.5px] font-semibold font-mono tabular-nums ${
                   budgetTone === 'danger'
-                    ? 'text-[#DE5252]'
+                    ? 'text-[var(--accent-danger-ink)]'
                     : budgetTone === 'warning'
-                      ? 'text-[#C7851F]'
-                      : 'text-[#15966B]'
+                      ? 'text-[var(--accent-warning-ink)]'
+                      : 'text-[var(--accent-success-ink)]'
                 }`}
               >
-                {Math.round(utilisationPct)}%
+                {Math.round(utilisationPct)}% used
               </span>
             </div>
 
-            <div>
-              <p className="text-[11px] text-[#697386]">Remaining</p>
-              <p
-                className={`text-[19px] font-bold font-mono tabular-nums tracking-tight ${
-                  remainingBudget < 0 ? 'text-[#DE5252]' : 'text-[#151922]'
+            <div className="flex items-baseline justify-between gap-2">
+              <span
+                className={`text-[14px] font-bold font-mono tabular-nums tracking-tight ${
+                  remainingBudget < 0
+                    ? 'text-[var(--accent-danger-ink)]'
+                    : 'text-[var(--text-primary)]'
                 }`}
               >
                 {remainingBudget < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(remainingBudget))}
-              </p>
+              </span>
+              <span className="text-[11px] font-mono tabular-nums text-[var(--text-muted)] truncate">
+                of ₹{formatCurrency(safeBudget)}
+              </span>
             </div>
 
             <ProgressBar
               value={safeBudget > 0 ? (totalSpent / safeBudget) * 100 : 0}
               tone={budgetTone}
               size="sm"
+              label="Sidebar cycle budget utilization"
             />
-
-            <div className="flex items-center justify-between text-[11px] text-[#697386] font-mono tabular-nums pt-0.5">
-              <span>₹{formatCurrency(totalSpent)} spent</span>
-              <span>of ₹{formatCurrency(safeBudget)}</span>
-            </div>
-          </div>
+          </button>
         </div>
       </aside>
 
       {/* Main Column */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Compact Sticky Mobile/Tablet Header (Single Clean Row + Hamburger Drawer) */}
-        <header className="lg:hidden sticky top-0 z-30 h-[54px] shell-header px-3 sm:px-5 flex items-center justify-between gap-2">
+        <header className="lg:hidden sticky top-0 z-30 h-[56px] shell-header px-2.5 sm:px-5 flex items-center justify-between gap-1.5 sm:gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={mobileDrawerOpen}
-              className="relative w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#151922] shrink-0"
+              className="relative w-9 h-9 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] shrink-0"
             >
-              <Menu className="w-4 h-4" strokeWidth={2.2} />
+              <Menu className="w-4 h-4" strokeWidth={2.1} />
               {cartItemCount > 0 && activeSection !== 'shopping' && (
                 <span
                   aria-hidden="true"
-                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#365FE8] ring-2 ring-white"
+                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] ring-2 ring-[var(--bg-surface)]"
                 />
               )}
             </button>
@@ -396,10 +402,10 @@ export function AppShell({
               onClick={() => onSelectSection('overview')}
               className="flex items-center gap-2 text-left min-w-0"
             >
-              <div className="w-7 h-7 rounded-lg bg-[#365FE8] flex items-center justify-center shrink-0">
+              <div className="hidden sm:flex w-7 h-7 rounded-lg bg-[var(--accent-primary)] items-center justify-center shrink-0">
                 <Wallet className="w-3.5 h-3.5 text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-[15px] font-bold tracking-tight text-[#151922] truncate">
+              <span className="text-[15px] font-bold font-display tracking-tight text-[var(--text-primary)] truncate">
                 CartAudit
               </span>
             </button>
@@ -407,12 +413,14 @@ export function AppShell({
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <div className="text-right leading-tight mr-0.5">
-              <span className="hidden sm:block text-[10px] font-medium text-[#697386]">
+              <span className="hidden sm:block text-xs font-medium text-[var(--text-secondary)]">
                 Balance
               </span>
               <span
                 className={`text-[12.5px] sm:text-[13px] font-bold font-mono tabular-nums whitespace-nowrap ${
-                  remainingBudget < 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
+                  remainingBudget < 0
+                    ? 'text-[var(--accent-danger-ink)]'
+                    : 'text-[var(--accent-success-ink)]'
                 }`}
               >
                 {remainingBudget < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(remainingBudget))}
@@ -425,7 +433,7 @@ export function AppShell({
                 onClick={() => setSettingsOpen(true)}
                 aria-label="Account and sync settings"
                 data-testid="mobile-account-button"
-                className="w-8 h-8 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center overflow-hidden shrink-0"
+                className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center overflow-hidden shrink-0"
               >
                 {user.photoURL ? (
                   <img
@@ -435,7 +443,7 @@ export function AppShell({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-xs font-bold text-[#365FE8]">{userInitial}</span>
+                  <span className="text-xs font-bold text-[var(--accent-ink)]">{userInitial}</span>
                 )}
               </button>
             )}
@@ -446,9 +454,9 @@ export function AppShell({
                 onClick={onOpenCart}
                 aria-label={`Open shopping cart with ${cartItemCount} items`}
                 data-testid="mobile-open-cart"
-                className="h-8 px-2 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] text-xs font-bold flex items-center gap-1 shrink-0"
+                className="h-9 px-2.5 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] text-xs font-bold flex items-center gap-1 shrink-0 whitespace-nowrap"
               >
-                <ShoppingBag className="w-3.5 h-3.5 shrink-0" strokeWidth={2.2} />
+                <ShoppingBag className="w-3.5 h-3.5 shrink-0" strokeWidth={2.1} />
                 <span className="font-mono tabular-nums">{cartItemCount}</span>
               </button>
             )}
@@ -458,12 +466,12 @@ export function AppShell({
               onClick={onToggleTheme}
               aria-label={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
               data-testid="mobile-theme-toggle"
-              className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#151922] shrink-0"
+              className="w-9 h-9 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] shrink-0"
             >
               {isDark ? (
-                <Sun className="w-4 h-4 text-[#F5B74F]" strokeWidth={2.2} />
+                <Sun className="w-4 h-4 text-[var(--accent-warning)]" strokeWidth={2.1} />
               ) : (
-                <Moon className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+                <Moon className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.1} />
               )}
             </button>
 
@@ -472,9 +480,9 @@ export function AppShell({
               onClick={() => setSettingsOpen(true)}
               aria-label="Open settings"
               data-testid="mobile-settings-button"
-              className="w-8 h-8 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] shrink-0"
+              className="w-9 h-9 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0"
             >
-              <Settings className="w-4 h-4" strokeWidth={2.2} />
+              <Settings className="w-4 h-4" strokeWidth={2.1} />
             </button>
           </div>
         </header>
@@ -494,10 +502,10 @@ export function AppShell({
       {mobileDrawerOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
-            className="fixed inset-0 bg-[#151922]/45 backdrop-blur-[3px] animate-fade-in"
+            className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[3px] animate-fade-in"
             onClick={() => setMobileDrawerOpen(false)}
           />
-          <aside className="relative z-10 w-[280px] max-w-[85vw] h-full modal-panel border-r border-[#E7EAF0] px-4 py-4 flex flex-col gap-4 animate-fade-in">
+          <aside className="relative z-10 w-[280px] max-w-[85vw] h-full modal-panel border-r border-[var(--border-subtle)] px-4 py-4 flex flex-col gap-4 animate-fade-in">
             {/* Drawer Header */}
             <div className="shrink-0 flex items-center justify-between gap-2 px-1">
               <button
@@ -508,19 +516,23 @@ export function AppShell({
                 }}
                 className="flex items-center gap-2.5 text-left"
               >
-                <div className="w-8 h-8 rounded-xl bg-[#365FE8] flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center shrink-0">
                   <Wallet className="w-4 h-4 text-white" strokeWidth={2.2} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#151922] leading-tight">CartAudit</p>
-                  <p className="text-[11px] text-[#697386] leading-tight">Smart Budget Radar</p>
+                  <p className="text-sm font-bold font-display text-[var(--text-primary)] leading-tight">
+                    CartAudit
+                  </p>
+                  <p className="text-[12px] text-[var(--text-secondary)] leading-tight">
+                    Personal Finance
+                  </p>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setMobileDrawerOpen(false)}
                 aria-label="Close navigation menu"
-                className="w-8 h-8 rounded-lg bg-[#F7F8FA] border border-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+                className="w-9 h-9 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -543,23 +555,23 @@ export function AppShell({
                       setMobileDrawerOpen(false);
                     }}
                     aria-current={active ? 'page' : undefined}
-                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] transition-colors ${
+                    className={`w-full flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-xl text-[13.5px] whitespace-nowrap transition-colors ${
                       active
-                        ? 'bg-[#EDF2FF] text-[#365FE8] font-semibold'
-                        : 'text-[#697386] font-medium hover:bg-[#F7F8FA] hover:text-[#151922]'
+                        ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] font-semibold'
+                        : 'text-[var(--text-secondary)] font-medium hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     <span className="flex items-center gap-3 min-w-0">
                       <Icon
                         className={`w-[18px] h-[18px] shrink-0 ${
-                          active ? 'text-[#365FE8]' : 'text-[#697386]'
+                          active ? 'text-[var(--accent-ink)]' : 'text-[var(--text-secondary)]'
                         }`}
-                        strokeWidth={active ? 2.2 : 1.9}
+                        strokeWidth={active ? 2.2 : 1.85}
                       />
                       <span className="truncate">{item.label}</span>
                     </span>
                     {item.id === 'shopping' && cartItemCount > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-[#365FE8] text-white text-[11px] font-mono font-semibold tabular-nums shrink-0">
+                      <span className="px-1.5 py-0.5 rounded-md bg-[var(--accent-primary)] text-white text-xs font-mono font-semibold tabular-nums shrink-0">
                         {cartItemCount}
                       </span>
                     )}
@@ -568,7 +580,7 @@ export function AppShell({
               })}
             </nav>
 
-            <div className="shrink-0 pt-2 border-t border-[#E7EAF0]">
+            <div className="shrink-0 pt-2 border-t border-[var(--border-subtle)]">
               {user ? (
                 <button
                   type="button"
@@ -576,7 +588,7 @@ export function AppShell({
                     setMobileDrawerOpen(false);
                     setSettingsOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#F7F8FA] border border-[#E7EAF0] text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-left"
                 >
                   {user.photoURL ? (
                     <img
@@ -586,15 +598,15 @@ export function AppShell({
                       className="w-7 h-7 rounded-lg object-cover shrink-0"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-lg bg-[#365FE8] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-[var(--accent-primary)] text-white text-xs font-bold flex items-center justify-center shrink-0">
                       {userInitial}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-[#151922] truncate">
+                    <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
                       {user.displayName || 'Synced Account'}
                     </p>
-                    <p className="text-[10.5px] font-semibold text-[#15966B] truncate">
+                    <p className="text-[12px] font-medium text-[var(--accent-success-ink)] truncate">
                       {syncLabel}
                     </p>
                   </div>

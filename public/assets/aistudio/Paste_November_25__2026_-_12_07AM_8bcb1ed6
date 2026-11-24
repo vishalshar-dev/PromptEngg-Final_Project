@@ -1,0 +1,1130 @@
+CARTAUDIT — MASTER UI/UX TRANSFORMATION
+
+Premium Product Experience | Complete Layout & Information Architecture Redesign
+
+You are working on an existing, fully functional application called CartAudit — Smart Budget Radar.
+
+Your task is to transform its user interface and user experience into a premium, polished, intuitive, modern financial application.
+
+This is a substantial redesign of the existing application's layout, information architecture, component composition, spacing, hierarchy, navigation and interaction design.
+
+This is NOT a rebuild. This is NOT a feature-reduction exercise. This is NOT a theme redesign.
+
+The objective is to make the existing product dramatically easier to understand, navigate and use while preserving every existing capability.
+
+---
+
+PART 1 — NON-NEGOTIABLE PRODUCT PRESERVATION RULES
+
+These rules take priority over every visual or architectural decision in this task.
+
+1.1 Preserve 100% of existing functionality
+
+You MUST preserve every feature that currently exists.
+
+Do not:
+
+- Delete existing features.
+- Remove secondary tools because they make the interface complicated.
+- Remove navigation destinations.
+- Remove settings.
+- Remove advanced functionality.
+- Replace functional components with decorative placeholders.
+- Remove buttons, controls, filters, actions or interactions.
+- Remove existing financial intelligence.
+- Replace real functionality with mock data.
+- Simplify the application by sacrificing capability.
+- Remove features that appear redundant without proving that they are genuinely duplicated.
+
+A feature that is currently difficult to discover must become easier to discover, not disappear.
+
+If a feature creates visual clutter, relocate it into a logical section, submenu, expandable panel, contextual menu, dedicated screen or progressive-disclosure interface.
+
+The feature must remain accessible and operational.
+
+1.2 Preserve the existing financial engine
+
+Do not rewrite the financial logic.
+
+Preserve:
+
+- Existing budget calculations.
+- Spending calculations.
+- Available balance calculations.
+- Transaction calculations.
+- Category limits.
+- Budget-cycle calculations.
+- Financial projections.
+- Shared expense calculations.
+- Settlement calculations.
+- Price tracking and alerts.
+- Receipt scanning.
+- Financial intelligence.
+- Existing Zustand state management.
+- Existing localStorage persistence.
+- Existing data import/export.
+- Existing validation and sanitization.
+
+Do not introduce new calculations simply to make a visual element look more impressive.
+
+Where the existing calculations produce inconsistent figures, investigate the underlying logic separately and report the issue rather than hiding it.
+
+1.3 Preserve the entire theme system
+
+THIS IS EXTREMELY IMPORTANT.
+
+The application already has extensive settings for themes, colors, appearance and customization.
+
+Do not redesign, replace or simplify this system.
+
+Do not:
+
+- Replace the existing theme architecture.
+- Hardcode a new global color palette.
+- Remove custom accent colors.
+- Remove theme presets.
+- Remove light/dark modes.
+- Override user-selected colors.
+- Break theme persistence.
+- Introduce a new theme provider.
+- Force every page into one appearance.
+
+The redesign must work with the existing theme system.
+
+All redesigned components must respect the existing theme tokens, CSS variables, appearance settings and user preferences.
+
+You may improve spacing, positioning, sizing, typography hierarchy and component composition without changing the established color identity.
+
+If a component currently uses hardcoded colors and breaks user-selected themes, correct its theme integration without replacing the theme system.
+
+1.4 Preserve AETHER
+
+AETHER is the signature 3D budget capsule experience.
+
+It has already undergone extensive development.
+
+Do not rebuild or replace:
+
+- Its 3D geometry.
+- Its physical materials.
+- Its fluid simulation.
+- Its shaders.
+- Its lighting architecture.
+- Its animations.
+- Its budget-state transitions.
+- Its camera behavior.
+- Its interactions.
+- Its responsive rendering.
+
+Do not use this redesign as an excuse to introduce another AETHER development phase.
+
+The goal is to improve its placement and integration within the Overview page.
+
+You may modify its surrounding containers, sizing, spacing and responsive composition, provided the existing capsule functionality remains intact.
+
+---
+
+PART 2 — PHASE ZERO: COMPLETE EXISTING-FEATURE AUDIT
+
+DO NOT START REDESIGNING IMMEDIATELY.
+
+First inspect the entire codebase.
+
+Read the actual implementation rather than relying on previous documentation or assumptions.
+
+Identify:
+
+- Every page.
+- Every navigation destination.
+- Every module.
+- Every tab.
+- Every subtab.
+- Every settings section.
+- Every modal and drawer.
+- Every expandable panel.
+- Every feature-specific component.
+- Every interactive control.
+- Every existing user workflow.
+- Every important data dependency.
+- Every responsive layout.
+- Every existing design token and theme dependency.
+
+Create an internal feature inventory.
+
+For each feature, record:
+
+1. Feature name.
+2. Existing location.
+3. Purpose.
+4. Current access method.
+5. Relevant component.
+6. Important data dependencies.
+7. Proposed new location.
+8. Regression test required.
+
+Pay particular attention to features that are not visible immediately, including those inside modals, dropdowns, contextual menus, settings, tabs and expandable sections.
+
+Do not overlook hidden functionality.
+
+Required output before implementation
+
+Produce:
+
+- Existing page inventory.
+- Existing feature inventory.
+- Existing navigation inventory.
+- Existing theme/customization inventory.
+- Existing component architecture overview.
+- Current UI/UX problems.
+- Proposed information architecture.
+- A feature-preservation mapping.
+
+Do not ask me to manually document features already present in the repository.
+
+Inspect them yourself.
+
+---
+
+PART 3 — THE DESIGN PHILOSOPHY
+
+The current problem is not that CartAudit lacks functionality.
+
+It is that too much functionality competes for attention simultaneously.
+
+The interface must become:
+
+- Clear.
+- Spacious.
+- Intuitive.
+- Visually structured.
+- Consistent.
+- Professional.
+- Premium.
+- Responsive.
+- Easy to learn.
+- Efficient for everyday use.
+
+The redesign should feel like a carefully designed financial product rather than a collection of densely packed dashboard cards.
+
+3.1 Reduce visual noise
+
+Audit the entire application for:
+
+- Excessive nested cards.
+- Repetitive borders.
+- Unnecessary containers.
+- Repeated explanatory paragraphs.
+- Competing headings.
+- Tiny typography.
+- Crowded action buttons.
+- Oversized control groups.
+- Inconsistent spacing.
+- Poorly aligned content.
+- Unnecessary decorative elements.
+- Overuse of badges.
+- Redundant information.
+- Poor visual grouping.
+
+Do not solve clutter by simply shrinking everything.
+
+Use better layout, spacing, hierarchy and progressive disclosure.
+
+3.2 Establish a consistent layout system
+
+Create consistent rules for:
+
+- Page width.
+- Page margins.
+- Section spacing.
+- Card spacing.
+- Component alignment.
+- Typography hierarchy.
+- Button sizing.
+- Input sizing.
+- Icon sizing.
+- Modal dimensions.
+- Drawer dimensions.
+- Responsive breakpoints.
+- Content density.
+
+Use the existing design system wherever possible.
+
+Do not introduce arbitrary spacing values independently on every page.
+
+3.3 Typography hierarchy
+
+Establish a clear distinction between:
+
+- Page titles.
+- Section headings.
+- Card headings.
+- Primary financial values.
+- Secondary financial values.
+- Supporting descriptions.
+- Labels.
+- Metadata.
+- Helper text.
+
+Important financial numbers should be easy to scan.
+
+Supporting information should remain readable without competing with the primary information.
+
+Avoid excessive all-caps labels and unnecessarily small text.
+
+3.4 Progressive disclosure
+
+Not every feature needs to be permanently visible.
+
+However, every feature must remain accessible.
+
+Use:
+
+- Expandable sections.
+- Contextual actions.
+- Well-organized submenus.
+- Secondary navigation.
+- Tabs where appropriate.
+- Detail drawers.
+- Modals for focused tasks.
+- Advanced filters that expand when requested.
+
+The interface should initially present the most important actions and information.
+
+Advanced capabilities should remain easy to find.
+
+---
+
+PART 4 — COMPLETE OVERVIEW REDESIGN
+
+This is the highest-priority part of the entire assignment.
+
+The Overview must become the most understandable and impressive part of CartAudit.
+
+Currently, too much information competes for attention.
+
+AETHER, financial explanations, metrics and budget intelligence must not all compete inside one crowded visual container.
+
+Redesign the Overview's information architecture from the ground up while preserving its underlying components and financial functionality.
+
+4.1 Overview opening section
+
+Create a clean introductory area.
+
+It should contain:
+
+- A clear page title.
+- A contextual greeting if already supported.
+- The current financial cycle or date range.
+- Relevant quick actions.
+- Any existing period-selection controls.
+
+Avoid unnecessary introductory paragraphs.
+
+The first screen should immediately communicate the user's financial situation.
+
+4.2 Financial snapshot
+
+Place the most important financial metrics near the top.
+
+Use the existing available financial data.
+
+Prioritize:
+
+- Total budget.
+- Amount spent.
+- Remaining budget.
+- Budget utilization.
+- Cycle duration or remaining time where supported.
+
+These values must be visually distinguishable.
+
+Do not make every metric equally prominent.
+
+The remaining budget and total spent should be particularly easy to understand.
+
+Use consistent formatting and avoid duplicating the same financial figure in multiple places without a clear reason.
+
+4.3 Budget health and spending progress
+
+Create a clear section that answers:
+
+- How much have I spent?
+- How much budget remains?
+- Am I spending too quickly?
+- Am I on track?
+- What is my projected remaining amount?
+- What requires attention?
+
+Use existing spending-pace and projection logic.
+
+Present progress using readable visual indicators, charts or progress bars.
+
+Do not create unsupported predictions.
+
+If data is insufficient, display an appropriate unavailable or insufficient-data state.
+
+Never present fabricated projections.
+
+4.4 AETHER — independent visual experience
+
+AETHER MUST HAVE ITS OWN DEDICATED SECTION.
+
+Do not place its explanatory paragraphs, financial intelligence text and multiple metrics inside the same container as the capsule.
+
+The capsule should have its own visual space and a clear visual boundary from surrounding financial content.
+
+Proposed hierarchy:
+
+1. Section identity: AETHER.
+2. The existing interactive 3D capsule.
+3. Existing interaction controls, if any.
+4. Minimal supporting information.
+5. Relevant status or budget context.
+
+The capsule should be the focal point of this section.
+
+Do not surround it with excessive explanatory text.
+
+Do not duplicate the complete financial snapshot inside the AETHER section.
+
+The Overview explains the financial situation.
+
+AETHER visualizes the budget.
+
+Keep those responsibilities separate.
+
+Desktop composition
+
+Use a dedicated spacious region.
+
+Choose the appropriate layout after inspecting the existing viewport and capsule proportions.
+
+The capsule must not be squeezed into an unnecessarily narrow column.
+
+Its proportions must remain visually balanced.
+
+Mobile composition
+
+Give AETHER its own mobile section.
+
+Preserve:
+
+- Correct aspect ratio.
+- Usable interaction controls.
+- Proper visual scale.
+- No horizontal overflow.
+- No clipping.
+- Reasonable loading behavior.
+
+Do not make the capsule disappear on smaller screens.
+
+4.5 Financial intelligence and actionable insights
+
+After the primary financial information and AETHER section, organize existing intelligence.
+
+Potential content includes:
+
+- Spending pace.
+- Projected cycle-end balance.
+- Category observations.
+- Overspending alerts.
+- Budget warnings.
+- Upcoming commitments, if supported.
+- Existing AI-generated insights.
+- Relevant financial recommendations.
+
+Prioritize the most important actionable information.
+
+Do not display every possible insight simultaneously.
+
+Use existing intelligence and reliability checks.
+
+4.6 Category and spending breakdown
+
+Make category-level information easier to understand.
+
+Preserve:
+
+- Existing category data.
+- Category limits.
+- Category spending.
+- Category comparisons.
+- Existing charts.
+- Existing navigation into category details.
+
+Use a layout that makes the largest spending categories easy to identify.
+
+4.7 Recent activity
+
+Preserve all existing recent-activity functionality.
+
+Improve:
+
+- Transaction readability.
+- Amount alignment.
+- Category visibility.
+- Dates.
+- Descriptions.
+- Transaction actions.
+- Navigation to detailed records.
+
+Make the section useful without making it excessively tall.
+
+4.8 Quick actions
+
+Inspect existing quick actions and position them according to their importance.
+
+Do not invent a new workflow that duplicates an existing feature.
+
+Ensure frequently used actions are discoverable.
+
+---
+
+PART 5 — SHOPPING / QUICKMART REDESIGN
+
+Do not remove or merge away any existing QuickMart functionality.
+
+Inspect and preserve all existing features, including where implemented:
+
+- Product catalogue.
+- Custom products.
+- Recurring items.
+- Shopping cart.
+- Cart drawer.
+- Recent purchases.
+- Expense splitting.
+- Named people.
+- Saved baskets.
+- Favourites.
+- Category manager.
+- Product search.
+- Filters.
+- Product details.
+- Existing purchase actions.
+- Existing quick actions.
+
+New layout goals
+
+Shopping header
+
+Create a clearer header with:
+
+- Page title.
+- Search.
+- Primary shopping action.
+- Cart access.
+- Relevant existing controls.
+
+Product discovery
+
+Make products easier to browse.
+
+Improve:
+
+- Product card proportions.
+- Image sizing.
+- Product names.
+- Price hierarchy.
+- Unit information.
+- Quantity controls.
+- Add-to-cart actions.
+- Category navigation.
+
+Avoid excessive information inside each product card.
+
+Advanced shopping tools
+
+Keep recurring items, baskets, favourites, custom products and category management accessible.
+
+Place them in a logical secondary navigation or contextual interface.
+
+Do not permanently occupy valuable space with controls that users only occasionally need.
+
+Cart experience
+
+Improve the cart drawer or cart view.
+
+Ensure:
+
+- Clear item hierarchy.
+- Readable quantities.
+- Understandable totals.
+- Easy editing.
+- Existing split functionality.
+- Accessible checkout or purchase actions, wherever supported.
+
+Do not change any existing calculations.
+
+---
+
+PART 6 — INSIGHTS REDESIGN
+
+Inspect all existing Insights functionality before modifying it.
+
+Preserve:
+
+- Penny AI.
+- Smart Radar.
+- Price Intelligence.
+- Existing analytics.
+- Date filters.
+- Category filters.
+- Comparisons.
+- Charts.
+- Tables.
+- Detailed reports.
+- Existing navigation.
+- Existing actions.
+
+New information architecture
+
+Organize the existing features into a clear hierarchy.
+
+Potential structure:
+
+1. Insights overview.
+2. Spending analytics.
+3. Category analysis.
+4. Trends and comparisons.
+5. Price intelligence.
+6. Smart Radar.
+7. Penny AI.
+8. Detailed reports.
+
+This is an organizational proposal, not permission to delete or combine features.
+
+If these features already have their own distinct workflows, preserve them.
+
+Chart improvements
+
+Improve:
+
+- Chart dimensions.
+- Label readability.
+- Legend placement.
+- Axis spacing.
+- Tooltip presentation.
+- Supporting explanations.
+- Empty states.
+- Responsive behavior.
+
+Charts should have sufficient room to communicate useful information.
+
+Avoid decorative charts that do not help users understand their finances.
+
+---
+
+PART 7 — EXPENSES AND LEDGER REDESIGN
+
+Preserve every existing transaction and ledger workflow.
+
+Inspect and preserve:
+
+- Expense records.
+- Income records, if supported.
+- Search.
+- Filters.
+- Transaction details.
+- Transaction editing.
+- Transaction deletion.
+- People balances.
+- Amounts owed.
+- Amounts owed to the user.
+- Shared expenses.
+- Expense splits.
+- Settlements.
+- Settlement history.
+- Existing reports and exports.
+
+Expenses
+
+Make transaction information easier to scan.
+
+Improve:
+
+- Transaction row spacing.
+- Amount alignment.
+- Date hierarchy.
+- Category presentation.
+- Search and filter positioning.
+- Transaction actions.
+- Empty and loading states.
+
+Ledger
+
+Make the distinction between these concepts immediately clear:
+
+- Money owed to the user.
+- Money the user owes.
+- Settled balances.
+- Pending balances.
+
+Improve people cards and settlement actions.
+
+Do not change the settlement engine.
+
+---
+
+PART 8 — FINANCIAL WELLNESS / WAR ROOM REDESIGN
+
+Preserve all existing functionality.
+
+Inspect the current implementation and retain:
+
+- Financial Wellness controls.
+- Budget limits.
+- Category caps.
+- Broke Mode.
+- Non-essential spending tracking.
+- Discipline score.
+- Spending restrictions.
+- Existing warnings.
+- Existing settings.
+- Existing reports.
+- All associated interactions.
+
+Design goals
+
+Create clearer separation between:
+
+1. Financial health summary.
+2. Spending limits.
+3. Category-specific controls.
+4. Broke Mode.
+5. Non-essential spending.
+6. Discipline and behavioral insights.
+7. Advanced configuration.
+
+The user should understand what each control does.
+
+Avoid presenting every setting as an equally important warning card.
+
+Use appropriate grouping and progressive disclosure.
+
+---
+
+PART 9 — SETTINGS PRESERVATION
+
+Settings already contains extensive customization functionality.
+
+Preserve every setting.
+
+Do not replace the existing settings architecture.
+
+Do not remove or rename existing appearance controls without necessity.
+
+Inspect the settings structure and improve its organization only where it materially improves discoverability.
+
+Potential improvements:
+
+- Clearer section grouping.
+- Better spacing.
+- Better labels.
+- More readable controls.
+- Better responsive presentation.
+- Easier navigation through long settings panels.
+
+All existing settings must continue to work exactly as before.
+
+---
+
+PART 10 — GLOBAL NAVIGATION AND RESPONSIVE EXPERIENCE
+
+The entire application must feel like one coherent product.
+
+Inspect the existing navigation architecture.
+
+Improve the placement and hierarchy of:
+
+- Primary navigation.
+- Secondary navigation.
+- Module-specific tabs.
+- Page titles.
+- Breadcrumbs, if applicable.
+- Contextual actions.
+- Search and filtering controls.
+
+Do not remove any navigation destination.
+
+A user must still be able to access every existing feature.
+
+Desktop
+
+Optimize for:
+
+- 1280 × 800.
+- 1366 × 768.
+- 1440 × 900.
+- 1920 × 1080.
+
+Use available screen space intelligently.
+
+Avoid excessive empty space and unnecessarily narrow content columns.
+
+Tablet
+
+Optimize for:
+
+- 768 × 1024.
+- 820 × 1180.
+
+Prevent navigation collisions and awkward card wrapping.
+
+Mobile
+
+Optimize for:
+
+- 360 × 800.
+- 375 × 812.
+- 390 × 844.
+- 430 × 932.
+
+Ensure:
+
+- Every existing feature remains accessible.
+- No horizontal page overflow.
+- Readable text.
+- Proper touch targets.
+- Functional drawers and modals.
+- Usable product cards.
+- Readable charts.
+- Appropriate navigation.
+- Properly scaled AETHER.
+- No clipped controls.
+
+Do not simply shrink the desktop interface to fit mobile.
+
+Design intentional responsive compositions.
+
+---
+
+PART 11 — INTERACTION AND POLISH
+
+Improve the usability of existing interactions.
+
+Where appropriate, refine:
+
+- Hover states.
+- Focus states.
+- Active states.
+- Press states.
+- Loading indicators.
+- Empty states.
+- Error states.
+- Success feedback.
+- Tooltips.
+- Dropdown behavior.
+- Modal transitions.
+- Drawer transitions.
+- Expandable sections.
+- Navigation transitions.
+
+Motion should be purposeful.
+
+Do not add animations merely for decoration.
+
+Respect the existing reduced-motion behavior.
+
+Do not introduce animation that makes financial workflows slower or harder to use.
+
+---
+
+PART 12 — TECHNICAL IMPLEMENTATION RULES
+
+Before modifying files, understand the current architecture.
+
+The application uses an existing React, TypeScript and Vite architecture with existing state management and financial components.
+
+Do not replace the technology stack.
+
+Do not introduce a new UI framework unnecessarily.
+
+Do not rewrite the application from scratch.
+
+Prefer targeted refactoring of existing components.
+
+If a component is too large or difficult to maintain, you may modularize it, but preserve its functionality and public behavior.
+
+Avoid:
+
+- Duplicate components.
+- Duplicate financial calculations.
+- Unnecessary state duplication.
+- Breaking existing imports.
+- Destructive localStorage migrations.
+- Unnecessary package additions.
+- Unnecessary dependency upgrades.
+- Unrelated refactoring.
+
+Preserve the existing coding conventions where practical.
+
+Use semantic, accessible controls.
+
+Ensure keyboard navigation works.
+
+Ensure forms have appropriate labels and validation feedback.
+
+---
+
+PART 13 — REQUIRED TESTING
+
+A visually attractive interface is not a successful redesign if functionality breaks.
+
+Testing is mandatory.
+
+13.1 Feature preservation tests
+
+Use the Phase Zero feature inventory.
+
+For EVERY identified feature:
+
+- Confirm it still exists.
+- Confirm its new location.
+- Confirm its access path.
+- Confirm its primary interaction works.
+- Confirm its data dependencies remain intact.
+- Confirm its responsive presentation.
+
+No feature may be marked preserved merely because a visual placeholder exists.
+
+13.2 Financial regression tests
+
+Validate:
+
+- Budget calculations.
+- Spent amounts.
+- Remaining amounts.
+- Utilization percentages.
+- Spending pace.
+- Projection reliability.
+- Category limits.
+- Expense splits.
+- Settlement balances.
+- Transaction editing.
+- Data persistence.
+- Data import/export.
+
+Use the existing test suite and realistic edge cases.
+
+Do not weaken or delete tests to achieve a passing result.
+
+13.3 Theme regression tests
+
+Test the redesigned application using the existing theme and appearance settings.
+
+Verify:
+
+- Theme switching.
+- Accent customization.
+- Preset selection.
+- Theme persistence.
+- Appearance settings.
+- All redesigned modules.
+- AETHER presentation.
+
+Do not test only one theme.
+
+13.4 Interaction regression tests
+
+Verify:
+
+- Every navigation destination.
+- Every tab.
+- Every submenu.
+- Every modal.
+- Every drawer.
+- Every expandable section.
+- Every existing action button.
+- Search.
+- Filters.
+- Forms.
+- Cart operations.
+- Ledger operations.
+- Receipt scanning.
+- Data import/export.
+- AETHER interactions.
+
+13.5 Responsive regression tests
+
+Test the desktop, tablet and mobile sizes specified earlier.
+
+Record actual results.
+
+Do not claim a responsive test passed merely because the page loaded.
+
+Inspect clipping, overlapping, horizontal overflow, unusable touch controls and hidden functionality.
+
+13.6 Build verification
+
+Run:
+
+- Existing automated tests.
+- TypeScript checks.
+- Production build.
+- Existing browser or end-to-end tests, where available.
+
+Fix regressions introduced by your changes.
+
+Report pre-existing failures separately.
+
+---
+
+PART 14 — IMPLEMENTATION STRATEGY
+
+Do not attempt a superficial one-pass makeover.
+
+Work in controlled implementation stages.
+
+Stage 0 — Audit and mapping
+
+Inspect the repository and establish the complete feature inventory.
+
+Stage 1 — Shared layout improvements
+
+Implement consistent spacing, page hierarchy, typography usage and component composition using the existing theme system.
+
+Stage 2 — Overview transformation
+
+Redesign the financial snapshot, budget health, AETHER placement, financial intelligence and recent activity.
+
+Stage 3 — Global navigation
+
+Improve navigation hierarchy without deleting destinations.
+
+Stage 4 — QuickMart and Shopping
+
+Improve product discovery, cart presentation and secondary feature organization.
+
+Stage 5 — Insights
+
+Improve analytics navigation, charts and intelligence presentation.
+
+Stage 6 — Expenses and Ledger
+
+Improve transaction readability, balances and settlement workflows.
+
+Stage 7 — Financial Wellness and War Room
+
+Improve information hierarchy and control organization.
+
+Stage 8 — Settings and responsive refinement
+
+Improve discoverability where needed while preserving all settings and customization capabilities.
+
+Stage 9 — Regression and final polish
+
+Run the full preservation, financial, theme, interaction and responsive test suite.
+
+Do not declare completion until the acceptance criteria are met.
+
+---
+
+PART 15 — VISUAL EVIDENCE REQUIRED
+
+Generate actual screenshots from the running application.
+
+Do not use mockups as evidence of implementation.
+
+Capture:
+
+1. Overview desktop.
+2. Overview mobile.
+3. AETHER desktop.
+4. AETHER mobile.
+5. QuickMart desktop.
+6. QuickMart mobile.
+7. Insights.
+8. Expenses.
+9. Ledger.
+10. Financial Wellness.
+11. War Room.
+12. Settings.
+13. Existing light theme.
+14. Existing dark theme.
+15. At least one existing customized accent-color configuration.
+
+Compare the redesigned interface against the original video and repository state.
+
+Screenshots must show the real application and actual working components.
+
+---
+
+PART 16 — FINAL ACCEPTANCE CRITERIA
+
+The task is complete only when all of the following are true:
+
+- Every existing feature has been inventoried.
+- Every existing feature has been mapped to its new location.
+- No feature has been intentionally removed.
+- All existing financial workflows still work.
+- Financial calculations remain intact.
+- Existing themes and customization settings remain intact.
+- AETHER retains its completed implementation.
+- AETHER has an independent section on Overview.
+- Overview communicates the user's financial position immediately.
+- All major modules have improved information hierarchy.
+- Navigation remains complete.
+- Desktop and mobile experiences are usable.
+- No significant responsive regressions remain.
+- Tests pass, or any pre-existing failures are clearly documented.
+- TypeScript checks pass.
+- Production build succeeds.
+- Real screenshots demonstrate the redesign.
+
+---
+
+PART 17 — FINAL REPORT
+
+At completion, provide a detailed report containing:
+
+1. Complete feature inventory summary.
+2. Exact files created.
+3. Exact files modified.
+4. Exact files deleted, if any, with justification and explicit confirmation that no feature was removed.
+5. Overview changes.
+6. AETHER placement changes.
+7. Shopping changes.
+8. Insights changes.
+9. Expenses and Ledger changes.
+10. Financial Wellness and War Room changes.
+11. Settings changes.
+12. Navigation changes.
+13. Responsive changes.
+14. Theme preservation results.
+15. Financial regression results.
+16. Interaction regression results.
+17. Test results.
+18. Build results.
+19. Screenshot locations.
+20. Known limitations.
+21. Any features that could not be verified.
+
+Do not use vague claims such as "the UI is now premium" without evidence.
+
+Explain what actually changed and how it improved usability.
+
+---
+
+FINAL DIRECTIVE
+
+I want CartAudit to feel like a premium, mature, professionally designed financial product.
+
+I do not want a new application.
+
+I do not want a simplified version of my application.
+
+I do not want features sacrificed for aesthetics.
+
+I do not want another superficial makeover that only changes colors, backgrounds, border radii or shadows.
+
+I want the same powerful application, with the same capabilities, the same financial engine, the same theme customization and the same AETHER experience — but with a dramatically better interface.
+
+REDUCE CLUTTER, NOT CAPABILITY.
+
+IMPROVE DISCOVERABILITY, NOT REMOVE FEATURES.
+
+REORGANIZE THE EXPERIENCE, NOT REBUILD THE PRODUCT.
+
+Start with the complete audit. Then implement the redesign systematically.
+
+Do not skip the audit, do not assume features are unused, and do not declare success without testing the existing workflows.

@@ -601,14 +601,14 @@ export function ReceiptUploader() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
             <ScanLine className="w-4 h-4" strokeWidth={2.25} />
           </div>
           <div>
-            <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+            <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
               Receipt Vision Scanner
             </h3>
-            <p className="text-xs text-[#697386]">
+            <p className="text-[12px] text-[var(--text-secondary)]">
               Upload screenshot or paste text to extract items and hidden fees
             </p>
           </div>
@@ -617,7 +617,7 @@ export function ReceiptUploader() {
           <button
             type="button"
             onClick={handleTrySample}
-            className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] bg-[#EDF2FF] hover:bg-[#DFE8FF] px-2.5 py-1.5 rounded-lg border border-[#D4E0FF] transition-colors flex items-center gap-1"
+            className="text-[12px] font-semibold text-[var(--accent-ink)] bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] px-2.5 py-1.5 rounded-lg border border-[var(--accent-border)] transition-colors flex items-center gap-1"
           >
             <Sparkles className="w-3.5 h-3.5" strokeWidth={2.25} />
             Sample
@@ -625,10 +625,10 @@ export function ReceiptUploader() {
           <button
             type="button"
             onClick={() => setShowPasteBox(!showPasteBox)}
-            className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
+            className={`text-[12px] font-semibold px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
               showPasteBox
-                ? 'bg-[#365FE8] text-white border-[#365FE8]'
-                : 'bg-[#FFFFFF] text-[#697386] hover:text-[#151922] border-[#E7EAF0] hover:bg-[#F7F8FA]'
+                ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]'
+                : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-subtle)] hover:bg-[var(--bg-subtle)]'
             }`}
           >
             <ClipboardPaste className="w-3.5 h-3.5" strokeWidth={2.25} />
@@ -657,21 +657,21 @@ export function ReceiptUploader() {
         onClick={() => fileInputRef.current?.click()}
         className={`w-full cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all ${
           dragOver
-            ? 'border-[#365FE8] bg-[#EDF2FF]'
-            : 'border-[#D5DBE6] hover:border-[#365FE8] bg-[#F7F8FA] hover:bg-[#F1F5FF]'
+            ? 'border-[var(--accent-primary)] bg-[var(--accent-primary-soft)]'
+            : 'border-[var(--border-strong)] hover:border-[var(--accent-primary)] bg-[var(--bg-well)] hover:bg-[var(--bg-subtle)]'
         }`}
       >
         {isScanning ? (
           <div className="flex flex-col items-center gap-2.5">
             <div className="relative">
-              <Loader2 className="w-10 h-10 text-[#365FE8] animate-spin" strokeWidth={2} />
+              <Loader2 className="w-10 h-10 text-[var(--accent-ink)] animate-spin" strokeWidth={2} />
               <ScanLine
-                className="w-4 h-4 text-[#365FE8] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                className="w-4 h-4 text-[var(--accent-ink)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                 strokeWidth={2.5}
               />
             </div>
-            <p className="text-sm font-bold text-[#365FE8]">Scanning receipt...</p>
-            <p className="text-xs text-[#697386]">
+            <p className="text-sm font-bold text-[var(--accent-ink)]">Scanning receipt...</p>
+            <p className="text-[12px] text-[var(--text-secondary)]">
               {scanStatus || 'Extracting items, taxes & fees'}
             </p>
           </div>
@@ -681,17 +681,17 @@ export function ReceiptUploader() {
               <img
                 src={previewUrl}
                 alt="Uploaded receipt preview"
-                className="w-16 h-16 object-cover rounded-xl border border-[#E7EAF0]"
+                className="w-16 h-16 object-cover rounded-xl border border-[var(--border-subtle)]"
               />
             ) : (
-              <div className="w-12 h-12 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center">
-                <Upload className="w-5 h-5 text-[#365FE8]" strokeWidth={2.25} />
+              <div className="w-12 h-12 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center">
+                <Upload className="w-5 h-5 text-[var(--accent-ink)]" strokeWidth={2.25} />
               </div>
             )}
-            <p className="text-sm font-bold text-[#151922]">
+            <p className="text-sm font-bold text-[var(--text-primary)]">
               Upload or paste (Ctrl+V) receipt screenshot
             </p>
-            <p className="text-xs text-[#697386]" data-testid="scanner-ai-mode">
+            <p className="text-[12px] text-[var(--text-secondary)]" data-testid="scanner-ai-mode">
               {aiVisionConfigured === false
                 ? 'Offline Browser OCR + Text Parse ready'
                 : 'AI Vision extraction · PNG, JPG, WebP, or TXT'}
@@ -709,12 +709,12 @@ export function ReceiptUploader() {
             value={receiptText}
             onChange={(e) => setReceiptText(e.target.value)}
             placeholder={`Paste receipt text here, e.g.\nBlinkit\nAmul Milk 500ml   ₹27\nHandling Charge   ₹15\nGST               ₹5`}
-            className="input-field w-full p-3 text-xs font-mono"
+            className="input-field w-full p-3 text-[12.5px] font-mono"
           />
           <button
             type="submit"
             disabled={!receiptText.trim()}
-            className="btn-primary w-full py-2.5 text-xs"
+            className="btn-primary w-full py-2.5 text-[12.5px]"
           >
             Parse Receipt Text
           </button>
@@ -723,7 +723,7 @@ export function ReceiptUploader() {
 
       {/* Notice Banner (e.g. offline OCR fallback info) */}
       {scanNotice && !scanError && (
-        <div className="rounded-xl px-3.5 py-2.5 bg-[#EDF2FF] border border-[#D4E0FF] text-xs font-medium text-[#294FCC]">
+        <div className="rounded-xl px-3.5 py-2.5 bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[12px] font-medium text-[var(--accent-ink)]">
           {scanNotice}
         </div>
       )}
@@ -732,20 +732,20 @@ export function ReceiptUploader() {
       {scanError && (
         <div
           role="alert"
-          className="rounded-xl p-3.5 bg-[#FEF6E7] border border-[#F3D8A8] space-y-2.5"
+          className="rounded-xl p-3.5 bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] space-y-2.5"
         >
           <div className="flex items-start gap-2">
             <AlertCircle
-              className="w-4 h-4 text-[#9E6614] shrink-0 mt-0.5"
+              className="w-4 h-4 text-[var(--accent-warning-ink)] shrink-0 mt-0.5"
               strokeWidth={2.25}
             />
-            <p className="text-xs text-[#7D4F0C] leading-relaxed">{scanError}</p>
+            <p className="text-[12px] text-[var(--accent-warning-ink)] leading-relaxed">{scanError}</p>
           </div>
           {lastImageFile && !isScanning && (
             <button
               type="button"
               onClick={handleOfflineOcr}
-              className="btn-secondary w-full py-2 text-xs flex items-center justify-center gap-1.5"
+              className="btn-secondary w-full py-2 text-[12.5px] flex items-center justify-center gap-1.5"
             >
               <Cpu className="w-3.5 h-3.5" strokeWidth={2.25} />
               Try Offline Browser OCR Instead
@@ -758,13 +758,13 @@ export function ReceiptUploader() {
       {parsedReceipts.length > 0 && (
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-[#697386] uppercase tracking-wider">
+            <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
               {parsedReceipts.length} parsed receipt{parsedReceipts.length > 1 ? 's' : ''}
             </p>
             <button
               type="button"
               onClick={clearParsedReceipts}
-              className="text-xs font-semibold text-[#697386] hover:text-[#DE5252] transition-colors flex items-center gap-1"
+              className="text-[12px] font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] transition-colors flex items-center gap-1"
             >
               <Trash2 className="w-3.5 h-3.5" strokeWidth={2.25} />
               Clear
@@ -797,10 +797,10 @@ export function ReceiptUploader() {
             const shouldSaveNew = saveNewToCatalog[idx] ?? true;
 
             return (
-              <div key={idx} className="surface-subtle p-4 space-y-3.5">
+              <div key={idx} className="surface-well border border-[var(--border-subtle)] p-4 space-y-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#E7EAF0] text-[#365FE8] flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--accent-ink)] flex items-center justify-center shrink-0">
                       <Receipt className="w-4 h-4" strokeWidth={2.25} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -812,14 +812,14 @@ export function ReceiptUploader() {
                             handleReceiptMetaChange(idx, { merchant: e.target.value })
                           }
                           aria-label="Receipt merchant name"
-                          className="input-field w-full max-w-[260px] px-2 py-0.5 text-sm font-bold text-[#151922]"
+                          className="input-field w-full max-w-[260px] px-2 py-0.5 text-sm font-bold text-[var(--text-primary)]"
                         />
                       ) : (
-                        <p className="text-sm font-bold text-[#151922] truncate">
+                        <p className="text-sm font-bold text-[var(--text-primary)] truncate">
                           {receipt.merchant}
                         </p>
                       )}
-                      <p className="text-[11px] text-[#697386] font-medium mt-0.5">
+                      <p className="text-[12px] text-[var(--text-secondary)] font-medium mt-0.5">
                         {new Date(receipt.date).toLocaleDateString('en-IN', {
                           month: 'short',
                           day: 'numeric',
@@ -831,17 +831,17 @@ export function ReceiptUploader() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+                    <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                       Total
                     </p>
-                    <p className="text-base font-bold font-mono tabular-nums text-[#151922]">
+                    <p className="text-base font-bold font-mono tabular-nums text-[var(--text-primary)]">
                       ₹{formatCurrency(receipt.total)}
                     </p>
                   </div>
                 </div>
 
                 {/* Parsed Items with Detected Category, Unit & Catalog Match */}
-                <div className="bg-[#FFFFFF] rounded-xl border border-[#E7EAF0] p-3 space-y-2.5">
+                <div className="border-t border-[var(--border-subtle)] pt-2.5 space-y-2.5">
                   {receipt.items.map((item, iIdx) => {
                     const rowKey = `${idx}-${iIdx}`;
                     const inCatalog = itemMatchStatus[iIdx];
@@ -855,14 +855,14 @@ export function ReceiptUploader() {
                     return (
                       <div
                         key={iIdx}
-                        className="pb-2 last:pb-0 border-b last:border-b-0 border-[#F1F3F7] space-y-1.5"
+                        className="pb-2 last:pb-0 border-b last:border-b-0 border-[var(--border-subtle)] space-y-1.5"
                       >
-                        <div className="flex items-center justify-between text-xs gap-2">
-                          <span className="text-[#151922] truncate font-medium">
+                        <div className="flex items-center justify-between text-[12.5px] gap-2">
+                          <span className="text-[var(--text-primary)] truncate font-medium">
                             {item.name}
                           </span>
                           <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[#151922] font-semibold font-mono tabular-nums">
+                            <span className="text-[var(--text-primary)] font-semibold font-mono tabular-nums">
                               ₹{formatCurrency(item.price)}
                             </span>
                             {!alreadyRecorded && receipt.items.length > 1 && (
@@ -871,32 +871,32 @@ export function ReceiptUploader() {
                                 onClick={() => handleRemoveParsedItem(idx, iIdx)}
                                 aria-label={`Remove ${item.name}`}
                                 title="Remove misread item"
-                                className="p-0.5 rounded text-[#929BAB] hover:text-[#DE5252] hover:bg-[#FDECEC] transition-colors"
+                                className="p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--accent-danger-ink)] hover:bg-[var(--accent-danger-soft)] transition-colors"
                               >
-                                <X className="w-3 h-3" />
+                                <X className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap text-[12px]">
                             <span
-                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border ${
+                              className={`font-semibold ${
                                 inCatalog
-                                  ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                                  : 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
+                                  ? 'text-[var(--accent-success-ink)]'
+                                  : 'text-[var(--accent-ink)]'
                               }`}
                             >
                               {inCatalog ? 'In Catalog' : 'New Item'}
                             </span>
                             {item.unit && (
-                              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-[#F7F8FA] text-[#697386] border border-[#E7EAF0]">
-                                {item.unit}
+                              <span className="font-medium text-[var(--text-secondary)]">
+                                · {item.unit}
                               </span>
                             )}
                             {item.brand && (
-                              <span className="text-[10px] font-medium text-[#697386]">
-                                {item.brand}
+                              <span className="font-medium text-[var(--text-secondary)]">
+                                · {item.brand}
                               </span>
                             )}
                           </div>
@@ -913,7 +913,7 @@ export function ReceiptUploader() {
                                 handleItemCategoryChange(idx, iIdx, e.target.value);
                               }
                             }}
-                            className="text-[11px] font-medium text-[#151922] bg-[#F7F8FA] hover:bg-[#EFF2F7] border border-[#E7EAF0] rounded-lg px-2 py-1 max-w-[175px] truncate focus:outline-none focus:border-[#365FE8] disabled:opacity-70"
+                            className="input-field text-[12px] font-medium px-2 py-1 max-w-[180px] truncate disabled:opacity-70"
                           >
                             {categoryChoices.map((cat) => (
                               <option key={cat} value={cat}>
@@ -942,13 +942,13 @@ export function ReceiptUploader() {
                               placeholder="New category name"
                               aria-label="New category name"
                               autoFocus
-                              className="input-field flex-1 px-2.5 py-1 text-xs"
+                              className="input-field flex-1 px-2.5 py-1 text-[12px]"
                             />
                             <button
                               type="button"
                               onClick={() => handleConfirmNewCategory(idx, iIdx)}
                               disabled={!newCategoryDraft.trim()}
-                              className="px-2.5 py-1 rounded-lg bg-[#365FE8] text-white text-xs font-semibold hover:bg-[#294FCC] disabled:opacity-50 flex items-center gap-1"
+                              className="btn-primary px-2.5 py-1 text-[12px] disabled:opacity-50 flex items-center gap-1"
                             >
                               <Plus className="w-3 h-3" strokeWidth={2.5} />
                               Add
@@ -960,7 +960,7 @@ export function ReceiptUploader() {
                                 setNewCategoryDraft('');
                               }}
                               aria-label="Cancel new category"
-                              className="p-1 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-[#F7F8FA]"
+                              className="p-1 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -972,7 +972,7 @@ export function ReceiptUploader() {
 
                   {!alreadyRecorded &&
                     (addingItemForReceipt === idx ? (
-                      <div className="pt-2 border-t border-[#F1F3F7] space-y-2">
+                      <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                           <input
                             type="text"
@@ -988,7 +988,7 @@ export function ReceiptUploader() {
                                 );
                               }
                             }}
-                            className="input-field sm:col-span-2 px-2.5 py-1.5 text-xs"
+                            className="input-field sm:col-span-2 px-2.5 py-1.5 text-[12px]"
                           />
                           <input
                             type="number"
@@ -998,7 +998,7 @@ export function ReceiptUploader() {
                             aria-label="Missing item price"
                             value={draftItemPrice}
                             onChange={(e) => setDraftItemPrice(e.target.value)}
-                            className="input-field px-2.5 py-1.5 text-xs font-mono"
+                            className="input-field px-2.5 py-1.5 text-[12px] font-mono tabular-nums"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1006,7 +1006,7 @@ export function ReceiptUploader() {
                             aria-label="Missing item category"
                             value={draftItemCategory}
                             onChange={(e) => setDraftItemCategory(e.target.value)}
-                            className="input-field flex-1 px-2.5 py-1.5 text-xs"
+                            className="input-field flex-1 px-2.5 py-1.5 text-[12px]"
                           >
                             {categories.map((cat) => (
                               <option key={cat} value={cat}>
@@ -1018,7 +1018,7 @@ export function ReceiptUploader() {
                             type="button"
                             onClick={() => handleAddMissingItem(idx)}
                             disabled={!draftItemName.trim() || Number(draftItemPrice) <= 0}
-                            className="px-3 py-1.5 rounded-lg bg-[#365FE8] text-white text-xs font-semibold hover:bg-[#294FCC] disabled:opacity-50"
+                            className="btn-primary px-3 py-1.5 text-[12px] disabled:opacity-50"
                           >
                             Add Item
                           </button>
@@ -1029,7 +1029,7 @@ export function ReceiptUploader() {
                               setDraftItemName('');
                               setDraftItemPrice('');
                             }}
-                            className="px-2 py-1.5 rounded-lg text-xs text-[#697386] hover:bg-[#F7F8FA]"
+                            className="px-2 py-1.5 rounded-lg text-[12px] text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]"
                           >
                             Cancel
                           </button>
@@ -1044,7 +1044,7 @@ export function ReceiptUploader() {
                           setDraftItemPrice('');
                           setDraftItemCategory('Other Expenses');
                         }}
-                        className="w-full pt-1.5 text-[11px] font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center justify-center gap-1"
+                        className="w-full pt-1.5 text-[12px] font-semibold text-[var(--accent-ink)] hover:opacity-80 flex items-center justify-center gap-1"
                       >
                         <Plus className="w-3 h-3" strokeWidth={2.5} />
                         Add missing item to receipt
@@ -1053,19 +1053,19 @@ export function ReceiptUploader() {
                 </div>
 
                 {/* Summary Bar */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
-                    <p className="text-[10px] font-semibold uppercase text-[#697386]">
+                <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] border-y border-[var(--border-subtle)] py-2">
+                  <div className="px-2 text-center">
+                    <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                       Subtotal
                     </p>
-                    <p className="text-xs font-bold text-[#151922] font-mono tabular-nums mt-0.5">
+                    <p className="text-[12.5px] font-bold text-[var(--text-primary)] font-mono tabular-nums mt-0.5">
                       ₹{formatCurrency(receipt.subtotal)}
                     </p>
                   </div>
-                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                  <div className="px-2 text-center">
                     <label
                       htmlFor={`receipt-tax-${idx}`}
-                      className="block text-[10px] font-semibold uppercase text-[#697386]"
+                      className="block text-[12px] font-medium text-[var(--text-secondary)]"
                     >
                       Tax (₹)
                     </label>
@@ -1082,18 +1082,18 @@ export function ReceiptUploader() {
                             taxTotal: Number(e.target.value) || 0,
                           })
                         }
-                        className="input-field w-full px-1.5 py-0.5 text-center text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5"
+                        className="input-field w-full px-1.5 py-0.5 text-center text-[12.5px] font-bold text-[var(--accent-warning-ink)] font-mono tabular-nums mt-0.5"
                       />
                     ) : (
-                      <p className="text-xs font-bold text-[#9E6614] font-mono tabular-nums mt-0.5">
+                      <p className="text-[12.5px] font-bold text-[var(--accent-warning-ink)] font-mono tabular-nums mt-0.5">
                         ₹{formatCurrency(receipt.taxTotal)}
                       </p>
                     )}
                   </div>
-                  <div className="bg-[#FFFFFF] rounded-lg border border-[#E7EAF0] p-2 text-center">
+                  <div className="px-2 text-center">
                     <label
                       htmlFor={`receipt-fee-${idx}`}
-                      className="block text-[10px] font-semibold uppercase text-[#697386]"
+                      className="block text-[12px] font-medium text-[var(--text-secondary)]"
                     >
                       Fees (₹)
                     </label>
@@ -1110,10 +1110,10 @@ export function ReceiptUploader() {
                             deliveryFee: Number(e.target.value) || 0,
                           })
                         }
-                        className="input-field w-full px-1.5 py-0.5 text-center text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5"
+                        className="input-field w-full px-1.5 py-0.5 text-center text-[12.5px] font-bold text-[var(--accent-danger-ink)] font-mono tabular-nums mt-0.5"
                       />
                     ) : (
-                      <p className="text-xs font-bold text-[#DE5252] font-mono tabular-nums mt-0.5">
+                      <p className="text-[12.5px] font-bold text-[var(--accent-danger-ink)] font-mono tabular-nums mt-0.5">
                         ₹{formatCurrency(receipt.deliveryFee)}
                       </p>
                     )}
@@ -1123,7 +1123,7 @@ export function ReceiptUploader() {
                 {/* Save new items to catalog option + Action Buttons */}
                 <div className="space-y-2">
                   {!alreadyRecorded && newItemsCount > 0 && (
-                    <label className="flex items-center gap-2 px-1 py-0.5 text-xs text-[#151922] font-medium cursor-pointer select-none">
+                    <label className="flex items-center gap-2 px-1 py-0.5 text-[12px] text-[var(--text-primary)] font-medium cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={shouldSaveNew}
@@ -1133,7 +1133,7 @@ export function ReceiptUploader() {
                             [idx]: e.target.checked,
                           }))
                         }
-                        className="w-3.5 h-3.5 rounded border-[#D5DBE6] text-[#365FE8] focus:ring-[#365FE8]"
+                        className="w-3.5 h-3.5 rounded border-[var(--border-strong)] accent-[var(--accent-primary)]"
                       />
                       <span>
                         Add {newItemsCount} new item{newItemsCount > 1 ? 's' : ''} to Quick Mart
@@ -1176,10 +1176,10 @@ export function ReceiptUploader() {
                           : res.error || 'Already recorded',
                       });
                     }}
-                    className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border ${
+                    className={`w-full py-2.5 px-3 rounded-xl text-[12.5px] font-bold transition-colors flex items-center justify-center gap-1.5 border ${
                       alreadyRecorded
-                        ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3] cursor-default'
-                        : 'bg-[#365FE8] hover:bg-[#294FCC] text-white border-[#365FE8]'
+                        ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)] cursor-default'
+                        : 'btn-primary border-transparent'
                     }`}
                   >
                     {alreadyRecorded ? (
@@ -1197,8 +1197,8 @@ export function ReceiptUploader() {
 
                   {recordFeedback?.idx === idx && (
                     <p
-                      className={`text-xs font-semibold px-1 ${
-                        recordFeedback.ok ? 'text-[#15966B]' : 'text-[#9E6614]'
+                      className={`text-[12px] font-semibold px-1 ${
+                        recordFeedback.ok ? 'text-[var(--accent-success-ink)]' : 'text-[var(--accent-warning-ink)]'
                       }`}
                     >
                       {recordFeedback.message}
@@ -1210,9 +1210,9 @@ export function ReceiptUploader() {
                       type="button"
                       disabled={receipt.items.length === 0}
                       onClick={() => handleImportReceiptToCart(idx)}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
+                      className={`flex-1 py-2 px-3 rounded-xl text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
                         importedIdx === idx
-                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+                          ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
                           : 'btn-secondary'
                       }`}
                     >
@@ -1231,10 +1231,10 @@ export function ReceiptUploader() {
                     <button
                       type="button"
                       onClick={() => handleSaveAudit(idx)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
+                      className={`px-3.5 py-2 rounded-xl text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
                         savedIdx === idx
-                          ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                          : 'bg-[#FFFFFF] hover:bg-[#F7F8FA] text-[#151922] border-[#E7EAF0]'
+                          ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
+                          : 'btn-secondary'
                       }`}
                     >
                       {savedIdx === idx ? (

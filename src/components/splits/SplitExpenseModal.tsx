@@ -322,23 +322,23 @@ export function SplitExpenseModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#151922]/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[var(--backdrop-scrim)] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="split-modal-title"
     >
-      <div className="w-full sm:max-w-lg max-h-[92vh] overflow-y-auto scrollbar-thin bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl p-5 shadow-xl">
+      <div className="modal-panel w-full sm:max-w-lg max-h-[92vh] overflow-y-auto scrollbar-thin rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center">
-              <Split className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center">
+              <Split className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
             </div>
             <div>
-              <h3 id="split-modal-title" className="text-base font-bold text-[#151922]">
+              <h3 id="split-modal-title" className="font-display text-base font-bold text-[var(--text-primary)]">
                 {title}
               </h3>
-              <p className="text-xs text-[#697386]">
+              <p className="text-[12px] text-[var(--text-secondary)]">
                 {mode === 'mart'
                   ? 'Your budget only counts your personal share'
                   : 'Track personal or multi-person shared expenses'}
@@ -349,7 +349,7 @@ export function SplitExpenseModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-8 h-8 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] transition-colors"
+            className="w-8 h-8 rounded-xl bg-[var(--bg-well)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             <X className="w-4 h-4" strokeWidth={2.2} />
           </button>
@@ -360,7 +360,7 @@ export function SplitExpenseModal({
           <div>
             <label
               htmlFor="expense-name-input"
-              className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
+              className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1.5"
             >
               Expense Name
             </label>
@@ -380,12 +380,12 @@ export function SplitExpenseModal({
             <div>
               <label
                 htmlFor="expense-amount-input"
-                className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
+                className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1.5"
               >
                 Total Amount
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[#697386]">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[var(--text-secondary)]">
                   ₹
                 </span>
                 <input
@@ -399,7 +399,7 @@ export function SplitExpenseModal({
                   onChange={(e) => setAmountInput(e.target.value)}
                   placeholder="0.00"
                   className={`input-field w-full pl-7 pr-3 py-2.5 text-sm font-mono font-bold ${
-                    mode === 'mart' ? 'opacity-80 cursor-not-allowed bg-[#F7F8FA]' : ''
+                    mode === 'mart' ? 'opacity-80 cursor-not-allowed bg-[var(--bg-well)]' : ''
                   }`}
                 />
               </div>
@@ -408,9 +408,9 @@ export function SplitExpenseModal({
             <div>
               <label
                 htmlFor="expense-date-input"
-                className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
+                className="flex items-center gap-1 text-[12px] font-medium text-[var(--text-secondary)] mb-1.5"
               >
-                <Calendar className="w-3 h-3" />
+                <Calendar className="w-3.5 h-3.5" />
                 Date
               </label>
               <input
@@ -426,9 +426,9 @@ export function SplitExpenseModal({
             <div>
               <label
                 htmlFor="expense-category-select"
-                className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
+                className="flex items-center gap-1 text-[12px] font-medium text-[var(--text-secondary)] mb-1.5"
               >
-                <Tag className="w-3 h-3" />
+                <Tag className="w-3.5 h-3.5" />
                 Category
               </label>
               <select
@@ -448,12 +448,12 @@ export function SplitExpenseModal({
 
           {/* Optional Split Expense Toggle */}
           {mode !== 'edit' && mode !== 'convert' && (
-            <div className="flex items-center justify-between bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl px-3.5 py-2.5">
+            <div className="surface-well flex items-center justify-between px-3.5 py-2.5">
               <div className="flex items-center gap-2.5">
-                <Users className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+                <Users className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
                 <div>
-                  <p className="text-xs font-bold text-[#151922]">Split Expense</p>
-                  <p className="text-[11px] text-[#697386]">
+                  <p className="text-[13px] font-bold text-[var(--text-primary)]">Split Expense</p>
+                  <p className="text-[12px] text-[var(--text-secondary)]">
                     Share this cost with one or more people
                   </p>
                 </div>
@@ -465,7 +465,7 @@ export function SplitExpenseModal({
                 aria-label="Split Expense"
                 onClick={() => setSplitEnabled((v) => !v)}
                 className={`w-11 h-6 rounded-full transition-colors p-0.5 ${
-                  splitEnabled ? 'bg-[#365FE8]' : 'bg-[#D5DBE6]'
+                  splitEnabled ? 'bg-[var(--accent-primary)]' : 'bg-[var(--border-strong)]'
                 }`}
               >
                 <span
@@ -484,7 +484,7 @@ export function SplitExpenseModal({
               <div>
                 <label
                   htmlFor="paid-by-select"
-                  className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5"
+                  className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1.5"
                 >
                   Who Paid
                 </label>
@@ -512,13 +512,13 @@ export function SplitExpenseModal({
               {/* Participants + Inline Add Person */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                  <span className="text-[12px] font-medium text-[var(--text-secondary)]">
                     Participants ({selectedIds.length} selected)
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowNewPerson((v) => !v)}
-                    className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1"
+                    className="text-[12.5px] font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1"
                   >
                     <UserPlus className="w-3.5 h-3.5" strokeWidth={2.2} />
                     {showNewPerson ? 'Cancel' : 'Add Person'}
@@ -526,7 +526,7 @@ export function SplitExpenseModal({
                 </div>
 
                 {showNewPerson && (
-                  <div className="bg-[#EDF2FF] border border-[#D4E0FF] rounded-xl p-3 mb-2.5 space-y-2">
+                  <div className="bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] rounded-xl p-3 mb-2.5 space-y-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <input
                         type="text"
@@ -534,7 +534,7 @@ export function SplitExpenseModal({
                         placeholder="Name (required)"
                         value={newPersonName}
                         onChange={(e) => setNewPersonName(e.target.value)}
-                        className="input-field px-3 py-2 text-xs"
+                        className="input-field px-3 py-2 text-[12.5px]"
                       />
                       <input
                         type="text"
@@ -542,16 +542,16 @@ export function SplitExpenseModal({
                         placeholder="Phone or email (optional)"
                         value={newPersonContact}
                         onChange={(e) => setNewPersonContact(e.target.value)}
-                        className="input-field px-3 py-2 text-xs"
+                        className="input-field px-3 py-2 text-[12.5px]"
                       />
                     </div>
                     {personError && (
-                      <p className="text-xs text-[#DE5252] font-medium">{personError}</p>
+                      <p className="text-[12px] text-[var(--accent-danger-ink)] font-medium">{personError}</p>
                     )}
                     <button
                       type="button"
                       onClick={handleQuickAddPerson}
-                      className="btn-primary w-full py-2 text-xs"
+                      className="btn-primary w-full py-2 text-[12.5px]"
                     >
                       Save Person &amp; Add to Split
                     </button>
@@ -563,14 +563,14 @@ export function SplitExpenseModal({
                     type="button"
                     onClick={() => toggleParticipant(SELF_PERSON_ID)}
                     aria-pressed={selectedIds.includes(SELF_PERSON_ID)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-xl text-[12.5px] font-semibold border transition-colors flex items-center gap-1.5 ${
                       selectedIds.includes(SELF_PERSON_ID)
-                        ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
-                        : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
+                        ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-border)]'
+                        : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {selectedIds.includes(SELF_PERSON_ID) && (
-                      <Check className="w-3 h-3" strokeWidth={2.5} />
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                     )}
                     You
                   </button>
@@ -583,13 +583,13 @@ export function SplitExpenseModal({
                         type="button"
                         onClick={() => toggleParticipant(person.id)}
                         aria-pressed={active}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-xl text-[12.5px] font-semibold border transition-colors flex items-center gap-1.5 ${
                           active
-                            ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
-                            : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
+                            ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-border)]'
+                            : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                         }`}
                       >
-                        {active && <Check className="w-3 h-3" strokeWidth={2.5} />}
+                        {active && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
                         {person.name}
                       </button>
                     );
@@ -597,7 +597,7 @@ export function SplitExpenseModal({
                 </div>
 
                 {people.length === 0 && !showNewPerson && (
-                  <p className="text-xs text-[#9E6614] mt-2">
+                  <p className="text-[12px] text-[var(--accent-warning-ink)] mt-2">
                     No people added yet. Click &ldquo;Add Person&rdquo; above to add friends or roommates.
                   </p>
                 )}
@@ -605,10 +605,10 @@ export function SplitExpenseModal({
 
               {/* Split Method Selector */}
               <div>
-                <span className="block text-[11px] font-semibold uppercase tracking-wider text-[#697386] mb-1.5">
+                <span className="block text-[12px] font-medium text-[var(--text-secondary)] mb-1.5">
                   Split Method
                 </span>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#F1F3F6] p-1 rounded-xl border border-[#E7EAF0]">
+                <div className="tactile-well grid grid-cols-3 gap-1.5 bg-[var(--bg-well)] p-1 rounded-xl border border-[var(--border-subtle)]">
                   {(
                     [
                       { id: 'equal', label: 'Equal' },
@@ -623,10 +623,10 @@ export function SplitExpenseModal({
                         type="button"
                         onClick={() => handleSwitchMethod(opt.id)}
                         aria-pressed={active}
-                        className={`py-2 px-2 rounded-lg text-xs font-semibold transition-colors ${
+                        className={`py-2 px-2 rounded-lg text-[12.5px] font-semibold transition-colors ${
                           active
-                            ? 'bg-[#365FE8] text-white shadow-xs'
-                            : 'text-[#697386] hover:text-[#151922]'
+                            ? 'bg-[var(--accent-primary)] text-white shadow-sm'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         {opt.label}
@@ -638,7 +638,7 @@ export function SplitExpenseModal({
 
               {/* Participant Share Breakdown */}
               {selectedIds.length > 0 && (
-                <div className="surface-subtle p-3 space-y-2">
+                <div className="surface-well p-3.5 space-y-2">
                   {selectedIds.map((id) => {
                     const computedShare =
                       splitValidation?.shares.find((s) => s.personId === id)?.amount ?? 0;
@@ -647,29 +647,28 @@ export function SplitExpenseModal({
                     return (
                       <div
                         key={id}
-                        className="flex items-center justify-between gap-3 py-1.5 border-b border-[#E7EAF0] last:border-b-0"
+                        className="flex items-center justify-between gap-3 py-1.5 border-b border-[var(--border-subtle)] last:border-b-0"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-2 h-2 rounded-full bg-[#365FE8] shrink-0" />
-                          <span className="text-xs font-bold text-[#151922] truncate">
+                          <span className="text-[13px] font-bold text-[var(--text-primary)] truncate">
                             {label}
                           </span>
                           {id === paidById && (
-                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#E8F7F1] text-[#15966B] border border-[#B7E4D3]">
-                              Paid
+                            <span className="text-[12px] font-semibold text-[var(--accent-success-ink)]">
+                              · Paid
                             </span>
                           )}
                         </div>
 
                         {splitMethod === 'equal' && (
-                          <span className="text-xs font-bold font-mono tabular-nums text-[#151922]">
+                          <span className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)]">
                             ₹{formatCurrencyExact(computedShare)}
                           </span>
                         )}
 
                         {splitMethod === 'custom' && (
                           <div className="relative w-28">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#697386]">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">
                               ₹
                             </span>
                             <input
@@ -685,14 +684,14 @@ export function SplitExpenseModal({
                                 }))
                               }
                               placeholder="0"
-                              className="input-field w-full pl-6 pr-2 py-1.5 text-xs font-mono font-bold text-right"
+                              className="input-field w-full pl-6 pr-2 py-1.5 text-[12.5px] font-mono font-bold text-right"
                             />
                           </div>
                         )}
 
                         {splitMethod === 'percentage' && (
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-mono text-[#697386] tabular-nums">
+                            <span className="text-[12px] font-mono text-[var(--text-secondary)] tabular-nums">
                               ₹{formatCurrencyExact(computedShare)}
                             </span>
                             <div className="relative w-20">
@@ -710,9 +709,9 @@ export function SplitExpenseModal({
                                   }))
                                 }
                                 placeholder="0"
-                                className="input-field w-full pl-2 pr-6 py-1.5 text-xs font-mono font-bold text-right"
+                                className="input-field w-full pl-2 pr-6 py-1.5 text-[12.5px] font-mono font-bold text-right"
                               />
-                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#697386]">
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[var(--text-secondary)]">
                                 %
                               </span>
                             </div>
@@ -726,7 +725,7 @@ export function SplitExpenseModal({
                   {splitValidation && !splitValidation.valid && (
                     <div
                       role="alert"
-                      className="flex items-center gap-2 text-xs font-semibold text-[#DE5252] bg-[#FDECEC] border border-[#F6B8B8] rounded-lg px-2.5 py-2 mt-2"
+                      className="flex items-center gap-2 text-[12.5px] font-semibold text-[var(--accent-danger-ink)] bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] rounded-lg px-2.5 py-2 mt-2"
                     >
                       <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={2.2} />
                       <span>{splitValidation.error}</span>
@@ -734,9 +733,9 @@ export function SplitExpenseModal({
                   )}
 
                   {splitValidation?.valid && (
-                    <div className="flex items-center justify-between text-xs pt-1 text-[#697386]">
+                    <div className="flex items-center justify-between text-[12.5px] pt-1 text-[var(--text-secondary)]">
                       <span>Your budget share:</span>
-                      <span className="font-mono font-bold text-[#15966B]">
+                      <span className="font-mono font-bold text-[var(--accent-success-ink)] tabular-nums">
                         ₹{formatCurrencyExact(userSharePreview)} of ₹
                         {formatCurrencyExact(totalAmount)}
                       </span>

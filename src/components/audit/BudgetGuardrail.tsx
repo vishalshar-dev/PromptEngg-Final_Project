@@ -42,12 +42,12 @@ export function BudgetGuardrail() {
 
   return (
     <div
-      className={`bg-white border rounded-2xl p-5 transition-colors ${
+      className={`surface-card p-5 transition-colors ${
         isOver
-          ? 'border-[#F6B8B8] bg-[#FDECEC]/40'
+          ? 'border-[var(--accent-danger-border)] bg-[var(--accent-danger-soft)]'
           : isWarning
-          ? 'border-[#F3D8A8] bg-[#FEF6E7]/40'
-          : 'border-[#E7EAF0]'
+          ? 'border-[var(--accent-warning-border)] bg-[var(--accent-warning-soft)]'
+          : ''
       }`}
     >
       <div className="flex items-center justify-between mb-4">
@@ -55,19 +55,19 @@ export function BudgetGuardrail() {
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
               isOver
-                ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+                ? 'bg-[var(--bg-surface)] border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
                 : isWarning
-                ? 'bg-[#FEF6E7] border-[#F3D8A8] text-[#C7851F]'
-                : 'bg-[#EDF2FF] border-[#D4E0FF] text-[#365FE8]'
+                ? 'bg-[var(--bg-surface)] border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)]'
+                : 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
             }`}
           >
             <Gauge className="w-4 h-4" strokeWidth={2.1} />
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold text-[#151922] tracking-tight">
+            <h3 className="font-display text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">
               Session Budget Guardrail
             </h3>
-            <p className="text-[12px] text-[#697386]">
+            <p className="text-[12px] text-[var(--text-secondary)]">
               Set a hard spending cap for your active cart
             </p>
           </div>
@@ -80,7 +80,7 @@ export function BudgetGuardrail() {
               setIsEditing(true);
             }}
             aria-label="Edit session budget guardrail"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#697386] hover:text-[#151922] hover:bg-[#F1F3F6] transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] transition-colors"
           >
             <Pencil className="w-3.5 h-3.5" strokeWidth={2.1} />
           </button>
@@ -90,7 +90,7 @@ export function BudgetGuardrail() {
       {isEditing || !isActive ? (
         <div className="space-y-3">
           <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-[#697386]">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] font-semibold text-[var(--text-secondary)]">
               ₹
             </span>
             <input
@@ -128,24 +128,24 @@ export function BudgetGuardrail() {
         <div className="space-y-3.5">
           <div className="flex items-baseline justify-between">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Session Limit
               </p>
-              <p className="text-[20px] font-bold font-mono tabular-nums text-[#151922] mt-0.5">
+              <p className="text-[20px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5">
                 ₹{formatCurrency(sessionBudget!)}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Cart Total
               </p>
               <p
                 className={`text-[20px] font-bold font-mono tabular-nums mt-0.5 ${
                   isOver
-                    ? 'text-[#DE5252]'
+                    ? 'text-[var(--accent-danger-ink)]'
                     : isWarning
-                    ? 'text-[#C7851F]'
-                    : 'text-[#15966B]'
+                    ? 'text-[var(--accent-warning-ink)]'
+                    : 'text-[var(--accent-success-ink)]'
                 }`}
               >
                 ₹{formatCurrency(cartTotal)}
@@ -153,14 +153,14 @@ export function BudgetGuardrail() {
             </div>
           </div>
 
-          <div className="h-2 w-full bg-[#F1F3F6] rounded-full overflow-hidden">
+          <div className="h-2 w-full bg-[var(--bg-well)] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 isOver
-                  ? 'bg-[#DE5252]'
+                  ? 'bg-[var(--accent-danger)]'
                   : isWarning
-                  ? 'bg-[#C7851F]'
-                  : 'bg-[#15966B]'
+                  ? 'bg-[var(--accent-warning)]'
+                  : 'bg-[var(--accent-success)]'
               }`}
               style={{ width: `${usagePct}%` }}
             />
@@ -170,10 +170,10 @@ export function BudgetGuardrail() {
             <div
               className={`flex items-center gap-1.5 ${
                 isOver
-                  ? 'text-[#DE5252]'
+                  ? 'text-[var(--accent-danger-ink)]'
                   : isWarning
-                  ? 'text-[#C7851F]'
-                  : 'text-[#15966B]'
+                  ? 'text-[var(--accent-warning-ink)]'
+                  : 'text-[var(--accent-success-ink)]'
               }`}
             >
               {isOver ? (
@@ -181,7 +181,7 @@ export function BudgetGuardrail() {
               ) : (
                 <Check className="w-4 h-4 shrink-0" strokeWidth={2.1} />
               )}
-              <span className="text-[12.5px] font-semibold">
+              <span className="text-[12.5px] font-semibold tabular-nums">
                 {isOver
                   ? `OVER LIMIT by ₹${formatCurrency(cartTotal - sessionBudget!)}`
                   : isWarning
@@ -192,10 +192,10 @@ export function BudgetGuardrail() {
             <span
               className={`text-[12px] font-semibold font-mono tabular-nums ${
                 isOver
-                  ? 'text-[#DE5252]'
+                  ? 'text-[var(--accent-danger-ink)]'
                   : isWarning
-                  ? 'text-[#C7851F]'
-                  : 'text-[#15966B]'
+                  ? 'text-[var(--accent-warning-ink)]'
+                  : 'text-[var(--accent-success-ink)]'
               }`}
             >
               {Math.round(usagePct)}%

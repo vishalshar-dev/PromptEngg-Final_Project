@@ -8,10 +8,10 @@ interface ProgressBarProps {
 }
 
 const barColors: Record<NonNullable<ProgressBarProps['tone']>, string> = {
-  brand: 'bg-[#365FE8]',
-  success: 'bg-[#15966B]',
-  warning: 'bg-[#C7851F]',
-  danger: 'bg-[#DE5252]',
+  brand: 'bg-[var(--accent-primary)]',
+  success: 'bg-[var(--accent-success)]',
+  warning: 'bg-[var(--accent-warning)]',
+  danger: 'bg-[var(--accent-danger)]',
 };
 
 export function ProgressBar({
@@ -35,7 +35,7 @@ export function ProgressBar({
 
   return (
     <div
-      className={`relative w-full ${heightClass} rounded-full bg-[#F1F3F6] tactile-well overflow-hidden`}
+      className={`relative w-full ${heightClass} rounded-full bg-[var(--bg-well)] tactile-well overflow-hidden`}
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}
@@ -54,7 +54,7 @@ export function ProgressBar({
           style={{
             left: `${clampedMarker}%`,
             backgroundColor: 'var(--text-primary)',
-            opacity: 0.4,
+            opacity: 0.45,
           }}
         />
       )}

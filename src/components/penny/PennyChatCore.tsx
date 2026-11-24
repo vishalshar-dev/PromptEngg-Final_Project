@@ -782,7 +782,7 @@ export function PennyChatCore({
     <div className="flex flex-col h-full min-h-0 gap-3">
       {/* Unified Sleek Control Bar */}
       <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--border-subtle)] shrink-0">
-        <div className="flex items-center gap-1.5 min-w-0 text-[11.5px]">
+        <div className="flex items-center gap-1.5 min-w-0 text-xs">
           {aiConfigured !== null && (
             <span
               data-testid="penny-ai-status"
@@ -809,7 +809,7 @@ export function PennyChatCore({
               type="button"
               onClick={() => void refreshHealth()}
               disabled={isReconnecting}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap shrink-0 disabled:opacity-50"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap shrink-0 disabled:opacity-50"
               title={
                 cooldownSecs > 0
                   ? `Retry Live AI now (auto-resumes in ${cooldownSecs}s)`
@@ -852,7 +852,7 @@ export function PennyChatCore({
               }}
               aria-label="Clear Penny chat"
               title="New chat"
-              className="px-1.5 py-1 rounded-lg text-[11px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] inline-flex items-center gap-1 whitespace-nowrap transition-colors"
+              className="px-1.5 py-1 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] inline-flex items-center gap-1 whitespace-nowrap transition-colors"
             >
               <RotateCcw className="w-3 h-3" />
               {!compact && <span>New Chat</span>}
@@ -870,7 +870,7 @@ export function PennyChatCore({
               aria-pressed={mode === 'chat'}
               className={`${
                 compact ? 'px-2' : 'px-2.5'
-              } py-1 rounded-[9px] text-[11.5px] font-semibold whitespace-nowrap border transition-all ${
+              } py-1 rounded-[9px] text-xs font-semibold whitespace-nowrap border transition-all ${
                 mode === 'chat'
                   ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-subtle)] shadow-xs'
                   : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -884,7 +884,7 @@ export function PennyChatCore({
               aria-pressed={mode === 'quick_log'}
               className={`${
                 compact ? 'px-2' : 'px-2.5'
-              } py-1 rounded-[9px] text-[11.5px] font-semibold whitespace-nowrap border transition-all ${
+              } py-1 rounded-[9px] text-xs font-semibold whitespace-nowrap border transition-all ${
                 mode === 'quick_log'
                   ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-subtle)] shadow-xs'
                   : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -899,7 +899,7 @@ export function PennyChatCore({
       {/* Collapsible Tone Override Drawer */}
       {showVibePicker && (
         <div className="surface-subtle p-2.5 space-y-2 shrink-0">
-          <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--text-secondary)]">
+          <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
             <span className="font-medium">
               Adapts automatically ({pennyProfile.messageCount}{' '}
               {pennyProfile.messageCount === 1 ? 'chat' : 'chats'}). Override anytime:
@@ -929,9 +929,9 @@ export function PennyChatCore({
                       : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:border-[var(--border-strong)]'
                   }`}
                 >
-                  <p className="text-[11px] font-semibold leading-tight">{opt.label}</p>
+                  <p className="text-xs font-semibold leading-tight">{opt.label}</p>
                   <p
-                    className={`text-[10px] truncate mt-0.5 ${
+                    className={`text-xs truncate mt-0.5 ${
                       active ? 'text-white/80' : 'text-[var(--text-secondary)]'
                     }`}
                   >
@@ -980,7 +980,7 @@ export function PennyChatCore({
                   <div className="flex items-center gap-3">
                     <PennyEmblem size={compact ? 'md' : 'lg'} />
                     <div className="min-w-0">
-                      <h3 className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight leading-snug">
+                      <h3 className="text-[15px] font-bold font-display text-[var(--text-primary)] tracking-tight leading-snug">
                         Ask Penny anything about your money
                       </h3>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
@@ -993,7 +993,7 @@ export function PennyChatCore({
                   {compact && (
                     <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)]/70 py-2.5">
                       <div className="px-3 min-w-0">
-                        <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                        <p className="text-xs font-medium text-[var(--text-secondary)] truncate">
                           Remaining
                         </p>
                         <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
@@ -1004,7 +1004,7 @@ export function PennyChatCore({
                         </p>
                       </div>
                       <div className="px-3 min-w-0">
-                        <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                        <p className="text-xs font-medium text-[var(--text-secondary)] truncate">
                           Safe / Day
                         </p>
                         <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-0.5 truncate">
@@ -1012,7 +1012,7 @@ export function PennyChatCore({
                         </p>
                       </div>
                       <div className="px-3 min-w-0">
-                        <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                        <p className="text-xs font-medium text-[var(--text-secondary)] truncate">
                           Commitments
                         </p>
                         <p className="text-[13px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
@@ -1025,7 +1025,7 @@ export function PennyChatCore({
 
                 {/* Interactive 2x2 Prompt Cards */}
                 <div className="space-y-2">
-                  <p className="text-[11px] font-semibold text-[var(--text-muted)]">
+                  <p className="text-xs font-semibold text-[var(--text-muted)]">
                     Quick prompts
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1038,10 +1038,10 @@ export function PennyChatCore({
                         className="group rounded-xl p-2.5 border border-[var(--border-subtle)] bg-[var(--bg-surface)] hover:border-[var(--accent-border)] hover:bg-[var(--bg-hover)] transition-all text-left flex items-start justify-between gap-2"
                       >
                         <div className="min-w-0">
-                          <p className="text-[11.5px] font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-ink)] truncate transition-colors">
+                          <p className="text-xs font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-ink)] truncate transition-colors">
                             {item.title}
                           </p>
-                          <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 mt-0.5 leading-snug">
+                          <p className="text-xs text-[var(--text-secondary)] line-clamp-2 mt-0.5 leading-snug">
                             {item.prompt}
                           </p>
                         </div>
@@ -1080,7 +1080,7 @@ export function PennyChatCore({
                                     key={`${msg.id}-h-${idx}`}
                                     className="px-2 first:pl-0 last:pr-0 min-w-0"
                                   >
-                                    <p className="text-[10.5px] font-medium text-[var(--text-secondary)] truncate">
+                                    <p className="text-xs font-medium text-[var(--text-secondary)] truncate">
                                       {h.label}
                                     </p>
                                     <p className="text-xs font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
@@ -1111,7 +1111,7 @@ export function PennyChatCore({
                                           <p className="text-xs font-bold text-[var(--text-primary)] leading-snug">
                                             {act.title}
                                           </p>
-                                          <p className="text-[11.5px] text-[var(--text-secondary)] leading-snug mt-0.5">
+                                          <p className="text-xs text-[var(--text-secondary)] leading-snug mt-0.5">
                                             {act.summary}
                                           </p>
                                         </div>
@@ -1129,7 +1129,7 @@ export function PennyChatCore({
                                                 expense: { ...c.expense!, name: e.target.value },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            className="input-field px-2.5 py-1.5 text-xs"
                                           />
                                           <input
                                             type="number"
@@ -1146,7 +1146,7 @@ export function PennyChatCore({
                                                 },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px] font-mono tabular-nums"
+                                            className="input-field px-2.5 py-1.5 text-xs font-mono tabular-nums"
                                           />
                                           <select
                                             aria-label="Expense category"
@@ -1157,7 +1157,7 @@ export function PennyChatCore({
                                                 expense: { ...c.expense!, category: e.target.value },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            className="input-field px-2.5 py-1.5 text-xs"
                                           >
                                             {categories.map((c) => (
                                               <option key={c} value={c}>
@@ -1175,14 +1175,14 @@ export function PennyChatCore({
                                                 expense: { ...c.expense!, date: e.target.value },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            className="input-field px-2.5 py-1.5 text-xs"
                                           />
                                         </div>
                                       )}
 
                                       {isPending && draft.type === 'set_budget' && (
                                         <div className="pt-2 border-t border-[var(--border-subtle)]">
-                                          <label className="flex items-center gap-2 text-[11px] font-medium text-[var(--text-secondary)]">
+                                          <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
                                             <span>Monthly Budget (₹)</span>
                                             <input
                                               type="number"
@@ -1196,7 +1196,7 @@ export function PennyChatCore({
                                                   totalBudget: Number(e.target.value) || 0,
                                                 }))
                                               }
-                                              className="input-field w-28 px-2.5 py-1 text-[11.5px] font-mono tabular-nums"
+                                              className="input-field w-28 px-2.5 py-1 text-xs font-mono tabular-nums"
                                             />
                                           </label>
                                         </div>
@@ -1218,7 +1218,7 @@ export function PennyChatCore({
                                                   },
                                                 }))
                                               }
-                                              className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                              className="input-field px-2.5 py-1.5 text-xs"
                                             >
                                               {categories.map((c) => (
                                                 <option key={c} value={c}>
@@ -1241,7 +1241,7 @@ export function PennyChatCore({
                                                   },
                                                 }))
                                               }
-                                              className="input-field px-2.5 py-1.5 text-[11.5px] font-mono tabular-nums"
+                                              className="input-field px-2.5 py-1.5 text-xs font-mono tabular-nums"
                                             />
                                             <select
                                               aria-label="Category cap period"
@@ -1255,7 +1255,7 @@ export function PennyChatCore({
                                                   },
                                                 }))
                                               }
-                                              className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                              className="input-field px-2.5 py-1.5 text-xs"
                                             >
                                               <option value="daily">Daily</option>
                                               <option value="weekly">Weekly</option>
@@ -1276,7 +1276,7 @@ export function PennyChatCore({
                                                 split: { ...c.split!, name: e.target.value },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            className="input-field px-2.5 py-1.5 text-xs"
                                           />
                                           <input
                                             type="number"
@@ -1293,7 +1293,7 @@ export function PennyChatCore({
                                                 },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px] font-mono tabular-nums"
+                                            className="input-field px-2.5 py-1.5 text-xs font-mono tabular-nums"
                                           />
                                           <select
                                             aria-label="Split category"
@@ -1304,7 +1304,7 @@ export function PennyChatCore({
                                                 split: { ...c.split!, category: e.target.value },
                                               }))
                                             }
-                                            className="input-field px-2.5 py-1.5 text-[11.5px]"
+                                            className="input-field px-2.5 py-1.5 text-xs"
                                           >
                                             {categories.map((c) => (
                                               <option key={c} value={c}>
@@ -1316,12 +1316,12 @@ export function PennyChatCore({
                                       )}
 
                                       {act.status === 'applied' ? (
-                                        <div className="flex items-center gap-1.5 text-[11.5px] font-semibold text-[var(--accent-success-ink)]">
+                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--accent-success-ink)]">
                                           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                                           <span>{act.appliedMessage || 'Applied'}</span>
                                         </div>
                                       ) : act.status === 'dismissed' ? (
-                                        <p className="text-[11px] text-[var(--text-muted)] font-medium">
+                                        <p className="text-xs text-[var(--text-muted)] font-medium">
                                           Dismissed
                                         </p>
                                       ) : (
@@ -1329,7 +1329,7 @@ export function PennyChatCore({
                                           <button
                                             type="button"
                                             onClick={() => handleConfirmProposal(msg.id, act)}
-                                            className="btn-primary px-3 py-1.5 text-[11.5px] whitespace-nowrap"
+                                            className="btn-primary px-3 py-1.5 text-xs whitespace-nowrap"
                                           >
                                             <Check className="w-3.5 h-3.5" />
                                             <span>
@@ -1344,7 +1344,7 @@ export function PennyChatCore({
                                           <button
                                             type="button"
                                             onClick={() => handleDismissProposal(msg.id, act.id)}
-                                            className="btn-secondary px-2.5 py-1.5 text-[11.5px] whitespace-nowrap"
+                                            className="btn-secondary px-2.5 py-1.5 text-xs whitespace-nowrap"
                                           >
                                             <X className="w-3 h-3" />
                                             <span>Dismiss</span>
@@ -1359,7 +1359,7 @@ export function PennyChatCore({
                           </div>
 
                           {(msg.isLocalFallback || msg.id.startsWith('a-local-')) && (
-                            <div className="flex items-center gap-2 pl-0.5 text-[11px] text-[var(--text-muted)]">
+                            <div className="flex items-center gap-2 pl-0.5 text-xs text-[var(--text-muted)]">
                               <span>Answered via Local Engine</span>
                               <span aria-hidden="true">·</span>
                               <button
@@ -1392,7 +1392,7 @@ export function PennyChatCore({
                                     type="button"
                                     disabled={isAsking}
                                     onClick={() => void handleAskPenny(fq)}
-                                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--accent-ink)] hover:border-[var(--accent-border)] hover:bg-[var(--accent-primary-soft)] transition-colors text-left"
+                                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--accent-ink)] hover:border-[var(--accent-border)] hover:bg-[var(--accent-primary-soft)] transition-colors text-left"
                                   >
                                     {fq}
                                   </button>
@@ -1435,7 +1435,7 @@ export function PennyChatCore({
           {(chatVoice.isListening || chatVoice.voiceError) && (
             <div
               role={chatVoice.voiceError ? 'alert' : 'status'}
-              className={`rounded-xl px-3 py-1.5 text-[11.5px] flex items-center justify-between gap-2 shrink-0 ${
+              className={`rounded-xl px-3 py-1.5 text-xs flex items-center justify-between gap-2 shrink-0 ${
                 chatVoice.voiceError
                   ? 'bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
                   : 'bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)]'
@@ -1555,7 +1555,7 @@ export function PennyChatCore({
                       setQuickText(example);
                       setParseError(null);
                     }}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-ink)] border border-[var(--border-subtle)] transition-colors"
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-ink)] border border-[var(--border-subtle)] transition-colors"
                   >
                     {example}
                   </button>
@@ -1619,7 +1619,7 @@ export function PennyChatCore({
             {(quickVoice.isListening || quickVoice.voiceError) && (
               <div
                 role={quickVoice.voiceError ? 'alert' : 'status'}
-                className={`rounded-xl px-3 py-1.5 text-[11.5px] flex items-center justify-between gap-2 ${
+                className={`rounded-xl px-3 py-1.5 text-xs flex items-center justify-between gap-2 ${
                   quickVoice.voiceError
                     ? 'bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
                     : 'bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)]'
@@ -1687,7 +1687,7 @@ export function PennyChatCore({
                         <span className="text-[var(--text-muted)]" aria-hidden="true">
                           ·
                         </span>
-                        <span className="text-[11px] font-medium text-[var(--accent-warning-ink)]">
+                        <span className="text-xs font-medium text-[var(--accent-warning-ink)]">
                           Local instant parse
                         </span>
                       </>
@@ -1697,7 +1697,7 @@ export function PennyChatCore({
                     <button
                       type="button"
                       onClick={() => onNavigate('expenses')}
-                      className="text-[11px] font-semibold text-[var(--accent-ink)] hover:underline"
+                      className="text-xs font-semibold text-[var(--accent-ink)] hover:underline"
                     >
                       Split with {parsedDraft.splitPersonHint}
                     </button>
@@ -1706,7 +1706,7 @@ export function PennyChatCore({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       Title
                     </span>
                     <input
@@ -1719,7 +1719,7 @@ export function PennyChatCore({
                     />
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       Amount (₹)
                     </span>
                     <input
@@ -1737,7 +1737,7 @@ export function PennyChatCore({
                     />
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       Category
                     </span>
                     <select
@@ -1755,7 +1755,7 @@ export function PennyChatCore({
                     </select>
                   </label>
                   <label className="block space-y-1">
-                    <span className="text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       Date
                     </span>
                     <input

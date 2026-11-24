@@ -77,10 +77,10 @@ export function RadarOverviewTab({
   const isWarning =
     !overview.isOverMonthlyBudget && overview.budgetUtilisationPct >= 80;
   const statusColor = overview.isOverMonthlyBudget
-    ? '#DE5252'
+    ? 'var(--accent-danger)'
     : isWarning
-      ? '#E5A23B'
-      : '#15966B';
+      ? 'var(--accent-warning)'
+      : 'var(--accent-success)';
 
   const topCategories = categoriesResult.categories
     .filter((c) => c.totalSpent > 0)
@@ -89,18 +89,18 @@ export function RadarOverviewTab({
   return (
     <div className="space-y-4">
       {/* Subtle Inline Window Caption */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#697386] px-0.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-secondary)] px-0.5">
         <span className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 text-[#365FE8] shrink-0" />
+          <Calendar className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />
           <span>
-            Showing <strong className="text-[#151922]">{overview.window.label}</strong> · vs{' '}
-            <strong className="text-[#151922]">{overview.window.comparisonLabel}</strong>
+            Showing <strong className="text-[var(--text-primary)]">{overview.window.label}</strong> · vs{' '}
+            <strong className="text-[var(--text-primary)]">{overview.window.comparisonLabel}</strong>
           </span>
         </span>
       </div>
 
       {/* Single Hairline KPI Strip (4 core window metrics; budget target ring sits below) */}
-      <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+      <div className="surface-card grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-subtle)]">
         <OverviewKpiCell
           label="Total Expenditure"
           value={`₹${formatCurrencyExact(overview.totalSpent)}`}
@@ -137,29 +137,29 @@ export function RadarOverviewTab({
 
         <div className="p-4 sm:p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+            <span className="text-[12px] font-semibold text-[var(--text-secondary)]">
               Highest Category
             </span>
-            <PieChartIcon className="w-4 h-4 text-[#929BAB]" />
+            <PieChartIcon className="w-4 h-4 text-[var(--text-muted)]" />
           </div>
           {overview.highestCategory ? (
             <div className="mt-2">
-              <p className="text-lg font-bold text-[#151922] truncate">
+              <p className="text-lg font-bold text-[var(--text-primary)] truncate">
                 {overview.highestCategory.category}
               </p>
               <div className="flex items-center justify-between gap-2 mt-1 text-xs">
-                <span className="font-mono tabular-nums font-bold text-[#365FE8]">
+                <span className="font-mono tabular-nums font-bold text-[var(--accent-ink)]">
                   ₹{formatCurrencyExact(overview.highestCategory.amount)}
                 </span>
-                <span className="text-[#697386] font-mono tabular-nums">
+                <span className="text-[var(--text-secondary)] font-mono tabular-nums">
                   {overview.highestCategory.sharePct}% share
                 </span>
               </div>
             </div>
           ) : (
             <div className="mt-2">
-              <p className="text-base font-semibold text-[#697386]">No spending yet</p>
-              <p className="text-xs text-[#929BAB] mt-0.5">Select a wider range or add expenses</p>
+              <p className="text-base font-semibold text-[var(--text-secondary)]">No spending yet</p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">Select a wider range or add expenses</p>
             </div>
           )}
         </div>
@@ -171,12 +171,12 @@ export function RadarOverviewTab({
         <div className="lg:col-span-5 surface-card p-5 flex flex-col justify-between">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <p className="text-[12px] font-semibold text-[var(--text-secondary)]">
                 Monthly Budget Target
               </p>
               {editingBudget ? (
                 <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="text-xl font-bold font-mono text-[#365FE8]">₹</span>
+                  <span className="text-xl font-bold font-mono text-[var(--accent-ink)]">₹</span>
                   <input
                     ref={budgetInputRef}
                     type="number"
@@ -194,7 +194,7 @@ export function RadarOverviewTab({
                     type="button"
                     onClick={handleBudgetSave}
                     aria-label="Save monthly budget"
-                    className="w-8 h-8 bg-[#365FE8] hover:bg-[#294FCC] rounded-lg flex items-center justify-center text-white transition-colors"
+                    className="w-8 h-8 bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] rounded-lg flex items-center justify-center text-white transition-colors"
                   >
                     <Check className="w-4 h-4" strokeWidth={2.5} />
                   </button>
@@ -202,21 +202,21 @@ export function RadarOverviewTab({
                     type="button"
                     onClick={() => setEditingBudget(false)}
                     aria-label="Cancel editing monthly budget"
-                    className="w-8 h-8 bg-[#F1F3F6] hover:bg-[#E7EAF0] rounded-lg flex items-center justify-center text-[#697386] hover:text-[#151922] transition-colors"
+                    className="w-8 h-8 bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     <X className="w-4 h-4" strokeWidth={2.5} />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-2xl font-bold font-mono tabular-nums text-[#151922]">
+                  <p className="text-2xl font-bold font-mono tabular-nums text-[var(--text-primary)]">
                     ₹{formatCurrency(totalBudget)}
                   </p>
                   <button
                     type="button"
                     onClick={() => setEditingBudget(true)}
                     aria-label="Edit monthly budget"
-                    className="text-[#697386] hover:text-[#365FE8] transition-colors p-1 rounded-md hover:bg-[#F1F3F6]"
+                    className="text-[var(--text-secondary)] hover:text-[var(--accent-ink)] transition-colors p-1.5 rounded-lg hover:bg-[var(--bg-subtle)]"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
@@ -226,19 +226,19 @@ export function RadarOverviewTab({
             <span
               className={`inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 ${
                 overview.isOverMonthlyBudget
-                  ? 'text-[#DE5252]'
+                  ? 'text-[var(--accent-danger-ink)]'
                   : isWarning
-                    ? 'text-[#9E6614]'
-                    : 'text-[#15966B]'
+                    ? 'text-[var(--accent-warning-ink)]'
+                    : 'text-[var(--accent-success-ink)]'
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
                   overview.isOverMonthlyBudget
-                    ? 'bg-[#DE5252]'
+                    ? 'bg-[var(--accent-danger)]'
                     : isWarning
-                      ? 'bg-[#E5A23B]'
-                      : 'bg-[#15966B]'
+                      ? 'bg-[var(--accent-warning)]'
+                      : 'bg-[var(--accent-success)]'
                 }`}
                 aria-hidden="true"
               />
@@ -258,7 +258,7 @@ export function RadarOverviewTab({
                   cy="60"
                   r={radius}
                   fill="none"
-                  stroke="#E7EAF0"
+                  stroke="var(--border-subtle)"
                   strokeWidth="8"
                 />
                 <circle
@@ -275,12 +275,14 @@ export function RadarOverviewTab({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+                <p className="text-[11.5px] font-semibold text-[var(--text-secondary)]">
                   Month Used
                 </p>
                 <p
                   className={`text-2xl font-bold font-mono tabular-nums ${
-                    overview.isOverMonthlyBudget ? 'text-[#DE5252]' : 'text-[#151922]'
+                    overview.isOverMonthlyBudget
+                      ? 'text-[var(--accent-danger-ink)]'
+                      : 'text-[var(--text-primary)]'
                   }`}
                 >
                   {Math.round(overview.budgetUtilisationPct)}%
@@ -289,17 +291,19 @@ export function RadarOverviewTab({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#E7EAF0] space-y-2 text-xs">
+          <div className="pt-3 border-t border-[var(--border-subtle)] space-y-2 text-xs">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[#697386]">Spent vs Target</span>
-              <span className="font-mono tabular-nums font-bold text-[#151922]">
+              <span className="text-[var(--text-secondary)]">Spent vs Target</span>
+              <span className="font-mono tabular-nums font-bold text-[var(--text-primary)]">
                 ₹{formatCurrencyExact(overview.currentMonthSpent)} / ₹{formatCurrency(totalBudget)}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">
               <span
                 className={`font-mono tabular-nums font-semibold ${
-                  overview.isOverMonthlyBudget ? 'text-[#DE5252]' : 'text-[#15966B]'
+                  overview.isOverMonthlyBudget
+                    ? 'text-[var(--accent-danger-ink)]'
+                    : 'text-[var(--accent-success-ink)]'
                 }`}
               >
                 {overview.remainingBudget < 0 ? '-' : ''}₹
@@ -309,7 +313,7 @@ export function RadarOverviewTab({
               <button
                 type="button"
                 onClick={() => onNavigateSection('budgets')}
-                className="font-semibold text-[#365FE8] hover:text-[#294FCC] inline-flex items-center gap-1 whitespace-nowrap"
+                className="font-semibold text-[var(--accent-ink)] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
               >
                 Monitor Caps
                 <ArrowRight className="w-3 h-3" />
@@ -323,17 +327,17 @@ export function RadarOverviewTab({
           <div>
             <div className="flex items-center justify-between gap-2 mb-4">
               <div>
-                <h3 className="text-sm font-bold text-[#151922]">
+                <h3 className="text-sm font-bold text-[var(--text-primary)]">
                   Category Spend Ranking ({overview.window.label})
                 </h3>
-                <p className="text-xs text-[#697386] mt-0.5">
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
                   Click any category to inspect distribution &amp; underlying expenses
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => onNavigateSection('categories')}
-                className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1 whitespace-nowrap shrink-0"
+                className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1 whitespace-nowrap shrink-0"
               >
                 Full Analysis
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -342,8 +346,8 @@ export function RadarOverviewTab({
 
             {topCategories.length === 0 ? (
               <div className="py-10 text-center">
-                <p className="text-sm font-semibold text-[#151922]">No spending in {overview.window.label}</p>
-                <p className="text-xs text-[#697386] mt-1">
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No spending in {overview.window.label}</p>
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
                   Try selecting another timeframe above or log a purchase in Shopping.
                 </p>
               </div>
@@ -364,20 +368,20 @@ export function RadarOverviewTab({
                       className="w-full text-left group"
                     >
                       <div className="flex items-center justify-between gap-2 text-xs mb-1">
-                        <span className="font-semibold text-[#151922] group-hover:text-[#365FE8] transition-colors truncate">
+                        <span className="font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-ink)] transition-colors truncate">
                           {cat.category}
-                          <span className="text-[#697386] font-normal ml-2">
+                          <span className="text-[var(--text-secondary)] font-normal ml-2">
                             {cat.txCount} {cat.txCount === 1 ? 'txn' : 'txns'} · {cat.sharePct}%
                           </span>
                         </span>
-                        <span className="font-mono tabular-nums font-bold text-[#151922] shrink-0">
+                        <span className="font-mono tabular-nums font-bold text-[var(--text-primary)] shrink-0">
                           ₹{formatCurrencyExact(cat.totalSpent)}
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-[#F1F3F6] overflow-hidden">
+                      <div className="h-2 rounded-full bg-[var(--bg-well)] overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
-                            cat.isOverCap ? 'bg-[#DE5252]' : style.dot
+                            cat.isOverCap ? 'bg-[var(--accent-danger)]' : style.dot
                           }`}
                           style={{ width: `${widthPct}%` }}
                         />
@@ -390,22 +394,22 @@ export function RadarOverviewTab({
           </div>
 
           {/* Quick Anomaly & Insight Strip */}
-          <div className="mt-5 pt-4 border-t border-[#E7EAF0] grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+          <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-subtle)]">
             <div className="pb-3 sm:pb-0 sm:pr-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-[#C7851F]" />
+                <span className="text-[12px] font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-[var(--accent-warning-ink)]" />
                   Unusual Activity
                 </span>
                 <button
                   type="button"
                   onClick={() => onNavigateSection('budgets')}
-                  className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] whitespace-nowrap"
+                  className="text-xs font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap"
                 >
                   Inspect ({anomalies.length})
                 </button>
               </div>
-              <p className="text-xs text-[#151922] mt-1.5 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-[var(--text-primary)] mt-1.5 line-clamp-2 leading-relaxed">
                 {anomalies.length > 0
                   ? anomalies[0].reason
                   : 'No statistical spending deviations detected for this window.'}
@@ -414,19 +418,19 @@ export function RadarOverviewTab({
 
             <div className="pt-3 sm:pt-0 sm:pl-4">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-[#365FE8]" />
+                <span className="text-[12px] font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
                   Key Insight
                 </span>
                 <button
                   type="button"
                   onClick={() => onNavigateSection('explorer')}
-                  className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] whitespace-nowrap"
+                  className="text-xs font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap"
                 >
                   Reports
                 </button>
               </div>
-              <p className="text-xs text-[#151922] mt-1.5 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-[var(--text-primary)] mt-1.5 line-clamp-2 leading-relaxed">
                 {insights[0]?.description ?? 'Log transactions to surface automated Radar insights.'}
               </p>
             </div>
@@ -455,30 +459,30 @@ function OverviewKpiCell({
   invertDeltaSemantics?: boolean;
   icon: typeof Wallet;
 }) {
-  let deltaColor = 'text-[#697386]';
+  let deltaColor = 'text-[var(--text-secondary)]';
   if (deltaPct !== null && deltaPct !== 0) {
     const isUp = deltaPct > 0;
     deltaColor = invertDeltaSemantics
       ? isUp
-        ? 'text-[#9E6614]'
-        : 'text-[#15966B]'
+        ? 'text-[var(--accent-warning-ink)]'
+        : 'text-[var(--accent-success-ink)]'
       : isUp
-        ? 'text-[#15966B]'
-        : 'text-[#9E6614]';
+        ? 'text-[var(--accent-success-ink)]'
+        : 'text-[var(--accent-warning-ink)]';
   }
 
   return (
     <div className="p-4 sm:p-5 flex flex-col justify-between">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+        <span className="text-[12px] font-semibold text-[var(--text-secondary)]">
           {label}
         </span>
-        <Icon className="w-4 h-4 text-[#929BAB]" />
+        <Icon className="w-4 h-4 text-[var(--text-muted)]" />
       </div>
       <div className="mt-2">
-        <p className="text-2xl font-bold font-mono tabular-nums text-[#151922]">{value}</p>
+        <p className="text-2xl font-bold font-mono tabular-nums text-[var(--text-primary)]">{value}</p>
         <div className="flex items-center justify-between gap-2 mt-1 text-xs">
-          <span className="text-[#697386] truncate">{deltaSub}</span>
+          <span className="text-[var(--text-secondary)] truncate">{deltaSub}</span>
           {deltaPct !== null && (
             <span className={`font-mono tabular-nums font-semibold inline-flex items-center gap-0.5 shrink-0 ${deltaColor}`}>
               {deltaPct > 0 ? (

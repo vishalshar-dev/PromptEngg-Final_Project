@@ -80,7 +80,7 @@ export function ShoppingCart({
     <>
       {expanded && hasItems && (
         <div
-          className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] z-40 animate-fade-in"
+          className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] z-40 animate-fade-in"
           onClick={() => {
             setExpanded(false);
             setConfirmClear(false);
@@ -91,17 +91,17 @@ export function ShoppingCart({
       {/* Compact Sticky Cart Bar (only visible on Shopping or when explicitly expanded / after checkout) */}
       {(hasItems || doneBanner) && (showFloatingBar || expanded || doneBanner) && (
         <div
-          className={`fixed bottom-4 lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 animate-slide-up ${
+          className={`fixed bottom-4 lg:bottom-5 left-1/2 lg:left-[calc(50%+126px)] -translate-x-1/2 w-full max-w-lg xl:max-w-xl px-3 lg:px-0 ${
             expanded ? 'z-50' : 'z-40'
           }`}
         >
         <div
-          className={`bg-white border rounded-2xl shadow-modal transition-all duration-200 ${
+          className={`animate-slide-up bg-[var(--bg-surface)] border rounded-2xl shadow-modal transition-all duration-200 ${
             isOverSession
-              ? 'border-[#DE5252]'
+              ? 'border-[var(--accent-danger)]'
               : isWarningSession
-              ? 'border-[#E5A23B]'
-              : 'border-[#E7EAF0]'
+              ? 'border-[var(--accent-warning)]'
+              : 'border-[var(--border-subtle)]'
           }`}
         >
           <div className="px-3 sm:px-4 py-3">
@@ -117,23 +117,23 @@ export function ShoppingCart({
                 <div
                   className={`relative w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                     hasItems
-                      ? 'bg-[#EDF2FF] border-[#365FE8]/25'
-                      : 'bg-[#F7F8FA] border-[#E7EAF0]'
+                      ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)]'
+                      : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)]'
                   }`}
                 >
                   <ShoppingBag
-                    className={`w-4 h-4 ${hasItems ? 'text-[#365FE8]' : 'text-[#929BAB]'}`}
+                    className={`w-4 h-4 ${hasItems ? 'text-[var(--accent-ink)]' : 'text-[var(--text-muted)]'}`}
                     strokeWidth={2.2}
                   />
                   {hasItems && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-[#365FE8] text-white text-[10px] font-bold flex items-center justify-center shadow-xs tabular-nums">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-[var(--accent-primary)] text-white text-[11px] font-bold flex items-center justify-center shadow-xs tabular-nums">
                       {lines.length}
                     </span>
                   )}
                 </div>
 
                 <div className="text-left min-w-0">
-                  <p className="text-xs text-[#697386] font-medium whitespace-nowrap">
+                  <p className="text-xs text-[var(--text-secondary)] font-medium whitespace-nowrap">
                     {doneBanner ? (
                       'Recorded to Budget'
                     ) : hasItems ? (
@@ -151,10 +151,10 @@ export function ShoppingCart({
                   <p
                     className={`text-base font-bold font-mono tabular-nums leading-tight ${
                       doneBanner
-                        ? 'text-[#15966B]'
+                        ? 'text-[var(--accent-success-ink)]'
                         : hasItems
-                        ? 'text-[#151922]'
-                        : 'text-[#929BAB]'
+                        ? 'text-[var(--text-primary)]'
+                        : 'text-[var(--text-muted)]'
                     }`}
                   >
                     {doneBanner ? 'Purchase Saved' : `₹${formatCurrencyExact(totalPrice)}`}
@@ -163,7 +163,7 @@ export function ShoppingCart({
 
                 {hasItems && (
                   <ChevronUp
-                    className={`w-4 h-4 text-[#697386] transition-transform shrink-0 ${
+                    className={`w-4 h-4 text-[var(--text-secondary)] transition-transform shrink-0 ${
                       expanded ? 'rotate-180' : ''
                     }`}
                     strokeWidth={2.2}
@@ -180,7 +180,7 @@ export function ShoppingCart({
                     aria-label="Split and checkout cart"
                     className="btn-secondary px-2.5 sm:px-3 py-2 text-xs"
                   >
-                    <Users className="w-3.5 h-3.5 text-[#365FE8]" strokeWidth={2.2} />
+                    <Users className="w-3.5 h-3.5 text-[var(--accent-ink)]" strokeWidth={2.2} />
                     Split
                   </button>
                 )}
@@ -190,8 +190,8 @@ export function ShoppingCart({
                   disabled={!hasItems}
                   className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
                     hasItems
-                      ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
-                      : 'bg-[#F1F3F6] text-[#929BAB] cursor-not-allowed'
+                      ? 'bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white'
+                      : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] cursor-not-allowed'
                   }`}
                 >
                   <span>Checkout</span>
@@ -204,10 +204,10 @@ export function ShoppingCart({
           {/* Expanded Cart Panel */}
           {expanded && hasItems && (
             <div className="px-4 pb-4 max-h-[52vh] overflow-y-auto scrollbar-thin animate-slide-up">
-              <div className="h-px bg-[#E7EAF0] mb-3" />
+              <div className="h-px bg-[var(--border-subtle)] mb-3" />
 
               <div className="flex items-center justify-between gap-2 mb-3">
-                <p className="text-xs font-semibold text-[#697386] tabular-nums">
+                <p className="text-xs font-semibold text-[var(--text-secondary)] tabular-nums">
                   Shopping Cart ({lines.length} {lines.length === 1 ? 'line' : 'lines'} ·{' '}
                   {formatQuantity(totalCount)} qty)
                 </p>
@@ -218,7 +218,7 @@ export function ShoppingCart({
                       setSaveBasketOpen((v) => !v);
                       setConfirmClear(false);
                     }}
-                    className="text-xs font-semibold text-[#365FE8] hover:underline flex items-center gap-1 whitespace-nowrap"
+                    className="text-xs font-semibold text-[var(--accent-ink)] hover:underline flex items-center gap-1 whitespace-nowrap"
                   >
                     <BookmarkPlus className="w-3.5 h-3.5" />
                     Save Basket
@@ -226,21 +226,21 @@ export function ShoppingCart({
 
                   {confirmClear ? (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-[#DE5252] font-semibold">Clear all?</span>
+                      <span className="text-xs text-[var(--accent-danger)] font-semibold">Clear all?</span>
                       <button
                         type="button"
                         onClick={() => {
                           clearCart();
                           setConfirmClear(false);
                         }}
-                        className="px-2 py-0.5 rounded-md bg-[#DE5252] text-white text-xs font-semibold"
+                        className="px-2 py-0.5 rounded-md bg-[var(--accent-danger)] text-white text-xs font-semibold"
                       >
                         Yes, Clear
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmClear(false)}
-                        className="px-2 py-0.5 rounded-md bg-[#F1F3F6] text-[#4B5565] text-xs font-semibold"
+                        className="px-2 py-0.5 rounded-md bg-[var(--bg-subtle)] text-[var(--text-tertiary)] text-xs font-semibold"
                       >
                         Keep
                       </button>
@@ -252,7 +252,7 @@ export function ShoppingCart({
                         setConfirmClear(true);
                         setSaveBasketOpen(false);
                       }}
-                      className="text-xs font-semibold text-[#697386] hover:text-[#DE5252] flex items-center gap-1 whitespace-nowrap"
+                      className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent-danger)] flex items-center gap-1 whitespace-nowrap"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       Clear Cart
@@ -273,7 +273,7 @@ export function ShoppingCart({
                       setTimeout(() => setBasketSavedBanner(null), 2500);
                     }
                   }}
-                  className="mb-3 rounded-xl bg-[#F7F8FA] border border-[#365FE8]/25 p-2.5 flex items-center gap-2"
+                  className="mb-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--accent-border)] p-2.5 flex items-center gap-2"
                 >
                   <input
                     type="text"
@@ -288,8 +288,8 @@ export function ShoppingCart({
                     disabled={!basketNameInput.trim()}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
                       basketNameInput.trim()
-                        ? 'bg-[#365FE8] hover:bg-[#294FCC] text-white'
-                        : 'bg-[#E7EAF0] text-[#929BAB] cursor-not-allowed'
+                        ? 'bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] text-white'
+                        : 'bg-[var(--bg-well)] text-[var(--text-muted)] cursor-not-allowed'
                     }`}
                   >
                     Save
@@ -300,14 +300,14 @@ export function ShoppingCart({
               {basketSavedBanner && (
                 <div
                   role="status"
-                  className="mb-3 rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] px-3 py-2 flex items-center gap-2 text-xs font-semibold text-[#15966B]"
+                  className="mb-3 rounded-xl bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] px-3 py-2 flex items-center gap-2 text-xs font-semibold text-[var(--accent-success-ink)]"
                 >
                   <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                   <span>Saved basket “{basketSavedBanner}”</span>
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="divide-y divide-[var(--border-subtle)]/60">
                 {lines.map((line) => (
                   <CartItemRow
                     key={line.lineKey}
@@ -325,10 +325,10 @@ export function ShoppingCart({
                 <div
                   className={`mt-3 rounded-xl p-2.5 flex items-center gap-2 border ${
                     isOverSession
-                      ? 'bg-[#FDECEC] border-[#F6B8B8] text-[#DE5252]'
+                      ? 'bg-[var(--accent-danger-soft)] border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)]'
                       : isWarningSession
-                      ? 'bg-[#FEF6E7] border-[#F3D8A8] text-[#9E6614]'
-                      : 'bg-[#E8F7F1] border-[#B7E4D3] text-[#15966B]'
+                      ? 'bg-[var(--accent-warning-soft)] border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)]'
+                      : 'bg-[var(--accent-success-soft)] border-[var(--accent-success-border)] text-[var(--accent-success-ink)]'
                   }`}
                 >
                   {isOverSession ? (
@@ -346,18 +346,18 @@ export function ShoppingCart({
                 </div>
               )}
 
-              <div className="mt-3 pt-2.5 border-t border-[#E7EAF0] flex items-center justify-between gap-2">
+              <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => setExpanded(false)}
-                  className="text-xs font-semibold text-[#697386] hover:text-[#151922] flex items-center gap-1.5"
+                  className="text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Continue Shopping
                 </button>
-                <span className="text-xs font-mono text-[#697386] tabular-nums">
+                <span className="text-xs font-mono text-[var(--text-secondary)] tabular-nums">
                   Total:{' '}
-                  <strong className="text-[#151922] font-bold">
+                  <strong className="text-[var(--text-primary)] font-bold">
                     ₹{formatCurrencyExact(totalPrice)}
                   </strong>
                 </span>

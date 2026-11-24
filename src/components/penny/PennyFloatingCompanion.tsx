@@ -70,17 +70,17 @@ export function PennyFloatingCompanion({
                 <PennyEmblem size="sm" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <h2 className="text-[14px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">
+                    <h2 className="text-[14px] font-bold font-display text-[var(--text-primary)] tracking-tight leading-tight">
                       Penny
                     </h2>
                     <span className="text-[var(--text-muted)] text-xs" aria-hidden="true">
                       ·
                     </span>
-                    <span className="text-[11.5px] font-medium text-[var(--text-secondary)] truncate">
+                    <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
                       {SCREEN_LABELS[activeScreen]}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[var(--text-secondary)] truncate">
+                  <p className="text-xs text-[var(--text-secondary)] truncate">
                     Money co-pilot · ask or confirm 1-click actions
                   </p>
                 </div>
@@ -132,7 +132,7 @@ export function PennyFloatingCompanion({
           data-testid="penny-floating-launcher"
           className={`fixed z-40 h-11 rounded-2xl bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-strong)] shadow-[var(--shadow-raised)] flex items-center justify-center gap-2 text-xs font-semibold whitespace-nowrap transition-all ${
             hasCartBarVisible
-              ? 'right-3 sm:right-4 lg:right-6 bottom-[84px] lg:bottom-6 w-11 sm:w-auto px-0 sm:px-3.5'
+              ? 'right-3 sm:right-4 lg:right-6 bottom-[84px] lg:bottom-[92px] w-11 sm:w-auto px-0 sm:px-3.5'
               : 'right-4 lg:right-6 bottom-4 lg:bottom-6 px-3.5'
           }`}
         >
@@ -140,14 +140,14 @@ export function PennyFloatingCompanion({
           <span className={hasCartBarVisible ? 'hidden sm:inline' : ''}>Ask Penny</span>
           {pennyMessages.length > 0 ? (
             <span
-              className={`font-mono tabular-nums text-[11px] text-[var(--accent-ink)] ${
+              className={`font-mono tabular-nums text-xs text-[var(--accent-ink)] ${
                 hasCartBarVisible ? 'hidden sm:inline' : ''
               }`}
             >
               · {pennyMessages.length}
             </span>
           ) : (
-            <kbd className="hidden sm:inline text-[10px] font-mono text-[var(--text-muted)] ml-0.5">
+            <kbd className="hidden sm:inline text-xs font-mono text-[var(--text-muted)] ml-0.5">
               ⌘K
             </kbd>
           )}

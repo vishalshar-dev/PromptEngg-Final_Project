@@ -266,26 +266,26 @@ export function UpiRemindModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#151922]/45 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[var(--backdrop-scrim)] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="upi-remind-modal-title"
     >
-      <div className="w-full sm:max-w-lg max-h-[90vh] overflow-y-auto scrollbar-thin bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl p-5 shadow-xl space-y-4">
+      <div className="modal-panel w-full sm:max-w-lg max-h-[90vh] overflow-y-auto scrollbar-thin rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 space-y-4 animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center shrink-0">
-              <QrCode className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center shrink-0">
+              <QrCode className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
             </div>
             <div className="min-w-0">
               <h3
                 id="upi-remind-modal-title"
-                className="text-base font-bold text-[#151922] truncate"
+                className="font-display text-base font-bold text-[var(--text-primary)] truncate"
               >
                 UPI QR &amp; Split Reminder
               </h3>
-              <p className="text-xs text-[#697386] truncate">
+              <p className="text-[12px] text-[var(--text-secondary)] truncate">
                 {person.name}
                 {person.contact ? ` · ${person.contact}` : ''}
               </p>
@@ -296,7 +296,7 @@ export function UpiRemindModal({
             type="button"
             onClick={onClose}
             aria-label="Close UPI reminder modal"
-            className="w-8 h-8 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] shrink-0"
+            className="w-8 h-8 rounded-xl bg-[var(--bg-well)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0"
           >
             <X className="w-4 h-4" strokeWidth={2.2} />
           </button>
@@ -312,10 +312,10 @@ export function UpiRemindModal({
             type="button"
             onClick={() => handleDirectionSwitch('they_pay')}
             aria-pressed={direction === 'they_pay'}
-            className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-colors ${
+            className={`py-2 px-3 rounded-xl text-[12.5px] font-semibold border transition-colors ${
               direction === 'they_pay'
-                ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
-                : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
+                ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
+                : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
             }`}
           >
             {person.name} Pays You (₹{formatCurrencyExact(summary.owedToMe)})
@@ -324,10 +324,10 @@ export function UpiRemindModal({
             type="button"
             onClick={() => handleDirectionSwitch('i_pay')}
             aria-pressed={direction === 'i_pay'}
-            className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-colors ${
+            className={`py-2 px-3 rounded-xl text-[12.5px] font-semibold border transition-colors ${
               direction === 'i_pay'
-                ? 'bg-[#EDF2FF] text-[#365FE8] border-[#D4E0FF]'
-                : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0]'
+                ? 'bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] border-[var(--accent-border)]'
+                : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
             }`}
           >
             You Pay {person.name} (₹{formatCurrencyExact(summary.iOwe)})
@@ -335,11 +335,11 @@ export function UpiRemindModal({
         </div>
 
         {/* UPI ID + Amount Inputs */}
-        <div className="surface-subtle p-3.5 space-y-3">
+        <div className="surface-well p-3.5 space-y-3">
           <div className="space-y-1">
             <label
               htmlFor="upi-vpa-input"
-              className="block text-[11px] font-semibold text-[#697386]"
+              className="block text-[12px] font-medium text-[var(--text-secondary)]"
             >
               {direction === 'they_pay'
                 ? 'Your UPI ID (to receive payment)'
@@ -356,13 +356,13 @@ export function UpiRemindModal({
                   setUpiSaveMsg(null);
                 }}
                 placeholder="e.g. name@okaxis or 9876543210@ybl"
-                className="input-field flex-1 min-w-0 px-3 py-2 text-xs font-mono"
+                className="input-field flex-1 min-w-0 px-3 py-2 text-[12.5px] font-mono"
               />
               {hasUnsavedUpiChanges && (
                 <button
                   type="button"
                   onClick={handleSaveUpiId}
-                  className="btn-secondary px-3 py-2 text-xs whitespace-nowrap shrink-0"
+                  className="btn-secondary px-3 py-2 text-[12.5px] whitespace-nowrap shrink-0"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>Save ID</span>
@@ -373,7 +373,7 @@ export function UpiRemindModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <label className="block space-y-1">
-              <span className="text-[11px] font-semibold text-[#697386]">Amount (₹)</span>
+              <span className="text-[12px] font-medium text-[var(--text-secondary)]">Amount (₹)</span>
               <input
                 type="number"
                 min="1"
@@ -381,11 +381,11 @@ export function UpiRemindModal({
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
                 placeholder="0.00"
-                className="input-field w-full px-3 py-2 text-xs font-mono font-bold tabular-nums"
+                className="input-field w-full px-3 py-2 text-[12.5px] font-mono font-bold tabular-nums"
               />
             </label>
             <label className="block space-y-1">
-              <span className="text-[11px] font-semibold text-[#697386]">Payment Note</span>
+              <span className="text-[12px] font-medium text-[var(--text-secondary)]">Payment Note</span>
               <input
                 type="text"
                 maxLength={60}
@@ -402,7 +402,7 @@ export function UpiRemindModal({
                   }
                 }}
                 placeholder="CartAudit split settlement"
-                className="input-field w-full px-3 py-2 text-xs"
+                className="input-field w-full px-3 py-2 text-[12.5px]"
               />
             </label>
           </div>
@@ -410,7 +410,7 @@ export function UpiRemindModal({
           {upiError && (
             <div
               role="alert"
-              className="rounded-lg px-2.5 py-1.5 bg-[#FDECEC] border border-[#F6B8B8] text-[#B93B3B] text-[11.5px] flex items-center gap-1.5"
+              className="rounded-lg px-2.5 py-1.5 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-[12px] flex items-center gap-1.5"
             >
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{upiError}</span>
@@ -418,15 +418,15 @@ export function UpiRemindModal({
           )}
 
           {upiSaveMsg && (
-            <p className="text-[11.5px] font-semibold text-[#15966B]">{upiSaveMsg}</p>
+            <p className="text-[12px] font-semibold text-[var(--accent-success-ink)]">{upiSaveMsg}</p>
           )}
         </div>
 
         {/* Scannable QR Preview */}
-        <div className="flex flex-col items-center justify-center text-center surface-subtle p-4 space-y-2.5">
+        <div className="flex flex-col items-center justify-center text-center surface-well p-4 space-y-2.5">
           {upiResult.ok && qrDataUrl ? (
             <>
-              <div className="p-2.5 rounded-2xl qr-quiet-frame border border-[#E7EAF0] shadow-xs">
+              <div className="p-2.5 rounded-2xl qr-quiet-frame border border-[var(--border-subtle)] shadow-xs">
                 <img
                   src={qrDataUrl}
                   alt={`UPI payment QR code for ${upiResult.normalizedUpiId}`}
@@ -436,10 +436,10 @@ export function UpiRemindModal({
                 />
               </div>
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-[#151922] font-mono">
+                <p className="text-[12.5px] font-bold text-[var(--text-primary)] font-mono">
                   {upiResult.normalizedUpiId}
                 </p>
-                <p className="text-[11.5px] text-[#697386]">
+                <p className="text-[12px] text-[var(--text-secondary)]">
                   Scan with any UPI app (GPay, PhonePe, Paytm, BHIM)
                   {parsedAmount > 0 ? ` · ₹${formatCurrencyExact(parsedAmount)}` : ''}
                 </p>
@@ -448,11 +448,11 @@ export function UpiRemindModal({
                 <button
                   type="button"
                   onClick={() => void handleCopy(upiResult.normalizedUpiId, 'upi')}
-                  className="btn-secondary px-3 py-1.5 text-xs whitespace-nowrap"
+                  className="btn-secondary px-3 py-1.5 text-[12.5px] whitespace-nowrap"
                 >
                   {copiedType === 'upi' ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-[#15966B]" />
+                      <Check className="w-3.5 h-3.5 text-[var(--accent-success-ink)]" />
                       <span>Copied UPI ID</span>
                     </>
                   ) : (
@@ -466,7 +466,7 @@ export function UpiRemindModal({
                 {direction === 'i_pay' && (
                   <a
                     href={upiResult.uri}
-                    className="btn-primary px-3 py-1.5 text-xs whitespace-nowrap"
+                    className="btn-primary px-3 py-1.5 text-[12.5px] whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>Open UPI App</span>
@@ -476,11 +476,11 @@ export function UpiRemindModal({
             </>
           ) : (
             <div className="py-4 px-2 space-y-1">
-              <QrCode className="w-8 h-8 text-[#929BAB] mx-auto" />
-              <p className="text-xs font-semibold text-[#151922]">
+              <QrCode className="w-8 h-8 text-[var(--text-muted)] mx-auto" />
+              <p className="text-[13px] font-semibold text-[var(--text-primary)]">
                 Enter a valid UPI ID above to generate a scannable QR code
               </p>
-              <p className="text-[11px] text-[#697386]">
+              <p className="text-[12px] text-[var(--text-secondary)]">
                 {direction === 'they_pay'
                   ? 'Save your UPI ID once so every friend can scan & pay instantly.'
                   : `Add ${person.name}'s UPI ID to scan or launch your UPI app in one tap.`}
@@ -492,18 +492,18 @@ export function UpiRemindModal({
         {/* Shareable Reminder Message */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+            <span className="text-[12px] font-medium text-[var(--text-secondary)]">
               Shareable Reminder Message
             </span>
             <button
               type="button"
               onClick={() => void handleCopy(reminderMessage, 'reminder')}
-              className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] inline-flex items-center gap-1"
+              className="text-[12.5px] font-semibold text-[var(--accent-ink)] hover:underline inline-flex items-center gap-1"
             >
               {copiedType === 'reminder' ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-[#15966B]" />
-                  <span className="text-[#15966B]">Copied</span>
+                  <Check className="w-3.5 h-3.5 text-[var(--accent-success-ink)]" />
+                  <span className="text-[var(--accent-success-ink)]">Copied</span>
                 </>
               ) : (
                 <>
@@ -513,7 +513,7 @@ export function UpiRemindModal({
               )}
             </button>
           </div>
-          <pre className="whitespace-pre-wrap break-words font-sans text-xs text-[#151922] bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3 leading-relaxed">
+          <pre className="surface-well whitespace-pre-wrap break-words font-sans text-[12.5px] text-[var(--text-primary)] p-3 leading-relaxed">
             {reminderMessage}
           </pre>
 
@@ -521,7 +521,7 @@ export function UpiRemindModal({
             <button
               type="button"
               onClick={() => void handleNativeShare()}
-              className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
+              className="btn-secondary px-3 py-2 text-[12.5px] whitespace-nowrap"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>Share</span>
@@ -530,9 +530,9 @@ export function UpiRemindModal({
               href={whatsAppUrl}
               target="_blank"
               rel="noreferrer"
-              className="btn-secondary px-3 py-2 text-xs whitespace-nowrap"
+              className="btn-secondary px-3 py-2 text-[12.5px] whitespace-nowrap"
             >
-              <MessageCircle className="w-3.5 h-3.5 text-[#15966B]" />
+              <MessageCircle className="w-3.5 h-3.5 text-[var(--accent-success-ink)]" />
               <span>WhatsApp</span>
             </a>
             <button
@@ -546,7 +546,7 @@ export function UpiRemindModal({
                   amount: parsedAmount,
                 });
               }}
-              className="btn-primary px-3 py-2 text-xs whitespace-nowrap"
+              className="btn-primary px-3 py-2 text-[12.5px] whitespace-nowrap"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>{direction === 'they_pay' ? 'Mark Received' : 'Mark Paid'}</span>

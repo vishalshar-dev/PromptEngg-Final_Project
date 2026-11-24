@@ -352,7 +352,9 @@ html[data-motion='rich_tactile'] {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: var(--font-body);
-    word-spacing: 0.03em;
+    word-spacing: 0.02em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.2s ease, color 0.18s ease;
   }
 
@@ -361,10 +363,12 @@ html[data-motion='rich_tactile'] {
   h3,
   .font-display {
     font-family: var(--font-display);
+    text-wrap: balance;
   }
 
   .font-mono {
     font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 
   input,
@@ -440,13 +444,25 @@ html[data-motion='rich_tactile'] {
     border-radius: 20px;
     box-shadow: inset 0 1px 0 var(--bevel-highlight), var(--shadow-raised);
     transition:
-      background-color 260ms var(--motion-ease),
-      border-color 260ms var(--motion-ease),
-      box-shadow 260ms var(--motion-ease);
+      background-color 220ms var(--motion-ease),
+      border-color 220ms var(--motion-ease),
+      box-shadow 220ms var(--motion-ease);
+  }
+
+  .aether-stage-card {
+    position: relative;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 var(--bevel-highlight), var(--shadow-card);
+    transition:
+      background-color 220ms var(--motion-ease),
+      border-color 220ms var(--motion-ease),
+      box-shadow 220ms var(--motion-ease);
   }
 
   .aether-disclosure-panel {
-    animation: aether-disclosure-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    animation: aether-disclosure-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @keyframes aether-disclosure-in {
@@ -460,9 +476,57 @@ html[data-motion='rich_tactile'] {
     }
   }
 
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 160ms var(--motion-ease);
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 200ms var(--motion-ease);
+  }
+
+  .animate-slide-up {
+    animation: slide-up 220ms var(--motion-ease);
+  }
+
   .surface-subtle {
     background-color: var(--bg-subtle);
     border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+  }
+
+  .surface-well {
+    background-color: var(--bg-well);
     border-radius: 12px;
   }
 
@@ -512,10 +576,12 @@ html[data-motion='rich_tactile'] {
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    padding: 0.5rem 0.875rem;
+    padding: 0.5rem 1rem;
     background-color: var(--accent-primary);
     color: #FFFFFF;
     font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
     border-radius: 12px;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 1px 2px rgba(0, 0, 0, 0.14);
     transition:
@@ -544,11 +610,13 @@ html[data-motion='rich_tactile'] {
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    padding: 0.5rem 0.875rem;
+    padding: 0.5rem 1rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     color: var(--text-primary);
     font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
     border-radius: 12px;
     box-shadow: inset 0 1px 0 var(--bevel-highlight), 0 1px 2px rgba(0, 0, 0, 0.04);
     transition:
@@ -572,6 +640,7 @@ html[data-motion='rich_tactile'] {
 html[data-surface='frosted_glass'] .surface-card,
 html[data-surface='frosted_glass'] .surface-card-interactive,
 html[data-surface='frosted_glass'] .hero-deck,
+html[data-surface='frosted_glass'] .aether-stage-card,
 html[data-surface='frosted_glass'] .shell-sidebar,
 html[data-surface='frosted_glass'] .modal-panel {
   background-color: var(--bg-surface-glass);
@@ -596,6 +665,7 @@ html[data-surface='tactile_wells'] .tactile-well {
 html[data-surface='tactile_wells'] .surface-card,
 html[data-surface='tactile_wells'] .surface-card-interactive,
 html[data-surface='tactile_wells'] .hero-deck,
+html[data-surface='tactile_wells'] .aether-stage-card,
 html[data-surface='tactile_wells'] .btn-secondary {
   box-shadow: inset 0 1px 0 var(--bevel-highlight), var(--shadow-raised);
 }
@@ -667,6 +737,12 @@ html[data-surface='frosted_glass'] .bg-\[\#FFFFFF\] {
   background-color: var(--border-subtle);
 }
 
+.bg-\[\#151922\]\/35,
+.bg-\[\#151922\]\/40,
+.bg-\[\#151922\]\/45 {
+  background-color: var(--backdrop-scrim);
+}
+
 /* Brand / Accent Fills & Text */
 .bg-\[\#365FE8\] {
   background-color: var(--accent-primary);
@@ -682,7 +758,8 @@ html[data-surface='frosted_glass'] .bg-\[\#FFFFFF\] {
 .bg-\[\#DCE6FF\],
 .bg-\[\#DFE8FF\],
 .hover\:bg-\[\#EDF2FF\]:hover,
-.hover\:bg-\[\#DCE6FF\]:hover {
+.hover\:bg-\[\#DCE6FF\]:hover,
+.hover\:bg-\[\#DFE8FF\]:hover {
   background-color: var(--accent-primary-soft);
 }
 
@@ -711,6 +788,7 @@ html[data-surface='frosted_glass'] .bg-\[\#FFFFFF\] {
 
 /* Semantic Status Surfaces & Inks */
 .bg-\[\#E8F7F1\],
+.bg-\[\#E8F7F1\]\/50,
 .bg-\[\#EAF6F1\],
 .bg-\[\#F5FCF9\] {
   background-color: var(--accent-success-soft);
@@ -735,12 +813,14 @@ html[data-surface='frosted_glass'] .bg-\[\#FFFFFF\] {
 }
 
 .bg-\[\#FEF6E7\],
+.bg-\[\#FEF6E7\]\/40,
 .bg-\[\#FFF9EE\],
 .bg-\[\#FDF0D5\],
 .bg-\[\#FDEBC7\],
 .bg-\[\#FBF5EA\],
 .bg-\[\#FCF6EB\],
-.hover\:bg-\[\#FDEBC7\]:hover {
+.hover\:bg-\[\#FDEBC7\]:hover,
+.hover\:bg-\[\#FDF0D5\]:hover {
   background-color: var(--accent-warning-soft);
 }
 
@@ -766,13 +846,15 @@ html[data-surface='frosted_glass'] .bg-\[\#FFFFFF\] {
 }
 
 .bg-\[\#FDECEC\],
+.bg-\[\#FDECEC\]\/40,
 .bg-\[\#FDF1F1\],
 .bg-\[\#FFF8F8\],
 .bg-\[\#FFF9F9\],
 .bg-\[\#FADADA\],
 .bg-\[\#F9DADA\],
 .hover\:bg-\[\#FDECEC\]:hover,
-.hover\:bg-\[\#FADADA\]:hover {
+.hover\:bg-\[\#FADADA\]:hover,
+.hover\:bg-\[\#F9DADA\]:hover {
   background-color: var(--accent-danger-soft);
 }
 

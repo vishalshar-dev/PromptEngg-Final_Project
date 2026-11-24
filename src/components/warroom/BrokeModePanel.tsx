@@ -99,16 +99,18 @@ export function BrokeModePanel({
     <div className="space-y-8">
       {/* Control Banner */}
       <div
-        className={`bg-white border rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
-          status.enabled ? 'border-[#F3D8A8] bg-[#FEF6E7]/40' : 'border-[#E7EAF0]'
+        className={`surface-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
+          status.enabled
+            ? 'border-[var(--accent-warning-border)] bg-[var(--accent-warning-soft)]'
+            : ''
         }`}
       >
         <div className="flex items-start gap-3">
           <div
             className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
               status.enabled
-                ? 'bg-[#FEF6E7] border-[#F3D8A8] text-[#C7851F]'
-                : 'bg-[#F1F3F6] border-[#E7EAF0] text-[#697386]'
+                ? 'bg-[var(--bg-surface)] border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)]'
+                : 'bg-[var(--bg-well)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
             }`}
           >
             {status.enabled ? (
@@ -119,18 +121,18 @@ export function BrokeModePanel({
           </div>
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="text-[15px] font-semibold text-[#151922]">
+              <h3 className="font-display text-[15px] font-semibold text-[var(--text-primary)]">
                 Broke Mode Financial Boundary
               </h3>
               <span
-                className={`text-[11.5px] font-semibold ${
-                  status.enabled ? 'text-[#C7851F]' : 'text-[#697386]'
+                className={`text-[12px] font-semibold ${
+                  status.enabled ? 'text-[var(--accent-warning-ink)]' : 'text-[var(--text-secondary)]'
                 }`}
               >
                 · {status.enabled ? 'Active' : 'Standby'}
               </span>
             </div>
-            <p className="text-[12.5px] text-[#697386] mt-1 leading-relaxed max-w-2xl">
+            <p className="text-[12.5px] text-[var(--text-secondary)] mt-1 leading-relaxed max-w-2xl">
               {status.enabled
                 ? 'Non-essential and watched category purchases trigger warnings in Shopping, Checkout, and Expenses while essential purchases stay unblocked.'
                 : 'Enable Broke Mode with default guardrails or customize your allowance, non-essential cap, and watched categories below.'}
@@ -143,8 +145,8 @@ export function BrokeModePanel({
           onClick={onToggleBrokeMode}
           className={`px-4 py-2.5 rounded-xl font-semibold text-[12.5px] inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-colors border ${
             status.enabled
-              ? 'bg-[#DE5252] hover:bg-[#C74343] text-white border-[#DE5252]'
-              : 'btn-primary border-[#365FE8]'
+              ? 'bg-[var(--accent-danger)] hover:opacity-90 text-white border-transparent'
+              : 'btn-primary border-transparent'
           }`}
         >
           <Zap className="w-3.5 h-3.5" />
@@ -153,69 +155,69 @@ export function BrokeModePanel({
       </div>
 
       {/* Single Hairline Summary Strip */}
-      <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+      <div className="surface-card grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 sm:divide-x divide-[var(--border-subtle)] overflow-hidden">
         <div className="p-5">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Remaining Allowance
           </p>
           <p
             className={`text-[22px] font-bold font-mono tabular-nums mt-1.5 ${
-              status.remaining > 0 ? 'text-[#15966B]' : 'text-[#DE5252]'
+              status.remaining > 0 ? 'text-[var(--accent-success-ink)]' : 'text-[var(--accent-danger-ink)]'
             }`}
           >
             ₹{formatCurrencyExact(status.remaining)}
           </p>
-          <p className="text-[12px] text-[#697386] mt-1 font-mono tabular-nums">
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1 font-mono tabular-nums">
             Safe pace ₹{formatCurrencyExact(status.dailySafeAllowance)}/day
           </p>
         </div>
 
         <div className="p-5">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Spent ({status.periodLabel})
           </p>
-          <p className="text-[22px] font-bold font-mono tabular-nums text-[#151922] mt-1.5">
+          <p className="text-[22px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-1.5">
             ₹{formatCurrencyExact(status.spent)}
           </p>
-          <p className="text-[12px] text-[#697386] mt-1 tabular-nums">
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1 tabular-nums">
             Limit ₹{formatCurrencyExact(status.limit)}
           </p>
         </div>
 
         <div className="p-5">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Essential vs Non-Ess
           </p>
-          <p className="text-[17px] font-bold font-mono tabular-nums text-[#15966B] mt-1.5">
+          <p className="text-[17px] font-bold font-mono tabular-nums text-[var(--accent-success-ink)] mt-1.5">
             ₹{formatCurrencyExact(status.essentialSpent)}{' '}
-            <span className="text-[#697386] text-[12px] font-sans font-normal">
+            <span className="text-[var(--text-secondary)] text-[12px] font-sans font-normal">
               essential
             </span>
           </p>
-          <p className="text-[12px] font-mono tabular-nums text-[#C7851F] mt-1">
+          <p className="text-[12px] font-mono tabular-nums text-[var(--accent-warning-ink)] mt-1">
             ₹{formatCurrencyExact(status.totalJunkSpent)}{' '}
-            <span className="text-[#697386] font-sans">
+            <span className="text-[var(--text-secondary)] font-sans">
               non-ess (cap ₹{formatCurrencyExact(status.nonEssentialLimit)})
             </span>
           </p>
         </div>
 
         <div className="p-5">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+          <p className="text-[12px] font-medium text-[var(--text-secondary)]">
             Utilisation &amp; Window
           </p>
           <p
             className={`text-[22px] font-bold font-mono tabular-nums mt-1.5 ${
               status.utilisationPct > 100
-                ? 'text-[#DE5252]'
+                ? 'text-[var(--accent-danger-ink)]'
                 : status.utilisationPct >= config.warningThresholdPct
-                ? 'text-[#C7851F]'
-                : 'text-[#15966B]'
+                ? 'text-[var(--accent-warning-ink)]'
+                : 'text-[var(--accent-success-ink)]'
             }`}
           >
             {status.utilisationPct}%
           </p>
-          <p className="text-[12px] text-[#697386] mt-1 tabular-nums">
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1 tabular-nums">
             {status.remainingDays}d left ·{' '}
             {status.durationRemainingDays !== null
               ? `${status.durationRemainingDays}/${status.durationDays}d window`
@@ -227,17 +229,17 @@ export function BrokeModePanel({
       {/* Boundaries & Configuration */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-5 space-y-5">
-          <div className="bg-white border border-[#E7EAF0] rounded-2xl p-5 space-y-4">
-            <h4 className="text-[15px] font-semibold text-[#151922]">
+          <div className="surface-card p-5 space-y-4">
+            <h4 className="font-display text-[15px] font-semibold text-[var(--text-primary)]">
               Boundaries &amp; Warnings
             </h4>
 
             <div className="space-y-1.5">
               <div className="flex justify-between text-[12.5px]">
-                <span className="font-medium text-[#151922]">
+                <span className="font-medium text-[var(--text-primary)]">
                   Overall Period Allowance
                 </span>
-                <span className="font-mono font-semibold tabular-nums text-[#151922]">
+                <span className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">
                   {status.utilisationPct}%
                 </span>
               </div>
@@ -255,11 +257,11 @@ export function BrokeModePanel({
 
             <div className="space-y-1.5">
               <div className="flex justify-between text-[12.5px]">
-                <span className="font-medium text-[#151922]">
+                <span className="font-medium text-[var(--text-primary)]">
                   Non-Essential Cap (₹{formatCurrencyExact(status.totalJunkSpent)}{' '}
                   / ₹{formatCurrencyExact(status.nonEssentialLimit)})
                 </span>
-                <span className="font-mono font-semibold tabular-nums text-[#C7851F]">
+                <span className="font-mono font-semibold tabular-nums text-[var(--accent-warning-ink)]">
                   {status.nonEssentialUtilisationPct}%
                 </span>
               </div>
@@ -274,38 +276,38 @@ export function BrokeModePanel({
                     : 'success'
                 }
               />
-              <p className="text-[12px] text-[#697386]">
+              <p className="text-[12px] text-[var(--text-secondary)] tabular-nums">
                 Remaining: ₹{formatCurrencyExact(status.nonEssentialRemaining)} ·
                 Compliance{' '}
-                <span className="text-[#151922] font-semibold">
+                <span className="text-[var(--text-primary)] font-semibold">
                   {status.targetProgressPct}%
                 </span>
               </p>
             </div>
 
-            <div className="pt-3 border-t border-[#E7EAF0] space-y-2.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386]">
+            <div className="pt-3 border-t border-[var(--border-subtle)] space-y-2.5">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Spending Alerts ({status.warnings.length})
               </p>
               {status.warnings.length === 0 ? (
-                <p className="text-[12.5px] text-[#697386]">
+                <p className="text-[12.5px] text-[var(--text-secondary)]">
                   All Broke Mode boundaries are within safe range.
                 </p>
               ) : (
-                <div className="divide-y divide-[#E7EAF0]">
+                <div className="divide-y divide-[var(--border-subtle)]">
                   {status.warnings.map((w) => (
                     <div key={w.id} className="py-2.5 first:pt-0 last:pb-0">
                       <p
                         className={`text-[12.5px] font-semibold flex items-center gap-1.5 ${
                           w.severity === 'critical'
-                            ? 'text-[#DE5252]'
-                            : 'text-[#C7851F]'
+                            ? 'text-[var(--accent-danger-ink)]'
+                            : 'text-[var(--accent-warning-ink)]'
                         }`}
                       >
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                         {w.title}
                       </p>
-                      <p className="text-[12px] text-[#697386] mt-1">
+                      <p className="text-[12px] text-[var(--text-secondary)] mt-1">
                         {w.message}
                       </p>
                     </div>
@@ -319,19 +321,19 @@ export function BrokeModePanel({
         {/* Right: Configuration Form */}
         <form
           onSubmit={handleSaveConfig}
-          className="lg:col-span-7 bg-white border border-[#E7EAF0] rounded-2xl p-5 space-y-4"
+          className="lg:col-span-7 surface-card p-5 space-y-4"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
-              <h4 className="text-[15px] font-semibold text-[#151922]">
+              <h4 className="font-display text-[15px] font-semibold text-[var(--text-primary)]">
                 Configure Financial Boundaries
               </h4>
-              <p className="text-[12.5px] text-[#697386]">
+              <p className="text-[12.5px] text-[var(--text-secondary)]">
                 Defaults are pre-filled; adjust allowances and watched categories.
               </p>
             </div>
             {savedNotice && (
-              <span className="text-[12.5px] font-semibold text-[#15966B] inline-flex items-center gap-1">
+              <span className="text-[12.5px] font-semibold text-[var(--accent-success-ink)] inline-flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" />
                 Saved
               </span>
@@ -339,7 +341,7 @@ export function BrokeModePanel({
           </div>
 
           <div>
-            <label className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1.5">
+            <label className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1.5">
               Active Allowance Period
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -350,8 +352,8 @@ export function BrokeModePanel({
                   onClick={() => setPeriod(p)}
                   className={`py-2 rounded-xl text-[12.5px] font-semibold capitalize border transition-colors ${
                     period === p
-                      ? 'bg-[#365FE8] border-[#365FE8] text-white'
-                      : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                      ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white'
+                      : 'bg-[var(--bg-well)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {p}
@@ -364,7 +366,7 @@ export function BrokeModePanel({
             <div>
               <label
                 htmlFor="broke-daily-allowance"
-                className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1"
+                className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1"
               >
                 Daily Allowance (₹)
               </label>
@@ -374,13 +376,13 @@ export function BrokeModePanel({
                 min="50"
                 value={dailyAllowance}
                 onChange={(e) => setDailyAllowance(e.target.value)}
-                className="input-field w-full px-3 py-2 text-[13px] font-mono"
+                className="input-field w-full px-3 py-2 text-[13px] font-mono tabular-nums"
               />
             </div>
             <div>
               <label
                 htmlFor="broke-weekly-allowance"
-                className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1"
+                className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1"
               >
                 Weekly Allowance (₹)
               </label>
@@ -390,13 +392,13 @@ export function BrokeModePanel({
                 min="100"
                 value={weeklyAllowance}
                 onChange={(e) => setWeeklyAllowance(e.target.value)}
-                className="input-field w-full px-3 py-2 text-[13px] font-mono"
+                className="input-field w-full px-3 py-2 text-[13px] font-mono tabular-nums"
               />
             </div>
             <div>
               <label
                 htmlFor="broke-monthly-allowance"
-                className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1"
+                className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1"
               >
                 Monthly Allowance (₹)
               </label>
@@ -406,7 +408,7 @@ export function BrokeModePanel({
                 min="200"
                 value={monthlyAllowance}
                 onChange={(e) => setMonthlyAllowance(e.target.value)}
-                className="input-field w-full px-3 py-2 text-[13px] font-mono"
+                className="input-field w-full px-3 py-2 text-[13px] font-mono tabular-nums"
               />
             </div>
           </div>
@@ -415,7 +417,7 @@ export function BrokeModePanel({
             <div>
               <label
                 htmlFor="broke-max-nonessential"
-                className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1"
+                className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1"
               >
                 Max Non-Essential (₹)
               </label>
@@ -425,13 +427,13 @@ export function BrokeModePanel({
                 min="0"
                 value={maxNonEssential}
                 onChange={(e) => setMaxNonEssential(e.target.value)}
-                className="input-field w-full px-3 py-2 text-[13px] font-mono"
+                className="input-field w-full px-3 py-2 text-[13px] font-mono tabular-nums"
               />
             </div>
             <div>
               <label
                 htmlFor="broke-warning-pct"
-                className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1"
+                className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1"
               >
                 Warning Threshold (%)
               </label>
@@ -442,13 +444,13 @@ export function BrokeModePanel({
                 max="99"
                 value={warningThreshold}
                 onChange={(e) => setWarningThreshold(e.target.value)}
-                className="input-field w-full px-3 py-2 text-[13px] font-mono"
+                className="input-field w-full px-3 py-2 text-[13px] font-mono tabular-nums"
               />
             </div>
             <div>
               <label
                 htmlFor="broke-duration-days"
-                className="text-[11px] font-medium uppercase tracking-wider text-[#697386] block mb-1"
+                className="text-[12px] font-medium text-[var(--text-secondary)] block mb-1"
               >
                 Duration (Days)
               </label>
@@ -459,13 +461,13 @@ export function BrokeModePanel({
                 max="90"
                 value={durationDays}
                 onChange={(e) => setDurationDays(e.target.value)}
-                className="input-field w-full px-3 py-2 text-[13px] font-mono"
+                className="input-field w-full px-3 py-2 text-[13px] font-mono tabular-nums"
               />
             </div>
           </div>
 
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wider text-[#697386] mb-1.5">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)] mb-1.5">
               Monitored Categories
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -480,8 +482,8 @@ export function BrokeModePanel({
                     onClick={() => toggleCategoryRestriction(cat)}
                     className={`px-2.5 py-1.5 rounded-lg text-[12px] font-medium border transition-colors ${
                       selected
-                        ? 'bg-[#FEF6E7] border-[#F3D8A8] text-[#9E6614] font-semibold'
-                        : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                        ? 'bg-[var(--accent-warning-soft)] border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)] font-semibold'
+                        : 'bg-[var(--bg-well)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }`}
                   >
                     {cat}

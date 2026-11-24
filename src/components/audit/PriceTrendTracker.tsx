@@ -35,10 +35,10 @@ export function PriceTrendTracker({
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
               <LineChart className="w-4 h-4" strokeWidth={2.25} />
             </div>
-            <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+            <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
               Price Trend Tracker
             </h3>
           </div>
@@ -46,7 +46,7 @@ export function PriceTrendTracker({
             <button
               type="button"
               onClick={onOpenPriceTracker}
-              className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1"
+              className="text-[12.5px] font-semibold text-[var(--accent-ink)] hover:opacity-80 flex items-center gap-1"
             >
               Open Full Tracker <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -54,13 +54,13 @@ export function PriceTrendTracker({
         </div>
 
         <div className="py-4 text-center space-y-1.5">
-          <div className="w-9 h-9 rounded-xl bg-[#F1F3F6] border border-[#E7EAF0] flex items-center justify-center mx-auto mb-1">
-            <Clock className="w-4 h-4 text-[#697386]" />
+          <div className="w-9 h-9 rounded-xl bg-[var(--bg-well)] border border-[var(--border-subtle)] flex items-center justify-center mx-auto mb-1">
+            <Clock className="w-4 h-4 text-[var(--text-secondary)]" />
           </div>
-          <p className="text-xs font-semibold text-[#151922]">
+          <p className="text-[13px] font-semibold text-[var(--text-primary)]">
             No recorded purchase prices yet
           </p>
-          <p className="text-xs text-[#697386] leading-relaxed max-w-sm mx-auto">
+          <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed max-w-sm mx-auto">
             Click &ldquo;Record Expense &amp; Track Prices&rdquo; on any scanned receipt, or check out in Shopping to track unit-normalized price history.
           </p>
         </div>
@@ -78,10 +78,10 @@ export function PriceTrendTracker({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] text-[#365FE8] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] text-[var(--accent-ink)] flex items-center justify-center">
             <LineChart className="w-4 h-4" strokeWidth={2.25} />
           </div>
-          <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+          <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
             Price Trend Tracker
           </h3>
         </div>
@@ -89,7 +89,7 @@ export function PriceTrendTracker({
           <button
             type="button"
             onClick={onOpenPriceTracker}
-            className="text-xs font-semibold text-[#365FE8] hover:text-[#294FCC] flex items-center gap-1"
+            className="text-[12.5px] font-semibold text-[var(--accent-ink)] hover:opacity-80 flex items-center gap-1"
           >
             Open Full Tracker <ArrowRight className="w-3.5 h-3.5" />
           </button>
@@ -105,14 +105,14 @@ export function PriceTrendTracker({
               key={s.productId}
               type="button"
               onClick={() => setSelectedId(s.productId)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 border ${
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 border ${
                 active
-                  ? 'bg-[#365FE8] text-white border-[#365FE8]'
-                  : 'bg-[#F7F8FA] text-[#697386] border-[#E7EAF0] hover:text-[#151922]'
+                  ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)]'
+                  : 'bg-[var(--bg-well)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
               }`}
             >
               <span>{s.productName}</span>
-              <span className="text-[11px] font-mono opacity-85">
+              <span className="text-[12px] font-mono tabular-nums opacity-85">
                 ₹{formatCurrencyExact(s.latestPrice)}/{s.unitOfMeasurement}
               </span>
             </button>
@@ -121,7 +121,7 @@ export function PriceTrendTracker({
       </div>
 
       {selected && (
-        <div className="surface-subtle p-4 space-y-3.5">
+        <div className="surface-well p-4 space-y-3.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <ProductVisual
@@ -133,10 +133,10 @@ export function PriceTrendTracker({
                 size="xs"
               />
               <div className="min-w-0">
-                <p className="text-sm font-bold text-[#151922] truncate">
+                <p className="text-sm font-bold text-[var(--text-primary)] truncate">
                   {selected.productName}
                 </p>
-                <p className="text-[11px] text-[#697386] font-mono">
+                <p className="text-[12px] text-[var(--text-secondary)] font-mono tabular-nums">
                   {selected.purchaseCount} real{' '}
                   {selected.purchaseCount === 1 ? 'purchase' : 'purchases'} · per{' '}
                   {selected.unitOfMeasurement}
@@ -145,20 +145,20 @@ export function PriceTrendTracker({
             </div>
 
             <div className="text-right shrink-0">
-              <p className="text-base font-bold font-mono text-[#151922] tabular-nums">
+              <p className="text-base font-bold font-mono text-[var(--text-primary)] tabular-nums">
                 ₹{formatCurrencyExact(selected.latestPrice)}
-                <span className="text-[11px] text-[#697386]">
+                <span className="text-[12px] text-[var(--text-secondary)]">
                   /{selected.unitOfMeasurement}
                 </span>
               </p>
               {pct !== null ? (
                 <div
-                  className={`flex items-center justify-end gap-1 text-[11px] font-bold font-mono ${
+                  className={`flex items-center justify-end gap-1 text-[12px] font-bold font-mono tabular-nums ${
                     isUp
-                      ? 'text-[#DE5252]'
+                      ? 'text-[var(--accent-danger-ink)]'
                       : isDown
-                      ? 'text-[#15966B]'
-                      : 'text-[#365FE8]'
+                      ? 'text-[var(--accent-success-ink)]'
+                      : 'text-[var(--accent-ink)]'
                   }`}
                 >
                   {isUp ? (
@@ -174,35 +174,35 @@ export function PriceTrendTracker({
                   </span>
                 </div>
               ) : (
-                <p className="text-[11px] text-[#697386] font-medium">
+                <p className="text-[12px] text-[var(--text-secondary)] font-medium">
                   Single purchase
                 </p>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-[#FFFFFF] rounded-lg p-2.5 border border-[#E7EAF0]">
-              <p className="text-[10px] font-semibold uppercase text-[#697386]">
+          <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] pt-2 border-t border-[var(--border-subtle)] text-center">
+            <div className="px-2">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Average
               </p>
-              <p className="text-xs font-bold font-mono text-[#151922] tabular-nums mt-0.5">
+              <p className="text-[12.5px] font-bold font-mono text-[var(--text-primary)] tabular-nums mt-0.5">
                 ₹{formatCurrencyExact(selected.averagePrice)}
               </p>
             </div>
-            <div className="bg-[#FFFFFF] rounded-lg p-2.5 border border-[#E7EAF0]">
-              <p className="text-[10px] font-semibold uppercase text-[#697386]">
+            <div className="px-2">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Lowest
               </p>
-              <p className="text-xs font-bold font-mono text-[#15966B] tabular-nums mt-0.5">
+              <p className="text-[12.5px] font-bold font-mono text-[var(--accent-success-ink)] tabular-nums mt-0.5">
                 ₹{formatCurrencyExact(selected.lowestPrice)}
               </p>
             </div>
-            <div className="bg-[#FFFFFF] rounded-lg p-2.5 border border-[#E7EAF0]">
-              <p className="text-[10px] font-semibold uppercase text-[#697386]">
+            <div className="px-2">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)]">
                 Highest
               </p>
-              <p className="text-xs font-bold font-mono text-[#9E6614] tabular-nums mt-0.5">
+              <p className="text-[12.5px] font-bold font-mono text-[var(--accent-warning-ink)] tabular-nums mt-0.5">
                 ₹{formatCurrencyExact(selected.highestPrice)}
               </p>
             </div>

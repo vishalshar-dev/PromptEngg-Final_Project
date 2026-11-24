@@ -114,20 +114,20 @@ export function FeeDetector() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#FEF6E7] border border-[#F3D8A8] text-[#C7851F] flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] text-[var(--accent-warning-ink)] flex items-center justify-center">
             <ShieldAlert className="w-4 h-4" strokeWidth={2.25} />
           </div>
           <div>
-            <h3 className="text-[15px] font-bold text-[#151922] tracking-tight">
+            <h3 className="font-display text-[15px] font-bold text-[var(--text-primary)] tracking-tight">
               Fee &amp; Dark Pattern Scanner
             </h3>
-            <p className="text-xs text-[#697386]">
+            <p className="text-[12px] text-[var(--text-secondary)]">
               Inspect your cart, scanned receipts, and logged expenses for hidden surcharges
             </p>
           </div>
         </div>
         {detectedFlags.length > 0 && (
-          <span className="text-xs font-bold font-mono tabular-nums text-[#9E6614] shrink-0">
+          <span className="text-[12px] font-bold font-mono tabular-nums text-[var(--accent-warning-ink)] shrink-0">
             {detectedFlags.length} flag{detectedFlags.length > 1 ? 's' : ''}
           </span>
         )}
@@ -136,10 +136,10 @@ export function FeeDetector() {
       {/* Scan Control or Empty State */}
       {!canScan ? (
         <div className="py-4 text-center space-y-1">
-          <p className="text-xs font-semibold text-[#151922]">
+          <p className="text-[13px] font-semibold text-[var(--text-primary)]">
             Nothing queued to audit yet
           </p>
-          <p className="text-xs text-[#697386]">
+          <p className="text-[12px] text-[var(--text-secondary)]">
             Add items in Shopping, log an expense, or scan a receipt above to inspect for small-cart fees, subscriptions, and handling surcharges.
           </p>
         </div>
@@ -147,9 +147,9 @@ export function FeeDetector() {
         <button
           type="button"
           onClick={runScan}
-          className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 border ${
+          className={`w-full py-2.5 px-4 rounded-xl text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-2 border ${
             detectedFlags.length > 0
-              ? 'bg-[#FEF6E7] text-[#9E6614] border-[#F3D8A8] hover:bg-[#FDF0D5]'
+              ? 'bg-[var(--accent-warning-soft)] text-[var(--accent-warning-ink)] border-[var(--accent-warning-border)] hover:opacity-90'
               : 'btn-secondary'
           }`}
         >
@@ -160,28 +160,28 @@ export function FeeDetector() {
 
       {/* Hairline Summary Stats */}
       {detectedFlags.length > 0 && (
-        <div className="grid grid-cols-3 divide-x divide-[#E7EAF0] border-y border-[#E7EAF0] py-2.5">
+        <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] border-y border-[var(--border-subtle)] py-2.5">
           <div className="text-center px-2">
-            <p className="text-base font-bold font-mono tabular-nums text-[#DE5252]">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--accent-danger-ink)]">
               {criticalCount}
             </p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
               Critical
             </p>
           </div>
           <div className="text-center px-2">
-            <p className="text-base font-bold font-mono tabular-nums text-[#9E6614]">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--accent-warning-ink)]">
               {warningCount}
             </p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
               Warning
             </p>
           </div>
           <div className="text-center px-2">
-            <p className="text-base font-bold font-mono tabular-nums text-[#151922]">
+            <p className="text-base font-bold font-mono tabular-nums text-[var(--text-primary)]">
               ₹{formatCurrency(totalEstimatedCost)}
             </p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#697386]">
+            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
               Est. Cost
             </p>
           </div>
@@ -190,7 +190,7 @@ export function FeeDetector() {
 
       {/* Flag List or Clean Result */}
       {detectedFlags.length > 0 ? (
-        <div className="divide-y divide-[#E7EAF0]">
+        <div className="divide-y divide-[var(--border-subtle)]">
           {detectedFlags.map((flag) => {
             const sevStyle = FEE_SEVERITY_STYLES[flag.severity];
             return (
@@ -215,17 +215,17 @@ export function FeeDetector() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-bold text-[#151922] truncate">
+                    <p className="text-[12.5px] font-bold text-[var(--text-primary)] truncate">
                       {flag.itemName}
                     </p>
-                    <span className={`text-xs font-bold font-mono tabular-nums shrink-0 ${sevStyle.text}`}>
+                    <span className={`text-[12.5px] font-bold font-mono tabular-nums shrink-0 ${sevStyle.text}`}>
                       ₹{formatCurrency(flag.estimatedCost)}
                     </span>
                   </div>
-                  <p className={`text-[11px] font-semibold uppercase tracking-wide mt-0.5 ${sevStyle.text}`}>
+                  <p className={`text-[12px] font-semibold mt-0.5 capitalize ${sevStyle.text}`}>
                     {FEE_TYPE_LABELS[flag.type]} · {flag.severity}
                   </p>
-                  <p className="text-xs text-[#697386] leading-relaxed mt-0.5">
+                  <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed mt-0.5">
                     {flag.message}
                   </p>
                 </div>
@@ -234,12 +234,12 @@ export function FeeDetector() {
           })}
         </div>
       ) : canScan && showResults ? (
-        <div className="surface-subtle p-5 text-center">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F7F1] border border-[#B7E4D3] flex items-center justify-center mx-auto mb-2">
-            <Check className="w-5 h-5 text-[#15966B]" strokeWidth={2.5} />
+        <div className="surface-well p-5 text-center">
+          <div className="w-10 h-10 rounded-xl bg-[var(--accent-success-soft)] border border-[var(--accent-success-border)] flex items-center justify-center mx-auto mb-2">
+            <Check className="w-5 h-5 text-[var(--accent-success-ink)]" strokeWidth={2.5} />
           </div>
-          <p className="text-sm font-bold text-[#15966B]">Audit clean</p>
-          <p className="text-xs text-[#697386] mt-1">
+          <p className="text-sm font-bold text-[var(--accent-success-ink)]">Audit clean</p>
+          <p className="text-[12px] text-[var(--text-secondary)] mt-1">
             No hidden fees, high GST markups, or dark patterns detected
           </p>
         </div>
@@ -250,9 +250,9 @@ export function FeeDetector() {
         <button
           type="button"
           onClick={handleSaveAudit}
-          className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
+          className={`w-full py-2.5 px-4 rounded-xl text-[12.5px] font-semibold transition-colors flex items-center justify-center gap-1.5 border ${
             savedFlash
-              ? 'bg-[#E8F7F1] text-[#15966B] border-[#B7E4D3]'
+              ? 'bg-[var(--accent-success-soft)] text-[var(--accent-success-ink)] border-[var(--accent-success-border)]'
               : 'btn-secondary'
           }`}
         >

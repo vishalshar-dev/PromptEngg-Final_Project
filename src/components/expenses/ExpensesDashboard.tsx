@@ -54,12 +54,12 @@ export function ExpensesDashboard({
   return (
     <div className="space-y-5">
       {/* Header + Integrated Underline Tab Strip */}
-      <div className="border-b border-[#E7EAF0]">
+      <div className="border-b border-[var(--border-subtle)]">
         <div className="pb-4">
-          <h1 className="text-[22px] sm:text-[26px] font-bold tracking-tight text-[#151922] leading-tight">
+          <h1 className="font-display text-[22px] sm:text-[26px] font-bold tracking-tight text-[var(--text-primary)] leading-tight">
             Expenses
           </h1>
-          <p className="text-[13.5px] text-[#697386] mt-1 max-w-2xl leading-relaxed">
+          <p className="text-[13.5px] text-[var(--text-secondary)] mt-1 max-w-2xl leading-relaxed">
             Manage personal transactions, classify spending, and settle shared group bills.
           </p>
         </div>
@@ -76,8 +76,8 @@ export function ExpensesDashboard({
             onClick={() => setActiveTab('transactions')}
             className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'transactions'
-                ? 'border-[#365FE8] text-[#365FE8]'
-                : 'border-transparent text-[#697386] hover:text-[#151922]'
+                ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <Receipt className="w-4 h-4" />
@@ -90,8 +90,8 @@ export function ExpensesDashboard({
             onClick={() => setActiveTab('splits')}
             className={`flex items-center gap-2 pb-3 text-[13.5px] font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'splits'
-                ? 'border-[#365FE8] text-[#365FE8]'
-                : 'border-transparent text-[#697386] hover:text-[#151922]'
+                ? 'border-[var(--accent-primary)] text-[var(--accent-ink)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -102,71 +102,71 @@ export function ExpensesDashboard({
 
       {/* Single hairline summary strip shown only on Transactions; Shared Splits shows its own split balance strip */}
       {activeTab === 'transactions' && (
-        <div className="bg-white border border-[#E7EAF0] rounded-2xl grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#E7EAF0]">
+        <div className="surface-card grid grid-cols-2 lg:grid-cols-4 [&>*:nth-child(odd)]:border-r [&>*:nth-child(-n+2)]:border-b lg:[&>*]:border-b-0 lg:[&>*:not(:last-child)]:border-r [&>*]:border-[var(--border-subtle)] overflow-hidden">
           <div className="p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <span className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                 Cycle Spent
               </span>
-              <TrendingDown className="w-4 h-4 text-[#929BAB]" />
+              <TrendingDown className="w-4 h-4 text-[var(--text-muted)]" />
             </div>
-            <p className="text-xl font-bold font-mono tabular-nums text-[#151922] mt-1.5">
+            <p className="font-display text-xl font-bold font-mono tabular-nums text-[var(--text-primary)] mt-1.5">
               ₹{formatCurrencyExact(cycleSpent)}
             </p>
-            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               {cycleSummary.window.label} · {activeCount} logged
             </p>
           </div>
 
           <div className="p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <span className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                 Budget Remaining
               </span>
-              <Wallet className="w-4 h-4 text-[#929BAB]" />
+              <Wallet className="w-4 h-4 text-[var(--text-muted)]" />
             </div>
             <p
-              className={`text-xl font-bold font-mono tabular-nums mt-1.5 ${
-                remaining < 0 ? 'text-[#DE5252]' : 'text-[#15966B]'
+              className={`font-display text-xl font-bold font-mono tabular-nums mt-1.5 ${
+                remaining < 0 ? 'text-[var(--accent-danger-ink)]' : 'text-[var(--accent-success-ink)]'
               }`}
             >
               {remaining < 0 ? '-' : ''}₹{formatCurrencyExact(Math.abs(remaining))}
             </p>
-            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate tabular-nums">
               of ₹{formatCurrencyExact(effectiveBudget)}
             </p>
           </div>
 
           <div className="p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <span className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                 Owed to You
               </span>
-              <Users className="w-4 h-4 text-[#929BAB]" />
+              <Users className="w-4 h-4 text-[var(--text-muted)]" />
             </div>
-            <p className="text-xl font-bold font-mono tabular-nums text-[#365FE8] mt-1.5">
+            <p className="font-display text-xl font-bold font-mono tabular-nums text-[var(--accent-ink)] mt-1.5">
               ₹{formatCurrencyExact(ledgerState.dashboard.totalOwedToMe)}
             </p>
-            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               {people.length} tracked contacts
             </p>
           </div>
 
           <div className="p-4 sm:p-5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#697386]">
+              <span className="text-[12.5px] font-medium text-[var(--text-secondary)]">
                 Net Split Position
               </span>
-              <Receipt className="w-4 h-4 text-[#929BAB]" />
+              <Receipt className="w-4 h-4 text-[var(--text-muted)]" />
             </div>
             <p
-              className={`text-xl font-bold font-mono tabular-nums mt-1.5 ${
-                netSplit >= 0 ? 'text-[#15966B]' : 'text-[#9E6614]'
+              className={`font-display text-xl font-bold font-mono tabular-nums mt-1.5 ${
+                netSplit >= 0 ? 'text-[var(--accent-success-ink)]' : 'text-[var(--accent-warning-ink)]'
               }`}
             >
               {netSplit >= 0 ? '+' : '-'}₹{formatCurrencyExact(Math.abs(netSplit))}
             </p>
-            <p className="text-[11.5px] text-[#697386] mt-0.5 truncate">
+            <p className="text-[12px] text-[var(--text-secondary)] mt-0.5 truncate">
               {netSplit >= 0 ? 'Net receivable' : 'Net payable'}
             </p>
           </div>

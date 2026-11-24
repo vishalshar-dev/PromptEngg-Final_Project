@@ -69,22 +69,22 @@ export function PeopleManagerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#151922]/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[var(--backdrop-scrim)] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="people-modal-title"
     >
-      <div className="w-full sm:max-w-md max-h-[88vh] overflow-y-auto scrollbar-thin bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl p-5 shadow-xl">
+      <div className="modal-panel w-full sm:max-w-md max-h-[88vh] overflow-y-auto scrollbar-thin rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 animate-slide-up">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#EDF2FF] border border-[#D4E0FF] flex items-center justify-center">
-              <Users className="w-4 h-4 text-[#365FE8]" strokeWidth={2.2} />
+            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary-soft)] border border-[var(--accent-border)] flex items-center justify-center">
+              <Users className="w-4 h-4 text-[var(--accent-ink)]" strokeWidth={2.2} />
             </div>
             <div>
-              <h3 id="people-modal-title" className="text-base font-bold text-[#151922]">
+              <h3 id="people-modal-title" className="font-display text-base font-bold text-[var(--text-primary)]">
                 Manage People
               </h3>
-              <p className="text-xs text-[#697386]">
+              <p className="text-[12px] text-[var(--text-secondary)]">
                 Add friends, roommates, or family you share bills with
               </p>
             </div>
@@ -93,16 +93,16 @@ export function PeopleManagerModal({
             type="button"
             onClick={onClose}
             aria-label="Close people manager"
-            className="w-8 h-8 rounded-xl bg-[#F1F3F6] hover:bg-[#E7EAF0] flex items-center justify-center text-[#697386] hover:text-[#151922] transition-colors"
+            className="w-8 h-8 rounded-xl bg-[var(--bg-well)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             <X className="w-4 h-4" strokeWidth={2.2} />
           </button>
         </div>
 
         {/* Add Person Form */}
-        <form onSubmit={handleAdd} className="surface-subtle p-3.5 space-y-2.5 mb-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#697386] flex items-center gap-1.5">
-            <UserPlus className="w-3.5 h-3.5 text-[#365FE8]" />
+        <form onSubmit={handleAdd} className="surface-well p-3.5 space-y-2.5 mb-4">
+          <p className="text-[12px] font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+            <UserPlus className="w-3.5 h-3.5 text-[var(--accent-ink)]" />
             Add New Person
           </p>
           <input
@@ -132,10 +132,10 @@ export function PeopleManagerModal({
             onChange={(e) => setUpiId(e.target.value)}
             className="input-field w-full px-3 py-2 text-sm font-mono"
           />
-          {formError && <p className="text-xs text-[#DE5252] font-medium">{formError}</p>}
+          {formError && <p className="text-[12px] text-[var(--accent-danger-ink)] font-medium">{formError}</p>}
           <button
             type="submit"
-            className="btn-primary w-full py-2.5 text-xs"
+            className="btn-primary w-full py-2.5 text-[13px]"
           >
             Add Person
           </button>
@@ -144,9 +144,9 @@ export function PeopleManagerModal({
         {deleteError && (
           <div
             role="alert"
-            className="flex items-start gap-2 text-xs text-[#9E6614] bg-[#FEF6E7] border border-[#F3D8A8] rounded-xl p-3 mb-3"
+            className="flex items-start gap-2 text-[12.5px] text-[var(--accent-warning-ink)] bg-[var(--accent-warning-soft)] border border-[var(--accent-warning-border)] rounded-xl p-3 mb-3"
           >
-            <AlertCircle className="w-4 h-4 text-[#C7851F] shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-[var(--accent-warning-ink)] shrink-0 mt-0.5" />
             <span>{deleteError}</span>
           </div>
         )}
@@ -154,14 +154,14 @@ export function PeopleManagerModal({
         {/* People List */}
         <div className="space-y-2">
           {people.length === 0 ? (
-            <p className="text-center text-xs text-[#697386] py-6">
+            <p className="text-center text-[12.5px] text-[var(--text-secondary)] py-6">
               No people saved yet. Add someone above to start splitting expenses.
             </p>
           ) : (
             people.map((person) => (
               <div
                 key={person.id}
-                className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3"
+                className="surface-well p-3"
               >
                 {editingId === person.id ? (
                   <div className="space-y-2">
@@ -178,7 +178,7 @@ export function PeopleManagerModal({
                       value={editContact}
                       onChange={(e) => setEditContact(e.target.value)}
                       placeholder="Phone or email"
-                      className="input-field w-full px-2.5 py-1.5 text-xs"
+                      className="input-field w-full px-2.5 py-1.5 text-[12.5px]"
                     />
                     <input
                       type="text"
@@ -186,13 +186,13 @@ export function PeopleManagerModal({
                       value={editUpiId}
                       onChange={(e) => setEditUpiId(e.target.value)}
                       placeholder="UPI ID (optional)"
-                      className="input-field w-full px-2.5 py-1.5 text-xs font-mono"
+                      className="input-field w-full px-2.5 py-1.5 text-[12.5px] font-mono"
                     />
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => handleSaveEdit(person.id)}
-                        className="btn-primary flex-1 py-1.5 text-xs flex items-center justify-center gap-1"
+                        className="btn-primary flex-1 py-1.5 text-[12.5px] flex items-center justify-center gap-1"
                       >
                         <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
                         Save
@@ -200,7 +200,7 @@ export function PeopleManagerModal({
                       <button
                         type="button"
                         onClick={() => setEditingId(null)}
-                        className="btn-secondary flex-1 py-1.5 text-xs"
+                        className="btn-secondary flex-1 py-1.5 text-[12.5px]"
                       >
                         Cancel
                       </button>
@@ -209,8 +209,8 @@ export function PeopleManagerModal({
                 ) : (
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#151922] truncate">{person.name}</p>
-                      <p className="text-xs text-[#697386] truncate">
+                      <p className="text-sm font-bold text-[var(--text-primary)] truncate">{person.name}</p>
+                      <p className="text-[12px] text-[var(--text-secondary)] truncate">
                         {person.contact || 'No contact info'}
                         {person.upiId ? ` · ${person.upiId}` : ''}
                       </p>
@@ -220,7 +220,7 @@ export function PeopleManagerModal({
                         type="button"
                         onClick={() => handleStartEdit(person)}
                         aria-label={`Edit ${person.name}`}
-                        className="p-1.5 rounded-lg text-[#697386] hover:text-[#151922] hover:bg-white transition-colors"
+                        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
@@ -228,7 +228,7 @@ export function PeopleManagerModal({
                         type="button"
                         onClick={() => handleDelete(person)}
                         aria-label={`Delete ${person.name}`}
-                        className="p-1.5 rounded-lg text-[#697386] hover:text-[#DE5252] hover:bg-[#FDECEC] transition-colors"
+                        className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-danger-ink)] hover:bg-[var(--accent-danger-soft)] transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

@@ -269,19 +269,19 @@ export function CustomProductForm({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-[#151922]/40 backdrop-blur-[2px] animate-fade-in"
+        className="fixed inset-0 bg-[var(--backdrop-scrim)] backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
       />
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col bg-white border border-[#E7EAF0] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden"
+        className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-t-3xl sm:rounded-2xl shadow-modal animate-slide-up overflow-hidden"
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7EAF0]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#EDF2FF] text-[#365FE8] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-primary-soft)] text-[var(--accent-ink)] flex items-center justify-center">
               <Sparkles className="w-4 h-4" strokeWidth={2.2} />
             </div>
-            <h3 className="text-base font-bold text-[#151922]">
+            <h3 className="text-base font-bold text-[var(--text-primary)]">
               {initialProduct ? 'Edit Product' : 'Create Custom Product'}
             </h3>
           </div>
@@ -289,7 +289,7 @@ export function CustomProductForm({
             type="button"
             onClick={onClose}
             aria-label="Close product form"
-            className="w-8 h-8 rounded-lg bg-[#F7F8FA] hover:bg-[#F1F3F6] flex items-center justify-center text-[#697386] hover:text-[#151922]"
+            className="w-9 h-9 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -299,7 +299,7 @@ export function CustomProductForm({
           {/* Name & Brand */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                 Product Name *
               </label>
               <input
@@ -314,7 +314,7 @@ export function CustomProductForm({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                 Brand (Optional)
               </label>
               <input
@@ -328,7 +328,7 @@ export function CustomProductForm({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                 Price (₹) {cleanVariants.length === 0 ? '*' : '(Base)'}
               </label>
               <input
@@ -345,7 +345,7 @@ export function CustomProductForm({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                 Unit / Pack Size
               </label>
               <input
@@ -368,8 +368,8 @@ export function CustomProductForm({
                 onClick={() => setUnit(preset)}
                 className={`px-2.5 py-1 rounded-md text-xs font-mono font-semibold border transition-colors ${
                   unit === preset
-                    ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
-                    : 'bg-[#F7F8FA] border-[#E7EAF0] text-[#697386] hover:text-[#151922]'
+                    ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                    : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 {preset}
@@ -380,7 +380,7 @@ export function CustomProductForm({
           {/* Category + Subcategory */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#4B5565] flex items-center gap-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] flex items-center gap-1.5">
                 <Tag className="w-3 h-3" /> Category
               </label>
               {!isCreatingCategory ? (
@@ -430,7 +430,7 @@ export function CustomProductForm({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                 Subcategory
               </label>
               <input
@@ -453,7 +453,7 @@ export function CustomProductForm({
           {/* Description & Tags */}
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+              <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                 Description (Optional)
               </label>
               <textarea
@@ -468,7 +468,7 @@ export function CustomProductForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+                <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                   Product Type &amp; Tags
                 </label>
                 <input
@@ -489,7 +489,7 @@ export function CustomProductForm({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#4B5565] block mb-1.5">
+                <label className="text-xs font-semibold text-[var(--text-tertiary)] block mb-1.5">
                   Product Image
                 </label>
                 <div className="flex gap-1.5">
@@ -523,21 +523,21 @@ export function CustomProductForm({
           </div>
 
           {/* Variants Builder */}
-          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5">
+          <div className="surface-well rounded-xl p-3.5 space-y-2.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-[#151922] flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#365FE8]" /> Pack Sizes / Variants
+              <label className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[var(--accent-ink)]" /> Pack Sizes / Variants
               </label>
               <button
                 type="button"
                 onClick={addVariantRow}
-                className="px-2.5 py-1 rounded-lg bg-[#EDF2FF] hover:bg-[#DCE6FF] border border-[#365FE8]/25 text-[#365FE8] text-xs font-semibold flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] border border-[var(--accent-border)] text-[var(--accent-ink)] text-xs font-semibold flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Add Variant
               </button>
             </div>
             {variants.length === 0 ? (
-              <p className="text-xs text-[#697386]">
+              <p className="text-xs text-[var(--text-secondary)]">
                 Optional: Add multiple pack sizes (e.g. 500 ml ₹30, 1 L ₹58) with separate prices.
               </p>
             ) : (
@@ -549,14 +549,14 @@ export function CustomProductForm({
                       placeholder="Label (500 ml)"
                       value={v.label}
                       onChange={(e) => updateVariantRow(idx, { label: e.target.value })}
-                      className="flex-1 min-w-0 bg-white border border-[#E7EAF0] rounded-lg px-2.5 py-1.5 text-xs text-[#151922] outline-none focus:border-[#365FE8]"
+                      className="flex-1 min-w-0 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]"
                     />
                     <input
                       type="text"
                       placeholder="Unit (500 ml)"
                       value={v.unit}
                       onChange={(e) => updateVariantRow(idx, { unit: e.target.value })}
-                      className="w-20 bg-white border border-[#E7EAF0] rounded-lg px-2 py-1.5 text-xs font-mono text-[#151922] outline-none focus:border-[#365FE8]"
+                      className="w-20 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2 py-1.5 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]"
                     />
                     <input
                       type="number"
@@ -565,13 +565,13 @@ export function CustomProductForm({
                       placeholder="₹ Price"
                       value={v.price}
                       onChange={(e) => updateVariantRow(idx, { price: e.target.value })}
-                      className="w-20 bg-white border border-[#E7EAF0] rounded-lg px-2 py-1.5 text-xs font-mono text-[#151922] outline-none focus:border-[#365FE8]"
+                      className="w-20 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2 py-1.5 text-xs font-mono text-[var(--text-primary)] outline-none focus:border-[var(--accent-primary)]"
                     />
                     <button
                       type="button"
                       onClick={() => removeVariantRow(idx)}
                       aria-label={`Remove variant ${idx + 1}`}
-                      className="w-7 h-7 rounded-lg bg-white hover:bg-[#FDECEC] border border-[#E7EAF0] text-[#697386] hover:text-[#DE5252] flex items-center justify-center flex-shrink-0"
+                      className="w-7 h-7 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--accent-danger-soft)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--accent-danger)] flex items-center justify-center flex-shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -583,36 +583,36 @@ export function CustomProductForm({
 
           {/* Decimal weight / Flags */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
-            <label className="flex items-center gap-2 text-xs font-semibold text-[#4B5565] cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-tertiary)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={isFavourite}
                 onChange={(e) => setIsFavourite(e.target.checked)}
-                className="accent-[#365FE8]"
+                className="accent-[var(--accent-primary)]"
               />
               Mark as Favourite
             </label>
-            <label className="flex items-center gap-2 text-xs font-semibold text-[#4B5565] cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-tertiary)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={isFrequent}
                 onChange={(e) => setIsFrequent(e.target.checked)}
-                className="accent-[#365FE8]"
+                className="accent-[var(--accent-primary)]"
               />
               Essential Staple
             </label>
-            <label className="flex items-center gap-2 text-xs font-semibold text-[#4B5565] cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--text-tertiary)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={allowDecimalQuantity}
                 onChange={(e) => setAllowDecimalQuantity(e.target.checked)}
-                className="accent-[#365FE8]"
+                className="accent-[var(--accent-primary)]"
               />
               Weight / Decimal Qty
             </label>
             {allowDecimalQuantity && (
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-[#697386]">Step:</span>
+                <span className="text-xs text-[var(--text-secondary)]">Step:</span>
                 <input
                   type="number"
                   step="0.25"
@@ -621,16 +621,16 @@ export function CustomProductForm({
                   aria-label="Quantity step"
                   value={quantityStep}
                   onChange={(e) => setQuantityStep(e.target.value)}
-                  className="w-16 bg-white border border-[#E7EAF0] rounded-lg px-2 py-1 text-xs font-mono text-[#151922] text-center"
+                  className="w-16 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2 py-1 text-xs font-mono text-[var(--text-primary)] text-center"
                 />
               </div>
             )}
           </div>
 
           {/* Recurring Schedule */}
-          <div className="bg-[#F7F8FA] border border-[#E7EAF0] rounded-xl p-3.5 space-y-2.5">
-            <label className="text-xs font-semibold text-[#151922] flex items-center gap-1.5">
-              <Repeat className="w-3.5 h-3.5 text-[#365FE8]" /> Recurring Schedule
+          <div className="surface-well rounded-xl p-3.5 space-y-2.5">
+            <label className="text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
+              <Repeat className="w-3.5 h-3.5 text-[var(--accent-ink)]" /> Recurring Schedule
             </label>
             <div className="grid grid-cols-5 gap-1.5">
               {(['none', 'daily', 'weekly', 'monthly', 'custom'] as const).map((freq) => (
@@ -640,8 +640,8 @@ export function CustomProductForm({
                   onClick={() => setRecurrenceFreq(freq)}
                   className={`py-1.5 rounded-lg text-xs font-semibold capitalize border transition-colors ${
                     recurrenceFreq === freq
-                      ? 'bg-[#EDF2FF] border-[#365FE8]/45 text-[#365FE8]'
-                      : 'bg-white border-[#E7EAF0] text-[#697386]'
+                      ? 'bg-[var(--accent-primary-soft)] border-[var(--accent-border)] text-[var(--accent-ink)]'
+                      : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)]'
                   }`}
                 >
                   {freq === 'none' ? 'Off' : freq}
@@ -650,25 +650,25 @@ export function CustomProductForm({
             </div>
             {recurrenceFreq === 'custom' && (
               <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-[#697386]">Every</span>
+                <span className="text-xs text-[var(--text-secondary)]">Every</span>
                 <input
                   type="number"
                   min="1"
                   value={intervalDays}
                   onChange={(e) => setIntervalDays(e.target.value)}
-                  className="w-16 bg-white border border-[#E7EAF0] rounded-lg px-2 py-1 text-xs font-mono text-[#151922] text-center"
+                  className="w-16 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-lg px-2 py-1 text-xs font-mono text-[var(--text-primary)] text-center"
                 />
-                <span className="text-xs text-[#697386]">days</span>
+                <span className="text-xs text-[var(--text-secondary)]">days</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="p-4 border-t border-[#E7EAF0] bg-[#F7F8FA]">
+        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)]">
           <button
             type="submit"
             disabled={!canSave}
-            className="w-full btn-primary py-3 text-sm disabled:bg-[#E7EAF0] disabled:text-[#929BAB] disabled:cursor-not-allowed"
+            className="w-full btn-primary py-3 text-sm disabled:bg-[var(--bg-well)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed"
           >
             <Check className="w-4 h-4" strokeWidth={2.5} />
             {initialProduct ? 'Save Changes' : 'Save Product to Catalog'}

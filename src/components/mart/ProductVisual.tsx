@@ -41,7 +41,7 @@ export function ProductVisual({
   if (canShowPhoto && imageUrl) {
     return (
       <div
-        className={`relative overflow-hidden bg-[#F1F3F6] border border-[#E7EAF0] shrink-0 ${SIZE_CLASSES[size]} ${className}`}
+        className={`relative overflow-hidden bg-[var(--bg-subtle)] border border-[var(--border-subtle)] shrink-0 ${SIZE_CLASSES[size]} ${className}`}
       >
         <img
           src={imageUrl}
