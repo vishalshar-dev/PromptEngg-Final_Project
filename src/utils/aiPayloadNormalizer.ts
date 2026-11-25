@@ -128,16 +128,25 @@ export function normalizePennyChatPayload(raw: unknown): NormalizedPennyChatPayl
   };
 }
 
-export function normalizePennyExpensePayload(
-  raw: unknown,
+export interface NormalizedPennyExpensesPayload {
+  expenses: NormalizedPennyExpensePayload[];
+  name: string;
+  amount: number;
+  category: string;
+  date: string;
+  isSplitHint: boolean;
+  splitPersonHint: string;
+}
+
+function normalizeSingleExpenseEntry(
+  rawEntry: unknown,
   allowedCategories: string[],
   fallbackDate: string,
   originalText: string
 ): NormalizedPennyExpensePayload {
-  const obj = (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}) as Record<
-    string,
-    unknown
-  >;
+  const obj = (rawEntry && typeof rawEntry === 'object' && !Array.isArray(rawEntry)
+    ? rawEntry
+    : {}) as Record<string, unknown>;
 
   const rawName = typeof obj.name === 'string' ? obj.name.trim() : '';
   const name = (rawName || originalText.trim()).slice(0, 80);
@@ -164,6 +173,60 @@ export function normalizePennyExpensePayload(
     date,
     isSplitHint,
     splitPersonHint,
+  };
+}
+
+export function normalizePennyExpensePayload(
+  raw: unknown,
+  allowedCategories: string[],
+  fallbackDate: string,
+  originalText: string
+): NormalizedPennyExpensePayload {
+  return normalizeSingleExpenseEntry(raw, allowedCategories, fallbackDate, originalText);
+}
+
+export function normalizePennyExpensesPayload(
+  raw: unknown,
+  allowedCategories: string[],
+  fallbackDate: string,
+  originalText: string
+): NormalizedPennyExpensesPayload {
+  const obj = (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+
+  const candidateList: unknown[] | null = Array.isArray(raw)
+    ? raw
+    : Array.isArray(obj.expenses)
+      ? obj.expenses
+      : Array.isArray(obj.items)
+        ? obj.items
+        : null;
+
+  let expenses: NormalizedPennyExpensePayload[] = [];
+
+  if (candidateList) {
+    expenses = candidateList
+      .filter(
+        (entry): entry is Record<string, unknown> =>
+          Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+      )
+      .map((entry) => normalizeSingleExpenseEntry(entry, allowedCategories, fallbackDate, ''))
+      .filter((item) => item.name.length > 0 && item.amount > 0)
+      .slice(0, 20);
+  } else {
+    const single = normalizeSingleExpenseEntry(raw, allowedCategories, fallbackDate, originalText);
+    if (single.name.length > 0 && single.amount > 0) {
+      expenses = [single];
+    }
+  }
+
+  const primary = expenses[0] ?? normalizeSingleExpenseEntry({}, allowedCategories, fallbackDate, originalText);
+
+  return {
+    expenses,
+    ...primary,
   };
 }
 

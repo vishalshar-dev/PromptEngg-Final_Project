@@ -11,6 +11,7 @@ import {
   groupCommitmentsAgenda,
   normalizePennyProposals,
   parseQuickExpenseLocally,
+  parseQuickExpensesLocally,
   sanitizePennyProfile,
 } from './pennyEngine';
 import { SELF_PERSON_ID, type CartItem, type Person, type SharedExpense, type Transaction } from '../types/models';
@@ -333,6 +334,29 @@ test('normalizePennyProposals filters invalid actions and resolves real catalog 
 
   assert.equal(proposals[2].type, 'toggle_broke_mode');
   assert.equal(proposals[2].brokeModeEnabled, true);
+
+  // Batch log_expenses and merging multiple log_expense entries
+  const batchProposals = normalizePennyProposals(
+    [
+      {
+        type: 'log_expenses',
+        expenses: [
+          { name: 'Coffee', amount: 180, category: 'Snacks & Beverages' },
+          { name: 'Zero item', amount: 0, category: 'Groceries' },
+          { name: 'Uber', amount: 240, category: 'Unknown Category' },
+        ],
+      },
+    ],
+    {
+      items: sampleItems,
+      basketTemplates: [],
+      categories: ['Groceries', 'Snacks & Beverages'],
+    }
+  );
+  assert.equal(batchProposals.length, 1);
+  assert.equal(batchProposals[0].type, 'log_expenses');
+  assert.equal(batchProposals[0].expenses?.length, 2);
+  assert.equal(batchProposals[0].expenses?.[1].category, 'Groceries');
 });
 
 test('groupCommitmentsAgenda buckets commitments into Overdue/Today, Next 7 Days, and Later', () => {
@@ -378,6 +402,39 @@ test('parseQuickExpenseLocally parses amounts, inferred categories, and relative
   assert.equal(p2.expense.date, '2026-11-20');
 
   assert.equal(parseQuickExpenseLocally('just some text without numbers', cats, '2026-11-21'), null);
+});
+
+test('parseQuickExpensesLocally parses comma, conjunction, newline, and quantity multi-item lists without splitting combined totals', () => {
+  const cats = ['Groceries', 'Snacks & Beverages', 'Fuel & Transportation', 'Utilities & Bills'];
+
+  const multi = parseQuickExpensesLocally(
+    'coffee 180, petrol 450 yesterday and milk 65',
+    cats,
+    '2026-11-21'
+  );
+  assert.equal(multi.length, 3);
+  assert.equal(multi[0].expense?.amount, 180);
+  assert.equal(multi[0].expense?.category, 'Snacks & Beverages');
+  assert.equal(multi[1].expense?.amount, 450);
+  assert.equal(multi[1].expense?.date, '2026-11-20');
+  assert.equal(multi[2].expense?.amount, 65);
+  assert.equal(multi[2].expense?.category, 'Groceries');
+
+  const lines = parseQuickExpensesLocally('180 coffee\n2 coffees at 120\n1.5k wifi bill', cats, '2026-11-21');
+  assert.equal(lines.length, 3);
+  assert.equal(lines[0].expense?.amount, 180);
+  assert.equal(lines[1].expense?.amount, 240);
+  assert.equal(lines[2].expense?.amount, 1500);
+  assert.equal(lines[2].expense?.category, 'Utilities & Bills');
+
+  // Combined total should NOT be split when second noun has no amount
+  const combined = parseQuickExpensesLocally(
+    'Paid 240 for cold coffee and sandwich',
+    cats,
+    '2026-11-21'
+  );
+  assert.equal(combined.length, 1);
+  assert.equal(combined[0].expense?.amount, 240);
 });
 
 import { answerPennyLocally } from './pennyEngine';

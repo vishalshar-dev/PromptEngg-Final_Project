@@ -43,6 +43,7 @@ import {
   buildSectionPayloads,
   computeSectionHashes,
   detectDeviceLabel,
+  formatReadableSyncError,
   hasMeaningfulWorkspaceData,
   smartMergeLocalAndCloud,
   SYNC_SECTION_IDS,
@@ -78,6 +79,8 @@ interface CloudSyncContextValue {
   syncStatus: CloudSyncStatus;
   lastSyncedAt: string | null;
   syncError: string | null;
+  syncErrorCode: string | null;
+  syncErrorAction: 'open_new_tab' | null;
   quotaUpgradeUrl: string | null;
   deviceLabel: string;
   isSigningIn: boolean;
@@ -128,41 +131,11 @@ function extractSyncableState(): SyncableWorkspaceState {
   };
 }
 
-function getQuotaUpgradeLink(errMsg: string): string | null {
-  if (errMsg.includes('Free daily read units per project')) {
-    return `https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/databases/${firebaseConfig.firestoreDatabaseId}/data?openUpgradeDialog=true`;
-  }
-  return null;
-}
-
-function formatReadableSyncError(err: unknown): { message: string; quotaUrl: string | null } {
-  const raw = err instanceof Error ? err.message : String(err);
-  if (raw.includes('Quota exceeded')) {
-    return {
-      message: 'Daily Firestore free-tier quota exceeded. Local changes remain saved and sync resumes after quota reset.',
-      quotaUrl: getQuotaUpgradeLink(raw),
-    };
-  }
-  if (raw.includes('client is offline') || raw.includes('network-request-failed')) {
-    return {
-      message: 'You appear offline. Changes are saved locally and will sync once reconnected.',
-      quotaUrl: null,
-    };
-  }
-  if (raw.startsWith('{')) {
-    try {
-      const parsed = JSON.parse(raw) as { error?: string };
-      if (parsed.error) {
-        return {
-          message: parsed.error,
-          quotaUrl: getQuotaUpgradeLink(parsed.error),
-        };
-      }
-    } catch {
-      // keep raw
-    }
-  }
-  return { message: raw || 'Cloud sync encountered an unexpected error.', quotaUrl: null };
+function formatContextSyncError(err: unknown) {
+  return formatReadableSyncError(err, {
+    projectId: firebaseConfig.projectId,
+    firestoreDatabaseId: firebaseConfig.firestoreDatabaseId,
+  });
 }
 
 export function CloudSyncProvider({ children }: { children: ReactNode }) {
@@ -171,6 +144,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
   const [syncStatus, setSyncStatus] = useState<CloudSyncStatus>('signed_out');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncErrorCode, setSyncErrorCode] = useState<string | null>(null);
+  const [syncErrorAction, setSyncErrorAction] = useState<'open_new_tab' | null>(null);
   const [quotaUpgradeUrl, setQuotaUpgradeUrl] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [pendingConflict, setPendingConflict] = useState<SyncConflictInfo | null>(null);
@@ -190,6 +165,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
 
   const clearSyncError = useCallback(() => {
     setSyncError(null);
+    setSyncErrorCode(null);
+    setSyncErrorAction(null);
     setQuotaUpgradeUrl(null);
   }, []);
 
@@ -330,6 +307,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
       setLastSyncedAt(clientNow);
       setSyncStatus('synced');
       setSyncError(null);
+      setSyncErrorCode(null);
+      setSyncErrorAction(null);
       setQuotaUpgradeUrl(null);
     },
     [deviceLabel]
@@ -395,8 +374,10 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
         setPendingConflict(null);
         isInitialSyncDoneRef.current = true;
       } catch (err) {
-        const parsed = formatReadableSyncError(err);
+        const parsed = formatContextSyncError(err);
         setSyncError(parsed.message);
+        setSyncErrorCode(parsed.code);
+        setSyncErrorAction(parsed.action);
         setQuotaUpgradeUrl(parsed.quotaUrl);
         setSyncStatus('error');
       }
@@ -410,8 +391,10 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
       const payloads = buildSectionPayloads(extractSyncableState(), INITIAL_MART_ITEMS);
       await writeSectionsToCloud(user.uid, [...SYNC_SECTION_IDS], payloads);
     } catch (err) {
-      const parsed = formatReadableSyncError(err);
+      const parsed = formatContextSyncError(err);
       setSyncError(parsed.message);
+      setSyncErrorCode(parsed.code);
+      setSyncErrorAction(parsed.action);
       setQuotaUpgradeUrl(parsed.quotaUrl);
       setSyncStatus(
         parsed.message.toLowerCase().includes('offline') ? 'offline' : 'error'
@@ -422,6 +405,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = useCallback(async () => {
     setIsSigningIn(true);
     setSyncError(null);
+    setSyncErrorCode(null);
+    setSyncErrorAction(null);
     setQuotaUpgradeUrl(null);
     try {
       await signInWithPopup(auth, googleProvider);
@@ -430,8 +415,11 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
         // User intentionally dismissed popup — do not alarm
       } else {
-        const parsed = formatReadableSyncError(err);
+        const parsed = formatContextSyncError(err);
         setSyncError(parsed.message);
+        setSyncErrorCode(parsed.code);
+        setSyncErrorAction(parsed.action);
+        setQuotaUpgradeUrl(parsed.quotaUrl);
         setSyncStatus('error');
       }
     } finally {
@@ -449,6 +437,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
     lastHashesRef.current = null;
     setPendingConflict(null);
     setSyncError(null);
+    setSyncErrorCode(null);
+    setSyncErrorAction(null);
     setQuotaUpgradeUrl(null);
     await signOut(auth);
     setSyncStatus('signed_out');
@@ -505,6 +495,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
     const initAndSubscribe = async () => {
       setSyncStatus('connecting');
       setSyncError(null);
+      setSyncErrorCode(null);
+      setSyncErrorAction(null);
       setQuotaUpgradeUrl(null);
       isInitialSyncDoneRef.current = false;
       knownCloudSectionsRef.current = new Set();
@@ -665,8 +657,10 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
             try {
               handleFirestoreError(error, OperationType.LIST, workspaceColPath);
             } catch (wrappedErr) {
-              const parsed = formatReadableSyncError(wrappedErr);
+              const parsed = formatContextSyncError(wrappedErr);
               setSyncError(parsed.message);
+              setSyncErrorCode(parsed.code);
+              setSyncErrorAction(parsed.action);
               setQuotaUpgradeUrl(parsed.quotaUrl);
               setSyncStatus('error');
             }
@@ -674,8 +668,10 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
         );
       } catch (err) {
         if (cancelled) return;
-        const parsed = formatReadableSyncError(err);
+        const parsed = formatContextSyncError(err);
         setSyncError(parsed.message);
+        setSyncErrorCode(parsed.code);
+        setSyncErrorAction(parsed.action);
         setQuotaUpgradeUrl(parsed.quotaUrl);
         setSyncStatus(
           parsed.message.toLowerCase().includes('offline') ? 'offline' : 'error'
@@ -724,8 +720,10 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
         if (dirtySections.length === 0) return;
 
         void writeSectionsToCloud(user.uid, dirtySections, currentPayloads).catch((err) => {
-          const parsed = formatReadableSyncError(err);
+          const parsed = formatContextSyncError(err);
           setSyncError(parsed.message);
+          setSyncErrorCode(parsed.code);
+          setSyncErrorAction(parsed.action);
           setQuotaUpgradeUrl(parsed.quotaUrl);
           setSyncStatus(
             parsed.message.toLowerCase().includes('offline') ? 'offline' : 'error'
@@ -750,6 +748,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
       syncStatus,
       lastSyncedAt,
       syncError,
+      syncErrorCode,
+      syncErrorAction,
       quotaUpgradeUrl,
       deviceLabel,
       isSigningIn,
@@ -772,6 +772,8 @@ export function CloudSyncProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signOutAccount,
       syncError,
+      syncErrorAction,
+      syncErrorCode,
       syncNow,
       syncStatus,
       user,

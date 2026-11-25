@@ -5,6 +5,8 @@ export interface GeminiHealthStatus {
   aiConfigured: boolean;
   visionConfigured: boolean;
   pennyConfigured: boolean;
+  geminiStatus?: 'active' | 'invalid_key' | 'cooldown' | 'unconfigured';
+  groqStatus?: 'active' | 'invalid_key' | 'cooldown' | 'unconfigured';
   model?: string;
   pennyModel?: string;
   visionFallbackModel?: string;
@@ -46,6 +48,8 @@ export async function fetchGeminiHealth(forceRefresh = false): Promise<GeminiHea
         aiConfigured?: boolean;
         visionConfigured?: boolean;
         pennyConfigured?: boolean;
+        geminiStatus?: 'active' | 'invalid_key' | 'cooldown' | 'unconfigured';
+        groqStatus?: 'active' | 'invalid_key' | 'cooldown' | 'unconfigured';
         model?: string;
         pennyModel?: string;
         visionFallbackModel?: string;
@@ -65,6 +69,8 @@ export async function fetchGeminiHealth(forceRefresh = false): Promise<GeminiHea
           typeof data?.visionConfigured === 'boolean' ? data.visionConfigured : aiConfigured,
         pennyConfigured:
           typeof data?.pennyConfigured === 'boolean' ? data.pennyConfigured : aiConfigured,
+        geminiStatus: data?.geminiStatus,
+        groqStatus: data?.groqStatus,
         model: typeof data?.model === 'string' ? data.model : undefined,
         pennyModel: typeof data?.pennyModel === 'string' ? data.pennyModel : undefined,
         visionFallbackModel:

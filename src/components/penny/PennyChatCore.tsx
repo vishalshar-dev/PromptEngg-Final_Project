@@ -26,7 +26,7 @@ import {
   buildPennyContextSnapshot,
   describePennyStyle,
   normalizePennyProposals,
-  parseQuickExpenseLocally,
+  parseQuickExpensesLocally,
 } from '../../utils/pennyEngine';
 import { executePennyProposal } from '../../utils/pennyActions';
 import {
@@ -75,8 +75,8 @@ const VIBE_OPTIONS: Array<{
 ];
 
 const QUICK_LOG_EXAMPLES = [
-  'Paid ₹180 for cold coffee',
-  'Spent ₹450 on petrol yesterday',
+  'Paid ₹180 coffee, ₹240 uber, ₹65 milk',
+  'Spent ₹450 petrol yesterday & ₹120 snacks',
   'Split ₹600 dinner with Rahul',
 ];
 
@@ -256,7 +256,7 @@ export function PennyChatCore({
   const [quickText, setQuickText] = useState('');
   const [isParsingExpense, setIsParsingExpense] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
-  const [parsedDraft, setParsedDraft] = useState<ParsedQuickExpense | null>(null);
+  const [parsedDrafts, setParsedDrafts] = useState<ParsedQuickExpense[]>([]);
   const [quickSavedMsg, setQuickSavedMsg] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -277,9 +277,11 @@ export function PennyChatCore({
     (status: { aiConfigured: boolean; groqConfigured: boolean; geminiConfigured: boolean }) => {
       setAiConfigured(status.aiConfigured);
       if (status.groqConfigured) {
-        setLiveProvider((curr) => curr ?? 'groq');
+        setLiveProvider('groq');
       } else if (status.geminiConfigured) {
-        setLiveProvider((curr) => curr ?? 'gemini');
+        setLiveProvider('gemini');
+      } else {
+        setLiveProvider(null);
       }
       if (status.aiConfigured) {
         pruneOfflinePennyMessages();
@@ -543,7 +545,7 @@ export function PennyChatCore({
           context: pennyContext,
           personalityProfile: updatedProfile,
         },
-        { timeoutMs: 14_000 }
+        { timeoutMs: 20_000 }
       );
 
       if (!result.ok || typeof result.data.answer !== 'string') {
@@ -627,7 +629,7 @@ export function PennyChatCore({
           context: pennyContext,
           personalityProfile: pennyProfile,
         },
-        { timeoutMs: 14_000, bypassCooldown: true }
+        { timeoutMs: 20_000, bypassCooldown: true }
       );
 
       if (!result.ok || typeof result.data.answer !== 'string') {
@@ -674,22 +676,26 @@ export function PennyChatCore({
     setQuickSavedMsg(null);
 
     const applyOfflineQuickParse = (raw: string): boolean => {
-      const local = parseQuickExpenseLocally(raw, categories, pennyContext.asOfDate);
-      if (!local?.expense) return false;
-      setParsedDraft({
-        name: local.expense.name,
-        amount: local.expense.amount,
-        category: local.expense.category,
-        date: local.expense.date || pennyContext.asOfDate,
-        isOfflineFallback: true,
-      });
+      const localList = parseQuickExpensesLocally(raw, categories, pennyContext.asOfDate);
+      if (localList.length === 0) return false;
+      setParsedDrafts(
+        localList
+          .filter((item) => Boolean(item.expense))
+          .map((item) => ({
+            name: item.expense!.name,
+            amount: item.expense!.amount,
+            category: item.expense!.category,
+            date: item.expense!.date || pennyContext.asOfDate,
+            isOfflineFallback: true,
+          }))
+      );
       return true;
     };
 
     if (getLiveAiAvailability().mode !== 'live') {
       syncAvailabilityState();
       if (!applyOfflineQuickParse(text)) {
-        setParseError('Include an amount like "Paid 240 for coffee" so Penny can log it.');
+        setParseError('Include amounts like "Paid 180 for coffee, 240 for uber" so Penny can log them.');
       }
       return;
     }
@@ -697,23 +703,30 @@ export function PennyChatCore({
     setIsParsingExpense(true);
 
     try {
-      const result = await enqueueAiPost<
-        ParsedQuickExpense & { provider?: 'groq' | 'gemini' }
-      >(
+      const result = await enqueueAiPost<{
+        expenses?: ParsedQuickExpense[];
+        name?: string;
+        amount?: number;
+        category?: string;
+        date?: string;
+        isSplitHint?: boolean;
+        splitPersonHint?: string;
+        provider?: 'groq' | 'gemini';
+      }>(
         '/api/penny-parse-expense',
         {
           text,
           categories,
           todayDate: pennyContext.asOfDate,
         },
-        { timeoutMs: 12_000 }
+        { timeoutMs: 15_000 }
       );
 
       if (!result.ok) {
         syncAvailabilityState();
         if (applyOfflineQuickParse(text)) return;
         setParseError(
-          result.error || 'Include an amount like "Paid 240 for coffee" so Penny can log it.'
+          result.error || 'Include amounts like "Paid 180 for coffee, 240 for uber" so Penny can log them.'
         );
         return;
       }
@@ -728,46 +741,109 @@ export function PennyChatCore({
       }
 
       const payload = result.data;
-      setParsedDraft({
-        name: payload.name?.trim() || text,
-        amount: Number.isFinite(Number(payload.amount)) ? Number(payload.amount) : 0,
-        category:
-          payload.category && categories.includes(payload.category)
-            ? payload.category
-            : categories[0] ?? 'Other Expenses',
-        date: payload.date || pennyContext.asOfDate,
-        isSplitHint: Boolean(payload.isSplitHint),
-        splitPersonHint: payload.splitPersonHint || '',
-        isOfflineFallback: false,
-      });
+      const rawItems =
+        Array.isArray(payload.expenses) && payload.expenses.length > 0
+          ? payload.expenses
+          : Number(payload.amount) > 0
+            ? [
+                {
+                  name: payload.name || text,
+                  amount: Number(payload.amount),
+                  category: payload.category || categories[0] || 'Other Expenses',
+                  date: payload.date || pennyContext.asOfDate,
+                  isSplitHint: payload.isSplitHint,
+                  splitPersonHint: payload.splitPersonHint,
+                },
+              ]
+            : [];
+
+      const normalizedDrafts: ParsedQuickExpense[] = rawItems
+        .map((item) => ({
+          name: item.name?.trim() || text,
+          amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
+          category:
+            item.category && categories.includes(item.category)
+              ? item.category
+              : categories[0] ?? 'Other Expenses',
+          date: item.date || pennyContext.asOfDate,
+          isSplitHint: Boolean(item.isSplitHint),
+          splitPersonHint: item.splitPersonHint || '',
+          isOfflineFallback: false,
+        }))
+        .filter((item) => item.amount > 0);
+
+      if (normalizedDrafts.length === 0) {
+        if (!applyOfflineQuickParse(text)) {
+          setParseError('No amounts detected. Try e.g. "Paid 180 coffee, 240 uber, 65 milk".');
+        }
+        return;
+      }
+
+      setParsedDrafts(normalizedDrafts);
     } finally {
       setIsParsingExpense(false);
     }
   };
 
-  const handleSaveParsedExpense = () => {
-    if (!parsedDraft) return;
-    if (!parsedDraft.name.trim() || !Number.isFinite(parsedDraft.amount) || parsedDraft.amount <= 0) {
-      setParseError('Enter a valid title and amount greater than ₹0 before saving.');
+  const updateParsedDraftAt = (index: number, patch: Partial<ParsedQuickExpense>) => {
+    setParsedDrafts((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item))
+    );
+  };
+
+  const removeParsedDraftAt = (index: number) => {
+    setParsedDrafts((prev) => prev.filter((_, idx) => idx !== index));
+    setParseError(null);
+  };
+
+  const handleAddEmptyQuickRow = () => {
+    setParsedDrafts((prev) => [
+      ...prev,
+      {
+        name: '',
+        amount: 0,
+        category: categories[0] ?? 'Other Expenses',
+        date: pennyContext.asOfDate,
+      },
+    ]);
+  };
+
+  const handleSaveParsedExpenses = () => {
+    if (parsedDrafts.length === 0) return;
+
+    const invalidIdx = parsedDrafts.findIndex(
+      (d) => !d.name.trim() || !Number.isFinite(d.amount) || d.amount <= 0
+    );
+    if (invalidIdx >= 0) {
+      setParseError(
+        `Item #${invalidIdx + 1} needs a title and an amount greater than ₹0 before saving.`
+      );
       return;
     }
 
-    const isoTimestamp = /^\d{4}-\d{2}-\d{2}$/.test(parsedDraft.date)
-      ? `${parsedDraft.date}T12:00:00.000Z`
-      : new Date().toISOString();
+    let totalSaved = 0;
+    for (const draft of parsedDrafts) {
+      const isoTimestamp = /^\d{4}-\d{2}-\d{2}$/.test(draft.date)
+        ? `${draft.date}T12:00:00.000Z`
+        : new Date().toISOString();
 
-    addTransaction({
-      name: parsedDraft.name.trim(),
-      amount: parsedDraft.amount,
-      category: parsedDraft.category,
-      timestamp: isoTimestamp,
-      source: 'manual',
-    });
+      totalSaved += draft.amount;
+      addTransaction({
+        name: draft.name.trim(),
+        amount: draft.amount,
+        category: draft.category,
+        timestamp: isoTimestamp,
+        source: 'manual',
+      });
+    }
 
+    const savedCount = parsedDrafts.length;
     setQuickSavedMsg(
-      `Saved "${parsedDraft.name.trim()}" (₹${formatCurrencyExact(parsedDraft.amount)}) to your ledger.`
+      savedCount === 1
+        ? `Saved "${parsedDrafts[0].name.trim()}" (₹${formatCurrencyExact(parsedDrafts[0].amount)}) to your ledger.`
+        : `Saved ${savedCount} expenses (₹${formatCurrencyExact(totalSaved)} total) to your ledger.`
     );
-    setParsedDraft(null);
+    setParsedDrafts([]);
     setQuickText('');
     setParseError(null);
   };
@@ -1180,6 +1256,119 @@ export function PennyChatCore({
                                         </div>
                                       )}
 
+                                      {isPending &&
+                                        draft.type === 'log_expenses' &&
+                                        Array.isArray(draft.expenses) &&
+                                        draft.expenses.length > 0 && (
+                                          <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
+                                            {draft.expenses.map((row, rowIdx) => (
+                                              <div
+                                                key={`${act.id}-row-${rowIdx}`}
+                                                className="rounded-lg bg-[var(--bg-subtle)]/70 p-2 space-y-1.5 border border-[var(--border-subtle)]"
+                                              >
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                                                    Item {rowIdx + 1}
+                                                  </span>
+                                                  {draft.expenses!.length > 1 && (
+                                                    <button
+                                                      type="button"
+                                                      onClick={() =>
+                                                        updateProposalDraft(act, (c) => ({
+                                                          ...c,
+                                                          expenses: (c.expenses ?? []).filter(
+                                                            (_, i) => i !== rowIdx
+                                                          ),
+                                                        }))
+                                                      }
+                                                      aria-label={`Remove item ${rowIdx + 1}`}
+                                                      className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-danger-ink)]"
+                                                    >
+                                                      <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                  )}
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                  <input
+                                                    type="text"
+                                                    aria-label={`Expense ${rowIdx + 1} title`}
+                                                    value={row.name}
+                                                    onChange={(e) =>
+                                                      updateProposalDraft(act, (c) => ({
+                                                        ...c,
+                                                        expenses: (c.expenses ?? []).map((it, i) =>
+                                                          i === rowIdx
+                                                            ? { ...it, name: e.target.value }
+                                                            : it
+                                                        ),
+                                                      }))
+                                                    }
+                                                    className="input-field px-2 py-1 text-xs"
+                                                  />
+                                                  <input
+                                                    type="number"
+                                                    min="1"
+                                                    step="0.01"
+                                                    aria-label={`Expense ${rowIdx + 1} amount`}
+                                                    value={row.amount}
+                                                    onChange={(e) =>
+                                                      updateProposalDraft(act, (c) => ({
+                                                        ...c,
+                                                        expenses: (c.expenses ?? []).map((it, i) =>
+                                                          i === rowIdx
+                                                            ? {
+                                                                ...it,
+                                                                amount: Number(e.target.value) || 0,
+                                                              }
+                                                            : it
+                                                        ),
+                                                      }))
+                                                    }
+                                                    className="input-field px-2 py-1 text-xs font-mono tabular-nums"
+                                                  />
+                                                  <select
+                                                    aria-label={`Expense ${rowIdx + 1} category`}
+                                                    value={row.category}
+                                                    onChange={(e) =>
+                                                      updateProposalDraft(act, (c) => ({
+                                                        ...c,
+                                                        expenses: (c.expenses ?? []).map((it, i) =>
+                                                          i === rowIdx
+                                                            ? { ...it, category: e.target.value }
+                                                            : it
+                                                        ),
+                                                      }))
+                                                    }
+                                                    className="input-field px-2 py-1 text-xs"
+                                                  >
+                                                    {categories.map((c) => (
+                                                      <option key={c} value={c}>
+                                                        {c}
+                                                      </option>
+                                                    ))}
+                                                  </select>
+                                                  <input
+                                                    type="date"
+                                                    aria-label={`Expense ${rowIdx + 1} date`}
+                                                    value={row.date || pennyContext.asOfDate}
+                                                    onChange={(e) =>
+                                                      updateProposalDraft(act, (c) => ({
+                                                        ...c,
+                                                        expenses: (c.expenses ?? []).map((it, i) =>
+                                                          i === rowIdx
+                                                            ? { ...it, date: e.target.value }
+                                                            : it
+                                                        ),
+                                                      }))
+                                                    }
+                                                    className="input-field px-2 py-1 text-xs"
+                                                  />
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+
                                       {isPending && draft.type === 'set_budget' && (
                                         <div className="pt-2 border-t border-[var(--border-subtle)]">
                                           <label className="flex items-center gap-2 text-xs font-medium text-[var(--text-secondary)]">
@@ -1539,12 +1728,12 @@ export function PennyChatCore({
           </form>
         </>
       ) : (
-        /* Quick Natural-Language Expense Parser */
+        /* Quick Natural-Language Expense Parser (Single & Multi-Item) */
         <div className="flex-1 flex flex-col justify-between gap-3 overflow-y-auto scrollbar-thin">
           <div className="space-y-3.5">
             <div className="space-y-2">
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                Describe an expense in plain English and Penny will extract title, amount, category, and date — works both online and offline.
+                Describe one or multiple expenses in plain English — separated by commas, &ldquo;and&rdquo;, or new lines — and Penny will extract every item, amount, category, and date.
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {QUICK_LOG_EXAMPLES.map((example) => (
@@ -1555,7 +1744,7 @@ export function PennyChatCore({
                       setQuickText(example);
                       setParseError(null);
                     }}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-ink)] border border-[var(--border-subtle)] transition-colors"
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--bg-subtle)] hover:bg-[var(--accent-primary-soft)] text-[var(--text-secondary)] hover:text-[var(--accent-ink)] border border-[var(--border-subtle)] transition-colors text-left"
                   >
                     {example}
                   </button>
@@ -1568,24 +1757,31 @@ export function PennyChatCore({
                 if (quickVoice.isListening) quickVoice.stopListening();
                 void handleParseQuickExpense(e);
               }}
-              className="flex flex-col sm:flex-row gap-2"
+              className="flex flex-col gap-2"
             >
               <label htmlFor={`${inputId}-quick-log`} className="sr-only">
-                Describe an expense to log
+                Describe one or more expenses to log
               </label>
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <input
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <textarea
                   id={`${inputId}-quick-log`}
-                  type="text"
+                  rows={2}
                   value={quickText}
                   onChange={(e) => setQuickText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (quickVoice.isListening) quickVoice.stopListening();
+                      void handleParseQuickExpense(e);
+                    }
+                  }}
                   placeholder={
                     quickVoice.isListening
-                      ? 'Listening… say e.g. "Paid 240 for coffee"'
-                      : 'e.g. "Paid 240 for cold coffee and sandwich"'
+                      ? 'Listening… say e.g. "Paid 180 coffee, 240 uber, 65 milk"'
+                      : 'e.g. "Paid 180 coffee, 240 uber, 65 milk" (Enter to parse, Shift+Enter for new line)'
                   }
                   disabled={isParsingExpense}
-                  className="input-field flex-1 min-w-0 px-3 py-2 text-[13px]"
+                  className="input-field flex-1 min-w-0 px-3 py-2 text-[13px] resize-y min-h-[60px] max-h-[140px]"
                 />
                 <button
                   type="button"
@@ -1606,14 +1802,16 @@ export function PennyChatCore({
                   )}
                 </button>
               </div>
-              <button
-                type="submit"
-                disabled={isParsingExpense || !quickText.trim()}
-                className="btn-primary px-4 py-2 text-xs whitespace-nowrap shrink-0"
-              >
-                <span>{isParsingExpense ? 'Parsing…' : 'Parse Note'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isParsingExpense || !quickText.trim()}
+                  className="btn-primary px-4 py-2 text-xs whitespace-nowrap shrink-0"
+                >
+                  <span>{isParsingExpense ? 'Parsing…' : 'Parse Expenses'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </form>
 
             {(quickVoice.isListening || quickVoice.voiceError) && (
@@ -1630,7 +1828,7 @@ export function PennyChatCore({
                     ? quickVoice.voiceError
                     : quickVoice.interimTranscript
                       ? `Listening: "${quickVoice.interimTranscript}"`
-                      : 'Listening… dictate your expense'}
+                      : 'Listening… dictate your expenses'}
                 </span>
                 {quickVoice.voiceError && (
                   <button
@@ -1675,14 +1873,21 @@ export function PennyChatCore({
               </div>
             )}
 
-            {parsedDraft && (
-              <div className="surface-subtle p-3.5 space-y-3">
+            {parsedDrafts.length > 0 && (
+              <div
+                data-testid="quick-log-review-panel"
+                className="surface-subtle p-3.5 space-y-3"
+              >
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-2 text-xs flex-wrap">
                     <p className="font-bold text-[var(--text-primary)]">
-                      Review &amp; Confirm Expense
+                      {parsedDrafts.length === 1
+                        ? 'Review & Confirm Expense'
+                        : `Review & Confirm ${parsedDrafts.length} Expenses · ₹${formatCurrencyExact(
+                            parsedDrafts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0)
+                          )}`}
                     </p>
-                    {parsedDraft.isOfflineFallback && (
+                    {parsedDrafts.some((d) => d.isOfflineFallback) && (
                       <>
                         <span className="text-[var(--text-muted)]" aria-hidden="true">
                           ·
@@ -1693,97 +1898,143 @@ export function PennyChatCore({
                       </>
                     )}
                   </div>
-                  {parsedDraft.isSplitHint && parsedDraft.splitPersonHint && onNavigate && (
-                    <button
-                      type="button"
-                      onClick={() => onNavigate('expenses')}
-                      className="text-xs font-semibold text-[var(--accent-ink)] hover:underline"
-                    >
-                      Split with {parsedDraft.splitPersonHint}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddEmptyQuickRow}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent-ink)] hover:underline"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add row</span>
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <label className="block space-y-1">
-                    <span className="text-xs font-medium text-[var(--text-secondary)]">
-                      Title
-                    </span>
-                    <input
-                      type="text"
-                      value={parsedDraft.name}
-                      onChange={(e) =>
-                        setParsedDraft({ ...parsedDraft, name: e.target.value })
-                      }
-                      className="input-field w-full px-2.5 py-1.5 text-xs"
-                    />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-xs font-medium text-[var(--text-secondary)]">
-                      Amount (₹)
-                    </span>
-                    <input
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      value={parsedDraft.amount || ''}
-                      onChange={(e) =>
-                        setParsedDraft({
-                          ...parsedDraft,
-                          amount: Number(e.target.value) || 0,
-                        })
-                      }
-                      className="input-field w-full px-2.5 py-1.5 text-xs font-mono tabular-nums"
-                    />
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-xs font-medium text-[var(--text-secondary)]">
-                      Category
-                    </span>
-                    <select
-                      value={parsedDraft.category}
-                      onChange={(e) =>
-                        setParsedDraft({ ...parsedDraft, category: e.target.value })
-                      }
-                      className="input-field w-full px-2.5 py-1.5 text-xs"
+                <div className="space-y-2.5">
+                  {parsedDrafts.map((draft, idx) => (
+                    <div
+                      key={`quick-draft-${idx}`}
+                      data-testid={`quick-log-item-${idx}`}
+                      className="rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-2.5 space-y-2"
                     >
-                      {categories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block space-y-1">
-                    <span className="text-xs font-medium text-[var(--text-secondary)]">
-                      Date
-                    </span>
-                    <input
-                      type="date"
-                      value={parsedDraft.date}
-                      onChange={(e) =>
-                        setParsedDraft({ ...parsedDraft, date: e.target.value })
-                      }
-                      className="input-field w-full px-2.5 py-1.5 text-xs"
-                    />
-                  </label>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                          {parsedDrafts.length > 1 ? `Item ${idx + 1}` : 'Expense Details'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {draft.isSplitHint && draft.splitPersonHint && onNavigate && (
+                            <button
+                              type="button"
+                              onClick={() => onNavigate('expenses')}
+                              className="text-xs font-semibold text-[var(--accent-ink)] hover:underline"
+                            >
+                              Split with {draft.splitPersonHint}
+                            </button>
+                          )}
+                          {parsedDrafts.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeParsedDraftAt(idx)}
+                              aria-label={`Remove expense item ${idx + 1}`}
+                              className="text-[var(--text-muted)] hover:text-[var(--accent-danger-ink)] p-0.5"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className="block space-y-1">
+                          <span className="text-xs font-medium text-[var(--text-secondary)]">
+                            Title
+                          </span>
+                          <input
+                            type="text"
+                            aria-label={`Item ${idx + 1} title`}
+                            value={draft.name}
+                            onChange={(e) =>
+                              updateParsedDraftAt(idx, { name: e.target.value })
+                            }
+                            className="input-field w-full px-2.5 py-1.5 text-xs"
+                          />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-xs font-medium text-[var(--text-secondary)]">
+                            Amount (₹)
+                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            aria-label={`Item ${idx + 1} amount`}
+                            value={draft.amount || ''}
+                            onChange={(e) =>
+                              updateParsedDraftAt(idx, {
+                                amount: Number(e.target.value) || 0,
+                              })
+                            }
+                            className="input-field w-full px-2.5 py-1.5 text-xs font-mono tabular-nums"
+                          />
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-xs font-medium text-[var(--text-secondary)]">
+                            Category
+                          </span>
+                          <select
+                            aria-label={`Item ${idx + 1} category`}
+                            value={draft.category}
+                            onChange={(e) =>
+                              updateParsedDraftAt(idx, { category: e.target.value })
+                            }
+                            className="input-field w-full px-2.5 py-1.5 text-xs"
+                          >
+                            {categories.map((c) => (
+                              <option key={c} value={c}>
+                                {c}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block space-y-1">
+                          <span className="text-xs font-medium text-[var(--text-secondary)]">
+                            Date
+                          </span>
+                          <input
+                            type="date"
+                            aria-label={`Item ${idx + 1} date`}
+                            value={draft.date}
+                            onChange={(e) =>
+                              updateParsedDraftAt(idx, { date: e.target.value })
+                            }
+                            className="input-field w-full px-2.5 py-1.5 text-xs"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setParsedDraft(null)}
+                    onClick={() => {
+                      setParsedDrafts([]);
+                      setParseError(null);
+                    }}
                     className="btn-secondary px-3 py-1.5 text-xs"
                   >
-                    Discard
+                    {parsedDrafts.length > 1 ? 'Discard All' : 'Discard'}
                   </button>
                   <button
                     type="button"
-                    onClick={handleSaveParsedExpense}
+                    onClick={handleSaveParsedExpenses}
                     className="btn-primary px-3.5 py-1.5 text-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Save to Ledger</span>
+                    <span>
+                      {parsedDrafts.length === 1
+                        ? 'Save to Ledger'
+                        : `Save All ${parsedDrafts.length} to Ledger`}
+                    </span>
                   </button>
                 </div>
               </div>

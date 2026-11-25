@@ -27,6 +27,7 @@ import {
   Type,
   Zap,
   Wand2,
+  ExternalLink,
 } from 'lucide-react';
 import { useAppStore } from '../../store/useStore';
 import { useCloudSync } from '../../contexts/CloudSyncContext';
@@ -219,12 +220,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     syncStatus,
     lastSyncedAt,
     syncError,
+    syncErrorAction,
     quotaUpgradeUrl,
     deviceLabel,
     isSigningIn,
     signInWithGoogle,
     signOutAccount,
     syncNow,
+    clearSyncError,
   } = useCloudSync();
 
   useEffect(() => {
@@ -411,22 +414,46 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {syncError && (
               <div
                 role="alert"
-                className="rounded-xl px-3 py-2 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-xs flex items-start gap-2"
+                data-testid="settings-sync-error"
+                className="rounded-xl px-3 py-2 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-xs flex items-start justify-between gap-2"
               >
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p>{syncError}</p>
-                  {quotaUpgradeUrl && (
-                    <a
-                      href={quotaUpgradeUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline font-semibold inline-block"
-                    >
-                      Open Firebase Console Usage
-                    </a>
-                  )}
+                <div className="flex items-start gap-2 min-w-0">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="space-y-1.5 min-w-0">
+                    <p className="break-words">{syncError}</p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {syncErrorAction === 'open_new_tab' && typeof window !== 'undefined' && (
+                        <a
+                          href={window.location.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline font-semibold inline-flex items-center gap-1"
+                        >
+                          <span>Open in new tab</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                      {quotaUpgradeUrl && (
+                        <a
+                          href={quotaUpgradeUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline font-semibold inline-block"
+                        >
+                          Open Firebase Console Usage
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={clearSyncError}
+                  aria-label="Dismiss sync error"
+                  className="shrink-0 p-0.5 rounded hover:bg-black/10"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
           </section>

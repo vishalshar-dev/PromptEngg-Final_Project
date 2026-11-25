@@ -1179,7 +1179,7 @@ export function normalizePennyProposals(
     return found ?? fallbackCategory;
   };
 
-  for (let idx = 0; idx < rawProposals.length && result.length < 3; idx++) {
+  for (let idx = 0; idx < rawProposals.length && result.length < 6; idx++) {
     const raw = rawProposals[idx];
     if (!raw || typeof raw !== 'object') continue;
     const p = raw as Record<string, unknown>;
@@ -1210,6 +1210,53 @@ export function normalizePennyProposals(
           date: dateStr,
         },
       });
+    } else if (type === 'log_expenses' && Array.isArray(p.expenses)) {
+      const validRows = p.expenses
+        .filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === 'object')
+        .map((row) => {
+          const name = typeof row.name === 'string' ? row.name.trim() : '';
+          const amount = Number(row.amount);
+          if (!name || !Number.isFinite(amount) || amount <= 0) return null;
+          const dateStr =
+            typeof row.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.date)
+              ? row.date
+              : undefined;
+          return {
+            name,
+            amount: roundCurrency(amount),
+            category: matchCategory(row.category),
+            date: dateStr,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .slice(0, 15);
+      if (validRows.length === 0) continue;
+      if (validRows.length === 1) {
+        const single = validRows[0];
+        result.push({
+          id,
+          type: 'log_expense',
+          title: title || `Log ₹${single.amount} — ${single.name}`,
+          summary: summary || `${single.name} · ${single.category}`,
+          status: 'pending',
+          expense: single,
+        });
+      } else {
+        const totalAmt = roundCurrency(validRows.reduce((s, r) => s + r.amount, 0));
+        result.push({
+          id,
+          type: 'log_expenses',
+          title: title || `Log ${validRows.length} expenses (₹${totalAmt})`,
+          summary:
+            summary ||
+            validRows
+              .slice(0, 3)
+              .map((r) => `${r.name} ₹${r.amount}`)
+              .join(' · ') + (validRows.length > 3 ? ` +${validRows.length - 3} more` : ''),
+          status: 'pending',
+          expenses: validRows,
+        });
+      }
     } else if (type === 'add_split' && p.split && typeof p.split === 'object') {
       const sp = p.split as Record<string, unknown>;
       const name = typeof sp.name === 'string' ? sp.name.trim() : '';
@@ -1446,6 +1493,27 @@ export function normalizePennyProposals(
     }
   }
 
+  // Merge 2+ standalone log_expense proposals into one clean batch card
+  const singleExpenses = result.filter((p) => p.type === 'log_expense' && p.expense);
+  if (singleExpenses.length >= 2) {
+    const mergedRows = singleExpenses.map((p) => p.expense!);
+    const totalAmt = roundCurrency(mergedRows.reduce((s, r) => s + r.amount, 0));
+    const batchAction: PennyProposedAction = {
+      id: singleExpenses[0].id,
+      type: 'log_expenses',
+      title: `Log ${mergedRows.length} expenses (₹${totalAmt})`,
+      summary:
+        mergedRows
+          .slice(0, 3)
+          .map((r) => `${r.name} ₹${r.amount}`)
+          .join(' · ') + (mergedRows.length > 3 ? ` +${mergedRows.length - 3} more` : ''),
+      status: 'pending',
+      expenses: mergedRows,
+    };
+    const nonSingle = result.filter((p) => p.type !== 'log_expense');
+    return [batchAction, ...nonSingle].slice(0, 4);
+  }
+
   return result;
 }
 
@@ -1484,73 +1552,165 @@ const OFFLINE_CATEGORY_KEYWORDS: Array<{ keywords: string[]; hints: string[] }> 
   { keywords: ['medicine', 'pharmacy', 'doctor', 'clinic', 'tablet', 'vitamin'], hints: ['health', 'medical', 'wellness'] },
 ];
 
+function parseNumericAmountToken(rawSegment: string): {
+  amount: number;
+  matchedSlice: string;
+} | null {
+  // Handle quantity * unit price e.g. "2 coffees at 120" or "3x milk 30"
+  const qtyMatch = rawSegment.match(
+    /\b(\d+)\s*(?:x|×|pcs?|pieces?|cups?|bottles?|packets?|coffees?|items?)\b[\s\w]{0,24}?(?:@|at|for|of)?\s*(?:₹|rs\.?|inr)?\s*(\d+(?:,\d{3})*(?:\.\d{1,2})?)(\s*k)?\b/i
+  );
+  if (qtyMatch) {
+    const qty = Number(qtyMatch[1]);
+    let unit = Number(qtyMatch[2].replace(/,/g, ''));
+    if (qtyMatch[3]) unit *= 1000;
+    const total = roundCurrency(qty * unit);
+    if (qty > 0 && qty <= 100 && Number.isFinite(total) && total > 0) {
+      return { amount: total, matchedSlice: qtyMatch[0] };
+    }
+  }
+
+  // Handle "2k" / "1.5k"
+  const kMatch = rawSegment.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:\.\d{1,2})?)\s*k\b/i);
+  if (kMatch) {
+    const amount = roundCurrency(Number(kMatch[1]) * 1000);
+    if (Number.isFinite(amount) && amount > 0) {
+      return { amount, matchedSlice: kMatch[0] };
+    }
+  }
+
+  const amountMatch = rawSegment.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:[.,]\d{1,2})?)(?:\/-)?/i);
+  if (!amountMatch) return null;
+  const numericStr = amountMatch[1].replace(/,/g, '');
+  const amount = roundCurrency(Number(numericStr));
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return { amount, matchedSlice: amountMatch[0] };
+}
+
+function inferCategoryForQuickText(lower: string, categories: string[]): string {
+  const directMatch = categories.find((c) => lower.includes(c.toLowerCase()));
+  if (directMatch) return directMatch;
+
+  for (const rule of OFFLINE_CATEGORY_KEYWORDS) {
+    if (rule.keywords.some((kw) => lower.includes(kw))) {
+      const candidate = categories.find((c) =>
+        rule.hints.some((h) => c.toLowerCase().includes(h))
+      );
+      if (candidate) return candidate;
+    }
+  }
+  return categories[0] || 'Groceries';
+}
+
+function resolveRelativeDateForSegment(lower: string, defaultDateKey: string): string {
+  const baseMs = parseDateKeyToLocalMiddayMs(defaultDateKey);
+  if (!baseMs) return defaultDateKey;
+  if (/\bday before yesterday\b/i.test(lower)) {
+    return toLocalDateKey(new Date(baseMs - 2 * 24 * 60 * 60 * 1000));
+  }
+  if (/\byesterday\b/i.test(lower)) {
+    return toLocalDateKey(new Date(baseMs - 24 * 60 * 60 * 1000));
+  }
+  const daysAgoMatch = lower.match(/\b(\d+)\s+days?\s+ago\b/i);
+  if (daysAgoMatch) {
+    const days = Math.min(30, Math.max(1, Number(daysAgoMatch[1])));
+    return toLocalDateKey(new Date(baseMs - days * 24 * 60 * 60 * 1000));
+  }
+  return defaultDateKey;
+}
+
+function splitMultiExpenseSegments(rawText: string): string[] {
+  const trimmed = rawText.trim();
+  if (!trimmed) return [];
+
+  // First split on explicit hard separators: newlines, semicolons, commas (preserving 1,200), +
+  const roughSegments = trimmed
+    .split(/(?:\r?\n|;|,(?:\s+|(?!\d))|\s+\+\s+)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // Only split on " and " / " & " when BOTH sides carry their own monetary amount
+  const finalSegments: string[] = [];
+  for (const seg of roughSegments) {
+    const conjParts = seg.split(/\s+(?:and|&)\s+/i).map((s) => s.trim()).filter(Boolean);
+    if (conjParts.length >= 2 && conjParts.every((part) => parseNumericAmountToken(part) !== null)) {
+      finalSegments.push(...conjParts);
+    } else {
+      finalSegments.push(seg);
+    }
+  }
+
+  return finalSegments;
+}
+
+export function parseQuickExpensesLocally(
+  rawText: string,
+  categories: string[],
+  todayDate: string = toLocalDateKey(new Date())
+): PennyProposedAction[] {
+  const segments = splitMultiExpenseSegments(rawText);
+  if (segments.length === 0) return [];
+
+  const leadingDate = resolveRelativeDateForSegment(rawText.toLowerCase(), todayDate);
+  const nowBase = Date.now();
+  const parsedActions: PennyProposedAction[] = [];
+
+  for (let i = 0; i < segments.length && parsedActions.length < 15; i++) {
+    const seg = segments[i];
+    const parsedNum = parseNumericAmountToken(seg);
+    if (!parsedNum) continue;
+
+    const { amount, matchedSlice } = parsedNum;
+    const lower = seg.toLowerCase();
+    const segmentHasDate =
+      /\b(yesterday|today|day before yesterday|\d+\s+days?\s+ago)\b/i.test(lower);
+    const dateKey = segmentHasDate
+      ? resolveRelativeDateForSegment(lower, todayDate)
+      : segments.length > 1 && /\byesterday\b/i.test(rawText.split(/[,;\n]/)[0] || '')
+        ? leadingDate
+        : todayDate;
+
+    const matchedCategory = inferCategoryForQuickText(lower, categories);
+
+    const cleanedName = seg
+      .replace(matchedSlice, ' ')
+      .replace(
+        /\b(spent|paid|logged|log|added|add|bought|for|on|at|today|yesterday|day before yesterday|rs|inr|rupees|each)\b/gi,
+        ' '
+      )
+      .replace(/₹|\/-/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const itemName = cleanedName
+      ? cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1)
+      : `${matchedCategory} Expense`;
+
+    parsedActions.push({
+      id: `offline-exp-${nowBase}-${i}`,
+      type: 'log_expense',
+      title: `Log ₹${amount} — ${itemName}`,
+      summary: `${matchedCategory} · ${dateKey} (instant offline parse)`,
+      status: 'pending',
+      expense: {
+        name: itemName,
+        amount,
+        category: matchedCategory,
+        date: dateKey,
+      },
+    });
+  }
+
+  return parsedActions;
+}
+
 export function parseQuickExpenseLocally(
   rawText: string,
   categories: string[],
   todayDate: string = toLocalDateKey(new Date())
 ): PennyProposedAction | null {
-  const text = rawText.trim();
-  if (!text) return null;
-
-  const amountMatch = text.match(/(?:₹|rs\.?|inr)?\s*(\d+(?:[.,]\d{1,2})?)/i);
-  if (!amountMatch) return null;
-
-  const numericStr = amountMatch[1].replace(/,/g, '');
-  const amount = roundCurrency(Number(numericStr));
-  if (!Number.isFinite(amount) || amount <= 0) return null;
-
-  const lower = text.toLowerCase();
-  let dateKey = todayDate;
-  if (/\byesterday\b/i.test(lower)) {
-    const baseMs = parseDateKeyToLocalMiddayMs(todayDate);
-    if (baseMs) {
-      dateKey = toLocalDateKey(new Date(baseMs - 24 * 60 * 60 * 1000));
-    }
-  }
-
-  let matchedCategory = categories[0] || 'Groceries';
-  // First check direct category name mentions
-  const directMatch = categories.find((c) => lower.includes(c.toLowerCase()));
-  if (directMatch) {
-    matchedCategory = directMatch;
-  } else {
-    for (const rule of OFFLINE_CATEGORY_KEYWORDS) {
-      if (rule.keywords.some((kw) => lower.includes(kw))) {
-        const candidate = categories.find((c) =>
-          rule.hints.some((h) => c.toLowerCase().includes(h))
-        );
-        if (candidate) {
-          matchedCategory = candidate;
-          break;
-        }
-      }
-    }
-  }
-
-  const cleanedName = text
-    .replace(amountMatch[0], ' ')
-    .replace(/\b(spent|paid|for|on|at|today|yesterday|rs|inr|rupees)\b/gi, ' ')
-    .replace(/₹/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  const itemName = cleanedName
-    ? cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1)
-    : `${matchedCategory} Expense`;
-
-  return {
-    id: `offline-exp-${Date.now()}`,
-    type: 'log_expense',
-    title: `Log ₹${amount} — ${itemName}`,
-    summary: `${matchedCategory} · ${dateKey} (instant offline parse)`,
-    status: 'pending',
-    expense: {
-      name: itemName,
-      amount,
-      category: matchedCategory,
-      date: dateKey,
-    },
-  };
+  const all = parseQuickExpensesLocally(rawText, categories, todayDate);
+  return all[0] ?? null;
 }
 
 export interface PennyLocalReply {
@@ -1641,12 +1801,39 @@ export function answerPennyLocally(params: {
     }
   }
 
-  // 2. Direct expense logging command
+  // 2. Direct expense logging command (single or multiple items)
   if (
     /\b(log|add|paid|spent|bought|expense|record)\b/i.test(lower) &&
     !/\b(recurring|due|cart|budget|cap|limit|broke)\b/i.test(lower)
   ) {
-    const localExpense = parseQuickExpenseLocally(trimmed, categories, context.asOfDate);
+    const localExpenses = parseQuickExpensesLocally(trimmed, categories, context.asOfDate);
+    if (localExpenses.length > 1) {
+      const rows = localExpenses.map((item) => item.expense!);
+      const totalAmt = roundCurrency(rows.reduce((s, r) => s + r.amount, 0));
+      return {
+        answer: `I parsed ${rows.length} expenses locally (${formatInrCompact(totalAmt)} total). Review or edit any row below and tap Confirm & Apply to save all of them to your ledger.`,
+        highlights: [
+          { label: 'Expenses', value: `${rows.length} items` },
+          { label: 'Total', value: formatInrCompact(totalAmt) },
+        ],
+        proposedActions: [
+          {
+            id: `local-exp-batch-${nowTs}`,
+            type: 'log_expenses',
+            title: `Log ${rows.length} expenses (${formatInrCompact(totalAmt)})`,
+            summary: rows.map((r) => `${r.name} ₹${r.amount}`).slice(0, 3).join(' · '),
+            status: 'pending',
+            expenses: rows,
+          },
+        ],
+        followUpQuestions: [
+          'How much budget is left this month?',
+          'Show my top spending categories',
+        ],
+      };
+    }
+
+    const localExpense = localExpenses[0];
     if (localExpense?.expense) {
       return {
         answer: `I parsed that expense locally for you — verify the title, amount, or category below and tap Confirm & Apply to save it to your ledger.`,

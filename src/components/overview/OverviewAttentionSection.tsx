@@ -26,6 +26,10 @@ import type {
   RadarSpendingAnomaly,
 } from '../../utils/radarEngine';
 import type { PriceInsight } from '../../utils/priceTrackerEngine';
+import {
+  cleanAttentionSignalCopy,
+  formatRecurringSubtitle,
+} from './overviewTextFormatters';
 
 interface AttentionSignal {
   id: string;
@@ -48,6 +52,7 @@ interface OverviewAttentionSectionProps {
   ledgerDashboard: LedgerDashboardSummary;
   commitmentsSummary: UpcomingCommitmentsSummary;
   recentTransactions: Transaction[];
+  totalActiveCount?: number;
   highlightCategory?: string | null;
   onAddExpense: () => void;
   onNavigate: (section: AppSection, subTab?: string) => void;
@@ -63,6 +68,7 @@ export function OverviewAttentionSection({
   ledgerDashboard,
   commitmentsSummary,
   recentTransactions,
+  totalActiveCount,
   highlightCategory,
   onAddExpense,
   onNavigate,
@@ -289,46 +295,52 @@ export function OverviewAttentionSection({
                           ? 'bg-[var(--accent-success-soft)]'
                           : 'bg-[var(--accent-primary-soft)]';
 
+                  const clean = cleanAttentionSignalCopy({
+                    title: sig.title,
+                    description: sig.description,
+                    metric: sig.metric,
+                  });
+
                   return (
                     <div
                       key={sig.id}
-                      className="py-3 first:pt-3.5 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                      className="py-3 first:pt-3.5 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4"
                     >
-                      <div className="flex items-start gap-3 min-w-0">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div
                           className={`w-8 h-8 rounded-xl ${iconBg} ${toneClass} flex items-center justify-center shrink-0 mt-0.5`}
                         >
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <p className="text-[13.5px] font-semibold text-[var(--text-primary)] leading-snug">
-                              {sig.title}
-                            </p>
-                            {sig.metric && (
-                              <span
-                                className={`text-[12px] font-bold font-mono tabular-nums ${toneClass}`}
-                              >
-                                {sig.metric}
-                              </span>
-                            )}
-                          </div>
+                          <p className="text-[13.5px] font-semibold text-[var(--text-primary)] leading-snug">
+                            {clean.title}
+                          </p>
                           <p className="text-[12.5px] text-[var(--text-secondary)] leading-relaxed mt-0.5 line-clamp-2">
-                            {sig.description}
+                            {clean.description}
                           </p>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onNavigate(sig.targetSection, sig.targetSubTab)
-                        }
-                        className="text-[12px] font-semibold text-[var(--accent-ink)] hover:underline inline-flex items-center gap-1 whitespace-nowrap shrink-0 self-start sm:self-center pl-11 sm:pl-2"
-                      >
-                        <span>{sig.actionLabel}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center sm:flex-col sm:items-end justify-between gap-2 sm:gap-0.5 pl-11 sm:pl-0 shrink-0">
+                        {clean.metric && (
+                          <span
+                            className={`text-[13px] font-bold font-mono tabular-nums ${toneClass}`}
+                          >
+                            {clean.metric}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onNavigate(sig.targetSection, sig.targetSubTab)
+                          }
+                          className="text-[12px] font-semibold text-[var(--accent-ink)] hover:underline inline-flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <span>{sig.actionLabel}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -364,32 +376,35 @@ export function OverviewAttentionSection({
                       : 'sm:grid-cols-3'
                 }`}
               >
-                {upcomingRecurring.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => onNavigate('shopping')}
-                    className="text-left rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] px-3 py-2 transition-colors min-w-0"
-                  >
-                    <p className="text-[12.5px] font-semibold text-[var(--text-primary)] truncate">
-                      {item.title}
-                    </p>
-                    <div className="flex items-center justify-between gap-2 mt-1 text-[11.5px]">
-                      <span
-                        className={`truncate ${
-                          item.isOverdue
-                            ? 'text-[var(--accent-warning-ink)] font-semibold'
-                            : 'text-[var(--text-secondary)]'
-                        }`}
-                      >
-                        {item.subtitle}
-                      </span>
-                      <span className="font-mono font-bold tabular-nums text-[var(--text-primary)] shrink-0">
-                        ₹{formatCurrencyExact(item.amount)}
-                      </span>
-                    </div>
-                  </button>
-                ))}
+                {upcomingRecurring.map((item) => {
+                  const formattedSub = formatRecurringSubtitle(item.subtitle, item.title);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => onNavigate('shopping')}
+                      className="text-left rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] px-3 py-2 transition-colors min-w-0"
+                    >
+                      <p className="text-[12.5px] font-semibold text-[var(--text-primary)] truncate">
+                        {item.title}
+                      </p>
+                      <div className="flex items-center justify-between gap-2 mt-1 text-[11.5px]">
+                        <span
+                          className={`truncate ${
+                            item.isOverdue
+                              ? 'text-[var(--accent-warning-ink)] font-semibold'
+                              : 'text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          {formattedSub}
+                        </span>
+                        <span className="font-mono font-bold tabular-nums text-[var(--text-primary)] shrink-0">
+                          ₹{formatCurrencyExact(item.amount)}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -489,6 +504,24 @@ export function OverviewAttentionSection({
             </div>
           )}
         </div>
+
+        {recentTransactions.length > 0 && (
+          <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2 text-[12px]">
+            <span className="text-[var(--text-secondary)] truncate">
+              Showing latest {recentTransactions.length}
+              {typeof totalActiveCount === 'number' && totalActiveCount > recentTransactions.length
+                ? ` of ${totalActiveCount} expenses`
+                : ' recorded'}
+            </span>
+            <button
+              type="button"
+              onClick={() => onNavigate('expenses')}
+              className="font-semibold text-[var(--accent-ink)] hover:underline whitespace-nowrap shrink-0"
+            >
+              Open full ledger
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

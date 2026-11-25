@@ -31,9 +31,17 @@ import {
   type AetherIntelligenceTone,
 } from './capsule/aetherIntelligence';
 import { useAnimatedNumber } from './capsule/useAnimatedNumber';
+import type { UpcomingCommitmentsSummary } from '../../utils/pennyEngine';
+import {
+  buildTrajectorySubtitle,
+  formatCycleDayCounter,
+  formatSafeDailySubtext,
+  formatTrajectoryProjectionTitle,
+} from './overviewTextFormatters';
 
 interface AetherBudgetHudProps {
   onNavigate?: (section: AppSection, subTab?: string) => void;
+  commitmentsSummary?: UpcomingCommitmentsSummary;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -143,7 +151,10 @@ function StatusIcon({ stateKey }: { stateKey: AetherHudStateKey }) {
   }
 }
 
-export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
+export function AetherBudgetHud({
+  onNavigate,
+  commitmentsSummary,
+}: AetherBudgetHudProps = {}) {
   const transactions = useAppStore((s) => s.transactions);
   const totalBudget = useAppStore((s) => s.totalBudget);
   const setTotalBudget = useAppStore((s) => s.setTotalBudget);
@@ -253,9 +264,15 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
     ledgerDashboard.totalSharedCount > 0 &&
     (ledgerDashboard.totalIOwe > 0 || ledgerDashboard.totalOwedToMe > 0);
 
+  const showProjectionStandby =
+    Boolean(intelligence.pace) &&
+    !intelligence.projection &&
+    !intelligence.categoryAttention &&
+    Boolean(intelligence.omittedReasons.projection);
+
   const intelCount =
     (intelligence.pace ? 1 : 0) +
-    (intelligence.projection ? 1 : 0) +
+    (intelligence.projection || showProjectionStandby ? 1 : 0) +
     (intelligence.categoryAttention ? 1 : 0);
   const intelGridClass =
     intelCount >= 3
@@ -263,6 +280,35 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
       : intelCount === 2
         ? 'md:grid-cols-2'
         : 'md:grid-cols-1';
+
+  const trajectorySubtitle = useMemo(
+    () =>
+      buildTrajectorySubtitle({
+        hasPace: Boolean(intelligence.pace),
+        hasProjection: Boolean(intelligence.projection),
+        hasCategory: Boolean(intelligence.categoryAttention),
+      }),
+    [intelligence.pace, intelligence.projection, intelligence.categoryAttention]
+  );
+
+  const cycleCounterLabel = useMemo(
+    () =>
+      formatCycleDayCounter(
+        budgetState.daysElapsed,
+        budgetState.daysTotal,
+        budgetState.daysRemaining
+      ),
+    [budgetState.daysElapsed, budgetState.daysTotal, budgetState.daysRemaining]
+  );
+
+  const safeDailySubtext = useMemo(() => {
+    if (!intelligence.pace) return cycleCounterLabel;
+    return formatSafeDailySubtext(
+      intelligence.pace.remainingFutureDays,
+      budgetState.daysElapsed,
+      budgetState.daysTotal
+    );
+  }, [intelligence.pace, cycleCounterLabel, budgetState.daysElapsed, budgetState.daysTotal]);
 
   const burnBarRatioPct = useMemo(() => {
     if (!intelligence.pace || intelligence.pace.dailyBudgetAllowance <= 0) return 0;
@@ -477,15 +523,20 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                     <button
                       type="button"
                       onClick={() => onNavigate?.('expenses', 'splits')}
-                      className="inline-flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-[12px] transition-colors"
+                      className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 px-3 py-1.5 rounded-lg bg-[var(--bg-subtle)]/75 hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-[12px] transition-colors"
                     >
                       <Users className="w-3.5 h-3.5 text-[var(--accent-ink)] shrink-0" />
                       <span className="font-medium text-[var(--text-secondary)]">
-                        Split Ledger:
+                        Splits
                       </span>
                       {ledgerDashboard.totalIOwe > 0 && (
                         <span className="font-mono font-semibold tabular-nums text-[var(--accent-warning-ink)]">
-                          You owe ₹{formatCurrencyExact(ledgerDashboard.totalIOwe)}
+                          Owe ₹{formatCurrencyExact(ledgerDashboard.totalIOwe)}
+                        </span>
+                      )}
+                      {ledgerDashboard.totalIOwe > 0 && ledgerDashboard.totalOwedToMe > 0 && (
+                        <span className="text-[var(--text-muted)]" aria-hidden="true">
+                          ·
                         </span>
                       )}
                       {ledgerDashboard.totalOwedToMe > 0 && (
@@ -494,7 +545,7 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                         </span>
                       )}
                       {onNavigate && (
-                        <ArrowRight className="w-3 h-3 text-[var(--accent-ink)]" />
+                        <ArrowRight className="w-3 h-3 text-[var(--accent-ink)] shrink-0" />
                       )}
                     </button>
                   </div>
@@ -613,8 +664,8 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                         ? `₹${formatCurrency(intelligence.pace.safeDailyRemaining)}/d`
                         : `${hud.cycleElapsedPct}% elapsed`}
                     </p>
-                    <p className="text-[11.5px] font-mono text-[var(--text-secondary)] tabular-nums mt-0.5 leading-snug">
-                      {hud.cyclePaceText}
+                    <p className="text-[11.5px] font-mono text-[var(--text-secondary)] tabular-nums mt-0.5 whitespace-nowrap truncate">
+                      {safeDailySubtext}
                     </p>
                   </div>
                 </div>
@@ -642,19 +693,19 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2 text-[12px]">
-                      <span className="font-medium text-[var(--text-secondary)]">
-                        Cycle time elapsed
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-[12px]">
+                      <span className="font-medium text-[var(--text-secondary)] whitespace-nowrap">
+                        Cycle elapsed
                       </span>
-                      <span className="font-mono font-semibold tabular-nums text-[var(--text-secondary)]">
-                        {hud.cycleElapsedPct}%
+                      <span className="font-mono font-semibold tabular-nums text-[var(--text-secondary)] whitespace-nowrap">
+                        {cycleCounterLabel} · {hud.cycleElapsedPct}%
                       </span>
                     </div>
                     <ProgressBar
                       value={hud.cycleElapsedPct}
                       tone="brand"
                       size="md"
-                      label={`Cycle time elapsed: ${hud.cycleElapsedPct}% (${hud.cyclePaceText})`}
+                      label={`Cycle elapsed: ${hud.cycleElapsedPct}% (${cycleCounterLabel})`}
                     />
                   </div>
                 </div>
@@ -720,46 +771,92 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
               </p>
             </div>
             <span
-              className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${toneStyle.statusText}`}
+              className={`inline-flex items-center gap-1.5 text-[12px] font-semibold whitespace-nowrap shrink-0 ${toneStyle.statusText}`}
             >
               <StatusIcon stateKey={effectiveStatusStateKey} />
               <span>{aetherStatusLine}</span>
             </span>
           </div>
 
-          <div className="space-y-2 py-2 border-y border-[var(--border-subtle)]">
-            <p className="text-[12px] font-medium text-[var(--text-secondary)]">
-              Live liquid reserve level
-            </p>
-            <div className="flex items-baseline gap-2.5">
-              <span
-                className={`text-[34px] sm:text-[38px] font-bold font-mono tabular-nums leading-none tracking-tight ${
-                  hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid'
-                    ? 'text-[var(--text-secondary)]'
-                    : toneStyle.balanceText
-                }`}
-              >
-                {hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid'
-                  ? 'Standby'
-                  : hud.stateKey === 'loading'
-                    ? 'Syncing'
-                    : `${remainingPctDisplay}%`}
-              </span>
+          <div className="space-y-3 py-3 border-y border-[var(--border-subtle)]">
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={`text-[32px] sm:text-[36px] font-bold font-mono tabular-nums leading-none tracking-tight ${
+                    hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid'
+                      ? 'text-[var(--text-secondary)]'
+                      : toneStyle.balanceText
+                  }`}
+                >
+                  {hud.stateKey === 'unconfigured' || hud.stateKey === 'invalid'
+                    ? 'Standby'
+                    : hud.stateKey === 'loading'
+                      ? 'Syncing'
+                      : `${remainingPctDisplay}%`}
+                </span>
+                {hud.showFinancialNumbers && (
+                  <span className="text-[12.5px] font-medium text-[var(--text-secondary)]">
+                    reserve left
+                  </span>
+                )}
+              </div>
               {hud.showFinancialNumbers && (
-                <span className="text-[13px] font-mono tabular-nums text-[var(--text-secondary)]">
-                  of ₹{formatCurrency(hud.effectiveBudget)} target
+                <span className="text-[12px] font-mono tabular-nums text-[var(--text-secondary)]">
+                  Target ₹{formatCurrency(hud.effectiveBudget)}
                 </span>
               )}
             </div>
-            {hud.showFinancialNumbers && (
-              <p className="text-[12.5px] text-[var(--text-secondary)]">
-                ₹{formatCurrencyExact(hud.primaryAmount)} available inside the active cycle vessel.
+
+            {hud.showFinancialNumbers ? (
+              <dl className="divide-y divide-[var(--border-subtle)] text-[12.5px]">
+                {commitmentsSummary && commitmentsSummary.committedUpcoming30d > 0 ? (
+                  <div className="py-2 flex items-center justify-between gap-3">
+                    <dt className="text-[var(--text-secondary)]">
+                      Safe after bills & splits
+                    </dt>
+                    <dd className="font-mono font-bold tabular-nums text-[var(--text-primary)]">
+                      ₹{formatCurrencyExact(commitmentsSummary.trueSafeToSpend)}
+                    </dd>
+                  </div>
+                ) : (
+                  <div className="py-2 flex items-center justify-between gap-3">
+                    <dt className="text-[var(--text-secondary)]">Liquid reserve</dt>
+                    <dd className="font-mono font-bold tabular-nums text-[var(--text-primary)]">
+                      ₹{formatCurrencyExact(hud.primaryAmount)}
+                    </dd>
+                  </div>
+                )}
+
+                {intelligence.pace && (
+                  <div className="py-2 flex items-center justify-between gap-3">
+                    <dt className="text-[var(--text-secondary)]">Daily burn vs. plan</dt>
+                    <dd className="font-mono font-semibold tabular-nums text-[var(--text-primary)]">
+                      ₹{formatCurrency(intelligence.pace.actualDailyAverage)}/d{' '}
+                      <span className="text-[var(--text-muted)] font-normal">
+                        / ₹{formatCurrency(intelligence.pace.dailyBudgetAllowance)}/d
+                      </span>
+                    </dd>
+                  </div>
+                )}
+
+                {hud.cyclePeriodText && (
+                  <div className="pt-2 flex items-center justify-between gap-3">
+                    <dt className="text-[var(--text-secondary)]">Active cycle</dt>
+                    <dd className="font-mono font-medium tabular-nums text-[var(--text-secondary)]">
+                      {hud.cyclePeriodText}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            ) : (
+              <p className="text-[12.5px] text-[var(--text-secondary)] leading-relaxed">
+                {hud.statusDescription}
               </p>
             )}
           </div>
 
           <div className="flex items-center justify-between gap-2 text-[11.5px] text-[var(--text-muted)]">
-            <span className="truncate">Drag to orbit · Arrow keys</span>
+            <span className="truncate">Drag or arrow keys to orbit</span>
             <span className="font-mono shrink-0">R / double-click reset</span>
           </div>
         </div>
@@ -778,7 +875,7 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                 Budget Trajectory
               </h2>
               <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5">
-                Daily burn rate vs. cycle target, projected cycle-end balance, and category watch
+                {trajectorySubtitle}
               </p>
             </div>
             <button
@@ -820,11 +917,15 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                   </dd>
                   <dd className="text-[12.5px] text-[var(--text-primary)] font-medium mt-0.5">
                     {intelligence.pace.summary}
+                    <span className="text-[var(--text-secondary)] font-normal">
+                      {' '}
+                      ({hud.consumedPct}% used vs {hud.cycleElapsedPct}% elapsed)
+                    </span>
                   </dd>
                 </div>
 
                 {intelligence.pace.dailyBudgetAllowance > 0 && (
-                  <div className="space-y-1 pt-1">
+                  <div className="space-y-1 pt-1 max-w-md">
                     <div className="flex items-center justify-between text-[11.5px] font-mono tabular-nums text-[var(--text-secondary)]">
                       <span>Actual ₹{formatCurrency(intelligence.pace.actualDailyAverage)}/d</span>
                       <span>Plan ₹{formatCurrency(intelligence.pace.dailyBudgetAllowance)}/d</span>
@@ -846,14 +947,13 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
               </div>
             )}
 
-            {intelligence.projection && (
+            {intelligence.projection ? (
               <div
                 data-testid="aether-insight-projection"
                 className="py-2.5 md:py-0.5 md:px-5 space-y-1"
               >
                 <dt className="text-[12px] font-medium text-[var(--text-secondary)]">
-                  {intelligence.projection.label}{' '}
-                  <span className="font-normal">(estimate)</span>
+                  {formatTrajectoryProjectionTitle(intelligence.projection.outcome)}
                 </dt>
                 <dd
                   className={`font-mono text-[15px] font-bold tabular-nums mt-0.5 ${
@@ -863,11 +963,25 @@ export function AetherBudgetHud({ onNavigate }: AetherBudgetHudProps = {}) {
                   {intelligence.projection.valueText}
                 </dd>
                 <dd className="text-[12px] text-[var(--text-secondary)] leading-relaxed">
-                  Based on ₹{formatCurrency(intelligence.projection.dailyAverage)}/day across{' '}
-                  {intelligence.projection.remainingFutureDays} day
-                  {intelligence.projection.remainingFutureDays === 1 ? '' : 's'} remaining.
+                  At ₹{formatCurrency(intelligence.projection.dailyAverage)}/day across{' '}
+                  {intelligence.projection.remainingFutureDays} remaining day
+                  {intelligence.projection.remainingFutureDays === 1 ? '' : 's'}.
                 </dd>
               </div>
+            ) : (
+              showProjectionStandby && (
+                <div className="py-2.5 md:py-0.5 md:pl-5 space-y-1">
+                  <dt className="text-[12px] font-medium text-[var(--text-secondary)]">
+                    Cycle-end projection
+                  </dt>
+                  <dd className="font-mono text-[14px] font-semibold text-[var(--text-secondary)] mt-0.5">
+                    Pending spending history
+                  </dd>
+                  <dd className="text-[12px] text-[var(--text-secondary)] leading-relaxed">
+                    {intelligence.omittedReasons.projection}
+                  </dd>
+                </div>
+              )
             )}
 
             {intelligence.categoryAttention && (

@@ -16,6 +16,8 @@ import {
   CloudOff,
   LogIn,
   RefreshCw,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 import type { FeatureSettings, ThemeMode } from '../../types/models';
 import { formatCurrency, formatCurrencyExact } from '../../utils/categoryStyles';
@@ -118,8 +120,11 @@ export function AppShell({
   const {
     user,
     syncStatus,
+    syncError,
+    syncErrorAction,
     isSigningIn,
     signInWithGoogle,
+    clearSyncError,
   } = useCloudSync();
 
   const syncLabel =
@@ -256,16 +261,51 @@ export function AppShell({
               </div>
             </button>
           ) : (
-            <button
-              type="button"
-              disabled={isSigningIn}
-              onClick={() => void signInWithGoogle()}
-              data-testid="sidebar-google-signin"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] border border-[var(--accent-border)] text-[var(--accent-ink)] text-xs font-semibold transition-colors whitespace-nowrap"
-            >
-              <LogIn className="w-3.5 h-3.5 shrink-0" strokeWidth={2.1} />
-              <span>{isSigningIn ? 'Connecting…' : 'Sign in to Sync'}</span>
-            </button>
+            <div className="space-y-2">
+              <button
+                type="button"
+                disabled={isSigningIn}
+                onClick={() => void signInWithGoogle()}
+                data-testid="sidebar-google-signin"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--accent-primary-soft)] hover:bg-[var(--accent-primary-soft-hover)] border border-[var(--accent-border)] text-[var(--accent-ink)] text-xs font-semibold transition-colors whitespace-nowrap"
+              >
+                <LogIn className="w-3.5 h-3.5 shrink-0" strokeWidth={2.1} />
+                <span>{isSigningIn ? 'Connecting…' : 'Sign in to Sync'}</span>
+              </button>
+              {syncError && (
+                <div
+                  role="alert"
+                  data-testid="sidebar-sync-error"
+                  className="rounded-xl px-2.5 py-2 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-[11px] leading-snug space-y-1.5"
+                >
+                  <div className="flex items-start justify-between gap-1.5">
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <p className="break-words">{syncError}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearSyncError}
+                      aria-label="Dismiss sync error"
+                      className="shrink-0 p-0.5 rounded hover:bg-black/10"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  {syncErrorAction === 'open_new_tab' && typeof window !== 'undefined' && (
+                    <a
+                      href={window.location.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold underline"
+                    >
+                      <span>Open in new tab</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Active Cart Shortcut (Accessible from any section) */}
@@ -612,18 +652,51 @@ export function AppShell({
                   </div>
                 </button>
               ) : (
-                <button
-                  type="button"
-                  disabled={isSigningIn}
-                  onClick={() => {
-                    setMobileDrawerOpen(false);
-                    void signInWithGoogle();
-                  }}
-                  className="btn-primary w-full px-3 py-2 text-xs"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>{isSigningIn ? 'Connecting…' : 'Sign in with Google'}</span>
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    disabled={isSigningIn}
+                    onClick={() => {
+                      void signInWithGoogle();
+                    }}
+                    className="btn-primary w-full px-3 py-2 text-xs"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>{isSigningIn ? 'Connecting…' : 'Sign in with Google'}</span>
+                  </button>
+                  {syncError && (
+                    <div
+                      role="alert"
+                      className="rounded-xl px-2.5 py-2 bg-[var(--accent-danger-soft)] border border-[var(--accent-danger-border)] text-[var(--accent-danger-ink)] text-[11px] leading-snug space-y-1.5"
+                    >
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="flex items-start gap-1.5 min-w-0">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <p className="break-words">{syncError}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearSyncError}
+                          aria-label="Dismiss sync error"
+                          className="shrink-0 p-0.5 rounded hover:bg-black/10"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {syncErrorAction === 'open_new_tab' && typeof window !== 'undefined' && (
+                        <a
+                          href={window.location.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold underline"
+                        >
+                          <span>Open in new tab</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </aside>

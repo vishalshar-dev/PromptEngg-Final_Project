@@ -309,7 +309,10 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
       </header>
 
       {/* Sections 1, 2 & 3: Flagship Financial Hero + Dedicated AETHER Showcase + Budget Trajectory */}
-      <AetherBudgetHud onNavigate={onNavigate} />
+      <AetherBudgetHud
+        onNavigate={onNavigate}
+        commitmentsSummary={commitmentsSummary}
+      />
 
       {/* Section 4: Spending Analytics + Category Intelligence */}
       <OverviewAnalyticsSection
@@ -335,6 +338,7 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
         ledgerDashboard={ledgerDashboard}
         commitmentsSummary={commitmentsSummary}
         recentTransactions={recentTransactions}
+        totalActiveCount={activeTransactions.length}
         highlightCategory={aetherIntelligence.categoryAttention?.category}
         onAddExpense={() => setAddExpenseOpen(true)}
         onNavigate={onNavigate}
@@ -358,9 +362,9 @@ export function OverviewDashboard({ onNavigate }: OverviewDashboardProps) {
                   ⌘K
                 </span>
               </div>
-              <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5 truncate">
+              <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5 leading-snug">
                 {totalBudget > 0 && commitmentsSummary.committedUpcoming30d > 0
-                  ? `Safe-to-spend after upcoming bills & splits: ₹${formatCurrencyExact(commitmentsSummary.trueSafeToSpend)} (${commitmentsSummary.remainingDaysInMonth}d left).`
+                  ? `Safe-to-spend: ₹${formatCurrencyExact(commitmentsSummary.trueSafeToSpend)} after ₹${formatCurrencyExact(commitmentsSummary.committedUpcoming30d)} in upcoming bills & splits (${commitmentsSummary.remainingDaysInMonth}d left).`
                   : 'Ask Penny to break down spending categories, log expenses quickly, or audit recurring prices.'}
               </p>
             </div>

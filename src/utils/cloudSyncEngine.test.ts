@@ -13,6 +13,7 @@ import {
   backupToSyncableState,
   buildSectionPayloads,
   computeSectionHashes,
+  formatReadableSyncError,
   hasMeaningfulWorkspaceData,
   sanitizeForFirestore,
   smartMergeLocalAndCloud,
@@ -222,3 +223,44 @@ test('backupToSyncableState preserves settings, wellness, and Penny profile for 
   assert.notEqual(localHashes.penny, cloudHashes.penny);
   assert.equal(localHashes.ledger, cloudHashes.ledger);
 });
+
+test('formatReadableSyncError explains popup-blocked clearly and enables open_new_tab recovery', () => {
+  const err = Object.assign(new Error('Firebase: Error (auth/popup-blocked).'), {
+    code: 'auth/popup-blocked',
+  });
+  const iframeResult = formatReadableSyncError(err, { inIframe: true });
+  assert.equal(iframeResult.code, 'auth/popup-blocked');
+  assert.equal(iframeResult.action, 'open_new_tab');
+  assert.match(iframeResult.message, /embedded preview frame/i);
+
+  const standaloneResult = formatReadableSyncError(err, { inIframe: false });
+  assert.equal(standaloneResult.code, 'auth/popup-blocked');
+  assert.equal(standaloneResult.action, 'open_new_tab');
+  assert.match(standaloneResult.message, /browser blocked the Google sign-in popup/i);
+});
+
+test('formatReadableSyncError formats unauthorized-domain, quota, offline, and JSON Firestore errors', () => {
+  const domainErr = Object.assign(new Error('Firebase: Error (auth/unauthorized-domain).'), {
+    code: 'auth/unauthorized-domain',
+  });
+  const domainRes = formatReadableSyncError(domainErr, { hostname: 'localhost' });
+  assert.equal(domainRes.code, 'auth/unauthorized-domain');
+  assert.match(domainRes.message, /localhost/);
+  assert.match(domainRes.message, /Authorized domains/);
+
+  const quotaRes = formatReadableSyncError(
+    new Error('Free daily read units per project Quota exceeded'),
+    { projectId: 'proj-1', firestoreDatabaseId: 'db-1' }
+  );
+  assert.match(quotaRes.message, /quota exceeded/i);
+  assert.match(quotaRes.quotaUrl ?? '', /proj-1\/firestore\/databases\/db-1/);
+
+  const offlineRes = formatReadableSyncError(
+    Object.assign(new Error('network error'), { code: 'auth/network-request-failed' })
+  );
+  assert.match(offlineRes.message, /offline/i);
+
+  const jsonRes = formatReadableSyncError(new Error('{"error":"Missing or insufficient permissions."}'));
+  assert.equal(jsonRes.message, 'Missing or insufficient permissions.');
+});
+

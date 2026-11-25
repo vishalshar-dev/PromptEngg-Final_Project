@@ -180,7 +180,7 @@ export function enqueueAiPost<T>(
         } else if (transient || res.status === 403) {
           markLiveAiBusy(
             errMsg,
-            res.status === 403 ? 120_000 : LIVE_AI_COOLDOWN_MS,
+            res.status === 403 ? 30_000 : LIVE_AI_COOLDOWN_MS,
             nowFn()
           );
         }

@@ -649,3 +649,163 @@ export function detectDeviceLabel(): string {
           : 'Browser';
   return `${platform} · ${browser}`.slice(0, 80);
 }
+
+export interface SyncErrorContext {
+  projectId?: string;
+  firestoreDatabaseId?: string;
+  hostname?: string;
+  inIframe?: boolean;
+}
+
+export interface SyncErrorInfo {
+  message: string;
+  code: string | null;
+  action: 'open_new_tab' | null;
+  quotaUrl: string | null;
+}
+
+export function isRunningInIframe(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+function getQuotaUpgradeLink(
+  errMsg: string,
+  projectId?: string,
+  firestoreDatabaseId?: string
+): string | null {
+  if (
+    errMsg.includes('Free daily read units per project') &&
+    projectId &&
+    firestoreDatabaseId
+  ) {
+    return `https://console.firebase.google.com/project/${projectId}/firestore/databases/${firestoreDatabaseId}/data?openUpgradeDialog=true`;
+  }
+  return null;
+}
+
+export function formatReadableSyncError(
+  err: unknown,
+  context: SyncErrorContext = {}
+): SyncErrorInfo {
+  const errObj = (err && typeof err === 'object' ? err : {}) as {
+    code?: unknown;
+    message?: unknown;
+  };
+  const code = typeof errObj.code === 'string' && errObj.code.trim() ? errObj.code.trim() : null;
+  const raw = err instanceof Error ? err.message : String(err ?? '');
+  const combined = `${code ?? ''} ${raw}`;
+  const inIframe =
+    typeof context.inIframe === 'boolean' ? context.inIframe : isRunningInIframe();
+  const hostname =
+    context.hostname ||
+    (typeof window !== 'undefined' ? window.location.hostname : '');
+
+  if (
+    code === 'auth/popup-blocked' ||
+    combined.includes('auth/popup-blocked')
+  ) {
+    return {
+      code: 'auth/popup-blocked',
+      action: 'open_new_tab',
+      quotaUrl: null,
+      message: inIframe
+        ? 'Sign-in popup was blocked because the app is running inside an embedded preview frame. Allow pop-ups for this site in your address bar, or open CartAudit in a dedicated browser tab.'
+        : 'Your browser blocked the Google sign-in popup. Allow pop-ups for this site in your address bar (or open in a new tab) and try again.',
+    };
+  }
+
+  if (
+    code === 'auth/unauthorized-domain' ||
+    combined.includes('auth/unauthorized-domain')
+  ) {
+    const domainLabel = hostname || 'this domain';
+    return {
+      code: 'auth/unauthorized-domain',
+      action: null,
+      quotaUrl: null,
+      message: `Google Sign-In is not authorized for "${domainLabel}" in Firebase Authentication. Open the authorized preview URL or add "${domainLabel}" under Firebase Auth → Settings → Authorized domains.`,
+    };
+  }
+
+  if (
+    code === 'auth/operation-not-allowed' ||
+    combined.includes('auth/operation-not-allowed')
+  ) {
+    return {
+      code: 'auth/operation-not-allowed',
+      action: null,
+      quotaUrl: null,
+      message:
+        'Google Sign-In is currently disabled in Firebase Authentication. Enable the Google provider in Firebase Console.',
+    };
+  }
+
+  if (
+    code === 'auth/operation-not-supported-in-this-environment' ||
+    combined.includes('auth/operation-not-supported-in-this-environment')
+  ) {
+    return {
+      code: 'auth/operation-not-supported-in-this-environment',
+      action: 'open_new_tab',
+      quotaUrl: null,
+      message:
+        'This embedded browser context does not support sign-in popups. Open CartAudit in a dedicated browser tab to sign in.',
+    };
+  }
+
+  if (raw.includes('Quota exceeded')) {
+    return {
+      code,
+      action: null,
+      message:
+        'Daily Firestore free-tier quota exceeded. Local changes remain saved and sync resumes after quota reset.',
+      quotaUrl: getQuotaUpgradeLink(raw, context.projectId, context.firestoreDatabaseId),
+    };
+  }
+
+  if (
+    code === 'auth/network-request-failed' ||
+    raw.includes('client is offline') ||
+    raw.includes('network-request-failed')
+  ) {
+    return {
+      code: code || 'network-request-failed',
+      action: null,
+      message: 'You appear offline. Changes are saved locally and will sync once reconnected.',
+      quotaUrl: null,
+    };
+  }
+
+  if (raw.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(raw) as { error?: string };
+      if (parsed.error) {
+        return {
+          code,
+          action: null,
+          message: parsed.error,
+          quotaUrl: getQuotaUpgradeLink(
+            parsed.error,
+            context.projectId,
+            context.firestoreDatabaseId
+          ),
+        };
+      }
+    } catch {
+      // keep raw
+    }
+  }
+
+  return {
+    code,
+    action: null,
+    message: raw || 'Cloud sync encountered an unexpected error.',
+    quotaUrl: null,
+  };
+}
+

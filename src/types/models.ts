@@ -496,6 +496,7 @@ export interface PennyInteractionProfile {
 
 export type PennyProposalType =
   | 'log_expense'
+  | 'log_expenses'
   | 'add_split'
   | 'settle_split'
   | 'build_cart'
@@ -521,6 +522,12 @@ export interface PennyProposedAction {
     category: string;
     date?: string;
   };
+  expenses?: Array<{
+    name: string;
+    amount: number;
+    category: string;
+    date?: string;
+  }>;
   split?: {
     name: string;
     totalAmount: number;

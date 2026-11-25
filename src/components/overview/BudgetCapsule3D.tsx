@@ -605,7 +605,7 @@ export function BudgetCapsule3D({
             </span>
 
             <div className="pointer-events-auto flex items-center">
-              {isOrbited ? (
+              {isOrbited && (
                 <button
                   type="button"
                   data-testid="capsule-reset-view-btn"
@@ -618,10 +618,6 @@ export function BudgetCapsule3D({
                 >
                   Reset angle
                 </button>
-              ) : (
-                <span className="pointer-events-none text-[11px] font-medium text-[var(--text-secondary)] opacity-80">
-                  Drag to rotate
-                </span>
               )}
             </div>
           </div>

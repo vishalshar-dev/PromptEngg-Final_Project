@@ -64,6 +64,46 @@ export function executePennyProposal(
       };
     }
 
+    case 'log_expenses': {
+      const list = Array.isArray(proposal.expenses) ? proposal.expenses : [];
+      if (list.length === 0) {
+        return { ok: false, message: 'Enter at least one valid expense with amount > ₹0.' };
+      }
+      const invalidIdx = list.findIndex(
+        (ex) => !ex || !ex.name.trim() || !Number.isFinite(Number(ex.amount)) || Number(ex.amount) <= 0
+      );
+      if (invalidIdx >= 0) {
+        return {
+          ok: false,
+          message: `Item #${invalidIdx + 1} needs a valid title and amount greater than ₹0.`,
+        };
+      }
+      const valid = list;
+      let total = 0;
+      for (const ex of valid) {
+        const amt = roundCurrency(ex.amount);
+        total += amt;
+        const timestamp =
+          ex.date && /^\d{4}-\d{2}-\d{2}$/.test(ex.date)
+            ? `${ex.date}T12:00:00.000Z`
+            : new Date().toISOString();
+        store.addTransaction({
+          name: ex.name.trim(),
+          amount: amt,
+          category: ex.category || store.categories[0] || 'Groceries',
+          timestamp,
+          source: 'manual',
+        });
+      }
+      return {
+        ok: true,
+        message:
+          valid.length === 1
+            ? `Logged "${valid[0].name.trim()}" (₹${formatCurrencyExact(valid[0].amount)}) under ${valid[0].category}.`
+            : `Logged ${valid.length} expenses (₹${formatCurrencyExact(total)} total).`,
+      };
+    }
+
     case 'add_split': {
       const sp = proposal.split;
       if (!sp || !sp.name.trim() || sp.totalAmount <= 0 || sp.participantNames.length === 0) {

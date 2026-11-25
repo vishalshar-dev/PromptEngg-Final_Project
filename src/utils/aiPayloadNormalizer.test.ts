@@ -4,6 +4,7 @@ import {
   chooseGroqModelCandidates,
   normalizePennyChatPayload,
   normalizePennyExpensePayload,
+  normalizePennyExpensesPayload,
   normalizeReceiptScanPayload,
   parseJsonObjectFromLlm,
 } from './aiPayloadNormalizer';
@@ -64,6 +65,49 @@ test('normalizePennyExpensePayload resolves allowed category case-insensitively 
     isSplitHint: true,
     splitPersonHint: 'Rahul',
   });
+});
+
+test('normalizePennyExpensesPayload extracts multiple expenses, drops zero/empty entries, and wraps legacy single object', () => {
+  const cats = ['Groceries', 'Snacks & Beverages', 'Fuel & Transportation', 'Other Expenses'];
+  const multi = normalizePennyExpensesPayload(
+    {
+      expenses: [
+        { name: 'Cold Coffee', amount: 180, category: 'snacks & beverages', date: '2026-11-25' },
+        { name: 'Zero promo', amount: 0, category: 'Groceries' },
+        { name: 'Petrol', amount: 450, category: 'fuel & transportation', date: '2026-11-24' },
+        { name: 'Milk & Bread', amount: 110, category: 'groceries', isSplitHint: true, splitPersonHint: 'Aman' },
+      ],
+    },
+    cats,
+    '2026-11-25',
+    'coffee 180, petrol 450 yesterday, milk & bread 110 with Aman'
+  );
+
+  assert.equal(multi.expenses.length, 3);
+  assert.equal(multi.expenses[0].name, 'Cold Coffee');
+  assert.equal(multi.expenses[0].category, 'Snacks & Beverages');
+  assert.equal(multi.expenses[1].date, '2026-11-24');
+  assert.equal(multi.expenses[2].isSplitHint, true);
+  assert.equal(multi.expenses[2].splitPersonHint, 'Aman');
+  assert.equal(multi.amount, 180);
+
+  const legacySingle = normalizePennyExpensesPayload(
+    { name: 'Tea', amount: 30, category: 'Snacks & Beverages' },
+    cats,
+    '2026-11-25',
+    'Tea 30'
+  );
+  assert.equal(legacySingle.expenses.length, 1);
+  assert.equal(legacySingle.expenses[0].amount, 30);
+
+  const noAmount = normalizePennyExpensesPayload(
+    { expenses: [] },
+    cats,
+    '2026-11-25',
+    'just coffee'
+  );
+  assert.equal(noAmount.expenses.length, 0);
+  assert.equal(noAmount.amount, 0);
 });
 
 test('normalizeReceiptScanPayload computes fallback subtotal and total and drops zero-price lines', () => {

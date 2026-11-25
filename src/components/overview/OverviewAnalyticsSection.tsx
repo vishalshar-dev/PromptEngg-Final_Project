@@ -135,7 +135,7 @@ export function OverviewAnalyticsSection({
       <section
         aria-label="Spending overview"
         data-testid="overview-spending-analytics"
-        className="lg:col-span-7 surface-card p-5 sm:p-6 flex flex-col justify-between gap-4 overflow-hidden"
+        className="lg:col-span-7 surface-card p-5 sm:p-6 flex flex-col gap-4 overflow-hidden"
       >
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -215,13 +215,16 @@ export function OverviewAnalyticsSection({
 
           {/* Compact Real Analytical KPI Ribbon */}
           {hasChartData && (
-            <div className="grid grid-cols-3 gap-3 px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)]/75 border border-[var(--border-subtle)]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2.5 px-3.5 py-2.5 rounded-xl bg-[var(--bg-subtle)]/75 border border-[var(--border-subtle)]">
               <div className="min-w-0">
                 <p className="text-[11px] font-medium text-[var(--text-secondary)] truncate">
                   Avg daily spend
                 </p>
                 <p className="text-[14px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
                   ₹{formatCurrencyExact(radarOverview.avgDailySpend)}
+                </p>
+                <p className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">
+                  Across {radarOverview.window.elapsedDays}d in cycle
                 </p>
               </div>
               <div className="min-w-0 pl-3 border-l border-[var(--border-subtle)]">
@@ -233,28 +236,50 @@ export function OverviewAnalyticsSection({
                     ? `₹${formatCurrency(dailyTrendsResult.highestSpendingDay.amount)}`
                     : '—'}
                 </p>
+                <p className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">
+                  {dailyTrendsResult.highestSpendingDay
+                    ? `${dailyTrendsResult.highestSpendingDay.label} · ${dailyTrendsResult.highestSpendingDay.txCount} tx`
+                    : 'No spend recorded'}
+                </p>
               </div>
-              <div className="min-w-0 pl-3 border-l border-[var(--border-subtle)]">
+              <div className="col-span-2 sm:col-span-1 min-w-0 pt-2 sm:pt-0 border-t sm:border-t-0 sm:pl-3 sm:border-l border-[var(--border-subtle)]">
                 <p className="text-[11px] font-medium text-[var(--text-secondary)] truncate">
                   {radarOverview.spendDeltaPct !== null ? 'Vs prior period' : 'Avg ticket'}
                 </p>
                 {radarOverview.spendDeltaPct !== null ? (
-                  <p
-                    className={`text-[14px] font-bold font-mono tabular-nums mt-0.5 inline-flex items-center gap-1 ${
-                      radarOverview.spendDeltaPct > 10
-                        ? 'text-[var(--accent-warning-ink)]'
-                        : radarOverview.spendDeltaPct < 0
-                          ? 'text-[var(--accent-success-ink)]'
-                          : 'text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {radarOverview.spendDeltaPct > 0 ? '+' : ''}
-                    {radarOverview.spendDeltaPct}%
-                  </p>
+                  <>
+                    <p
+                      className={`text-[14px] font-bold font-mono tabular-nums mt-0.5 inline-flex items-center gap-1 ${
+                        radarOverview.spendDeltaPct > 10
+                          ? 'text-[var(--accent-warning-ink)]'
+                          : radarOverview.spendDeltaPct < 0
+                            ? 'text-[var(--accent-success-ink)]'
+                            : 'text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {radarOverview.spendDeltaPct > 0 ? (
+                        <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      ) : radarOverview.spendDeltaPct < 0 ? (
+                        <TrendingDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      ) : null}
+                      <span>
+                        {radarOverview.spendDeltaPct > 0 ? '+' : ''}
+                        {radarOverview.spendDeltaPct}%
+                      </span>
+                    </p>
+                    <p className="text-[11px] font-mono tabular-nums text-[var(--text-muted)] truncate mt-0.5">
+                      vs ₹{formatCurrency(radarOverview.prevTotalSpent)} prior
+                    </p>
+                  </>
                 ) : (
-                  <p className="text-[14px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
-                    ₹{formatCurrency(radarOverview.avgTxValue)}
-                  </p>
+                  <>
+                    <p className="text-[14px] font-bold font-mono tabular-nums text-[var(--text-primary)] mt-0.5 truncate">
+                      ₹{formatCurrency(radarOverview.avgTxValue)}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">
+                      {radarOverview.txCount} transaction{radarOverview.txCount === 1 ? '' : 's'}
+                    </p>
+                  </>
                 )}
               </div>
             </div>
@@ -278,7 +303,7 @@ export function OverviewAnalyticsSection({
             }
           />
         ) : (
-          <div className="h-[228px] w-full">
+          <div className="flex-1 min-h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               {chartMode === 'daily' ? (
                 <BarChart
